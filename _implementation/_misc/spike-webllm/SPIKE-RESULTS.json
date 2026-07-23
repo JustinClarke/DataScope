@@ -1,0 +1,239 @@
+{
+  "startedAt": "2026-07-21T11:22:48.310Z",
+  "env": {
+    "crossOriginIsolated": true,
+    "hasWebGPU": true,
+    "hasMeasureMemory": true,
+    "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  "gpuAdapter": {
+    "info": {},
+    "maxBufferMB": 4096
+  },
+  "modelCatalogue": {
+    "coderOptions": [
+      {
+        "id": "Qwen2.5-Coder-0.5B-Instruct-q4f16_1-MLC",
+        "vramMB": 944.62,
+        "lowResource": true
+      },
+      {
+        "id": "Qwen2.5-Coder-0.5B-Instruct-q4f32_1-MLC",
+        "vramMB": 1060.2,
+        "lowResource": true
+      },
+      {
+        "id": "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC",
+        "vramMB": 1629.75,
+        "lowResource": false
+      },
+      {
+        "id": "Qwen2.5-Coder-1.5B-Instruct-q4f32_1-MLC",
+        "vramMB": 1888.97,
+        "lowResource": false
+      },
+      {
+        "id": "Qwen2.5-Coder-3B-Instruct-q4f16_1-MLC",
+        "vramMB": 2504.76,
+        "lowResource": true
+      },
+      {
+        "id": "Qwen2.5-Coder-3B-Instruct-q4f32_1-MLC",
+        "vramMB": 2893.64,
+        "lowResource": true
+      }
+    ],
+    "picked": "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC"
+  },
+  "duckdb": {
+    "coldMs": 1028.6449999958277,
+    "bundle": "coi",
+    "threaded": true
+  },
+  "criterionC": {
+    "modelId": "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC",
+    "loadMs": 2647.7549999952316,
+    "reportCount": 33,
+    "firstReportMs": 554.25,
+    "maxFrameGapMs": 474.3449999988079,
+    "downloadedBytes": 0,
+    "encodedBytes": 0,
+    "cdnResourceCount": 0,
+    "timelineSample": [
+      {
+        "t": 554.25,
+        "progress": 0,
+        "text": "Start to fetch params"
+      },
+      {
+        "t": 1273.0249999985099,
+        "progress": 0.190373394671719,
+        "text": "Loading model from cache[3/30]: 158MB loaded. 19% completed, 1 secs elapsed."
+      },
+      {
+        "t": 1421.5,
+        "progress": 0.2813222493518559,
+        "text": "Loading model from cache[6/30]: 234MB loaded. 28% completed, 1 secs elapsed."
+      },
+      {
+        "t": 1565.9549999982119,
+        "progress": 0.3722711040319928,
+        "text": "Loading model from cache[9/30]: 309MB loaded. 37% completed, 2 secs elapsed."
+      },
+      {
+        "t": 1705.3349999934435,
+        "progress": 0.4632199587121297,
+        "text": "Loading model from cache[12/30]: 384MB loaded. 46% completed, 2 secs elapsed."
+      },
+      {
+        "t": 1849.4249999970198,
+        "progress": 0.5541688133922666,
+        "text": "Loading model from cache[15/30]: 460MB loaded. 55% completed, 2 secs elapsed."
+      },
+      {
+        "t": 2006.2849999964237,
+        "progress": 0.6451176680724034,
+        "text": "Loading model from cache[18/30]: 535MB loaded. 64% completed, 2 secs elapsed."
+      },
+      {
+        "t": 2153.064999997616,
+        "progress": 0.7360665227525404,
+        "text": "Loading model from cache[21/30]: 610MB loaded. 73% completed, 2 secs elapsed."
+      },
+      {
+        "t": 2312.7149999961257,
+        "progress": 0.8270153774326773,
+        "text": "Loading model from cache[24/30]: 686MB loaded. 82% completed, 2 secs elapsed."
+      },
+      {
+        "t": 2470.9899999946356,
+        "progress": 0.9179642321128142,
+        "text": "Loading model from cache[27/30]: 761MB loaded. 91% completed, 2 secs elapsed."
+      },
+      {
+        "t": 2614.6549999937415,
+        "progress": 1,
+        "text": "Loading model from cache[30/30]: 829MB loaded. 100% completed, 3 secs elapsed."
+      }
+    ]
+  },
+  "seed": {
+    "rows": 240
+  },
+  "criterionB": {
+    "total": 12,
+    "passed": 11,
+    "passRate": 0.9166666666666666,
+    "results": [
+      {
+        "q": "How many total orders are there?",
+        "genSql": "SELECT COUNT(*) FROM sales",
+        "ok": true,
+        "ms": 703.4550000056624
+      },
+      {
+        "q": "What is the total sales amount across all orders?",
+        "genSql": "SELECT SUM(amount) FROM sales",
+        "ok": true,
+        "ms": 561.3800000026822
+      },
+      {
+        "q": "List the distinct regions.",
+        "genSql": "SELECT DISTINCT region FROM sales",
+        "ok": true,
+        "ms": 535.734999999404
+      },
+      {
+        "q": "What is the total sales amount for each region?",
+        "genSql": "SELECT region, SUM(amount) AS total_sales FROM sales GROUP BY region",
+        "ok": true,
+        "ms": 835.3249999955297
+      },
+      {
+        "q": "Which product has the highest total sales amount? Return only the product name.",
+        "genSql": "SELECT product FROM sales ORDER BY amount DESC LIMIT 1",
+        "ok": false,
+        "error": "mismatch: expected [[\"P1\"]] got [[\"P4\"]]",
+        "ms": 811.9349999949336
+      },
+      {
+        "q": "How many orders were placed in the West region?",
+        "genSql": "SELECT COUNT(*) FROM sales WHERE region = 'West'",
+        "ok": true,
+        "ms": 744.8800000026822
+      },
+      {
+        "q": "What is the average order amount for the Electronics category?",
+        "genSql": "SELECT AVG(amount) FROM sales WHERE category = 'Electronics'",
+        "ok": true,
+        "ms": 871.5850000008941
+      },
+      {
+        "q": "How many orders had a quantity greater than 5?",
+        "genSql": "SELECT COUNT(*) FROM sales WHERE quantity > 5",
+        "ok": true,
+        "ms": 788
+      },
+      {
+        "q": "What is the total quantity sold per category?",
+        "genSql": "SELECT category, SUM(quantity) FROM sales GROUP BY category",
+        "ok": true,
+        "ms": 748.179999999702
+      },
+      {
+        "q": "What were the total sales in the year 2023?",
+        "genSql": "SELECT SUM(amount) FROM sales WHERE EXTRACT(YEAR FROM order_date) = 2023",
+        "ok": true,
+        "ms": 1185.6300000026822
+      },
+      {
+        "q": "List the top 3 products by total quantity sold.",
+        "genSql": "SELECT product FROM sales GROUP BY product ORDER BY sum(quantity) DESC LIMIT 3",
+        "ok": true,
+        "ms": 998.2400000020862
+      },
+      {
+        "q": "What is the total sales amount for orders placed after 2023-06-01?",
+        "genSql": "SELECT SUM(amount) FROM sales WHERE order_date > '2023-06-01'",
+        "ok": true,
+        "ms": 1224.289999999106
+      }
+    ]
+  },
+  "criterionA": {
+    "ingest": {
+      "url": "http://127.0.0.1:5199/fixtures/large.csv",
+      "bytes": 0,
+      "rows": 1240000,
+      "cols": 6,
+      "registerMs": 19.554999999701977,
+      "ingestMs": 243.57500000298023
+    },
+    "aggMs": 3.2700000032782555,
+    "aggRows": 1240000,
+    "inferMs": 1055.6000000014901,
+    "inferOk": true,
+    "mem": {
+      "before": {
+        "label": "before-ingest",
+        "jsHeapBytes": 278810133,
+        "uaMemoryBytes": 828368204,
+        "duckdbHeapBytes": 153600
+      },
+      "afterIngest": {
+        "label": "after-ingest",
+        "jsHeapBytes": 275227987,
+        "uaMemoryBytes": 1037996943,
+        "duckdbHeapBytes": 87083008
+      },
+      "afterInfer": {
+        "label": "after-infer-with-big-loaded",
+        "jsHeapBytes": 276687407,
+        "uaMemoryBytes": 1038018102,
+        "duckdbHeapBytes": 87083008
+      }
+    }
+  },
+  "crashed": false,
+  "finishedAt": "2026-07-21T11:26:05.878Z"
+}

@@ -1,0 +1,521 @@
+ReviewId,ProductId,Rating,ReviewText,ReviewDate
+1,9,3,Does the job but nothing special.,2023-11-15
+2,20,3,"Average product, matches the price point.",2023-12-07
+3,11,4,Shipping was fast and the quality exceeded expectations.,2023-05-16
+4,106,3,"Average product, matches the price point.",2024-07-09
+5,81,4,Shipping was fast and the quality exceeded expectations.,2023-07-20
+6,2,4,"Solid build quality, no complaints so far.",2024-01-13
+7,93,2,"Broke after a week of light use, disappointed.",2024-10-17
+8,45,4,Shipping was fast and the quality exceeded expectations.,2023-04-18
+9,58,3,Does the job but nothing special.,2023-01-05
+10,95,2,"Not as described, considering a return.",2024-04-22
+11,45,3,"Average product, matches the price point.",2023-02-18
+12,56,4,"Solid build quality, no complaints so far.",2023-10-16
+13,103,4,Shipping was fast and the quality exceeded expectations.,2024-06-27
+14,84,3,"Average product, matches the price point.",2024-04-26
+15,86,4,"Solid build quality, no complaints so far.",2024-09-08
+16,7,3,A few minor issues but overall acceptable.,2024-06-19
+17,42,5,Shipping was fast and the quality exceeded expectations.,2024-08-28
+18,67,4,"Great value for the price, would buy again.",2023-11-20
+19,21,3,"Average product, matches the price point.",2024-06-13
+20,93,1,"Not as described, considering a return.",2024-06-09
+21,83,5,"Great value for the price, would buy again.",2023-04-18
+22,119,3,"Average product, matches the price point.",2024-11-21
+23,115,1,"Not as described, considering a return.",2024-09-12
+24,114,2,"Broke after a week of light use, disappointed.",2024-03-13
+25,76,4,Shipping was fast and the quality exceeded expectations.,2023-04-08
+26,6,4,"Great value for the price, would buy again.",2024-09-08
+27,107,2,"Broke after a week of light use, disappointed.",2023-10-24
+28,35,5,Shipping was fast and the quality exceeded expectations.,2023-03-13
+29,1,1,"Not as described, considering a return.",2023-05-05
+30,100,5,Shipping was fast and the quality exceeded expectations.,2024-03-16
+31,24,3,A few minor issues but overall acceptable.,2023-03-28
+32,70,5,Shipping was fast and the quality exceeded expectations.,2024-04-17
+33,12,3,Does the job but nothing special.,2024-10-27
+34,60,1,"Broke after a week of light use, disappointed.",2023-09-25
+35,81,4,Shipping was fast and the quality exceeded expectations.,2023-07-13
+36,41,5,"Great value for the price, would buy again.",2024-06-29
+37,10,4,"Great value for the price, would buy again.",2024-11-23
+38,105,5,"Works exactly as described, very happy with this purchase.",2023-03-29
+39,8,3,A few minor issues but overall acceptable.,2023-09-27
+40,16,4,"Great value for the price, would buy again.",2023-04-03
+41,66,4,"Works exactly as described, very happy with this purchase.",2023-01-13
+42,108,4,"Great value for the price, would buy again.",2024-11-03
+43,34,1,"Broke after a week of light use, disappointed.",2023-08-14
+44,24,5,"Solid build quality, no complaints so far.",2023-01-07
+45,68,4,"Solid build quality, no complaints so far.",2023-08-05
+46,3,5,Shipping was fast and the quality exceeded expectations.,2024-07-23
+47,2,1,"Broke after a week of light use, disappointed.",2023-02-28
+48,65,4,Shipping was fast and the quality exceeded expectations.,2024-08-29
+49,105,3,A few minor issues but overall acceptable.,2024-03-16
+50,70,2,"Not as described, considering a return.",2023-07-03
+51,20,1,"Not as described, considering a return.",2023-05-19
+52,104,4,"Works exactly as described, very happy with this purchase.",2024-03-07
+53,39,5,"Solid build quality, no complaints so far.",2024-04-10
+54,54,4,"Solid build quality, no complaints so far.",2024-05-27
+55,55,2,"Not as described, considering a return.",2024-07-28
+56,81,4,"Solid build quality, no complaints so far.",2023-09-25
+57,83,4,"Solid build quality, no complaints so far.",2023-11-10
+58,48,1,Poor packaging led to damage in transit.,2024-08-19
+59,82,5,"Works exactly as described, very happy with this purchase.",2023-05-22
+60,87,3,A few minor issues but overall acceptable.,2023-07-02
+61,57,4,"Solid build quality, no complaints so far.",2023-06-12
+62,9,3,A few minor issues but overall acceptable.,2024-07-03
+63,103,2,"Broke after a week of light use, disappointed.",2024-09-18
+64,9,3,A few minor issues but overall acceptable.,2023-10-17
+65,64,4,Shipping was fast and the quality exceeded expectations.,2024-01-17
+66,85,3,Does the job but nothing special.,2024-09-17
+67,118,3,A few minor issues but overall acceptable.,2024-10-16
+68,53,1,Poor packaging led to damage in transit.,2023-01-23
+69,70,4,"Works exactly as described, very happy with this purchase.",2024-02-11
+70,68,2,Poor packaging led to damage in transit.,2023-06-21
+71,44,4,"Works exactly as described, very happy with this purchase.",2023-03-05
+72,71,3,Does the job but nothing special.,2023-10-01
+73,47,4,"Works exactly as described, very happy with this purchase.",2023-02-23
+74,40,5,"Great value for the price, would buy again.",2023-03-23
+75,88,4,"Solid build quality, no complaints so far.",2023-10-11
+76,79,4,"Solid build quality, no complaints so far.",2024-10-26
+77,93,2,Poor packaging led to damage in transit.,2024-07-15
+78,45,4,"Solid build quality, no complaints so far.",2023-07-15
+79,96,4,"Great value for the price, would buy again.",2024-06-20
+80,50,4,Shipping was fast and the quality exceeded expectations.,2023-10-04
+81,93,5,"Great value for the price, would buy again.",2023-11-04
+82,10,3,A few minor issues but overall acceptable.,2023-12-24
+83,56,3,Does the job but nothing special.,2023-12-14
+84,25,3,"Average product, matches the price point.",2024-03-06
+85,87,2,"Broke after a week of light use, disappointed.",2023-08-24
+86,35,5,"Great value for the price, would buy again.",2024-08-26
+87,2,2,"Not as described, considering a return.",2024-01-29
+88,83,5,"Works exactly as described, very happy with this purchase.",2023-11-07
+89,94,5,"Great value for the price, would buy again.",2024-03-31
+90,8,4,"Great value for the price, would buy again.",2023-07-10
+91,34,5,"Great value for the price, would buy again.",2024-10-25
+92,79,5,"Works exactly as described, very happy with this purchase.",2023-05-21
+93,18,4,"Works exactly as described, very happy with this purchase.",2024-01-07
+94,51,5,"Works exactly as described, very happy with this purchase.",2023-01-06
+95,21,2,"Broke after a week of light use, disappointed.",2024-03-11
+96,101,3,Does the job but nothing special.,2023-02-23
+97,102,4,"Great value for the price, would buy again.",2024-08-28
+98,93,2,"Broke after a week of light use, disappointed.",2024-04-26
+99,76,5,"Works exactly as described, very happy with this purchase.",2024-11-09
+100,81,2,Poor packaging led to damage in transit.,2023-10-09
+101,106,4,"Great value for the price, would buy again.",2023-06-19
+102,55,3,Does the job but nothing special.,2023-03-24
+103,89,3,A few minor issues but overall acceptable.,2023-10-25
+104,2,5,"Solid build quality, no complaints so far.",2023-10-22
+105,106,2,"Broke after a week of light use, disappointed.",2024-01-07
+106,120,4,"Great value for the price, would buy again.",2023-12-13
+107,23,4,"Works exactly as described, very happy with this purchase.",2023-10-23
+108,77,5,Shipping was fast and the quality exceeded expectations.,2023-02-23
+109,79,5,Shipping was fast and the quality exceeded expectations.,2023-10-28
+110,86,4,"Great value for the price, would buy again.",2024-01-03
+111,89,1,"Broke after a week of light use, disappointed.",2023-04-30
+112,56,4,"Great value for the price, would buy again.",2024-01-13
+113,102,4,"Solid build quality, no complaints so far.",2023-03-21
+114,116,3,Does the job but nothing special.,2024-09-09
+115,29,3,"Average product, matches the price point.",2024-01-21
+116,70,4,"Works exactly as described, very happy with this purchase.",2023-04-15
+117,12,3,A few minor issues but overall acceptable.,2024-08-16
+118,14,3,"Average product, matches the price point.",2023-08-18
+119,58,4,"Solid build quality, no complaints so far.",2023-11-05
+120,103,5,"Solid build quality, no complaints so far.",2024-05-23
+121,112,4,"Great value for the price, would buy again.",2024-02-14
+122,21,5,Shipping was fast and the quality exceeded expectations.,2024-01-30
+123,37,4,"Solid build quality, no complaints so far.",2023-12-20
+124,15,1,"Broke after a week of light use, disappointed.",2024-10-10
+125,25,2,"Broke after a week of light use, disappointed.",2023-12-21
+126,17,5,"Works exactly as described, very happy with this purchase.",2023-08-11
+127,42,4,Shipping was fast and the quality exceeded expectations.,2023-08-09
+128,115,4,"Solid build quality, no complaints so far.",2023-05-11
+129,89,4,"Solid build quality, no complaints so far.",2024-01-02
+130,34,1,Poor packaging led to damage in transit.,2024-08-02
+131,74,1,Poor packaging led to damage in transit.,2024-03-22
+132,75,2,"Broke after a week of light use, disappointed.",2024-05-18
+133,46,3,Does the job but nothing special.,2023-10-15
+134,82,3,"Average product, matches the price point.",2023-04-09
+135,4,4,"Great value for the price, would buy again.",2023-10-08
+136,95,1,"Broke after a week of light use, disappointed.",2023-09-06
+137,67,5,"Great value for the price, would buy again.",2023-04-13
+138,17,4,"Great value for the price, would buy again.",2024-06-27
+139,103,3,A few minor issues but overall acceptable.,2023-08-08
+140,95,1,"Broke after a week of light use, disappointed.",2023-10-07
+141,116,3,A few minor issues but overall acceptable.,2023-10-08
+142,112,4,"Works exactly as described, very happy with this purchase.",2024-01-20
+143,41,3,"Average product, matches the price point.",2024-04-24
+144,8,4,Shipping was fast and the quality exceeded expectations.,2024-04-17
+145,12,3,A few minor issues but overall acceptable.,2023-10-18
+146,105,5,"Great value for the price, would buy again.",2023-07-09
+147,54,5,"Works exactly as described, very happy with this purchase.",2024-11-07
+148,24,2,Poor packaging led to damage in transit.,2024-02-19
+149,68,3,Does the job but nothing special.,2024-02-07
+150,17,2,Poor packaging led to damage in transit.,2024-01-11
+151,2,3,A few minor issues but overall acceptable.,2024-05-10
+152,7,2,"Broke after a week of light use, disappointed.",2023-06-27
+153,62,4,"Solid build quality, no complaints so far.",2023-11-13
+154,83,2,Poor packaging led to damage in transit.,2023-08-31
+155,65,4,Shipping was fast and the quality exceeded expectations.,2024-01-06
+156,54,2,"Broke after a week of light use, disappointed.",2024-05-18
+157,10,4,"Works exactly as described, very happy with this purchase.",2024-06-01
+158,53,2,"Not as described, considering a return.",2023-04-21
+159,119,5,"Solid build quality, no complaints so far.",2023-07-17
+160,35,4,"Works exactly as described, very happy with this purchase.",2024-04-08
+161,112,4,"Works exactly as described, very happy with this purchase.",2023-04-08
+162,63,4,"Great value for the price, would buy again.",2023-05-27
+163,32,5,"Solid build quality, no complaints so far.",2024-05-26
+164,97,3,"Average product, matches the price point.",2023-07-29
+165,95,3,"Average product, matches the price point.",2023-01-06
+166,71,4,"Great value for the price, would buy again.",2023-08-07
+167,26,3,"Average product, matches the price point.",2023-11-28
+168,91,5,"Solid build quality, no complaints so far.",2024-11-11
+169,90,1,"Broke after a week of light use, disappointed.",2024-08-11
+170,74,4,Shipping was fast and the quality exceeded expectations.,2024-01-04
+171,29,3,"Average product, matches the price point.",2023-10-23
+172,118,5,"Great value for the price, would buy again.",2024-08-03
+173,89,3,Does the job but nothing special.,2024-05-26
+174,4,1,"Broke after a week of light use, disappointed.",2023-06-04
+175,116,4,"Solid build quality, no complaints so far.",2023-04-07
+176,37,4,"Works exactly as described, very happy with this purchase.",2023-11-05
+177,91,4,"Works exactly as described, very happy with this purchase.",2024-09-26
+178,79,4,"Great value for the price, would buy again.",2024-02-28
+179,25,2,Poor packaging led to damage in transit.,2023-09-11
+180,64,5,Shipping was fast and the quality exceeded expectations.,2023-03-15
+181,2,4,Shipping was fast and the quality exceeded expectations.,2024-02-24
+182,47,3,"Average product, matches the price point.",2023-11-20
+183,98,2,"Broke after a week of light use, disappointed.",2024-04-26
+184,41,1,"Not as described, considering a return.",2024-05-26
+185,27,5,"Solid build quality, no complaints so far.",2023-06-11
+186,37,4,Shipping was fast and the quality exceeded expectations.,2024-06-11
+187,55,4,"Solid build quality, no complaints so far.",2023-02-10
+188,81,2,Poor packaging led to damage in transit.,2024-03-05
+189,33,1,"Broke after a week of light use, disappointed.",2024-03-01
+190,85,3,"Average product, matches the price point.",2024-11-29
+191,35,1,Poor packaging led to damage in transit.,2023-03-21
+192,20,2,"Broke after a week of light use, disappointed.",2023-02-06
+193,56,2,Poor packaging led to damage in transit.,2023-09-07
+194,103,2,"Not as described, considering a return.",2023-05-22
+195,30,4,"Solid build quality, no complaints so far.",2024-11-20
+196,61,1,"Not as described, considering a return.",2024-04-20
+197,48,5,"Solid build quality, no complaints so far.",2023-09-10
+198,7,4,"Great value for the price, would buy again.",2024-03-19
+199,106,4,"Great value for the price, would buy again.",2023-02-08
+200,24,4,"Works exactly as described, very happy with this purchase.",2023-02-03
+201,72,2,"Not as described, considering a return.",2024-06-09
+202,78,3,Does the job but nothing special.,2024-03-26
+203,14,5,"Works exactly as described, very happy with this purchase.",2023-04-21
+204,30,2,"Broke after a week of light use, disappointed.",2023-04-16
+205,72,5,"Works exactly as described, very happy with this purchase.",2023-01-21
+206,77,2,"Broke after a week of light use, disappointed.",2023-12-20
+207,19,4,"Works exactly as described, very happy with this purchase.",2023-02-15
+208,22,3,Does the job but nothing special.,2023-11-02
+209,34,5,"Great value for the price, would buy again.",2023-03-30
+210,100,3,A few minor issues but overall acceptable.,2024-07-18
+211,29,4,"Great value for the price, would buy again.",2023-04-04
+212,9,3,"Average product, matches the price point.",2024-01-02
+213,43,3,Does the job but nothing special.,2024-11-13
+214,50,4,"Great value for the price, would buy again.",2024-06-14
+215,23,2,Poor packaging led to damage in transit.,2023-04-26
+216,70,5,"Great value for the price, would buy again.",2024-08-15
+217,38,4,"Works exactly as described, very happy with this purchase.",2023-12-08
+218,107,2,"Broke after a week of light use, disappointed.",2023-02-19
+219,50,2,"Not as described, considering a return.",2023-03-19
+220,64,4,Shipping was fast and the quality exceeded expectations.,2023-02-20
+221,87,4,"Works exactly as described, very happy with this purchase.",2023-03-28
+222,59,1,Poor packaging led to damage in transit.,2024-10-31
+223,103,1,Poor packaging led to damage in transit.,2024-10-30
+224,60,4,"Great value for the price, would buy again.",2023-10-04
+225,75,5,"Great value for the price, would buy again.",2023-06-14
+226,87,2,Poor packaging led to damage in transit.,2024-02-13
+227,115,5,"Works exactly as described, very happy with this purchase.",2023-02-16
+228,80,5,"Solid build quality, no complaints so far.",2023-04-03
+229,47,4,"Great value for the price, would buy again.",2023-03-17
+230,100,4,"Solid build quality, no complaints so far.",2024-04-06
+231,50,4,"Great value for the price, would buy again.",2024-06-15
+232,55,1,"Not as described, considering a return.",2024-01-02
+233,67,3,Does the job but nothing special.,2023-04-14
+234,19,1,"Not as described, considering a return.",2023-07-08
+235,114,1,"Not as described, considering a return.",2024-03-14
+236,87,4,Shipping was fast and the quality exceeded expectations.,2024-07-29
+237,21,4,"Great value for the price, would buy again.",2023-09-27
+238,91,4,"Great value for the price, would buy again.",2024-01-17
+239,52,3,Does the job but nothing special.,2024-05-24
+240,76,3,A few minor issues but overall acceptable.,2024-05-04
+241,112,3,A few minor issues but overall acceptable.,2023-07-28
+242,101,4,"Great value for the price, would buy again.",2024-01-27
+243,17,2,"Not as described, considering a return.",2023-11-01
+244,76,5,"Solid build quality, no complaints so far.",2023-08-08
+245,104,1,"Broke after a week of light use, disappointed.",2023-12-03
+246,118,2,"Not as described, considering a return.",2023-10-07
+247,114,1,"Broke after a week of light use, disappointed.",2023-01-29
+248,93,3,A few minor issues but overall acceptable.,2023-06-21
+249,66,1,Poor packaging led to damage in transit.,2024-10-14
+250,9,2,Poor packaging led to damage in transit.,2024-02-15
+251,113,4,"Solid build quality, no complaints so far.",2023-01-09
+252,35,3,Does the job but nothing special.,2023-01-01
+253,90,5,"Solid build quality, no complaints so far.",2023-02-13
+254,20,4,"Great value for the price, would buy again.",2023-05-09
+255,12,3,A few minor issues but overall acceptable.,2023-05-14
+256,90,4,"Works exactly as described, very happy with this purchase.",2023-08-15
+257,57,5,"Works exactly as described, very happy with this purchase.",2024-09-28
+258,76,4,Shipping was fast and the quality exceeded expectations.,2023-03-21
+259,74,4,Shipping was fast and the quality exceeded expectations.,2024-04-02
+260,34,5,"Great value for the price, would buy again.",2023-10-27
+261,50,4,"Great value for the price, would buy again.",2023-06-10
+262,42,2,"Not as described, considering a return.",2023-05-15
+263,107,3,A few minor issues but overall acceptable.,2023-12-16
+264,65,4,"Works exactly as described, very happy with this purchase.",2024-06-26
+265,98,1,"Broke after a week of light use, disappointed.",2024-07-06
+266,28,4,"Solid build quality, no complaints so far.",2023-02-08
+267,85,4,"Works exactly as described, very happy with this purchase.",2023-03-30
+268,94,5,"Works exactly as described, very happy with this purchase.",2024-05-27
+269,67,2,Poor packaging led to damage in transit.,2023-12-07
+270,71,4,"Works exactly as described, very happy with this purchase.",2023-03-10
+271,113,4,"Works exactly as described, very happy with this purchase.",2024-07-12
+272,7,4,"Solid build quality, no complaints so far.",2023-02-13
+273,9,4,Shipping was fast and the quality exceeded expectations.,2023-01-16
+274,40,3,Does the job but nothing special.,2023-08-06
+275,67,3,Does the job but nothing special.,2023-07-10
+276,34,3,Does the job but nothing special.,2024-07-07
+277,30,2,Poor packaging led to damage in transit.,2024-08-18
+278,82,3,"Average product, matches the price point.",2024-11-10
+279,31,4,"Solid build quality, no complaints so far.",2023-11-29
+280,66,4,Shipping was fast and the quality exceeded expectations.,2024-03-19
+281,81,2,Poor packaging led to damage in transit.,2024-06-19
+282,35,1,"Broke after a week of light use, disappointed.",2024-02-09
+283,85,1,"Not as described, considering a return.",2023-09-24
+284,101,1,"Broke after a week of light use, disappointed.",2024-06-06
+285,56,3,"Average product, matches the price point.",2023-04-04
+286,54,4,"Great value for the price, would buy again.",2024-03-17
+287,27,5,"Solid build quality, no complaints so far.",2023-11-27
+288,31,5,"Works exactly as described, very happy with this purchase.",2024-03-21
+289,86,4,"Great value for the price, would buy again.",2023-12-18
+290,42,3,A few minor issues but overall acceptable.,2024-08-18
+291,8,3,Does the job but nothing special.,2023-09-04
+292,34,1,"Not as described, considering a return.",2023-04-16
+293,54,5,"Great value for the price, would buy again.",2024-02-20
+294,40,5,Shipping was fast and the quality exceeded expectations.,2024-03-19
+295,37,4,"Solid build quality, no complaints so far.",2024-02-08
+296,45,2,"Not as described, considering a return.",2024-04-21
+297,6,4,"Solid build quality, no complaints so far.",2023-12-09
+298,111,5,"Great value for the price, would buy again.",2023-06-05
+299,1,1,"Broke after a week of light use, disappointed.",2024-07-20
+300,85,4,Shipping was fast and the quality exceeded expectations.,2023-10-11
+301,95,1,"Broke after a week of light use, disappointed.",2024-11-10
+302,21,3,A few minor issues but overall acceptable.,2023-11-27
+303,25,5,"Great value for the price, would buy again.",2024-11-15
+304,79,4,"Works exactly as described, very happy with this purchase.",2023-10-11
+305,106,2,"Broke after a week of light use, disappointed.",2023-02-20
+306,114,1,"Broke after a week of light use, disappointed.",2024-02-07
+307,103,5,"Works exactly as described, very happy with this purchase.",2024-06-29
+308,79,1,"Broke after a week of light use, disappointed.",2023-04-19
+309,56,4,"Great value for the price, would buy again.",2024-06-05
+310,6,4,Shipping was fast and the quality exceeded expectations.,2024-02-01
+311,77,1,Poor packaging led to damage in transit.,2024-05-21
+312,28,3,A few minor issues but overall acceptable.,2023-12-18
+313,15,5,Shipping was fast and the quality exceeded expectations.,2024-11-02
+314,117,3,A few minor issues but overall acceptable.,2023-04-19
+315,86,4,"Great value for the price, would buy again.",2024-06-21
+316,36,5,"Solid build quality, no complaints so far.",2024-01-10
+317,17,3,"Average product, matches the price point.",2024-09-28
+318,109,3,Does the job but nothing special.,2023-06-29
+319,104,5,"Great value for the price, would buy again.",2023-07-25
+320,69,5,"Works exactly as described, very happy with this purchase.",2024-01-08
+321,26,3,Does the job but nothing special.,2024-08-10
+322,16,1,"Broke after a week of light use, disappointed.",2023-06-15
+323,43,4,Shipping was fast and the quality exceeded expectations.,2024-08-02
+324,37,2,Poor packaging led to damage in transit.,2023-01-25
+325,21,3,Does the job but nothing special.,2023-10-15
+326,62,1,Poor packaging led to damage in transit.,2023-09-18
+327,94,3,"Average product, matches the price point.",2024-05-25
+328,64,2,"Broke after a week of light use, disappointed.",2023-06-24
+329,85,4,Shipping was fast and the quality exceeded expectations.,2023-01-15
+330,88,4,"Works exactly as described, very happy with this purchase.",2024-05-02
+331,52,3,A few minor issues but overall acceptable.,2024-03-18
+332,47,3,A few minor issues but overall acceptable.,2023-05-12
+333,27,4,Shipping was fast and the quality exceeded expectations.,2023-12-15
+334,107,1,"Not as described, considering a return.",2024-06-26
+335,87,3,A few minor issues but overall acceptable.,2023-05-26
+336,119,5,"Works exactly as described, very happy with this purchase.",2024-11-28
+337,66,4,"Works exactly as described, very happy with this purchase.",2024-08-19
+338,58,1,Poor packaging led to damage in transit.,2023-02-25
+339,118,5,"Solid build quality, no complaints so far.",2024-09-03
+340,16,5,Shipping was fast and the quality exceeded expectations.,2024-07-07
+341,33,4,Shipping was fast and the quality exceeded expectations.,2024-01-27
+342,2,4,"Great value for the price, would buy again.",2023-10-21
+343,97,3,Does the job but nothing special.,2024-11-12
+344,99,4,"Great value for the price, would buy again.",2023-02-04
+345,41,4,"Great value for the price, would buy again.",2024-04-20
+346,97,5,Shipping was fast and the quality exceeded expectations.,2024-02-21
+347,31,4,"Works exactly as described, very happy with this purchase.",2024-01-14
+348,74,4,"Works exactly as described, very happy with this purchase.",2024-07-19
+349,68,4,"Great value for the price, would buy again.",2023-11-15
+350,15,2,"Not as described, considering a return.",2024-04-15
+351,68,2,"Broke after a week of light use, disappointed.",2024-07-08
+352,61,5,Shipping was fast and the quality exceeded expectations.,2024-10-28
+353,29,5,"Works exactly as described, very happy with this purchase.",2024-08-19
+354,68,1,"Broke after a week of light use, disappointed.",2023-12-28
+355,5,4,"Works exactly as described, very happy with this purchase.",2024-06-07
+356,7,2,Poor packaging led to damage in transit.,2023-12-12
+357,55,3,Does the job but nothing special.,2024-04-26
+358,1,5,"Solid build quality, no complaints so far.",2024-04-07
+359,103,4,Shipping was fast and the quality exceeded expectations.,2023-12-04
+360,57,4,Shipping was fast and the quality exceeded expectations.,2023-03-02
+361,39,2,"Broke after a week of light use, disappointed.",2023-02-19
+362,80,4,"Solid build quality, no complaints so far.",2024-04-17
+363,48,1,Poor packaging led to damage in transit.,2023-02-16
+364,83,5,"Works exactly as described, very happy with this purchase.",2023-12-28
+365,34,4,"Solid build quality, no complaints so far.",2023-07-21
+366,104,3,A few minor issues but overall acceptable.,2024-04-19
+367,61,4,"Great value for the price, would buy again.",2023-01-14
+368,85,4,"Great value for the price, would buy again.",2024-11-06
+369,49,4,"Great value for the price, would buy again.",2024-10-04
+370,6,4,"Great value for the price, would buy again.",2023-10-06
+371,33,5,"Solid build quality, no complaints so far.",2023-04-17
+372,107,4,"Works exactly as described, very happy with this purchase.",2023-11-07
+373,25,2,"Not as described, considering a return.",2023-12-05
+374,14,2,Poor packaging led to damage in transit.,2023-02-20
+375,62,5,"Solid build quality, no complaints so far.",2023-02-26
+376,118,2,"Broke after a week of light use, disappointed.",2024-03-28
+377,74,5,"Works exactly as described, very happy with this purchase.",2023-02-09
+378,18,4,Shipping was fast and the quality exceeded expectations.,2024-08-06
+379,36,1,"Not as described, considering a return.",2023-11-29
+380,62,5,"Great value for the price, would buy again.",2024-05-04
+381,110,3,A few minor issues but overall acceptable.,2023-07-06
+382,69,2,"Broke after a week of light use, disappointed.",2023-01-25
+383,84,5,"Great value for the price, would buy again.",2023-04-23
+384,86,4,"Works exactly as described, very happy with this purchase.",2024-02-23
+385,86,2,"Not as described, considering a return.",2023-08-20
+386,13,4,Shipping was fast and the quality exceeded expectations.,2023-07-03
+387,107,1,"Not as described, considering a return.",2024-05-24
+388,120,3,Does the job but nothing special.,2024-10-10
+389,87,3,Does the job but nothing special.,2024-03-03
+390,101,4,"Solid build quality, no complaints so far.",2023-02-14
+391,107,1,"Not as described, considering a return.",2023-01-13
+392,2,4,"Works exactly as described, very happy with this purchase.",2023-04-05
+393,61,3,Does the job but nothing special.,2024-01-21
+394,88,3,A few minor issues but overall acceptable.,2024-09-11
+395,54,3,A few minor issues but overall acceptable.,2024-10-10
+396,20,4,"Works exactly as described, very happy with this purchase.",2024-05-30
+397,82,5,"Solid build quality, no complaints so far.",2023-08-23
+398,4,4,"Works exactly as described, very happy with this purchase.",2023-01-12
+399,4,3,A few minor issues but overall acceptable.,2024-08-16
+400,23,2,Poor packaging led to damage in transit.,2024-01-17
+401,104,3,Does the job but nothing special.,2023-11-19
+402,14,4,"Great value for the price, would buy again.",2023-05-10
+403,37,5,"Solid build quality, no complaints so far.",2024-06-06
+404,52,2,"Not as described, considering a return.",2023-05-30
+405,55,4,"Works exactly as described, very happy with this purchase.",2024-01-12
+406,11,2,Poor packaging led to damage in transit.,2024-11-08
+407,70,1,"Broke after a week of light use, disappointed.",2024-02-05
+408,48,3,"Average product, matches the price point.",2023-06-18
+409,25,2,"Broke after a week of light use, disappointed.",2023-12-07
+410,64,2,"Not as described, considering a return.",2023-02-26
+411,28,1,Poor packaging led to damage in transit.,2023-11-15
+412,37,4,"Great value for the price, would buy again.",2024-06-01
+413,84,4,"Great value for the price, would buy again.",2023-09-29
+414,71,1,"Broke after a week of light use, disappointed.",2024-06-12
+415,68,3,A few minor issues but overall acceptable.,2024-07-23
+416,42,4,"Solid build quality, no complaints so far.",2023-08-13
+417,104,3,A few minor issues but overall acceptable.,2024-05-23
+418,48,1,"Not as described, considering a return.",2024-11-13
+419,112,4,"Great value for the price, would buy again.",2024-09-11
+420,34,5,"Great value for the price, would buy again.",2023-07-16
+421,87,4,"Great value for the price, would buy again.",2024-11-18
+422,118,4,"Works exactly as described, very happy with this purchase.",2024-04-17
+423,9,4,"Great value for the price, would buy again.",2023-06-10
+424,92,4,Shipping was fast and the quality exceeded expectations.,2023-03-10
+425,24,3,Does the job but nothing special.,2024-06-18
+426,61,3,Does the job but nothing special.,2024-09-23
+427,21,4,"Solid build quality, no complaints so far.",2023-09-09
+428,2,4,"Solid build quality, no complaints so far.",2024-01-24
+429,59,3,"Average product, matches the price point.",2024-11-20
+430,40,4,"Works exactly as described, very happy with this purchase.",2023-03-18
+431,59,5,"Great value for the price, would buy again.",2024-10-27
+432,56,3,A few minor issues but overall acceptable.,2023-08-15
+433,54,3,A few minor issues but overall acceptable.,2023-02-12
+434,19,5,Shipping was fast and the quality exceeded expectations.,2023-11-16
+435,11,4,"Great value for the price, would buy again.",2023-02-20
+436,60,1,"Not as described, considering a return.",2024-06-16
+437,30,5,Shipping was fast and the quality exceeded expectations.,2023-03-16
+438,58,4,"Great value for the price, would buy again.",2024-11-06
+439,26,3,Does the job but nothing special.,2024-04-03
+440,28,3,Does the job but nothing special.,2023-04-04
+441,47,2,Poor packaging led to damage in transit.,2024-06-07
+442,3,4,"Works exactly as described, very happy with this purchase.",2023-11-18
+443,94,2,Poor packaging led to damage in transit.,2024-08-14
+444,91,1,"Not as described, considering a return.",2024-07-19
+445,41,4,"Works exactly as described, very happy with this purchase.",2024-06-22
+446,9,4,Shipping was fast and the quality exceeded expectations.,2023-04-19
+447,19,3,Does the job but nothing special.,2024-11-04
+448,24,4,"Solid build quality, no complaints so far.",2023-09-06
+449,39,3,"Average product, matches the price point.",2023-03-15
+450,10,4,"Works exactly as described, very happy with this purchase.",2024-04-02
+451,77,4,"Solid build quality, no complaints so far.",2023-08-24
+452,37,5,"Great value for the price, would buy again.",2023-08-26
+453,109,5,"Solid build quality, no complaints so far.",2024-08-23
+454,75,3,"Average product, matches the price point.",2023-05-08
+455,114,1,"Broke after a week of light use, disappointed.",2023-12-18
+456,59,2,"Broke after a week of light use, disappointed.",2024-03-28
+457,14,3,"Average product, matches the price point.",2024-08-18
+458,93,3,A few minor issues but overall acceptable.,2024-05-19
+459,89,2,Poor packaging led to damage in transit.,2023-02-11
+460,115,4,Shipping was fast and the quality exceeded expectations.,2024-09-05
+461,12,4,Shipping was fast and the quality exceeded expectations.,2023-09-13
+462,82,3,A few minor issues but overall acceptable.,2024-10-06
+463,1,4,"Solid build quality, no complaints so far.",2023-06-24
+464,64,3,Does the job but nothing special.,2024-01-07
+465,100,4,"Works exactly as described, very happy with this purchase.",2023-04-27
+466,14,1,Poor packaging led to damage in transit.,2024-04-03
+467,43,3,A few minor issues but overall acceptable.,2023-09-16
+468,85,3,A few minor issues but overall acceptable.,2024-05-07
+469,11,5,"Works exactly as described, very happy with this purchase.",2023-05-10
+470,120,5,Shipping was fast and the quality exceeded expectations.,2024-06-24
+471,61,4,"Works exactly as described, very happy with this purchase.",2023-09-18
+472,114,5,"Great value for the price, would buy again.",2023-03-30
+473,3,5,Shipping was fast and the quality exceeded expectations.,2024-05-08
+474,24,3,A few minor issues but overall acceptable.,2024-03-16
+475,62,1,"Broke after a week of light use, disappointed.",2023-09-05
+476,27,4,Shipping was fast and the quality exceeded expectations.,2023-11-19
+477,112,5,"Works exactly as described, very happy with this purchase.",2023-02-05
+478,63,3,A few minor issues but overall acceptable.,2023-07-25
+479,115,3,Does the job but nothing special.,2023-06-18
+480,104,3,Does the job but nothing special.,2024-04-22
+481,15,3,A few minor issues but overall acceptable.,2024-11-21
+482,109,1,"Broke after a week of light use, disappointed.",2023-01-26
+483,50,2,Poor packaging led to damage in transit.,2023-11-19
+484,46,1,Poor packaging led to damage in transit.,2023-06-12
+485,85,4,Shipping was fast and the quality exceeded expectations.,2024-11-28
+486,114,5,"Great value for the price, would buy again.",2023-11-28
+487,61,3,A few minor issues but overall acceptable.,2023-05-26
+488,7,1,Poor packaging led to damage in transit.,2024-09-28
+489,98,3,Does the job but nothing special.,2024-11-11
+490,5,5,Shipping was fast and the quality exceeded expectations.,2024-10-11
+491,79,4,"Solid build quality, no complaints so far.",2023-05-11
+492,28,4,Shipping was fast and the quality exceeded expectations.,2023-03-22
+493,59,3,"Average product, matches the price point.",2023-05-21
+494,103,5,"Solid build quality, no complaints so far.",2023-03-02
+495,105,3,Does the job but nothing special.,2023-04-27
+496,28,5,"Works exactly as described, very happy with this purchase.",2024-10-20
+497,99,1,"Not as described, considering a return.",2023-12-30
+498,83,3,Does the job but nothing special.,2024-01-22
+499,14,2,Poor packaging led to damage in transit.,2024-08-26
+500,38,3,Does the job but nothing special.,2024-07-19
+184,41,1,"Not as described, considering a return.",2024-05-26
+22,119,3,"Average product, matches the price point.",2024-11-21
+303,25,5,"Great value for the price, would buy again.",2024-11-15
+173,89,3,Does the job but nothing special.,2024-05-26
+224,60,4,"Great value for the price, would buy again.",2023-10-04
+156,54,2,"Broke after a week of light use, disappointed.",2024-05-18
+100,81,2,Poor packaging led to damage in transit.,2023-10-09
+6,2,4,"Solid build quality, no complaints so far.",2024-01-13
+196,61,1,"Not as described, considering a return.",2024-04-20
+38,105,5,"Works exactly as described, very happy with this purchase.",2023-03-29
+397,82,5,"Solid build quality, no complaints so far.",2023-08-23
+492,28,4,Shipping was fast and the quality exceeded expectations.,2023-03-22
+427,21,4,"Solid build quality, no complaints so far.",2023-09-09
+491,79,4,"Solid build quality, no complaints so far.",2023-05-11
+493,59,3,"Average product, matches the price point.",2023-05-21
+478,63,3,A few minor issues but overall acceptable.,2023-07-25
+91,34,5,"Great value for the price, would buy again.",2024-10-25
+362,80,4,"Solid build quality, no complaints so far.",2024-04-17
+493,59,3,"Average product, matches the price point.",2023-05-21
+168,91,5,"Solid build quality, no complaints so far.",2024-11-11

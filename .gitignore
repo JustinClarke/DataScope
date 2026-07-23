@@ -1,0 +1,50 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules/
+dist/
+dist-ssr
+*.local
+*.tsbuildinfo
+
+# D40 eval harness run output (generated; the labeled set + harness code are the artifact, not a run's numbers)
+eval/EVAL-RESULTS.json
+eval/webllm/
+
+# Wrangler / edge deploy — local state and secrets never committed
+.wrangler/
+.dev.vars
+
+# Terraform — local plugin cache/state and the backend-config file that
+# carries the R2 endpoint + credentials (§23.1, never committed).
+# infra/.terraform.lock.hcl is NOT ignored — provider hashes are pinned and
+# committed, same reasoning as package-lock.json.
+infra/.terraform
+infra/*.tfstate
+infra/*.tfstate.*
+infra/backend.hcl
+infra/*.tfplan
+
+# Spike sandbox artifacts (Chrome automation profile used by the WebLLM spike)
+.chrome-profile/
+
+# graphify knowledge graph — generated from the codebase (AST), rebuild with
+# `graphify update .`. The skill under .claude/skills/graphify/ IS committed.
+graphify-out/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

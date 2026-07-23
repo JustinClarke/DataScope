@@ -1,0 +1,113 @@
+# The edge Worker deploy (build/09-edge/01). Bundled from TypeScript by wrangler
+# (esbuild) — no separate build step. The tested surface is the pure handlers;
+# this config only names the bindings the entrypoint (edge/worker.ts) wires up.
+name = "datascope-edge"
+main = "edge/worker.ts"
+compatibility_date = "2024-09-23"
+workers_dev = true
+
+# Workers AI — the free-tier cloud NL→SQL backend (ADR-007). The default model is
+# also set as a var so it is overridable without a code change.
+[ai]
+binding = "AI"
+
+# The counter store for both the per-minute rate limiter and the daily quota. A
+# Durable Object gives one single-threaded actor per limiter key, so its count is
+# strongly consistent — plain KV was eventually consistent and under-counted
+# bursts on both windows. SQLite-backed (new_sqlite_classes) so it is free-plan
+# eligible.
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiterDo"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiterDo"]
+
+# The BYOK vault's store (D9). KV holds *values* here, not counters — the
+# opposite of the case ADR-006 moved the limiter off KV for. While it is unbound
+# the vault endpoint answers `unavailable` and no other endpoint changes behavior. The
+# at-rest secret is separate and never lives in this file:
+#   wrangler secret put VAULT_SECRET            (and --env staging)
+[[kv_namespaces]]
+binding = "VAULT_KV"
+id = "e54ca510eb46457bb89f93a5e9d83552"
+
+# R2 save/share's object store (D5, §12.3). The retention TTL is a bucket
+# lifecycle rule, not a wrangler.toml setting — R2 has no per-binding TTL
+# config; it is Terraform-owned (§23.3) and not yet provisioned (no infra/
+# tree exists in this repo yet). Until `wrangler r2 bucket create
+# datascope-persistence` is run this binding fails to resolve and the
+# endpoint answers `unavailable`, same fail-closed shape as an unbound vault.
+[[r2_buckets]]
+binding = "PERSISTENCE_BUCKET"
+bucket_name = "datascope-persistence"
+
+[vars]
+AI_ROUTER_KILL_SWITCH = "off"
+SYNTHESIS_KILL_SWITCH = "off"
+CORS_RELAY_KILL_SWITCH = "off"
+VAULT_KILL_SWITCH = "off"
+PERSISTENCE_KILL_SWITCH = "off"
+AI_MODEL = "@cf/mistralai/mistral-small-3.1-24b-instruct"
+WORKERS_AI_DAILY_QUOTA = "20"
+CORS_ALLOW_ORIGIN = "*"
+# These four reproduce ai-router.ts's own hardcoded defaults — setting them here
+# is a no-op until an environment deliberately overrides one (e.g. staging, to
+# live-test the §21.6 timeout without waiting 30s).
+AI_ROUTER_TIMEOUT_MS = "30000"
+AI_ROUTER_MAX_BODY_BYTES = "65536"
+AI_ROUTER_PER_SESSION_LIMIT = "10"
+AI_ROUTER_PER_IP_LIMIT = "30"
+AI_ROUTER_WINDOW_SECONDS = "60"
+
+# The staging environment. The Analytics Engine dataset is optional; uncomment
+# it once the account has Analytics Engine enabled (metrics no-op until then).
+[env.staging]
+name = "datascope-edge-staging"
+
+[env.staging.ai]
+binding = "AI"
+
+# DO binding + migration are non-inheritable, so the staging env repeats them
+# (same as its ai/vars blocks below).
+[[env.staging.durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiterDo"
+
+[[env.staging.migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiterDo"]
+
+# KV bindings are non-inheritable too — staging repeats the block above, but with
+# its *own* namespace (`staging-VAULT_KV`): a shared id would let the staging
+# Worker resolve production vault records.
+[[env.staging.kv_namespaces]]
+binding = "VAULT_KV"
+id = "2d522eeb99c846b9b1164588a8b0a4d2"
+
+# R2 bindings are per-environment too, with its own bucket (not shared with
+# root) — same isolation reasoning as the staging KV namespace above: a
+# shared bucket would let the staging Worker resolve production share links.
+[[env.staging.r2_buckets]]
+binding = "PERSISTENCE_BUCKET"
+bucket_name = "datascope-persistence-staging"
+
+[env.staging.vars]
+AI_ROUTER_KILL_SWITCH = "off"
+SYNTHESIS_KILL_SWITCH = "off"
+CORS_RELAY_KILL_SWITCH = "off"
+VAULT_KILL_SWITCH = "off"
+PERSISTENCE_KILL_SWITCH = "off"
+AI_MODEL = "@cf/mistralai/mistral-small-3.1-24b-instruct"
+WORKERS_AI_DAILY_QUOTA = "20"
+CORS_ALLOW_ORIGIN = "*"
+AI_ROUTER_TIMEOUT_MS = "30000"
+AI_ROUTER_MAX_BODY_BYTES = "65536"
+AI_ROUTER_PER_SESSION_LIMIT = "10"
+AI_ROUTER_PER_IP_LIMIT = "30"
+AI_ROUTER_WINDOW_SECONDS = "60"
+
+# [[env.staging.analytics_engine_datasets]]
+# binding = "METRICS"
+# dataset = "datascope_edge_metrics"

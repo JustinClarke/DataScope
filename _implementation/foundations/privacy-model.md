@@ -1,0 +1,118 @@
+# Privacy Model (Tiered)
+
+**Tier: cross-cutting — every phase answers to this.**
+**Master spec:** §5, §11.3. Enforcement checklist in [`testing-strategy.md`](testing-strategy.md).
+
+Governing principle: **raw dataset rows never leave the browser except through explicit,
+labeled user actions.** The original "no network requests after page load" promise survives
+as one selectable mode, not the only architecture. Every escalation is opt-in and clearly
+labeled in the UI — no silent architectural drift.
+
+## AI modes (§5.1 — D2: all three ship; first-run chooser on first launch)
+
+**Renamed 2026-07-22 (human directive):** "Cloud AI" → **"API"**, and localhost Ollama moved
+out of "Local model" and into "API" — reached through the same key/endpoint field a cloud key
+uses, which auto-detects its own shape (a URL → local Ollama endpoint; anything else → bearer
+key). "Local model" narrows to the in-browser WebLLM/WebGPU path only. Ollama reaches the
+browser directly, never through the edge Worker — the same zero-egress shape it always had,
+just triggered from API mode's field now.
+
+| Mode | What leaves the browser | Notes |
+| :--- | :--- | :--- |
+| **Local-only (AI off)** | Nothing after initial page load | The original promise, intact. Acts as the global AI kill-switch. |
+| **Local model** | Nothing (in-browser WebLLM/WebGPU only) | DuckDB-NSQL / Chat-with-a-Duck precedent. One-time download; weaker SQL generation than cloud. The **D43 spike passed (GO, 2026-07-21; ADR-007)**: pinned to a small coder (Qwen2.5-Coder-1.5B q4f16), Worker engine, resumable download; a "local" number in the D40 harness stays **D40-gated** before any comparative claim. Zero egress: WebLLM inference stays in the browser. Localhost Ollama no longer routes through this mode — see **API**. |
+| **API** | **Ollama-shaped field, routing untouched (default): nothing** — treated as prefer-endpoint until routing is explicitly chosen. **Ollama-shaped + "Prefer my key": nothing** — direct browser→localhost, never through the Worker. **Ollama-shaped + "Use free tier first" (explicit):** cloud payloads leave for Workers AI while the shared budget serves, nothing once the client overflows to the local endpoint (client-orchestrated — the Worker can't reach localhost; §11.2). **Otherwise:** schema (table/column names, types), prompts, generated SQL, error traces. Sample data rows **only** if "data-sampled repair" is enabled (§11.3). | Workers AI by default; BYOK per D3 toggle, except Ollama-shaped fields default to prefer-endpoint until routing is explicitly set. One field serves both a bearer key and a local endpoint. |
+
+The first-run chooser (D2) is a one-screen explanation of the three modes on first launch —
+no silent default.
+
+## Cloud-mode repair specifics (§11.3)
+
+In cloud mode, the retry loop's data-sampled repair sends up to 3 actual data rows to the
+provider. This is **disclosed and separately toggleable**: the "metadata-only repair"
+setting restricts retry context to schema + error trace.
+
+## Other disclosures (§5.2)
+
+- **Tier-2 relay ingestion:** target URL and response pass through the Cloudflare Worker —
+  stateless pass-through, no secrets, nothing stored.
+- **Saved/shared datasets (R2):** contents stored server-side *only* on explicit Save/Share,
+  with retention + abuse controls (§12.3). The hosted share **defaults to the structure-only
+  artifact** (D20) — schema, types, relationships, profile aggregates, **no data rows**; raw-rows
+  share is a separate, explicitly labeled escalation. Language rule (D21): "structure only —
+  no data rows included," never "anonymized"/"compliant"; redaction/suppression controls
+  *reduce* re-identification risk, never eliminate it. The stage-A MCP endpoint (D38) serves
+  these shared structure-only artifacts **read-only** — no new data leaves that the share
+  itself didn't already expose.
+- **Staged datasets (opt-in, D39; the D61 hosted tier):** a user may explicitly stage a full
+  dataset to product-account R2 for server-side handling — datasets beyond the §7.3 in-browser
+  ceiling, or the D38 stage-B MCP tools. This is the **hosted tier**, the chartered second
+  platform rung (D61); its **privacy-and-deletion promise** binds it, in D21-compliant language:
+  opt-in always (**never a silent fallback** — §7.3 only *offers* staging); a **disclosed
+  lifecycle TTL by default**; **delete-on-demand honored within a stated window** (a manual
+  "Clear temporary data" control plus the TTL); **documented retention**; and **no training on
+  user data**. The promise is stated as verifiable server behavior — "deleted on schedule / on
+  demand" — **never** as "anonymized," "compliant," or "your data is safe" (D21 extended from
+  share copy to hosted-tier copy). **While staged, D38 MCP tools can read it.** The server-side
+  execution design round (D39, anchored at the v0.5 close) fixes the exact disclosure copy before
+  build, within these bounds.
+- **v0.25 edge-warm dataset synthesis (D70):** the Blueprint's opening synthesis is served first
+  from the Cloudflare edge (warm start) and then from in-browser WebLLM (client-side takeover —
+  itself consent-gated: the ~830 MB model download is ask-first, never silent, per the 2026-07-22
+  decision in §13.1/§19). The
+  edge call carries **DSPS structural facts only — schema, types, profile aggregates, never data
+  rows** (the same structure-only boundary as the D20 share, D45/D59); it is **opt-in**, a **stateless
+  pass-through** (D9 — attached, forwarded, nothing stored server-side, no DSPS accumulation, D59),
+  and **local-only mode never calls it** (D2 — the edge synthesis is a cloud/edge-mode feature). It is
+  the D56 async upgrade over the deterministic Verdict, never the first-paint path. Column names are
+  themselves re-identifiable (D46), so this is an explicit opt-in mode under the D2 first-run chooser,
+  not a default.
+- **BYOK keys (D9):** default = browser memory only, per-request stateless pass-through via
+  the Worker, never persisted server-side. Opt-in "Remember my key" = server-side vault
+  (Cloudflare secret/KV keyed to session) with delete control; the browser then holds only a
+  reference, never the raw key in plaintext. Vaulted keys also carry a disclosed idle TTL —
+  expire after 90 days without use (launch default, tunable; §11.2). **Field-shape amendment
+  (2026-07-22):** the one key/endpoint field branches on its own contents — a URL is a local
+  Ollama endpoint (reached directly by the browser, never the Worker, never persisted or
+  vault-eligible — it isn't a secret); anything else is a bearer key under the custody rules
+  above, unchanged. **Built 2026-07-23:** the vaulted key is encrypted at rest under a
+  Worker-held secret, so the store is opaque to a dump; the vault fails closed (typed
+  `unavailable`) rather than storing a key unprotected if that secret is missing; and no
+  operation on the endpoint returns key material — resolution happens in-process inside the
+  router, so there is no shape a key could come back in.
+- **Edge anti-abuse counters:** the edge's rate-limiting and abuse controls use transient
+  per-IP counters held only for the duration of the rate window — never stored with, or
+  joined to, any dataset, key material, or saved object (Cloudflare sees client IPs
+  regardless; nothing here adds to that; §23.1, §23.5).
+- **Client-side persistence:** datasets live in DuckDB's in-memory VFS only — closing the
+  tab destroys them. Settings (AI mode, BYOK reference, theme) may persist locally; dataset
+  contents never do. The BYOK reference persists alongside a **durable vault session id minted
+  only on opting into "Remember my key"** (2026-07-23) — remembering a key across tab closes
+  requires an identifier that outlives the tab, and a user who never opts in gains none; every
+  other edge call's session id stays per-page-load and content-free.
+- **No third-party tracking by default.** Any future usage analytics are opt-in with a
+  visible consent banner, never transmit dataset contents or query text, and are **hard-off
+  in local-only mode** (§18) — the zero-network guarantee always wins over measurement.
+  Operator-side infrastructure counters (§23.5) are a separate, content-free thing: request
+  counts and outcome classes with no URLs, payloads, session tokens, or IPs, never joined to
+  user data. Per **D25** the same content-free machinery also counts product **edge events**
+  (hosted shares created, relay fetches, edge-routed structure-report exports, AI-mode
+  requests routed) plus CDN-level visitor counts — **local-only mode stays zero-network and
+  is deliberately uncounted** (an accepted blind spot; the visible graph is the
+  edge-touching funnel). Per **D41** these counters also carry **numeric-only LLM metrics** on
+  the cloud/edge path — tokens/turn, retry count, repair-rate, latency bucket — and **never
+  prompt text, generated SQL, or error text** (that content lives only in the client-side
+  §11.1 transcript). OTel-style content-bearing Worker-path tracing is out (a §5.2 violation);
+  content-bearing traces for **explicitly staged datasets only** (D39) are a question for the
+  D39 design round, not decided now.
+
+## Hard invariants (test these, don't just assert them)
+
+- Local-only mode: **zero network requests after initial page load** (DevTools Network tab).
+- Cloud mode: only the disclosed payloads leave; with metadata-only repair on, no data rows
+  appear in any request body.
+- Tab close leaves no dataset contents in `localStorage`/`IndexedDB`/cookies (settings only).
+- BYOK key never appears in browser storage or request bodies in plaintext (reference token only).
+- Share-link delete control removes the R2 object; TTL expiry actually expires.
+- Paid tiers (if ever, §20.10) only add server-side conveniences already opt-in by design —
+  nothing local ever moves behind a paywall.

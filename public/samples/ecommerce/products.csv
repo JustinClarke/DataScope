@@ -1,0 +1,151 @@
+product_id,name,category,unit_price
+1,Toys Item 1,Toys,293.25
+2,Toys Item 2,Toys,318.39
+3,Sporting Goods Item 3,Sporting Goods,225.1
+4,Sporting Goods Item 4,Sporting Goods,220.27
+5,Sporting Goods Item 5,Sporting Goods,130
+6,Apparel Item 6,Apparel,207.41
+7,Electronics Item 7,Electronics,287.83
+8,Apparel Item 8,Apparel,354.98
+9,Electronics Item 9,Electronics,100.22
+10,Electronics Item 10,Electronics,305.09
+11,Books Item 11,Books,398.83
+12,Home Item 12,Home,48.91
+13,Books Item 13,Books,207.5
+14,Books Item 14,Books,41.49
+15,Apparel Item 15,Apparel,131.25
+16,Books Item 16,Books,300.26
+17,Home Item 17,Home,97.55
+18,Electronics Item 18,Electronics,101.52
+19,Books Item 19,Books,388.59
+20,Home Item 20,Home,315.37
+21,Books Item 21,Books,132.33
+22,Toys Item 22,Toys,308.31
+23,Toys Item 23,Toys,206.09
+24,Toys Item 24,Toys,318.74
+25,Home Item 25,Home,48.4
+26,Sporting Goods Item 26,Sporting Goods,195.07
+27,Apparel Item 27,Apparel,164.55
+28,Toys Item 28,Toys,268.61
+29,Sporting Goods Item 29,Sporting Goods,238.16
+30,Electronics Item 30,Electronics,149.49
+31,Electronics Item 31,Electronics,33
+32,Electronics Item 32,Electronics,372.43
+33,Electronics Item 33,Electronics,379.31
+34,Toys Item 34,Toys,54.93
+35,Sporting Goods Item 35,Sporting Goods,242.4
+36,Books Item 36,Books,273.12
+37,Books Item 37,Books,7.02
+38,Apparel Item 38,Apparel,262.09
+39,Sporting Goods Item 39,Sporting Goods,222.98
+40,Books Item 40,Books,161.16
+41,Books Item 41,Books,96.2
+42,Toys Item 42,Toys,188.51
+43,Apparel Item 43,Apparel,36.83
+44,Books Item 44,Books,280.94
+45,Apparel Item 45,Apparel,130.76
+46,Apparel Item 46,Apparel,91.5
+47,Books Item 47,Books,239.03
+48,Electronics Item 48,Electronics,45.86
+49,Books Item 49,Books,301.35
+50,Sporting Goods Item 50,Sporting Goods,52.43
+51,Home Item 51,Home,339.85
+52,Toys Item 52,Toys,19.46
+53,Electronics Item 53,Electronics,103.03
+54,Electronics Item 54,Electronics,115.58
+55,Home Item 55,Home,42.24
+56,Home Item 56,Home,58.85
+57,Sporting Goods Item 57,Sporting Goods,169.38
+58,Toys Item 58,Toys,377.26
+59,Books Item 59,Books,381.59
+60,Sporting Goods Item 60,Sporting Goods,36.04
+61,Toys Item 61,Toys,224.15
+62,Electronics Item 62,Electronics,275.14
+63,Toys Item 63,Toys,88.57
+64,Home Item 64,Home,72.44
+65,Home Item 65,Home,71.7
+66,Electronics Item 66,Electronics,87.73
+67,Books Item 67,Books,92.28
+68,Books Item 68,Books,199.38
+69,Home Item 69,Home,10.67
+70,Toys Item 70,Toys,328.87
+71,Apparel Item 71,Apparel,334.29
+72,Home Item 72,Home,278.19
+73,Apparel Item 73,Apparel,308.58
+74,Home Item 74,Home,58.35
+75,Electronics Item 75,Electronics,136.32
+76,Home Item 76,Home,176.2
+77,Sporting Goods Item 77,Sporting Goods,240.44
+78,Electronics Item 78,Electronics,232.51
+79,Sporting Goods Item 79,Sporting Goods,34.48
+80,Electronics Item 80,Electronics,160.82
+81,Apparel Item 81,Apparel,158.78
+82,Electronics Item 82,Electronics,174.2
+83,Toys Item 83,Toys,224.71
+84,Home Item 84,Home,192.02
+85,Toys Item 85,Toys,55.55
+86,Books Item 86,Books,51.59
+87,Toys Item 87,Toys,68.09
+88,Books Item 88,Books,334.54
+89,Books Item 89,Books,76.73
+90,Books Item 90,Books,393.65
+91,Books Item 91,Books,45.12
+92,Electronics Item 92,Electronics,297.11
+93,Books Item 93,Books,59.33
+94,Apparel Item 94,Apparel,104.28
+95,Electronics Item 95,Electronics,216.94
+96,Apparel Item 96,Apparel,332.65
+97,Books Item 97,Books,374.57
+98,Home Item 98,Home,105.17
+99,Electronics Item 99,Electronics,107.86
+100,Apparel Item 100,Apparel,169.89
+101,Electronics Item 101,Electronics,348.94
+102,Sporting Goods Item 102,Sporting Goods,261.04
+103,Home Item 103,Home,185.07
+104,Toys Item 104,Toys,392.18
+105,Books Item 105,Books,311.29
+106,Toys Item 106,Toys,129.44
+107,Home Item 107,Home,309.79
+108,Books Item 108,Books,23.67
+109,Toys Item 109,Toys,364.23
+110,Electronics Item 110,Electronics,175.87
+111,Sporting Goods Item 111,Sporting Goods,121.78
+112,Toys Item 112,Toys,269.14
+113,Toys Item 113,Toys,71.05
+114,Sporting Goods Item 114,Sporting Goods,289.32
+115,Books Item 115,Books,371.93
+116,Sporting Goods Item 116,Sporting Goods,396.97
+117,Toys Item 117,Toys,361.16
+118,Apparel Item 118,Apparel,108.88
+119,Books Item 119,Books,342.3
+120,Sporting Goods Item 120,Sporting Goods,76.07
+121,Books Item 121,Books,147.33
+122,Toys Item 122,Toys,62.83
+123,Apparel Item 123,Apparel,195.53
+124,Apparel Item 124,Apparel,49.85
+125,Books Item 125,Books,134.02
+126,Electronics Item 126,Electronics,117.36
+127,Books Item 127,Books,322.9
+128,Apparel Item 128,Apparel,254.67
+129,Books Item 129,Books,136.06
+130,Home Item 130,Home,84.28
+131,Books Item 131,Books,147.27
+132,Electronics Item 132,Electronics,32.74
+133,Toys Item 133,Toys,250.46
+134,Books Item 134,Books,352.39
+135,Electronics Item 135,Electronics,88.22
+136,Electronics Item 136,Electronics,79.88
+137,Electronics Item 137,Electronics,147.77
+138,Books Item 138,Books,275.91
+139,Books Item 139,Books,26.09
+140,Sporting Goods Item 140,Sporting Goods,127.29
+141,Home Item 141,Home,126.14
+142,Sporting Goods Item 142,Sporting Goods,67.61
+143,Electronics Item 143,Electronics,227.56
+144,Toys Item 144,Toys,119.64
+145,Home Item 145,Home,53.21
+146,Toys Item 146,Toys,122.16
+147,Home Item 147,Home,260.48
+148,Electronics Item 148,Electronics,328.29
+149,Sporting Goods Item 149,Sporting Goods,218.66
+150,Toys Item 150,Toys,24.45

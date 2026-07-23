@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-ssr
+*.local
+.git
+.DS_Store
+_implementation
+.claude
+DATASCOPE.md
