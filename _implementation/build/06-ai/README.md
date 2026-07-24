@@ -13,8 +13,16 @@ retry-on-error → auto-chart.
 | Doc | Covers |
 | :--- | :--- |
 | [01-pipeline.md](01-pipeline.md) | §11.1 — stages 1–6 as a tool-use loop, transcript auditability; the D40 eval harness (§11.4) |
-| [02-modes-byok.md](02-modes-byok.md) | §11.2 — three AI modes, BYOK routing + custody (D2/D3/D9), local-model guardrail (D43) |
-| [03-privacy-disclosure.md](03-privacy-disclosure.md) | §11.3 — metadata-only repair, disclosure UI |
+| [02-modes-byok.md](02-modes-byok.md) | §11.2 — three AI modes, BYOK routing + custody (D2/D3/D9), local-model guardrail (D43); the Workbench switch model (D2 amendment, §5.1) |
+| [03-privacy-disclosure.md](03-privacy-disclosure.md) | §11.3 — metadata-only repair, disclosure UI; Workbench fold deltas (flip lifecycle, persistence boundary, D72 grounding) |
+
+**Workbench fold (2026-07-24, D71/D72 — master §5.1/§5.2/§13.3).** Consent placement is
+shell-conditional: the first-run chooser serves the current shell; the Workbench serves flat
+mode switches + "Configure workspace" (off by default, capable-device WebLLM pre-select behind
+the D70 confirm, disclosure-precedes-egress, per-session egress persistence). **D72 deeper
+cloud grounding** adds a graduated, capped, transmit-only row-sample escalation on the stage-5
+path. The audit trail renders as the Workbench right pane's hero (§13.3); Workbench build
+leaves live in [`../12-workbench/`](../12-workbench/).
 
 **AI-facing surface beyond the chat (D38).** The client-side AI surface is DSPS + "Copy for
 AI" ([`../08-persistence/03-dsps-spec.md`](../08-persistence/03-dsps-spec.md)); a remote

@@ -83,6 +83,15 @@ series/distribution/categorical only; Correlation stays its own ANALYZE destinat
 matrix, not a chart sub-type) becomes local state inside `ChartsModule`, carried across the
 module boundary as `activeTabId` when a ranked action names a specific chart type.
 
+**Nav facade (2026-07-24, D71 — master §13.3/§16).** Navigation gains a single facade,
+`services/navigation.ts` (`openDestination`): **flag-off it drives the `stores/ui.ts`
+destination state above; flag-on (`WORKBENCH_ENABLED`) it drives the Workbench tabs store.**
+The flag lives at the composition root (`App.tsx` branching shells) and inside this facade
+**only** — a feature module needing to know which shell is live is a facade design error;
+modules call `openDestination` and never read the flag. This section's intent-group sidebar
+stays the flag-off navigation spec of record until the W8 cutover
+([`../12-workbench/`](../12-workbench/README.md)).
+
 ## Files
 
 `src/app/` (shell, layout, providers), `src/components/` (SidebarCard, **SidebarGroup**,

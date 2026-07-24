@@ -73,6 +73,21 @@ semantics; the renderers themselves are covered in
   the sender) and is the D64 reference consumer. **v0 stretch if trivially cheap, else early
   v0.5;** internal cut line: degrade to rendering the §12.2 HTML report output — never the date
   (D27).
+- **Workbench viewer mode (2026-07-24, D62 amendment / D71 — master §13.3; flag-on shell
+  only).** In the Workbench the receiver renders as **viewer mode** — the same shell
+  read-only, not a modal: options strip fully absent (consumption-only), no right AI pane,
+  read-only explorer (no Add-data, no per-table management), **read-only inspector — edge
+  evidence renders, override controls do not** (the structure belongs to the sender's
+  session). The **D63 trust-chrome slot** is a full-width provenance band (structure-only
+  claim · signer · signature-verified state), and the **D45 provenance chrome renders in
+  full** (computed-as-of snapshot + hash, provenance tags, banned-permanence wording).
+  Exactly two exits: **Export report** (where the payload allows) and **Start my own
+  session**. **Drop routing:** every drop surface — welcome page, whole-window, explorer
+  Add-data — **sniffs `dsps_version` first** and branches `.dsps` → viewer mode *before*
+  the JSON-ingestion path, so a dropped report never mis-ingests as a dataset. **Cut line
+  restated (D62):** viewer mode degrades to the single-table Blueprint face / the static
+  §12.2 HTML report render — never the date (D27).
+  ([`../12-workbench/`](../12-workbench/README.md))
 - **Signed `.dsps` — verifiable provenance (D63.2; design round before build, v0.5+).** D45's
   provenance *labels* gain a verifiable *signature*: a receiver can confirm an artifact was
   genuinely computed by DataScope from a file with hash X, not hand-edited. Claim discipline
@@ -119,7 +134,9 @@ second renderer), the same component the "open a share link" flow already uses. 
 report output") rather than a from-scratch static render of the full live Dossier ViewSpec —
 deliberate, not a shortfall. `DropZone.tsx`'s file-picker `accept` list gained `.dsps` (a real,
 live-pass-only finding: without it a `.dsps` file was invisible to click-to-browse, though
-drag-drop was unaffected).
+drag-drop was unaffected). The Workbench viewer mode (above) inherits this branch point and
+tightens it: the sniff keys on `dsps_version` (not the filename suffix alone) and must run at
+every drop surface before JSON ingestion.
 
 **JSON Schema + npm validator library (D64):** `schemas/dsps.schema.json` at the repo root (the
 published contract) and the standalone package `packages/dsps-validator/` (`package.json`,

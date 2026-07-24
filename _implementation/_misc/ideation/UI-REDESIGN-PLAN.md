@@ -196,12 +196,12 @@ map → strip/palette → pane migrations).
 | §9 item | This plan's stance |
 | :--- | :--- |
 | 1. Ship surface & timing | Deferred by construction — flag flip decides at W8; both surfaces launch-capable until then. The call stays Justin's. |
-| 2. D2 timing | As specced (Act 2 branch); implemented in W6; Decision-Record edit happens in the formal pass before W6 builds. |
-| 3. D68/D69 supersession | Broker/Verdict/contracts survive as the strip's engine (W5); sidebar + Blueprint-as-module dissolve at W8. `skipToData` **retired** — the map's default tab + palette cover the intent; a toggle contradicts "zero questions." |
+| 2. D2 timing | **Reframed, not just retimed** (LIFECYCLES §4): a single **data-handling gate** in Act 2, post-upload/pre-map, replacing today's app-open `AIModeChooser`. Two options — keep-on-device (default, no data-derived facts leave the browser) / allow-cloud (the existing three-mode D2 consent nested inside). Re-asked every upload for now (no stored posture). Palette "Ask AI" from keep-on-device **re-opens the same full gate**, not a lighter confirm. Implemented in W6; this is a larger D2 edit than originally scoped — Decision-Record edit happens in the formal pass before W6 builds. |
+| 3. D68/D69 supersession | Broker/Verdict/contracts survive as the strip's engine (W5); sidebar + Blueprint-as-module dissolve at W8. Scattered-action placement is now settled by LIFECYCLES §3's per-action table (strip acts on the current selection; producing lives near the artifact; managing lives in the explorer; palette is the universal fallback). `skipToData` **retired** as a toggle — structural explorer click-through to a table's Profile tab, plus an optional settings-pane "default tab" preference (LIFECYCLES §5), cover the intent without contradicting "zero questions." |
 | 4. Tab persistence | **Restore-from-spec is the contract**, keep-mounted an opt-in optimization per type. Rationale: it forces spec completeness (specs are what viewer mode, share, and the hosted tier serialize — D61 leverage), and it makes the memory ceiling a non-policy (nothing accumulates by default). |
 | 5. EducationalPanel home | Inspector section (a scent surface is where explanations belong); revisit only if W7's inspector gets crowded. |
 | 6. No mode switch | Affirmed; palette + disclosure only. No phase builds a switch. |
-| 7. Small-viewport floor | SqlErd precedent for the *map only* (honest "optimized for desktop" fallback); the rest of the shell keeps Phase 6's tablet commitment — collapse right pane and inspector, explorer becomes a drawer. |
+| 7. Small-viewport floor | SqlErd precedent for the *map only* (honest "optimized for desktop" fallback); the rest of the shell keeps Phase 6's tablet commitment — collapse right pane and inspector, explorer becomes a drawer. **Deferred — not prioritized (2026-07-24, owner call).** |
 | 8. Welcome-page routes | Consumer pages (D30) render **as Act 0 variants** (prop-driven copy/sample slot), not separate funnels — one welcome surface to maintain. |
 
 ## 6. Risks

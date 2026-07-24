@@ -82,14 +82,31 @@ degrade-to-per-table-profile cut line (never the date); in v0 no sensitive-colum
 D46 detector is v0.5);
 **consumer templates + `/spotify` + `/google-takeout` pages, shipped unmarketed (D30, §14)**;
 report design pass + attribution footer (D26); edge/CDN counters flowing (D25);
-**universal `.dsps` receiver — v0 stretch (D62, §13.1)**: the Dossier's read-only mode over a
-handed `.dsps` (no data/login/install), zero new server surface — ships in v0 **only if
-trivially cheap**, else an early-v0.5 item; internal cut line: degrade to the §12.2 HTML report
-output, never the date (D27).
+**universal `.dsps` receiver — built (D62, §13.1)**: the Dossier's read-only mode over a
+handed `.dsps` (no data/login/install), zero new server surface — **already built
+(2026-07-24)**, no longer a v0-stretch-or-else-v0.5 open item; internal cut line: degrade to
+the §12.2 HTML report output, never the date (D27).
 Full ship-gate additions table in §19 Phase 3 (now including the Dossier row); launch-craft
 items (wifi demo; three intent landing pages — `/schema-diagram` flagship + `/csv-profiler` +
 `/ai-context`, §24.1) in §24.
 **Deliverable:** all chart modules light correctly per the broker; each bundled sample surfaces ≥ 3 correct insights and exports a self-contained structure report; the Dataset Dossier lands the folder as the post-ingest overview; the Join Graph (beta) assembles on the e-commerce sample and "Copy for AI" copies with zero raw rows.
+
+## The Workbench adoption: W0–W8 *(parallel shell work, flag-gated — D71)* → [`../build/12-workbench/`](../build/12-workbench/)
+
+**Not a release tier** — a parallel adoption track behind `WORKBENCH_ENABLED` (D71, master
+§13.3/§19): the VS-Code-shaped second shell (explorer / tabbed canvas opening on the dataset
+map / options strip / command palette / optional AI pane / inspector / status bar) built as a
+second composition root while **main stays shippable every day and the current shell (§13.0)
+is untouched until cutover; ship-timing is the open §9.1 call at W8** — nothing here forecloses
+it. Nine phases, each one build-order leaf: W0 tab contract + tabs store + nav facade
+(envelope invariant tested) → W1 scaffold → W2 explorer + selection store → W3 tab-model
+maturation (keep-mounted-first) → W4 dataset map (ERD + Blueprint face + Verdict band) → W5
+options strip + command palette (**hard gate: palette reaches every feature home**) → W6 Acts
+0–2 (§5.1 switch model, no forced gate) → W7 AI pane / inspector / status bar → W8 viewer
+mode + cutover (§9.1 decided, flag flip, soak, old shell + §13.0 deleted master-first). **No
+`src/` code for the redesign until the fold → tree → build-leaf sequence has landed** (it now
+has); per-phase DoDs live in the `12-workbench/` leaves. No v0 scope, date, or cut-order
+change (D27).
 
 ## v0.25 — Blueprint-forward opening + edge synthesis → WebLLM + BYOK *(post-launch tier, D70)*
 
@@ -143,6 +160,10 @@ this phase ships — a v0.5-only gate that never touches the Oct 6 v0 date.
 **rejected** (2026-07-12) — it would edit settled D15 and load the fixed date; the
 launch-moment AI signal is the already-v0 "Copy for AI" renderer (D31). Not re-litigated
 without founder instruction.
+*Deeper cloud grounding (D72, §5.2/§11.3):* the stage-5 3-row repair sample becomes the floor
+of a **graduated, user-controlled, hard-capped** row-sample escalation for cloud answers —
+default-off, per-session, disclosure-precedes-egress, **transmit-only** (never persisted,
+never in a `.dsps`, never shared); entire-dataset stays behind the D39/D61 hosted-tier round.
 **Deliverable:** plain-English question → SQL → chart, visibly self-correcting failure case; mode switching verified against the Network tab.
 
 ### Phase 5: Connectivity & Persistence → [`../build/07-connectivity/`](../build/07-connectivity/), [`08-persistence/`](../build/08-persistence/)
@@ -169,8 +190,9 @@ as deterministic-first (optional AI polish layered later under D56-style gating)
 published artifacts (D64, §6/§12.2)** — a published DSPS JSON Schema + a small npm
 validator/parser library over the already-shipping spec, spec-first discipline, no new server
 surface; **approval-kit provenance (D63, §23.2/§24.4)** — published build provenance (bundle
-hashes + SLSA-style attestation on `/security`, D50) + the signed-`.dsps` design round; and the
-**`.dsps` receiver (D62)** if it did not make the v0 stretch cut.
+hashes + SLSA-style attestation on `/security`, D50) + the signed-`.dsps` design round. (The
+**`.dsps` receiver (D62)** is now **built (2026-07-24)** — see Phase 3 above — no longer
+carried here as a v0.5 fallback.)
 
 **v0.5 first post-launch ship — Drift Report (D44, §20.8).** The aggregate Drift Report
 (re-drop a newer version of an already-profiled dataset → rows added/removed, per-column

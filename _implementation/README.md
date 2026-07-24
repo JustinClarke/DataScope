@@ -11,7 +11,7 @@ Read a leaf doc to build a feature; open the cited `§` only when you need the f
 | :--- | :--- |
 | [`meta/`](meta/) | **Navigation** — [technical walkthrough](meta/technical-overview.md), the [agent question index](meta/question-index.md), and the [file→purpose doc index](meta/doc-index.md); sits above the other four, not tied to one concern |
 | [`product/`](product/) | **Why** — identity, target users, positioning, competitive landscape, strategy, roadmap, [rejected ideas](product/rejected-ideas.md) |
-| [`architecture/`](architecture/) | **How it holds together** — system design, data flow, decision record (D1–D69) |
+| [`architecture/`](architecture/) | **How it holds together** — system design, data flow, decision record (D1–D72) |
 | [`foundations/`](foundations/) | **Cross-cutting constraints every phase answers to** — privacy, security, performance, testing, samples, infrastructure |
 | [`build/`](build/) | **How it's built**, phase by phase, numbered in build order |
 | [`backlog/`](backlog/) | Designed-but-deferred work (§20 remainder; incl. [deferred architecture](backlog/deferred-architecture.md)) |
@@ -35,12 +35,16 @@ by the mirror rule.
 Terminology note: text predating D15 that said "v1" in the D1 sense meant the foundation
 scope (now v0 + v0.5). "v1" alone now means the Studio release.
 
+Beside the tiers, [`build/12-workbench/`](build/12-workbench/) holds the **Workbench
+adoption (D71, §13.3)** — parallel shell work behind `WORKBENCH_ENABLED`, phased W0–W8
+(§19), not a release tier; ship-timing is the open §9.1 call at W8.
+
 Looking for the answer to a specific question rather than reading the whole tree? Start at
 [`meta/question-index.md`](meta/question-index.md) instead of the reading order below.
 
 ## Reading order for an implementing agent
 
-1. [`architecture/decisions.md`](architecture/decisions.md) — the 56 decisions that bound everything else.
+1. [`architecture/decisions.md`](architecture/decisions.md) — the settled decisions (D1–D72) that bound everything else.
 2. [`architecture/system-design.md`](architecture/system-design.md) — component diagram, tech stack, planned `src/` layout.
 3. [`foundations/`](foundations/) — all six docs; these are constraints, not suggestions.
 4. [`build/`](build/) in numeric order. Each section `README.md` states its tier, the §19 phase it maps to, and its dependency on the section beneath it.

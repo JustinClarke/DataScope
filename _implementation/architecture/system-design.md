@@ -95,6 +95,25 @@ a minimal projection of `Table` / DSPS facts / `ViewSpec`, never a new pipeline 
 composition ladder (drop → Verdict → Thread → Takeaway) and its optional D56 AI producer swap in
 at a seam by emitting the *identical* slice, touching one producer, never the UI or the contracts.
 
+**The Workbench tab-spec seam (2026-07-24, D71 — master §13.3; the D55 generalization).** In
+the flag-on shell every canvas surface is a tab described by a spec, and **serializability is
+orthogonal to safety — the envelope invariant**: the tab *envelope* — type (from a fixed,
+closed tab-type registry), identity, active-tab selection, initializer — is **authored only by
+the app, never by a model**; model output enters solely as validated inner artifact specs
+(ChartSpec via the §11.1 stage-6 translator, ViewSpec via the D55 renderer) through
+`producerValidators` **before** any tab opens, and `stores/tabs.openTab` treats model-origin
+payloads as untrusted input. Four structural rules ride with it: **(1) nav facade** —
+`services/navigation.ts` (`openDestination`) is the single migration seam; flag-off drives the
+ui store, flag-on the tabs store, and `WORKBENCH_ENABLED` lives at the composition root + this
+facade **only**. **(2) Keep-mounted is the v0 tab norm** — restore-from-spec is a per-type
+opt-in, full tab-list serialization deferred to the D61 hosted-tier round. **(3) Skeleton
+purity is scoped honestly** — which panes exist given session state is a pure function
+(asserted by the W1/W7 assembly tests); async producers, engine state, Monaco tabs, and
+`.dsps`/`?share=` loads layer on as imperative updates over that skeleton, testable at their
+own seams. **(4) Shell-wide selection** (table/column/map edge) is one store —
+`stores/selection.ts` — feeding the options strip and inspector
+([`../build/12-workbench/`](../build/12-workbench/)).
+
 ## Core technology stack (§6)
 
 | Layer | Technology |
@@ -124,13 +143,15 @@ Feature-based layout (avoids refactoring imports at 20,000 lines):
 
 ```
 src/
-├── app/                        # Shell, routing, providers
+├── app/                        # Shell, routing, providers — incl. WorkbenchShell.tsx (D71 second composition root; App.tsx branches on WORKBENCH_ENABLED)
 ├── features/
 │   ├── ingestion/              # Drop zone, sample picker, API URL ingest, telemetry
 │   ├── profiling/              # Auto-profile dashboard, column cards, schema table
 │   ├── sql/                    # Monaco wrapper, suggestions, results grid, auto-chart
 │   ├── charts/                 # Time series, correlation, distribution, categorical
-│   ├── ai/                     # Chat UI, NL→SQL pipeline, mode/BYOK settings
+│   ├── explorer/               # (Workbench, D71) left explorer — grown from TableList; per-table actions, Add data, share-links entry
+│   ├── map/                    # (Workbench, D71) dataset map — ERD + Blueprint face; ABSORBS JoinGraphModule (from charts/) and DossierModule (from profiling/) — a move, not an addition (§13.3)
+│   ├── ai/                     # Chat UI, NL→SQL pipeline, mode/BYOK settings — Workbench: mode switches + Configure-workspace (§5.1)
 │   ├── export/                 # Parquet download, R2 save/share, DSPS renderers (HTML/JSON/Copy-for-AI, D31/D37)
 │   ├── studio/                 # (Studio arc) quality report, relationship inference, schema graph, dbt/semantic export
 │   └── ml/                     # (post-v1) K-Means, regression, tree, NLP modules
@@ -142,7 +163,7 @@ src/
 ├── workers/
 │   ├── duckdb.worker.ts        # DuckDB Web Worker
 │   └── ml.worker.ts            # (post-v1) ML training worker
-├── services/                   # Module API contracts (ingestion.ts, sql.ts, ai.ts, charts.ts, export.ts)
+├── services/                   # Module API contracts (ingestion.ts, sql.ts, ai.ts, charts.ts, export.ts) + navigation.ts — the D71 nav facade (openDestination; flag-off drives ui store, flag-on drives tabs store)
 ├── lib/
 │   ├── classifier.ts           # Semantic type rules
 │   ├── capabilities.ts         # Broker evaluation + rankNextActions (Action Broker, §9/D68)
@@ -153,10 +174,13 @@ src/
 │   ├── viewspec.ts             # ViewSpec schema, viewspec_version + validation; deterministic producer over broker + Dossier (D55; optional AI producer v0.5+, D56)
 │   ├── inputNormalizer.ts      # Fuzzy pre-match (AI stage 1)
 │   ├── sqlLint.ts              # Dialect lint via pgsql-ast-parser (AI stage 4)
-│   └── dsps.ts                 # DSPS schema, dsps_version + forward/backward-compat rules (D31/D37)
-├── stores/                     # App state — incl. the table registry (datasets.ts; session catalog, §7.5/D13, build/02-ingestion/03-table-registry.md), schema, tabs, query, AI session, settings
+│   ├── dsps.ts                 # DSPS schema, dsps_version + forward/backward-compat rules (D31/D37)
+│   └── featureFlags.ts         # WORKBENCH_ENABLED (D71; precedent JOIN_GRAPH_ENABLED)
+├── stores/                     # App state — incl. the table registry (datasets.ts; session catalog, §7.5/D13, build/02-ingestion/03-table-registry.md), schema, query, AI session, settings;
+│                                #   tabs.ts (Workbench tab instances — openTab validates model-origin payloads, §13.3/D55) + selection.ts (shell-wide selection: table/column/map edge) — the pre-existing "tabs" state here is this store made explicit, not a second one (D71)
 ├── types/                      # ClassifiedColumn, DataCapabilities, ChartSpec, ViewSpec, TableRegistryEntry, WorkerMessage,
-│                                #   FactRef, RankedAction, DatasetVerdict, ThreadConfig (composition-layer contracts, D68), ...
+│                                #   FactRef, RankedAction, DatasetVerdict, ThreadConfig (composition-layer contracts, D68),
+│                                #   tabs.ts — TabSpec envelope: fixed tab-type registry, app-authored only (D71/§13.3), ...
 └── data/samples/               # ecommerce/ (4-table folder), titanic.csv, stock_prices.csv, product_reviews.csv, weather.csv
 
 edge/                           # Cloudflare Worker (separate deploy, wrangler-managed)

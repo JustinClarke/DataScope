@@ -13,7 +13,7 @@ The sibling code repos (`app/`, `spike-ingestion/`) are out of scope by design �
 | File | Purpose |
 | :--- | :--- |
 | [CLAUDE.md](../../CLAUDE.md) | Workspace rules: Part I behavioral guidelines, Part II the DataScope tiered-agent workflow + efficiency rules. |
-| [DATASCOPE.md](../../DATASCOPE.md) | The living master spec — Decision Record (D1–D70), architecture, phases, every §-numbered section. Everything else derives from this. |
+| [DATASCOPE.md](../../DATASCOPE.md) | The living master spec — Decision Record (D1–D72), architecture, phases, every §-numbered section. Everything else derives from this. |
 
 ## `_implementation/` — tree root + `status/` (README, build checklist)
 
@@ -210,3 +210,9 @@ Each phase folder's `README.md` states its section dependency and exit criteria;
 | File | Purpose |
 | :--- | :--- |
 | [README.md](../build/11-ml/README.md) | Tier: backlog — designed, deferred (D1) · Design: §20.1 · Depends on: the core |
+
+### `12-workbench`
+
+| File | Purpose |
+| :--- | :--- |
+| [README.md](../build/12-workbench/README.md) | Tier: parallel shell work, flag-gated (D71) · Phases W0–W8 (§19) · Master spec: §13.3 — the leaf-group charter; per-phase leaves land as picked up |

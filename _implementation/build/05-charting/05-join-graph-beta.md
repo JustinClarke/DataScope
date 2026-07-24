@@ -44,6 +44,17 @@ Phases 8–9 (the arc is unchanged; this pulls a slice, not the arc).
   **join-graph thumbnail** in the Dataset Dossier (the post-ingest overview); when cut, the
   Dossier simply omits the thumbnail — the Dossier is itself the structural hedge if the graph
   is cut.
+- **Workbench dataset map (2026-07-24, D71 — master §13.3; flag-on shell only):** the
+  Workbench's multi-table opening tab is an ERD fed by this same engine — **a re-skin of
+  this graph, not new analysis** (automatic layout, field-row edge anchors; in §16 terms
+  `features/map/` *absorbs* the join-graph module — a move, not an addition). The **§13.1
+  connector-source guardrail transfers verbatim**: map lines come from the D24 engine only —
+  solid/dashed tier, evidence, override state — never a name/presence matcher, **never a
+  cardinality (e.g. crow's-foot "1:M") the engine did not compute**. The map header carries
+  the persistent Verdict band (D48/D68c —
+  [`../03-profiling/05-dataset-dossier.md`](../03-profiling/05-dataset-dossier.md)); edge
+  evidence + override controls render in the Workbench's bottom inspector
+  ([`../12-workbench/`](../12-workbench/README.md)).
 - **Performance:** the inference pass must hold §18 targets on a 50MB multi-table folder —
   no full-table rescans breaching the <500ms-class interactions.
 
@@ -92,7 +103,8 @@ because it is the sole unclaimed capability (§3.4).
 ## Files
 
 `src/lib/relationshipInference.ts` (shared with Phase 8 — this is its v0 seed);
-`src/features/studio/` graph view (thin), or charts-adjacent placement per ADR.
+`src/features/studio/` graph view (thin), or charts-adjacent placement per ADR. In the
+Workbench, `features/map/` absorbs the graph view as the dataset map (a move — §16, D71).
 
 ## Dependencies
 

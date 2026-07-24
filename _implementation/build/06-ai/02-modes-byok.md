@@ -27,6 +27,19 @@ pass-through already has); `edge/byok.ts`'s server-side pass-through is unaffect
   no silent default. Mode switchable anytime in settings; the sidebar AI card reflects it
   ("AI is off — enable in settings"). The chooser describes **API** mode as a **shared,
   exhaustible free budget** (§11.2), not a personal allowance.
+- **Workbench consent surface (2026-07-24, D2 amendment / D71 — master §5.1; shell-conditional):**
+  the chooser above stays the **current shell's** surface while it remains launch-capable (§9.1
+  open). In the **Workbench**, the same modes render as **flat switches above the AI pane** —
+  `Off` · `Cloudflare` · `WebLLM` · `Your own key (local or hosted)` (Cloudflare + Your-own-key =
+  the two faces of API mode with the D3 routing made visible) — plus an on-demand **"Configure
+  workspace"** surface near the composer (routing toggle, metadata-only repair, D72 grounding
+  amount, custody). **Off by default; a capable device pre-selects `WebLLM` and highlights the
+  pane** — the probe is coarse/binary/recommendation-only (WebGPU + a D43-derived memory floor
+  against the ADR-007 pinned model) and **pre-select never auto-downloads**: the D70
+  download-confirm remains the single WebLLM consent gate, warm-up off the first-paint path.
+  Egress switches follow **flip → disclose → confirm → active**; `Your own key` discloses after
+  field-shape detection (URL = zero-egress; bearer = leaves); **egress modes never persist across
+  sessions** (§5.2 boundary — re-arm re-discloses).
 - **Local model mode — honesty guardrail (D43):** the honestly-specced path is now
   **in-browser WebLLM/WebGPU only** — the **D43 spike passed (GO, 2026-07-21; ADR-007)**, so
   in-browser weights are scoped (the v0.25 handoff), not a stretch goal. It ships **within the

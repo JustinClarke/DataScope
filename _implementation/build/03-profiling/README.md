@@ -29,6 +29,12 @@ UI (which modules light up) and, in v0.5, the AI layer's schema-pruned prompts.
   the D24 above-the-fold hedge, opinionated-not-over-claiming next steps, positives-only PII
   copy, graduated cut line) in [05-dataset-dossier.md](05-dataset-dossier.md).
 
+**Workbench fold (2026-07-24, D71 — master §13.3):** in the flag-on shell the Dossier re-homes
+as the map's Blueprint face (+ persistent Verdict band) and the broker's `RankedAction[]` gains
+the options strip as a subject-scoped second consumer — see
+[03-capability-engine.md](03-capability-engine.md), [05-dataset-dossier.md](05-dataset-dossier.md),
+and [`../12-workbench/`](../12-workbench/).
+
 **Exit criteria (= the Phase-1 deliverable):** drop a folder of CSVs → every table
 registered and statistically profiled → correct modules lit up, with reason tooltips on
 everything disabled.

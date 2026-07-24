@@ -84,6 +84,21 @@ security to get DataScope blessed org-wide (the §24.4 leave-behind gains it):
 3. **Third-party security audit.** A **GTM expense decision, not spec work** — tied to the first
    serious design-partner conversation (§24.4), founder-triggered, no date.
 
+**Workbench homes (2026-07-24, D71/D72 — master §13.3/§5.2).** In the flag-on shell the
+**D63 trust chrome renders in viewer mode**: a `?share=` URL or dropped `.dsps` opens the
+read-only Workbench with a **full-width provenance band** — structure-only claim · signer ·
+signature-verified state — plus the D45 provenance chrome in full (computed-as-of snapshot +
+hash, provenance tags, banned-permanence wording); this band is where piece (2)'s signature
+verdict surfaces to a receiver
+([`../build/08-persistence/03-dsps-spec.md`](../build/08-persistence/03-dsps-spec.md)).
+**D72 deeper cloud grounding** adds one control-plane rule and one labeling rule: the AI
+pane's **`Off` switch is a hard kill — it aborts any in-flight grounded turn**, not just
+future ones; and grounded-turn labeling is **custody-differentiated (D21)** — Cloudflare
+route: *not used for training, not stored by Cloudflare; transient performance caching may
+apply*; BYOK route: *rows go to your provider under your provider's terms, which DataScope
+cannot control* — plus the v0 "may contain sensitive values" caveat (the D46 detector is
+v0.5, positives-only).
+
 ## Hard invariants (test these, don't just assert them)
 
 - Adversarial CSV fixture (script/HTML payloads in cell values *and* column names) renders
@@ -97,6 +112,8 @@ security to get DataScope blessed org-wide (the §24.4 leave-behind gains it):
 - Key material never appears in Worker logs or error traces (grep the staging logs in E2E).
 - The `/security` page's enumerated network surface matches the deployed CSP `connect-src`
   allow-list exactly — any drift between the two is a release-blocking bug (D50).
+- Flipping the AI pane's `Off` switch mid-turn aborts an in-flight D72 grounded request
+  (observable as a cancelled network call, not merely a discarded response) — §5.2/§13.3.
 
 ## Process rules
 

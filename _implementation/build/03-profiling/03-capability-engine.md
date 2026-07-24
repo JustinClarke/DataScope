@@ -114,6 +114,19 @@ It consumes the **single** insight feed (Module 1 / §20.5's matured `HeuristicF
 one pipeline, no parallel generator, D58/D69); the tier-1 Verdict and the v0.5 tier-2 data-sniffer
 grid render that *same* feed at different disclosure tiers, never two competing authorities.
 
+**Workbench options strip — a second consumer, not a second ranker (2026-07-24, D71 —
+master §9/§13.3).** In the flag-on shell the map tab's options strip renders this same
+`RankedAction[]`: **membership = the capability gate resolved against the selected subject's
+legal operations; order = the D68a ranking applied to that legal set** — implemented as a
+**client-side, subject-scoped filter of the dataset-wide `RankedAction[]`** (via each
+action's `ThreadConfig` subject), never a second ranking path (D58). Not "no engine change":
+the subject-scoped filter is a named, tested seam. Gated actions render
+**disabled-with-reason** — the *why* tooltip contract above ("Needs a date column") survives
+the redesign; legal-but-unranked actions collapse under a "more" affordance. The D68d
+"skip to data" toggle is superseded structurally there: clicking a table in the explorer
+opens its Profile tab directly, with an optional settings preference for open-on-Profile
+([../12-workbench/](../12-workbench/README.md)).
+
 ## Files
 
 `src/lib/capabilities.ts`, `src/hooks/useCapabilities.ts`; sidebar consumes via the shell

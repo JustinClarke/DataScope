@@ -60,6 +60,16 @@ log (this milestone's "WebLLM spike" checklist row); the D40 harness may report 
   cloud free tier as the conversational engine. A user-supplied BYOK key suppresses the handoff
   entirely — they brought their own provider. Serving honors the same gate: turning the local model
   off in settings stops it serving even while warm; local-only mode never serves it (D2).
+- **Workbench pre-select is not a second consent trigger (2026-07-24, D2 amendment / D71 —
+  master §5.1/§13.3).** In the flag-on shell a **capable device pre-selects the `WebLLM`
+  switch and highlights the AI pane — pre-select only, never auto-download**: shards pull and
+  warm-up begin solely through the download-confirm above, which remains **the single WebLLM
+  consent gate** in both shells, and warm-up stays off the ingest/first-paint critical path
+  (D56). **The capability probe is defined against the ADR-007 pinned model**: WebGPU present
+  *plus* a memory floor derived from the D43 coexistence criterion (can this device run the
+  pinned 1.5B q4f16 coder alongside DuckDB-Wasm) — **coarse, binary, recommendation-only**;
+  it gates nothing but the pre-selected default, and non-capable devices can enable WebLLM
+  manually behind the same confirm ([`../12-workbench/`](../12-workbench/README.md)).
 
 ## Files
 

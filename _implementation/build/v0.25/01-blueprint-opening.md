@@ -36,6 +36,14 @@ made the default landing and structured around the D69 intelligence-layers.
   Verdict (D2/D28), unchanged.
 - **The D48 four-rung cut ladder is unchanged** and lives entirely in the deterministic
   producer; promoting the Dossier to the opening surface does not alter any rung.
+- **Workbench reconciliation (2026-07-24, D70/D71 — master §13.3).** In the flag-on shell
+  the **Workbench dataset map *is* this Blueprint-forward opening — one opening, not two**:
+  single-table, the map tab renders the Blueprint face directly; multi-table, the ERD +
+  persistent Verdict band open with the Blueprint as the selection panel. The D68d "skip to
+  data" escape hatch there is **structural, not a sticky toggle**: clicking a table in the
+  explorer opens its Profile tab directly, with an optional settings preference
+  "open on the last table's Profile instead of the map." This leaf's sticky-affordance spec
+  stays the flag-off shell's answer until W8 ([`../12-workbench/`](../12-workbench/README.md)).
 
 ## Files
 

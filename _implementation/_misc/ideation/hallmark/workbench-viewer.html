@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c10">
+<title>DataScope — Viewer mode (J4, share-link / .dsps) · Hallmark ideation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V5
+ * genre: atmospheric · macrostructure: Workbench · theme: custom dark (SqlErd-ported) · enrichment: Tier B hand-built ERD SVG · chrome: app-surface (title/status bar ARE the product UI, not fake browser chrome / not N#/Ft#)
+ * DNA source: sibling workbench-shell.html. Diversification deliberately SUSPENDED — this is the SAME Workbench, read-only, so it must cohere with the J1/J2 shells, not differ.
+ * Purpose: ideation mock of UI-REDESIGN-LIFECYCLES.md §2 J4 + SPEC §10 "Viewer mode" — the share-link / .dsps recipient. Decided (LIFECYCLES §7): NO data-handling gate, options strip FULLY ABSENT, explorer read-only, NO right pane; only exits are start-own-session + export. D63 signed-provenance trust chrome shown as the reserved slot. Structure only, no rows (D20/D31/D62). Illustrative data; signer is a demo handle, not a real person.
+ */
+
+:root {
+  --c-void:     #060709;
+  --c-canvas:   #0a0c10;
+  --c-chrome:   #0c0f14;
+  --c-panel:    #0e1116;
+  --c-card:     #12151a;
+  --c-elev:     #171b21;
+
+  --c-rule:     rgba(255,255,255,0.10);
+  --c-rule-2:   rgba(255,255,255,0.05);
+  --c-rule-hi:  rgba(255,255,255,0.30);
+
+  --c-fg:       #f2f4f7;
+  --c-fg-2:     rgba(255,255,255,0.55);
+  --c-fg-3:     rgba(255,255,255,0.35);
+
+  --c-pk:       #f59e0b;
+  --c-fk:       #a855f7;
+  --c-edge:     rgba(255,255,255,0.22);
+  --c-edge-hi:  rgba(255,255,255,0.75);
+
+  --c-active:   #f59e0b;
+  --c-active-ink: #17120a;
+  --c-focus:    #fbbf74;
+  --c-ok:       #34d399;   /* verified / trust green */
+
+  /* Viewer register — a cool slate marks "not your session", distinct from the amber HUD */
+  --c-view:     #60a5fa;
+  --c-view-2:   #93c5fd;
+  --c-view-soft: color-mix(in oklab, var(--c-view) 10%, var(--c-card));
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --sp-2xs: 0.25rem;
+  --sp-xs:  0.5rem;
+  --sp-sm:  0.75rem;
+  --sp-md:  1rem;
+  --sp-lg:  1.5rem;
+  --sp-xl:  2.5rem;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+
+  --z-svg: 5;
+  --z-cards: 10;
+}
+
+* { box-sizing: border-box; }
+html, body { overflow-x: clip; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--c-void);
+  color: var(--c-fg);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding: clamp(0.75rem, 3vw, 2.5rem);
+}
+
+.micro { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; }
+.board { max-width: 84rem; margin-inline: auto; display: flex; flex-direction: column; gap: var(--sp-lg); }
+.board__cap { color: var(--c-fg-3); text-align: center; }
+.board__cap b { color: var(--c-view-2); }
+
+.shell {
+  position: relative;
+  border: 1px solid var(--c-rule);
+  border-radius: clamp(14px, 1.6vw, 22px);
+  background: var(--c-canvas);
+  box-shadow: 0 50px 100px -50px rgba(0,0,0,0.85);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* the "not your session" tell: a cool hairline crown on the whole instrument */
+.shell::before { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--c-view) 70%, transparent), transparent); z-index: 40; }
+
+/* ---------- Title bar ---------- */
+.titlebar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md);
+  padding: var(--sp-sm) clamp(0.9rem, 2vw, 1.5rem);
+  border-bottom: 1px solid var(--c-rule-2);
+  background: var(--c-chrome);
+}
+.titlebar__l { display: flex; align-items: center; gap: var(--sp-md); min-width: 0; }
+.wordmark { font-weight: 600; letter-spacing: -0.01em; font-size: 0.95rem; }
+.wordmark .dot { color: var(--c-active); }
+.titlebar__sep { width: 1px; height: 1.1rem; background: var(--c-rule); }
+.titlebar__ds { color: var(--c-fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.viewer-badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid color-mix(in oklab, var(--c-view) 40%, var(--c-rule)); color: var(--c-view-2); background: var(--c-view-soft); border-radius: 999px; padding: 0.18rem 0.55rem; font-family: var(--font-mono); font-size: 0.5625rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+.titlebar__r { display: flex; align-items: center; gap: var(--sp-xs); }
+
+.kbtn {
+  appearance: none; border: 1px solid var(--c-rule); background: var(--c-panel);
+  color: var(--c-fg-2); border-radius: 8px; cursor: pointer;
+  font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.02em;
+  padding: 0.4rem 0.7rem; display: inline-flex; align-items: center; gap: 0.45rem;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+  white-space: nowrap;
+}
+.kbtn:hover { color: var(--c-fg); border-color: var(--c-rule-hi); }
+.kbtn:focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; }
+.btn-primary { appearance: none; border: 1px solid var(--c-active); background: var(--c-active); color: var(--c-active-ink); font-weight: 600; font-size: 0.8rem; border-radius: 9px; padding: 0.42rem 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; white-space: nowrap; transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out); }
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:active { transform: translateY(1px); }
+.btn-primary:focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; }
+
+/* ---------- D63 provenance / trust chrome (the reserved slot) ---------- */
+.provbar { display: flex; align-items: center; gap: var(--sp-md) var(--sp-lg); flex-wrap: wrap; padding: var(--sp-sm) clamp(0.9rem, 2vw, 1.5rem); border-bottom: 1px solid var(--c-rule-2); background: var(--c-view-soft); }
+.prov__shield { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--c-view-2); font-weight: 600; font-size: 0.82rem; }
+.prov__facts { display: flex; align-items: center; gap: 0.5rem var(--sp-md); flex-wrap: wrap; color: var(--c-fg-2); font-family: var(--font-mono); font-size: 0.6875rem; }
+.prov__facts .sep { color: var(--c-fg-3); }
+.prov__sig { display: inline-flex; align-items: center; gap: 0.4rem; }
+.prov__sig .who { color: var(--c-fg); }
+.prov__verified { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--c-ok); border: 1px solid color-mix(in oklab, var(--c-ok) 40%, var(--c-rule)); border-radius: 999px; padding: 0.12rem 0.5rem; font-family: var(--font-mono); font-size: 0.5625rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; }
+.prov__spacer { margin-left: auto; }
+.prov__note { color: var(--c-fg-3); font-family: var(--font-mono); font-size: 0.625rem; }
+
+/* ---------- Body: explorer | main (no right pane) ---------- */
+.body { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); min-height: 34rem; }
+
+/* ---------- Explorer (read-only) ---------- */
+.explorer { border-right: 1px solid var(--c-rule-2); background: var(--c-panel); display: flex; flex-direction: column; min-width: 0; }
+.explorer__head { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-sm) var(--sp-md); border-bottom: 1px solid var(--c-rule-2); }
+.explorer__head .micro { color: var(--c-fg-3); display: inline-flex; align-items: center; gap: 0.4rem; }
+.explorer__count { color: var(--c-fg-3); font-family: var(--font-mono); font-size: 0.5625rem; }
+.explorer__scroll { flex: 1; overflow-y: auto; padding: var(--sp-xs) var(--sp-2xs); }
+.explorer__group { color: var(--c-fg-3); padding: var(--sp-sm) var(--sp-sm) var(--sp-2xs); }
+
+.trow { position: relative; display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border-radius: 7px; cursor: pointer; transition: background-color var(--dur-fast) var(--ease-out); outline: 2px solid transparent; outline-offset: -2px; }
+.trow:hover { background: var(--c-elev); }
+.trow.is-sel { background: var(--c-elev); box-shadow: inset 2px 0 0 var(--c-view); }
+.trow:focus-visible { outline-color: var(--c-focus); }
+.trow__key { width: 6px; height: 6px; border-radius: 2px; flex: none; background: var(--c-fg-3); }
+.trow.role-fact .trow__key { background: var(--c-active); }
+.trow.role-junction .trow__key { background: var(--c-fk); }
+.trow__name { font-family: var(--font-mono); font-size: 0.75rem; color: var(--c-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.trow__role { font-family: var(--font-mono); font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-fg-3); }
+
+.explorer__ro { margin: var(--sp-xs) var(--sp-sm) 0; padding: 0.5rem 0.6rem; border-radius: 8px; border: 1px solid var(--c-rule-2); background: var(--c-card); color: var(--c-fg-3); font-family: var(--font-mono); font-size: 0.625rem; line-height: 1.5; display: flex; gap: 0.5rem; align-items: flex-start; }
+.explorer__ro .glyph { color: var(--c-view-2); }
+.explorer__foot { border-top: 1px solid var(--c-rule-2); padding: var(--sp-md) var(--sp-sm); }
+.explorer__foot .kbtn { width: 100%; justify-content: center; }
+
+/* ---------- Main ---------- */
+.main { display: flex; flex-direction: column; min-width: 0; }
+.tabs { display: flex; align-items: stretch; gap: 2px; padding: var(--sp-xs) var(--sp-sm) 0; border-bottom: 1px solid var(--c-rule-2); background: var(--c-chrome); overflow-x: auto; }
+.tab { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0; padding: 0.42rem 0.7rem; color: var(--c-fg-3); font-family: var(--font-mono); font-size: 0.6875rem; background: transparent; cursor: default; }
+.tab.is-active { color: var(--c-fg); background: var(--c-canvas); border-color: var(--c-rule-2); border-bottom-color: var(--c-canvas); margin-bottom: -1px; }
+.tab__glyph { color: var(--c-active); }
+.tab__ro { margin-left: auto; }
+
+/* NO options strip in viewer mode (decided §7). A single read-only hint sits where it would be. */
+.viewhint { display: flex; align-items: center; gap: 0.5rem; padding: var(--sp-sm) clamp(0.9rem, 2vw, 1.5rem); border-bottom: 1px solid var(--c-rule-2); background: var(--c-panel); color: var(--c-fg-3); font-family: var(--font-mono); font-size: 0.6875rem; }
+.viewhint .glyph { color: var(--c-view-2); }
+.viewhint b { color: var(--c-fg-2); font-weight: 600; }
+
+.canvas { position: relative; flex: 1; min-height: 26rem; background: var(--c-canvas); overflow: auto; }
+.mapstage { position: relative; padding: clamp(1.25rem, 3.5vw, 3rem) clamp(1rem, 3vw, 2.5rem); }
+.erd { position: relative; display: flex; gap: clamp(3rem, 9vw, 8rem); align-items: center; justify-content: center; min-height: 22rem; }
+.col { display: flex; flex-direction: column; gap: clamp(1.25rem, 3vw, 2.5rem); justify-content: center; position: relative; z-index: var(--z-cards); }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: var(--z-svg); overflow: visible; }
+.wire { fill: none; stroke: var(--c-edge); stroke-width: 1.25; pointer-events: none; transition: stroke var(--dur-fast) var(--ease-out), stroke-width var(--dur-fast) var(--ease-out); }
+.wire--dashed { stroke-dasharray: 5 4; }
+.wire.is-lit { stroke: var(--c-edge-hi); stroke-width: 1.75; }
+.wire.is-sel { stroke: var(--c-view); stroke-width: 2.25; }
+.wire-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
+.wire-cap { fill: var(--c-canvas); stroke: var(--c-pk); stroke-width: 1.25; pointer-events: none; }
+.wire-cap--hollow { fill: var(--c-canvas); stroke: var(--c-fg-3); }
+
+.card { width: clamp(9.5rem, 13vw, 12rem); border: 1px solid var(--c-rule); border-radius: 11px; background: var(--c-card); overflow: hidden; box-shadow: 0 18px 30px -22px rgba(0,0,0,0.9); cursor: pointer; outline: 2px solid transparent; outline-offset: 3px; transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
+@media (hover: hover) { .card:hover { border-color: var(--c-rule-hi); } }
+.card:focus-visible { outline: 2px solid var(--c-focus); }
+.card.is-selected { border-color: var(--c-view); box-shadow: 0 0 0 1px var(--c-view), 0 18px 40px -20px rgba(96,165,250,0.3); }
+.card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-xs); padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--c-rule-2); background: rgba(255,255,255,0.02); }
+.card__name { font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--c-fg); }
+.card__role { font-family: var(--font-mono); font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-fg-3); }
+.card__body { display: flex; flex-direction: column; padding: 3px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-xs); padding: 0.3rem 0.45rem; border-radius: 6px; }
+.row__l { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.key { width: 7px; height: 7px; border-radius: 2px; flex: none; }
+.key--pk { background: var(--c-pk); }
+.key--fk { background: var(--c-fk); }
+.key--none { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.2); margin-inline: 1.5px; }
+.row__name { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--c-fg-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.is-key .row__name { color: var(--c-fg); }
+.row__type { font-family: var(--font-mono); font-size: 0.5625rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-fg-3); font-weight: 700; flex: none; }
+
+.mobile-note { display: none; padding: var(--sp-md) clamp(1rem, 4vw, 2.5rem); color: var(--c-fg-3); font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.06em; border-bottom: 1px solid var(--c-rule-2); }
+
+/* ---------- Inspector (read-only — evidence, no overrides) ---------- */
+.inspector { border-top: 1px solid var(--c-rule); background: var(--c-panel); padding: var(--sp-md) clamp(0.9rem, 2vw, 1.5rem); min-height: 6.5rem; }
+.inspector__empty { color: var(--c-fg-3); font-family: var(--font-mono); font-size: 0.6875rem; display: flex; align-items: center; gap: 0.6rem; }
+.inspector__empty b { color: var(--c-view-2); }
+.insp { display: none; }
+.inspector.is-filled .insp { display: block; }
+.inspector.is-filled .inspector__empty { display: none; }
+.insp__top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md); flex-wrap: wrap; margin-bottom: var(--sp-sm); }
+.insp__rel { font-family: var(--font-mono); font-size: 0.85rem; color: var(--c-fg); }
+.insp__rel .arrow { color: var(--c-view-2); margin-inline: 0.3rem; }
+.conf { display: inline-flex; align-items: center; gap: 0.45rem; border: 1px solid var(--c-rule); border-radius: 999px; padding: 0.2rem 0.6rem; font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--c-fg-2); }
+.conf .line { width: 20px; height: 0; border-top: 1.5px solid var(--c-edge-hi); }
+.conf .line--dashed { border-top-style: dashed; }
+.conf.is-high { color: var(--c-active); border-color: color-mix(in oklab, var(--c-active) 40%, var(--c-rule)); }
+.evidence { display: flex; flex-wrap: wrap; gap: var(--sp-sm) var(--sp-lg); margin-bottom: var(--sp-sm); }
+.ev { display: flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.6875rem; color: var(--c-fg-2); }
+.ev__i { color: var(--c-ok); }
+.ev__i--warn { color: var(--c-active); }
+.insp__ro { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--c-fg-3); font-family: var(--font-mono); font-size: 0.625rem; border: 1px dashed var(--c-rule); border-radius: 8px; padding: 0.3rem 0.6rem; }
+
+/* ---------- Status bar ---------- */
+.statusbar { display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap; padding: 0.45rem clamp(0.9rem, 2vw, 1.5rem); border-top: 1px solid var(--c-rule-2); background: var(--c-chrome); font-family: var(--font-mono); font-size: 0.625rem; color: var(--c-fg-3); }
+.status__posture { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--c-view-2); }
+.status__posture .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-view); box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-view) 20%, transparent); }
+.status__spacer { margin-left: auto; }
+.status__item { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+/* toast for mock exits */
+.toast { position: absolute; left: 50%; bottom: 1.1rem; transform: translateX(-50%) translateY(0); background: var(--c-elev); border: 1px solid var(--c-rule-hi); color: var(--c-fg); border-radius: 10px; padding: 0.55rem 0.9rem; font-family: var(--font-mono); font-size: 0.6875rem; box-shadow: 0 20px 40px -20px rgba(0,0,0,0.8); opacity: 0; pointer-events: none; transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); z-index: 60; }
+.toast.is-show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+@media (max-width: 60rem) {
+  .body { grid-template-columns: 1fr; }
+  .explorer { border-right: none; border-bottom: 1px solid var(--c-rule-2); max-height: 13rem; }
+  .wires { display: none; }
+  .erd { flex-direction: column; align-items: stretch; gap: var(--sp-lg); }
+  .card { width: 100%; }
+  .mobile-note { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wire, .card, .trow, .btn-primary, .toast { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <p class="board__cap micro">Hallmark ideation · <b>J4 — share-link / .dsps viewer mode</b> · the same Workbench, read-only · no gate · no options strip · no right pane · structure only (D20/D31/D62) · illustrative data</p>
+
+  <section class="shell" aria-label="DataScope Workbench — viewer mode">
+
+    <!-- Title bar -->
+    <div class="titlebar">
+      <div class="titlebar__l">
+        <span class="wordmark">Data<span class="dot">Scope</span></span>
+        <span class="titlebar__sep"></span>
+        <span class="titlebar__ds micro">movielens · shared report</span>
+        <span class="viewer-badge">Viewer</span>
+      </div>
+      <div class="titlebar__r">
+        <button class="kbtn" id="exportBtn" title="Export the structure report where the payload allows">↓ Export report</button>
+        <button class="btn-primary" id="ownBtn">Start my own session →</button>
+      </div>
+    </div>
+
+    <!-- D63 provenance / trust chrome -->
+    <div class="provbar" aria-label="Provenance">
+      <span class="prov__shield">Structure report</span>
+      <span class="prov__facts">
+        <span>no rows — structure only</span><span class="sep">·</span>
+        <span class="prov__sig">signed by <span class="who">movielens-demo</span></span><span class="sep">·</span>
+        <span>shared 2026-07-20</span>
+      </span>
+      <span class="prov__spacer"></span>
+      <span class="prov__verified">✓ Signature verified</span>
+      <span class="prov__note">D63 · D20 / D31 / D62</span>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+
+      <!-- Explorer (read-only) -->
+      <aside class="explorer" aria-label="Explorer (read-only)">
+        <div class="explorer__head">
+          <span class="micro">Explorer · read-only</span>
+          <span class="explorer__count">6 tables</span>
+        </div>
+        <div class="explorer__scroll">
+          <p class="explorer__group micro">Tables in this report</p>
+          <div id="tableList"></div>
+          <div class="explorer__ro"><span class="glyph">◈</span> You're viewing someone else's structure report. Add data, refresh, and share are the sender's — not available here.</div>
+        </div>
+        <div class="explorer__foot">
+          <button class="kbtn" id="ownBtn2">＋ Start your own session</button>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <div class="main">
+        <div class="tabs" role="tablist" aria-label="Open tabs">
+          <button class="tab is-active" role="tab" aria-selected="true"><span class="tab__glyph">◈</span> Dataset map</button>
+          <span class="tab__ro micro" style="color:var(--c-fg-3); padding:0.42rem 0.5rem">map-forward · consumption only</span>
+        </div>
+
+        <!-- where the options strip would be — a read-only hint instead (strip is fully absent, §7) -->
+        <div class="viewhint">
+          <span class="glyph">◑</span> <span>This is a <b>read-only</b> view — inspect the structure and relationships, then <b>start your own session</b> to analyse it.</span>
+        </div>
+
+        <div class="canvas">
+          <div class="mapstage">
+            <div class="mobile-note">Connector view is desktop-only · tables listed below · map opens full-screen in the app</div>
+            <div class="erd" id="erd">
+              <svg class="wires" id="wires" aria-hidden="true"></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspector (read-only — evidence, no overrides) -->
+        <div class="inspector" id="inspector">
+          <div class="inspector__empty">
+            <span>Inspector · relationship evidence (read-only).</span>
+            <span>Click an edge — try the dashed <b>tags → movies</b> (inferred by structure only).</span>
+          </div>
+          <div class="insp" id="inspBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="statusbar">
+      <span class="status__posture" title="Read-only view of a shared structure report">
+        <span class="dot"></span> Viewer · read-only · structure only
+      </span>
+      <span class="status__spacer"></span>
+      <span class="status__item">From movielens-demo</span>
+      <span class="status__item">6 tables · 6 relationships</span>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+  </section>
+
+  <p class="board__cap micro">Two ways out, and only two: <b>export the report</b> (where the payload allows) and <b>start your own session</b> (→ Act 0). No producing new analysis on someone else's structure.</p>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var TABLES = {
+    ratings: { role: 'fact', fields: [
+      { n: 'rating_id', t: 'INT', pk: 1 }, { n: 'user_id', t: 'INT', fk: 1 }, { n: 'movie_id', t: 'INT', fk: 1 }, { n: 'score', t: 'NUM' }, { n: 'rated_at', t: 'DATE' } ] },
+    tags: { role: 'fact', fields: [
+      { n: 'tag_id', t: 'INT', pk: 1 }, { n: 'user_id', t: 'INT', fk: 1 }, { n: 'item_id', t: 'INT', fk: 1 }, { n: 'label', t: 'STR' } ] },
+    movie_genres: { role: 'junction', fields: [
+      { n: 'movie_id', t: 'INT', fk: 1 }, { n: 'genre_id', t: 'INT', fk: 1 } ] },
+    users: { role: 'dimension', fields: [
+      { n: 'user_id', t: 'INT', pk: 1 }, { n: 'name', t: 'STR' }, { n: 'email', t: 'STR' }, { n: 'joined_at', t: 'DATE' } ] },
+    movies: { role: 'dimension', fields: [
+      { n: 'movie_id', t: 'INT', pk: 1 }, { n: 'title', t: 'STR' }, { n: 'release_year', t: 'INT' }, { n: 'runtime_min', t: 'INT' } ] },
+    genres: { role: 'dimension', fields: [
+      { n: 'genre_id', t: 'INT', pk: 1 }, { n: 'name', t: 'STR' } ] }
+  };
+  var COLS = [ ['ratings', 'tags', 'movie_genres'], ['users', 'movies', 'genres'] ];
+
+  var EDGES = [
+    { id: 'e1', from: 'ratings', ff: 'user_id',  to: 'users',  tf: 'user_id',  card: '1:M', conf: 'name',
+      ev: { nameMatch: 1, typeMatch: 'INT → INT', overlap: '100%' } },
+    { id: 'e2', from: 'ratings', ff: 'movie_id', to: 'movies', tf: 'movie_id', card: '1:M', conf: 'name',
+      ev: { nameMatch: 1, typeMatch: 'INT → INT', overlap: '100%' } },
+    { id: 'e3', from: 'tags',    ff: 'user_id',  to: 'users',  tf: 'user_id',  card: '1:M', conf: 'name',
+      ev: { nameMatch: 1, typeMatch: 'INT → INT', overlap: '100%' } },
+    { id: 'e4', from: 'tags',    ff: 'item_id',  to: 'movies', tf: 'movie_id', card: '1:M', conf: 'structure',
+      ev: { nameMatch: 0, typeMatch: 'INT → INT', overlap: '~94% sampled' } },
+    { id: 'e5', from: 'movie_genres', ff: 'movie_id', to: 'movies', tf: 'movie_id', card: '1:M', conf: 'name',
+      ev: { nameMatch: 1, typeMatch: 'INT → INT', overlap: '100%' } },
+    { id: 'e6', from: 'movie_genres', ff: 'genre_id', to: 'genres', tf: 'genre_id', card: '1:M', conf: 'name',
+      ev: { nameMatch: 1, typeMatch: 'INT → INT', overlap: '100%' } }
+  ];
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var roleTag = function (r) { return r === 'fact' ? 'FACT' : r === 'junction' ? 'JUNCTION' : 'DIMENSION'; };
+  var selected = null;
+
+  /* ---------- Explorer (read-only: select = viewing highlight only) ---------- */
+  function buildExplorer() {
+    var host = $('#tableList');
+    Object.keys(TABLES).forEach(function (id) {
+      var t = TABLES[id];
+      var row = document.createElement('div');
+      row.className = 'trow role-' + t.role;
+      row.id = 'trow-' + id; row.tabIndex = 0; row.setAttribute('role', 'button');
+      row.innerHTML = '<span class="trow__key"></span><span class="trow__name">' + id + '</span>' +
+        '<span class="trow__role">' + (t.role === 'dimension' ? 'DIM' : t.role === 'junction' ? 'JCT' : 'FACT') + '</span>';
+      row.addEventListener('click', function () { selectTable(id); });
+      row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTable(id); } });
+      host.appendChild(row);
+    });
+  }
+
+  /* ---------- ERD ---------- */
+  function buildErd() {
+    var erd = $('#erd');
+    COLS.forEach(function (ids) {
+      var col = document.createElement('div');
+      col.className = 'col';
+      ids.forEach(function (id) { col.appendChild(buildCard(id)); });
+      erd.appendChild(col);
+    });
+  }
+  function buildCard(id) {
+    var t = TABLES[id];
+    var card = document.createElement('div');
+    card.className = 'card'; card.id = 'card-' + id; card.tabIndex = 0;
+    card.setAttribute('role', 'button'); card.dataset.table = id;
+    var head = '<div class="card__head"><span class="card__name">' + id + '</span><span class="card__role">' + roleTag(t.role) + '</span></div>';
+    var body = '<div class="card__body">' + t.fields.map(function (f) {
+      var dot = f.pk ? '<span class="key key--pk"></span>' : f.fk ? '<span class="key key--fk"></span>' : '<span class="key--none"></span>';
+      return '<div class="row' + (f.pk || f.fk ? ' is-key' : '') + '" id="f-' + id + '-' + f.n + '">' +
+        '<span class="row__l">' + dot + '<span class="row__name">' + f.n + '</span></span><span class="row__type">' + f.t + '</span></div>';
+    }).join('') + '</div>';
+    card.innerHTML = head + body;
+    card.addEventListener('click', function () { selectTable(id); });
+    card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTable(id); } });
+    card.addEventListener('mouseenter', function () { litEdges(id, true); });
+    card.addEventListener('mouseleave', function () { if (selected !== id) litEdges(id, false); });
+    return card;
+  }
+
+  /* ---------- Connectors ---------- */
+  var wireById = {}, hasAnimated = false;
+  function drawWires() {
+    var erd = $('#erd'), wires = $('#wires');
+    while (wires.firstChild) wires.removeChild(wires.firstChild);
+    wireById = {};
+    if (window.matchMedia('(max-width: 60rem)').matches) return;
+    var box = erd.getBoundingClientRect();
+    var ns = 'http://www.w3.org/2000/svg';
+    EDGES.forEach(function (e, i) {
+      var fr = $('#f-' + e.from + '-' + e.ff), tr = $('#f-' + e.to + '-' + e.tf);
+      var fc = $('#card-' + e.from), tc = $('#card-' + e.to);
+      if (!fr || !tr || !fc || !tc) return;
+      var frb = fr.getBoundingClientRect(), trb = tr.getBoundingClientRect(), fcb = fc.getBoundingClientRect(), tcb = tc.getBoundingClientRect();
+      var left = fcb.left < tcb.left;
+      var sx = (left ? fcb.right : fcb.left) - box.left, sy = frb.top + frb.height / 2 - box.top;
+      var ex = (left ? tcb.left : tcb.right) - box.left, ey = trb.top + trb.height / 2 - box.top;
+      var dir = left ? 1 : -1, dx = Math.max(34, Math.abs(ex - sx) * 0.45);
+      var d = 'M ' + sx + ' ' + sy + ' C ' + (sx + dir * dx) + ' ' + sy + ', ' + (ex - dir * dx) + ' ' + ey + ', ' + ex + ' ' + ey;
+
+      var path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('class', 'wire' + (e.conf === 'structure' ? ' wire--dashed' : ''));
+      path.dataset.edge = e.id;
+      wires.appendChild(path);
+      wireById[e.id] = path;
+
+      var hit = document.createElementNS(ns, 'path');
+      hit.setAttribute('d', d); hit.setAttribute('class', 'wire-hit');
+      hit.addEventListener('click', function () { selectEdge(e.id); });
+      wires.appendChild(hit);
+
+      var cap = document.createElementNS(ns, 'circle');
+      cap.setAttribute('cx', sx); cap.setAttribute('cy', sy); cap.setAttribute('r', 2.5);
+      cap.setAttribute('class', 'wire-cap' + (e.conf === 'structure' ? ' wire-cap--hollow' : ''));
+      wires.appendChild(cap);
+
+      if (!reduceMotion && !hasAnimated) {
+        if (e.conf !== 'structure') {
+          var len = path.getTotalLength();
+          path.style.strokeDasharray = len; path.style.strokeDashoffset = len; path.style.transition = 'none';
+          requestAnimationFrame(function () { path.style.transition = 'stroke-dashoffset 850ms var(--ease-out) ' + (i * 80) + 'ms'; path.style.strokeDashoffset = 0; });
+        } else {
+          path.style.opacity = 0;
+          requestAnimationFrame(function () { path.style.transition = 'opacity 650ms var(--ease-out) ' + (i * 80) + 'ms'; path.style.opacity = 1; });
+        }
+      }
+    });
+    if (Object.keys(wireById).length) hasAnimated = true;
+    if (selEdge) { var p = wireById[selEdge]; if (p) p.classList.add('is-sel'); }
+  }
+  function litEdges(id, on) {
+    EDGES.forEach(function (e) { if (e.from === id || e.to === id) { var p = wireById[e.id]; if (p) p.classList.toggle('is-lit', on); } });
+  }
+
+  /* ---------- Table selection = viewing highlight only (no strip, no actions) ---------- */
+  function selectTable(id) {
+    selected = id;
+    document.querySelectorAll('.card').forEach(function (c) { c.classList.toggle('is-selected', c.dataset.table === id); });
+    document.querySelectorAll('.trow').forEach(function (r) { r.classList.toggle('is-sel', r.id === 'trow-' + id); });
+    Object.keys(wireById).forEach(function (k) { wireById[k].classList.remove('is-lit'); });
+    litEdges(id, true);
+  }
+
+  /* ---------- Edge selection → read-only inspector (evidence, no overrides) ---------- */
+  var selEdge = null;
+  function selectEdge(eid) {
+    selEdge = eid;
+    Object.keys(wireById).forEach(function (k) { wireById[k].classList.toggle('is-sel', k === eid); });
+    var e = EDGES.filter(function (x) { return x.id === eid; })[0];
+    var high = e.conf === 'name';
+    var confChip = '<span class="conf ' + (high ? 'is-high' : '') + '"><span class="line' + (high ? '' : ' line--dashed') + '"></span>' +
+      (high ? 'Name match · high' : 'Structure only · lower') + '</span>';
+    var evi = [
+      '<span class="ev"><span class="ev__i' + (e.ev.nameMatch ? '' : ' ev__i--warn') + '">' + (e.ev.nameMatch ? '✓' : '⚠') + '</span> Name ' + (e.ev.nameMatch ? 'agrees (' + e.ff + ' ≈ ' + e.tf + ')' : 'differs (' + e.ff + ' ≠ ' + e.tf + ')') + '</span>',
+      '<span class="ev"><span class="ev__i">✓</span> Type ' + e.ev.typeMatch + '</span>',
+      '<span class="ev"><span class="ev__i">✓</span> Value overlap ' + e.ev.overlap + '</span>',
+      '<span class="ev"><span class="ev__i">✓</span> Cardinality ' + e.card + '</span>'
+    ].join('');
+    $('#inspBody').innerHTML =
+      '<div class="insp__top">' +
+        '<span class="insp__rel">' + e.from + '.' + e.ff + '<span class="arrow">→</span>' + e.to + '.' + e.tf + '</span>' +
+        confChip + '</div>' +
+      '<div class="evidence">' + evi + '</div>' +
+      '<div class="insp__ro">Read-only — overrides (confirm / reject / retarget) belong to the sender’s session.</div>';
+    $('#inspector').classList.add('is-filled');
+  }
+
+  /* ---------- Exits (mock toasts) ---------- */
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $('#toast'); t.textContent = msg; t.classList.add('is-show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('is-show'); }, 2600);
+  }
+
+  /* ---------- Wiring ---------- */
+  buildExplorer();
+  buildErd();
+
+  $('#exportBtn').addEventListener('click', function () { toast('↓ Export the structure report (HTML / .dsps) — where the payload allows.'); });
+  $('#ownBtn').addEventListener('click', function () { toast('→ Start my own session: opens Act 0 (welcome) with a fresh, empty explorer.'); });
+  $('#ownBtn2').addEventListener('click', function () { toast('→ Start my own session: opens Act 0 (welcome) with a fresh, empty explorer.'); });
+
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { requestAnimationFrame(drawWires); });
+  requestAnimationFrame(function () { requestAnimationFrame(drawWires); });
+  var ro = new ResizeObserver(function () { drawWires(); });
+  ro.observe($('#erd'));
+  window.addEventListener('resize', drawWires);
+})();
+</script>
+
+</body>
+</html>

@@ -251,7 +251,9 @@ The redesign must not be a layout the next two years fight against. Each planned
 | Planned feature | When | Home in the Workbench |
 | :--- | :--- | :--- |
 | DSPS spec publication (`▶ 08-persistence/03`) | now | No new chrome; export surface already carries the formats |
-| Theme toggle, responsive pass, empty/error states (Phase 6) | v0.5 | Status bar / palette; per-pane empty states |
+| **Theme control (light / dark / system)** — *user-facing*, not just OS `prefers-color-scheme` follow (today's `theme.css` behaviour) | v0.5 | Full control in the **settings pane** (below); quick toggle in status bar / palette |
+| **Thorough settings pane** — consolidates the prefs today scattered across stores (`settings`, `privacy`/telemetry, AI mode + BYOK keys per `06-ai/02`, engine/memory ceilings, locale/number format, sample-data) into one deliberate surface; hosts the theme control | v0.5 | A **Settings tab** in the middle canvas (VS Code "Settings editor" idiom, fits the tab-instance model §4) + a gear affordance in the status bar / explorer; opened via palette. *Contents above are candidate scope, not decided.* |
+| Responsive pass, empty/error states (Phase 6) | v0.5 | Per-pane empty states; small-viewport stance is §9.7 |
 | Manual column re-classification (Phase 6) | v0.5 | Inspector action on a column |
 | Guided tour (D15) | v0 | Largely absorbed by Acts 0–4; residue = welcome copy + first-map coach marks |
 | Deterministic narration (D65) | v0.5 | Narration blocks on map face + report tabs |
@@ -290,7 +292,8 @@ on soon, △ bookkeeping.
    all of v0.5 are *built* as of 2026-07-24, pre-launch. Cutline language now describes
    ship order, not build order — and makes §9's ship-surface question acute.
 5. △ **D62 `.dsps` receiver tier bookkeeping:** roadmap still says "v0 stretch … else
-   early-v0.5"; it is built (untracked wave). Reconcile at the next design pass.
+   early-v0.5"; it is built (untracked wave). Reconcile at the next design pass. **Resolved
+   2026-07-24 — `roadmap.md` updated to "built".**
 6. △ `stores/aiSession.ts` header still describes itself as a stub "until build/06-ai/*" —
    06-ai landed and `AIChatModule` consumes it.
 7. △ `types/worker.ts` names `ml.worker.ts`, which doesn't exist (anticipatory; `features/
@@ -320,7 +323,8 @@ triage, not decisions.*
 6. **No mode switch** is the recommendation (palette + disclosure instead); revisit only if
    the guided surface demonstrably can't serve both audiences.
 7. **Small-viewport stance.** The SqlErd precedent (honest "optimized for desktop" fallback)
-   vs. Phase 6's tablet commitment — decide the floor.
+   vs. Phase 6's tablet commitment — decide the floor. **Deferred — not prioritized
+   (2026-07-24, owner call).**
 8. **Welcome-page routes.** Whether D30 consumer pages render *as* Act 0 variants or link
    into it.
 

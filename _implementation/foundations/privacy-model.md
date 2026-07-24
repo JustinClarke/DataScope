@@ -8,7 +8,7 @@ labeled user actions.** The original "no network requests after page load" promi
 as one selectable mode, not the only architecture. Every escalation is opt-in and clearly
 labeled in the UI — no silent architectural drift.
 
-## AI modes (§5.1 — D2: all three ship; first-run chooser on first launch)
+## AI modes (§5.1 — D2: all three ship; consent placement is shell-conditional)
 
 **Renamed 2026-07-22 (human directive):** "Cloud AI" → **"API"**, and localhost Ollama moved
 out of "Local model" and into "API" — reached through the same key/endpoint field a cloud key
@@ -24,7 +24,17 @@ just triggered from API mode's field now.
 | **API** | **Ollama-shaped field, routing untouched (default): nothing** — treated as prefer-endpoint until routing is explicitly chosen. **Ollama-shaped + "Prefer my key": nothing** — direct browser→localhost, never through the Worker. **Ollama-shaped + "Use free tier first" (explicit):** cloud payloads leave for Workers AI while the shared budget serves, nothing once the client overflows to the local endpoint (client-orchestrated — the Worker can't reach localhost; §11.2). **Otherwise:** schema (table/column names, types), prompts, generated SQL, error traces. Sample data rows **only** if "data-sampled repair" is enabled (§11.3). | Workers AI by default; BYOK per D3 toggle, except Ollama-shaped fields default to prefer-endpoint until routing is explicitly set. One field serves both a bearer key and a local endpoint. |
 
 The first-run chooser (D2) is a one-screen explanation of the three modes on first launch —
-no silent default.
+no silent default. **Workbench amendment (2026-07-24, D2/D71 — master §5.1):** the chooser is
+the **current shell's** consent surface while it remains launch-capable; the **Workbench**
+renders the same modes as **flat switches above the AI pane** — `Off` · `Cloudflare` ·
+`WebLLM` · `Your own key (local or hosted)` — plus an on-demand **"Configure workspace"**
+surface (no forced gate). Rules: **off by default**; a **capable device** (WebGPU + a D43-derived
+memory floor vs. the ADR-007 pinned model; coarse, binary, recommendation-only) **pre-selects
+WebLLM and highlights the pane — never auto-downloads** (the D70 confirm is the single WebLLM
+gate); egress switches activate only through **flip → disclosure → explicit confirm** (no
+producer, edge-warm synthesis included, egresses on a merely *selected* mode); `Your own key`
+resolves its disclosure **after** field-shape detection (URL = zero-egress localhost; bearer =
+leaves to the provider); and **egress modes never persist across sessions** (below).
 
 ## Cloud-mode repair specifics (§11.3)
 
@@ -67,6 +77,16 @@ setting restricts retry context to schema + error trace.
   the D56 async upgrade over the deterministic Verdict, never the first-paint path. Column names are
   themselves re-identifiable (D46), so this is an explicit opt-in mode under the D2 first-run chooser,
   not a default.
+- **Deeper cloud grounding (D72 — graduated row-sample escalation, per-session; master §5.2/§11.3):**
+  a cloud AI turn may be grounded in a **larger, user-controlled, hard-capped sample of real rows**
+  (default = the 3-row repair; user-raised up to a cap of N rows / M bytes, refuse-with-guidance
+  above — never the whole dataset, which stays behind the D39/D61 hosted-mode round). **Default-off,
+  per-session, non-sticky; disclosure precedes egress. Transmit-only:** never persisted to R2, never
+  in a `.dsps`, never shared; `Off` aborts in-flight grounded turns. Labeling is custody-differentiated
+  (D21): Cloudflare — *not used for training, not stored; transient performance caching may apply*;
+  BYOK — *your provider's terms, outside DataScope's control*; plus a v0 "may contain sensitive
+  values" caveat (the D46 detector is v0.5, positives-only). Homes: Configure-workspace + the
+  contextual weak-answer prompt (§13.3).
 - **BYOK keys (D9):** default = browser memory only, per-request stateless pass-through via
   the Worker, never persisted server-side. Opt-in "Remember my key" = server-side vault
   (Cloudflare secret/KV keyed to session) with delete control; the browser then holds only a
@@ -85,8 +105,12 @@ setting restricts retry context to schema + error trace.
   joined to, any dataset, key material, or saved object (Cloudflare sees client IPs
   regardless; nothing here adds to that; §23.1, §23.5).
 - **Client-side persistence:** datasets live in DuckDB's in-memory VFS only — closing the
-  tab destroys them. Settings (AI mode, BYOK reference, theme) may persist locally; dataset
-  contents never do. The BYOK reference persists alongside a **durable vault session id minted
+  tab destroys them. Settings may persist locally; dataset contents never do. **Persistence
+  boundary (2026-07-24, D2 amendment — master §5.2): only zero-egress preferences persist
+  across sessions** (`Off`, WebLLM-enabled, theme, the BYOK *reference*); **egress-enabling
+  modes (`Cloudflare`, a bearer key's active state, D72 grounding) reset to off each session
+  and re-disclose on re-arm** — no dataset is analyzed under a silently restored egress
+  posture consented to for different data. The BYOK reference persists alongside a **durable vault session id minted
   only on opting into "Remember my key"** (2026-07-23) — remembering a key across tab closes
   requires an identifier that outlives the tab, and a user who never opts in gains none; every
   other edge call's session id stays per-page-load and content-free.
@@ -109,6 +133,10 @@ setting restricts retry context to schema + error trace.
 ## Hard invariants (test these, don't just assert them)
 
 - Local-only mode: **zero network requests after initial page load** (DevTools Network tab).
+- Workbench (D2 amendment): a fresh session starts with every egress mode off, regardless of
+  the previous session's switches; flipping an egress switch produces **no** network call until
+  its disclosure is confirmed (the edge-warm synthesis path included); D72-grounded rows appear
+  in no stored artifact (R2 object, `.dsps`, share) — request-transcript evidence only.
 - Cloud mode: only the disclosed payloads leave; with metadata-only repair on, no data rows
   appear in any request body.
 - Tab close leaves no dataset contents in `localStorage`/`IndexedDB`/cookies (settings only).

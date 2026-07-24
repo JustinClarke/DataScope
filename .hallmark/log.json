@@ -1,0 +1,45 @@
+[
+  {
+    "date": "2026-07-24",
+    "macrostructure": "Workbench",
+    "theme": "custom dark (SqlErd-ported)",
+    "theme_axes": "dark / geometric-sans + mono / warm-amber (+ cool-slate viewer register)",
+    "vibe": "dark technical HUD instrument, read-only viewer variant (diversification suspended for coherence with the J1/J2 shells)",
+    "enrichment": "Tier B hand-built ERD SVG (field-anchored connectors, path-draw)",
+    "brief": "DataScope Workbench — J4 viewer mode (share-link / .dsps): read-only shell, no gate/strip/right-pane, D63 signed-provenance chrome, structure-only (ideation, _implementation/_misc/ideation/hallmark/workbench-viewer.html)"
+  },
+  {
+    "date": "2026-07-24",
+    "macrostructure": "Workbench",
+    "theme": "custom dark (SqlErd-ported)",
+    "theme_axes": "dark / geometric-sans + mono / warm-amber (+ purple copilot register)",
+    "vibe": "dark technical HUD instrument with the AI right pane added (diversification suspended for coherence with the J1 shell)",
+    "enrichment": "Tier B hand-built ERD SVG + per-turn audit-trail pipeline",
+    "brief": "DataScope Workbench — J2 AI copilot right pane: the per-turn audit trail as hero (SQL/timings/retries/sampled), D55 seam model→spec→validated→rendered (ideation, _implementation/_misc/ideation/hallmark/workbench-ai.html)"
+  },
+  {
+    "date": "2026-07-24",
+    "macrostructure": "Workbench",
+    "theme": "custom dark (SqlErd-ported)",
+    "theme_axes": "dark / geometric-sans + mono / warm-amber",
+    "vibe": "dark technical HUD instrument (shell housing the map — diversification suspended for coherence)",
+    "enrichment": "Tier B hand-built ERD SVG (field-anchored clickable connectors, path-draw)",
+    "brief": "DataScope Workbench — assembled J1 shell (Act 3/4) + Act 2 data-handling gate (ideation, _implementation/_misc/ideation/hallmark/workbench-shell.html)"
+  },
+  {
+    "date": "2026-07-24",
+    "macrostructure": "Map / Diagram",
+    "theme": "custom dark (SqlErd-ported)",
+    "theme_axes": "dark / geometric-sans + mono / warm-amber",
+    "vibe": "dark technical HUD instrument",
+    "enrichment": "Tier B hand-built map SVG (field-anchored connectors, path-draw)",
+    "brief": "DataScope Workbench — dataset map, ERD + Blueprint faces (ideation, _implementation/_misc/ideation/hallmark/dataset-map.html)"
+  },
+  {
+    "date": "2026-07-24",
+    "macrostructure": "Specimen",
+    "theme": "Specimen (violet-accent variant)",
+    "enrichment": "Tier A pure-CSS hairline grid mark",
+    "brief": "DataScope Workbench — Act 0 Welcome page (ideation, _implementation/_misc/ideation/hallmark/welcome-act0.html)"
+  }
+]

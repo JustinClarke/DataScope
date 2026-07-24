@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DataScope — Welcome (Act 0) · Hallmark ideation</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500&display=swap" rel="stylesheet">
+<style>
+/* Hallmark · genre: editorial · macrostructure: Specimen · theme: Specimen (violet-accent variant) · enrichment: Tier A pure-CSS hairline grid mark · nav: N6 · footer: Ft2 */
+
+html, body { overflow-x: clip; }
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, svg { max-width: 100%; display: block; }
+
+::selection { background: var(--color-accent); color: var(--color-accent-ink); }
+
+a { color: inherit; }
+
+.wrap {
+  max-width: 74rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 3rem);
+}
+
+/* ---------- Masthead (N6) ---------- */
+
+.masthead {
+  padding-block: var(--space-lg) var(--space-md);
+  text-align: center;
+}
+
+.masthead__issue {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-sm);
+}
+
+.masthead__wordmark {
+  font-family: var(--font-wordmark);
+  font-weight: 600;
+  font-size: clamp(1.75rem, 2.5vw + 1rem, 2.4414rem);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.masthead__wordmark .mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  vertical-align: -0.08em;
+  margin-inline-end: var(--space-2xs);
+}
+
+/* Tier A hairline grid mark — a quiet nod to tabular data, not a logo */
+.gridmark {
+  width: 0.62em;
+  height: 0.62em;
+  display: inline-grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  border: 1px solid var(--color-ink);
+}
+.gridmark span { border: 0.5px solid var(--color-rule); }
+.gridmark span:nth-child(1),
+.gridmark span:nth-child(5) { background: var(--color-accent); }
+
+.masthead__rule {
+  margin: var(--space-md) 0 0;
+  border: none;
+  border-top: 1px solid var(--color-ink);
+  position: relative;
+}
+.masthead__rule::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 4px;
+  border-top: 1px solid var(--color-rule);
+}
+
+/* ---------- Specimen header blocks ---------- */
+
+.specimen {
+  padding-block: var(--space-3xl) var(--space-2xl);
+  border-bottom: 1px solid var(--color-rule);
+}
+.specimen:last-of-type { border-bottom: none; }
+
+/* Stacked, single column — the tag-left/heading-right split is a banned
+   pattern (gate 54) even though the Specimen macro's own reference file
+   shows it that way. The label sits directly above the heading it labels. */
+.specimen__num {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-md);
+}
+
+.specimen__body { min-width: 0; max-width: 42rem; }
+.specimen__body--wide { max-width: none; }
+
+.specimen__h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--text-display);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-lg);
+  max-width: 16ch;
+  overflow-wrap: anywhere;
+}
+
+.specimen__h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--text-display-s);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--space-lg);
+  max-width: 20ch;
+  overflow-wrap: anywhere;
+}
+
+.specimen__lede {
+  font-size: var(--text-md);
+  line-height: 1.6;
+  color: var(--color-ink-2);
+  max-width: 52ch;
+  margin: 0;
+}
+
+.specimen__lede + .specimen__lede { margin-top: var(--space-md); }
+
+/* ---------- 02 — Bring data ---------- */
+
+.ingest {
+  display: grid;
+  gap: var(--space-xl);
+  margin-top: var(--space-xl);
+}
+
+@media (min-width: 60rem) {
+  .ingest {
+    grid-template-columns: 1.3fr 1fr;
+    grid-template-areas:
+      "drop url"
+      "drop samples";
+  }
+  .ingest__drop { grid-area: drop; }
+  .ingest__url { grid-area: url; }
+  .ingest__samples { grid-area: samples; }
+}
+
+.ingest__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-sm);
+}
+
+/* Drop zone — full interaction states */
+.dropzone {
+  --bw: 1px;
+  border: var(--bw) dashed var(--color-rule);
+  border-radius: 2px;
+  background: var(--color-paper-2);
+  padding: var(--space-xl) var(--space-lg);
+  min-height: 12rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: background-color var(--dur-short) var(--ease-out),
+              border-color var(--dur-short) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dropzone:hover { background: var(--color-paper); border-color: var(--color-neutral); }
+}
+.dropzone:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.dropzone.is-dragover {
+  border-color: var(--color-accent);
+  border-style: solid;
+  background: var(--color-paper);
+}
+.dropzone.is-filled {
+  border-style: solid;
+  border-color: var(--color-ink-2);
+  align-items: flex-start;
+}
+
+.dropzone__title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 400;
+}
+.dropzone__hint {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.dropzone input[type="file"] {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* URL form */
+.urlform { display: flex; flex-direction: column; gap: var(--space-xs); }
+.urlform__row { display: flex; gap: var(--space-xs); }
+
+.urlform__input {
+  flex: 1;
+  min-width: 0;
+  height: 2.75rem;
+  padding-inline: var(--space-sm);
+  font-size: var(--text-base);
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+}
+.urlform__input::placeholder { color: var(--color-muted); }
+@media (hover: hover) and (pointer: fine) {
+  .urlform__input:hover { background: var(--color-paper-2); }
+}
+.urlform__input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+  border-color: var(--color-ink-2);
+}
+
+.urlform__submit {
+  height: 2.75rem;
+  padding-inline: var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-accent-ink);
+  background: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  border-radius: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform var(--dur-instant) var(--ease-out),
+              background-color var(--dur-short) var(--ease-out);
+}
+.urlform__submit:hover { background: var(--color-accent); border-color: var(--color-accent); }
+.urlform__submit:active { transform: translateY(1px); }
+.urlform__submit:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+.urlform__help {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  min-height: 1lh;
+  margin: 0;
+}
+
+/* Samples — typographic links, C3 */
+.samples { display: flex; flex-direction: column; gap: var(--space-2xs); }
+.samples__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  width: fit-content;
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-rule);
+  padding-block: var(--space-3xs);
+  font-size: var(--text-base);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+.samples__item:hover,
+.samples__item:focus-visible { border-color: var(--color-accent); }
+.samples__item:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.samples__arrow { font-family: var(--font-mono); color: var(--color-muted); font-size: var(--text-sm); }
+
+/* ---------- Footer (Ft2) ---------- */
+
+.foot {
+  border-top: 1px solid var(--color-rule);
+  padding-block: var(--space-lg);
+  margin-top: var(--space-2xl);
+}
+.foot__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2xs) var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.foot__row strong { color: var(--color-ink); font-weight: 600; }
+.foot__sep { color: var(--color-rule); }
+
+/* ---------- Entrance (one-shot, first load only) ---------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: reveal-up var(--dur-long) var(--ease-out) forwards;
+}
+.reveal--d1 { animation-delay: 60ms; }
+.reveal--d2 { animation-delay: 140ms; }
+.reveal--d3 { animation-delay: 220ms; }
+
+@keyframes reveal-up {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { animation-duration: 1ms; animation-delay: 0ms !important; }
+  .dropzone, .urlform__input, .urlform__submit, .samples__item { transition: none; }
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 47.999rem) {
+  .specimen { padding-block: var(--space-2xl) var(--space-xl); }
+  .urlform__row { flex-direction: column; }
+  .urlform__submit { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <p class="masthead__issue">Runs entirely in your browser — nothing leaves your machine</p>
+  <p class="masthead__wordmark">
+    <span class="mark"><span class="gridmark" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></span>DataScope
+  </p>
+  <hr class="masthead__rule">
+</header>
+
+<main class="wrap">
+
+  <section class="specimen reveal reveal--d1">
+    <p class="specimen__num">01 — Local-first.</p>
+    <div class="specimen__body">
+      <h1 class="specimen__h1">Nothing leaves your machine.</h1>
+      <p class="specimen__lede">
+        DataScope runs entirely in your browser. No upload, no server round-trip, no
+        account — everything you drop in stays on this device, for as long as this tab
+        is open.
+      </p>
+    </div>
+  </section>
+
+  <section class="specimen reveal reveal--d2">
+    <div class="specimen__body specimen__body--wide">
+      <h2 class="specimen__h2">Drop a file, paste a link, or start from a sample.</h2>
+
+      <div class="ingest">
+        <div class="ingest__drop">
+          <p class="ingest__label">File, folder, or .zip</p>
+          <label class="dropzone" id="dropzone" tabindex="0">
+            <input type="file" id="fileInput" multiple>
+            <span class="dropzone__title" id="dzTitle">Drag it here, or click to browse</span>
+            <span class="dropzone__hint" id="dzHint">Multiple files, a whole folder, or a .zip all work.</span>
+          </label>
+        </div>
+
+        <div class="ingest__url">
+          <p class="ingest__label">From a URL</p>
+          <form class="urlform" id="urlForm">
+            <div class="urlform__row">
+              <input class="urlform__input" type="url" inputmode="url" id="urlInput"
+                     placeholder="https://example.com/data.csv" aria-label="Dataset URL">
+              <button class="urlform__submit" type="submit">Fetch →</button>
+            </div>
+            <p class="urlform__help" id="urlHelp">A CSV, an API endpoint, or a public sheet.</p>
+          </form>
+        </div>
+
+        <div class="ingest__samples">
+          <p class="ingest__label">Or try a sample</p>
+          <div class="samples">
+            <a class="samples__item" href="#" data-sample="iris">Iris — the classic 150-row set <span class="samples__arrow">→</span></a>
+            <a class="samples__item" href="#" data-sample="taxi">NYC taxi trips — a few million rows <span class="samples__arrow">→</span></a>
+            <a class="samples__item" href="#" data-sample="movies">Movie ratings — joins across three tables <span class="samples__arrow">→</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen reveal reveal--d3">
+    <div class="specimen__body">
+      <h2 class="specimen__h2">One question, then we get out of your way.</h2>
+      <p class="specimen__lede">
+        Once something's in, we'll ask exactly one thing — how you'd like to work.
+        Everything after that, the map, the tools you see, follows from your answer.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__row">
+    <span><strong>DataScope</strong></span>
+    <span class="foot__sep">·</span>
+    <span>a local-first data workbench</span>
+    <span class="foot__sep">·</span>
+    <span>ideation draft, <span id="foot-year"></span></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var dz = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  var dzTitle = document.getElementById('dzTitle');
+  var dzHint = document.getElementById('dzHint');
+
+  ['dragenter', 'dragover'].forEach(function (evt) {
+    dz.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dz.classList.add('is-dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach(function (evt) {
+    dz.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dz.classList.remove('is-dragover');
+    });
+  });
+  dz.addEventListener('drop', function (e) {
+    var files = e.dataTransfer && e.dataTransfer.files;
+    showFiles(files);
+  });
+  dz.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener('change', function () { showFiles(fileInput.files); });
+
+  function showFiles(files) {
+    if (!files || !files.length) return;
+    dz.classList.add('is-filled');
+    var label = files.length === 1 ? files[0].name : files.length + ' files selected';
+    dzTitle.textContent = label;
+    dzHint.textContent = 'Click to choose different files.';
+  }
+
+  var urlForm = document.getElementById('urlForm');
+  var urlInput = document.getElementById('urlInput');
+  var urlHelp = document.getElementById('urlHelp');
+  urlForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!urlInput.value) {
+      urlHelp.textContent = 'Paste a link first — that’s what we’ll fetch.';
+      urlInput.setAttribute('aria-invalid', 'true');
+      return;
+    }
+    urlInput.removeAttribute('aria-invalid');
+    urlHelp.textContent = 'Ideation mockup — fetch is not wired up here.';
+  });
+
+  document.getElementById('foot-year').textContent = new Date().getFullYear();
+
+  document.querySelectorAll('.samples__item').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      el.style.borderColor = 'var(--color-accent)';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

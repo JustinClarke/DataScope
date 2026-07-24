@@ -144,6 +144,28 @@ When answering a question, the agent should:
   - `../../DATASCOPE.md` §12.3, D20, D21.
   - Extension tiers considered but deferred: `../backlog/shape-share-extensions.md`.
 
+- How is the UI laid out / what is the Workbench?
+  - `../../DATASCOPE.md` §13 — two shells: §13.0 (current shell, the flag-off spec of record) and §13.3 (the Workbench behind `WORKBENCH_ENABLED`, D71); build leaves `../build/12-workbench/README.md`.
+
+- Where did the sidebar go in the Workbench?
+  - `../../DATASCOPE.md` §13.3, D68(d)-superseded-by-D71 — the intent-group sidebar becomes explorer + dataset map + options strip + command palette; §13.2 stays the flag-off nav until W8.
+
+- How do tabs remember state when I switch away?
+  - `../../DATASCOPE.md` §13.3, D71 — keep-mounted is the v0 norm; restore-from-spec is per-type opt-in; full tab-list serialization is deferred to the D61 hosted-tier round.
+
+- Where is AI consent in the Workbench / where did the first-run chooser go?
+  - `../../DATASCOPE.md` §5.1 (shell-conditional: the current shell keeps the chooser; the Workbench renders flat mode switches + "Configure workspace"), §5.2 (egress modes never persist across sessions), D2/D71; `../build/06-ai/02-modes-byok.md`.
+  - Note: an earlier ideation proposal — the per-upload data-handling gate in `../_misc/ideation/UI-REDESIGN-LIFECYCLES.md` §4/§7 — was considered and **superseded** by the shipped flat-switch model (AI-V2 review, Change A). If you open LIFECYCLES.md, read its §4 and §7 items 1–2 as history, not live design.
+
+- Can I send actual data rows to the AI for a better answer (D72)?
+  - `../../DATASCOPE.md` §5.2, §11.3, D72 (deeper cloud grounding — graduated, hard-capped, per-session, transmit-only; never the whole dataset); `../build/06-ai/03-privacy-disclosure.md`.
+
+- What is viewer mode?
+  - `../../DATASCOPE.md` §13.3, D62/D63 — the read-only Workbench shell over a `?share=` URL or dropped `.dsps`; `../build/08-persistence/03-dsps-spec.md`.
+
+- How does the Workbench behave on small viewports / tablets?
+  - **Open, explicitly deferred (2026-07-24, owner call — not prioritized).** No decision in master or the build tree yet; the SqlErd "optimized for desktop" precedent vs. a Phase 6 tablet commitment is unresolved. Tracked at `../_misc/ideation/UI-REDESIGN-SPEC.md` §9 item 7 and `UI-REDESIGN-PLAN.md` §5 item 7.
+
 ### 4) Ingestion / file input questions
 
 - What file types are supported?

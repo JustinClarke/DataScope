@@ -1,6 +1,6 @@
 # 03.5 Dataset Dossier — the post-ingest landing view
 
-**Tier:** v0 · Phase 3 (UI assembly) · **Master spec:** §13.1 (D48) · **Decisions:** D48, D24, D46, D45, D10, D20, D52, D55/D56, D68, D69
+**Tier:** v0 · Phase 3 (UI assembly) · **Master spec:** §13.1 (D48) · **Decisions:** D48, D24, D46, D45, D10, D20, D52, D55/D56, D68, D69, D71 (Workbench re-home)
 
 ## Objective
 
@@ -108,6 +108,20 @@ cached per dataset fingerprint (the identity band's D45 hash), resolving async a
 deterministic paint as an explicit "tailored this view" upgrade badge, never load-bearing, never
 breaking wifi-off. The four-rung cut ladder is unchanged and lives entirely in the
 deterministic producer.
+
+**Workbench re-home (2026-07-24, D71 — master §13.3; flag-on shell only).** In the Workbench
+the Dossier's home moves, its content and cut ladder survive verbatim: single-table, it is the
+map tab's **Blueprint face**; multi-table, selecting a table on the ERD opens the Blueprint as
+the **selection side panel**, and the **map tab header carries a persistent Verdict band** —
+identity + the one headline `FactRef` under the D68c tier-1 discipline above (confidence floor
+and quality-risk tie-break intact) — so a fresh multi-table open still answers "what have I
+been handed / can I trust it?"; the ERD is the hero region, never the whole tier-1 surface.
+The ViewSpec seam generalizes to the Workbench **tab-spec contract with the envelope
+invariant** (D55/§13.3): the tab envelope — type from a fixed registry, identity, active-tab,
+initializer — is app-authored only; model output enters solely as validated inner
+ChartSpec/ViewSpec via `producerValidators` before any tab opens. §13.0's current-shell
+placement stays the flag-off spec of record until W8
+([../12-workbench/](../12-workbench/README.md)).
 
 ## Acceptance criteria
 

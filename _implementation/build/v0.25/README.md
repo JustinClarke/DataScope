@@ -53,6 +53,19 @@ ships within its four constraints. Every
 AI producer is **eval-gated like D40/D56 — on the feature, never the tier**: failing the
 labeled-set check leaves the deterministic Blueprint as the product at zero cost.
 
+## Workbench fold (2026-07-24, D70 consistency / D71 — master §5.1/§13.3)
+
+In the flag-on shell the **Workbench dataset map *is* the Blueprint-forward opening — one
+opening, not two** ([01-blueprint-opening.md](01-blueprint-opening.md)); the escape hatch
+there is structural (explorer click-through + settings preference, D68d supersession). Two
+consent rules bind the AI layers: the **D70 download-confirm stays the single WebLLM consent
+trigger** — the Workbench's capable-device pre-select never auto-downloads
+([03-webllm-handoff.md](03-webllm-handoff.md)) — and the **edge-warm synthesis fires only
+under a confirmed-active egress mode** (§5.1 flip → disclose → confirm; a merely *selected*
+switch never egresses), degrading to the deterministic paint otherwise
+([02-edge-synthesis.md](02-edge-synthesis.md)). Workbench build leaves:
+[`../12-workbench/`](../12-workbench/).
+
 ## Open sequencing call (unresolved — a human decision)
 
 Where v0.25 slots **relative to `06-ai`** is deliberately **not decided here** (§19/D70). Its

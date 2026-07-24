@@ -23,6 +23,24 @@ disclosure UI, and the transcript as the audit surface.
   ([01-pipeline.md](01-pipeline.md)) marks which attempts included sampled rows, so a user
   can verify the toggle's effect from inside the product.
 
+### Workbench fold deltas (2026-07-24 — master §5.1/§5.2/§11.3, D2 amendment, D71/D72; builds in the W6/W7 leaves)
+
+- **Shell-conditional disclosure surface:** the first-run chooser (`AIModeChooser`) remains the
+  current shell's surface; the Workbench replaces it with the **flat mode switches + "Configure
+  workspace"** (§5.1). The disclosure copy in this doc serves both.
+- **Flip lifecycle:** egress switch = **flip → disclosure shown → explicit confirm → active**;
+  no producer (edge-warm D70 synthesis included) may egress on a selected-but-unconfirmed mode.
+  `Your own key` discloses **after** field-shape detection (URL = zero-egress; bearer = leaves).
+- **Persistence boundary:** only zero-egress prefs persist; `Cloudflare` / active-bearer / D72
+  grounding reset off per session and re-disclose on re-arm (§5.2).
+- **D72 deeper cloud grounding:** the graduated sample control (3-row floor → hard cap N rows /
+  M bytes) extends this doc's stage-5 sample path — same pipeline, bigger disclosed sample;
+  per-session, default-off, transmit-only (never persisted / `.dsps` / shared); `Off` aborts
+  in-flight. Custody-differentiated labeling: Cloudflare — not trained on / not stored, transient
+  perf caching may apply; BYOK — the user's provider's terms; + a v0 "may contain sensitive
+  values" caveat (D46 stays v0.5, positives-only). The transcript marks grounded attempts and
+  the row-count sent, extending the existing `sampledRows` badge.
+
 ## Files
 
 `src/services/ai.ts` (the `metadataOnlyRepair` deps flag; stage 5's resample-on-failure,

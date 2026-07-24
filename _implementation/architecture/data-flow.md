@@ -25,6 +25,10 @@ Key properties:
 - The broker evaluates over the **union of all registered tables** (D13).
 - Ingestion telemetry panel shows size/format/rows/elapsed/memory live during load (§7.2);
   the same UI is reused for API pagination.
+- **Workbench shell assembly (D71, master §13.3):** the deterministic shell *skeleton* —
+  which panes exist given session state — is a pure function of that state; async producers
+  (D56/D70 synthesis, WebLLM warm-up, `.dsps`/`?share=` loads) **layer on as imperative
+  state updates over the pure skeleton**, testable at their own seams.
 
 ## 2. AI question → chart (§11.1)
 
