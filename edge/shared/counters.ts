@@ -54,7 +54,7 @@ export interface AiRouterMetric {
 }
 
 /** The DSPS-serving MCP surface's outcome counter (D38 stage A). */
-export type McpOutcome = 'ok' | 'not-found' | 'rate-limited' | 'paused' | 'bad-request'
+export type McpOutcome = 'ok' | 'not-found' | 'rate-limited' | 'paused' | 'bad-request' | 'unavailable'
 
 export interface McpMetric {
   endpoint: 'mcp'

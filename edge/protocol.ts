@@ -201,12 +201,17 @@ export interface McpRequest {
   artifactId?: string;
 }
 
-/** list_shared → ids only; get_dsps → the artifact's structure-only facts. */
+/**
+ * list_shared → ids only; get_dsps → the *identical* client-generated DSPS
+ * document (build/08-persistence/03-dsps-spec), passed through verbatim —
+ * `dsps` is deliberately `unknown` here: the edge transports the artifact, it
+ * never re-derives or re-shapes it (D38's "DSPS itself is unchanged by MCP").
+ */
 export type McpResponse =
   | { tool: 'list_shared'; artifactIds: string[] }
-  | { tool: 'get_dsps'; artifactId: string; facts: StructuralFacts };
+  | { tool: 'get_dsps'; artifactId: string; dsps: unknown };
 
-export type McpErrorCode = 'bad-request' | 'not-found' | 'rate-limited' | 'paused';
+export type McpErrorCode = 'bad-request' | 'not-found' | 'rate-limited' | 'paused' | 'unavailable';
 
 export interface McpError {
   error: McpErrorCode;

@@ -18,9 +18,8 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-MASTER="$ROOT/DATASCOPE.md"
-TREE="$ROOT/_implementation"
+TREE="$(cd "$SCRIPT_DIR/.." && pwd)"   # the _implementation/ tree
+MASTER="$TREE/DATASCOPE.md"
 DECISIONS="$TREE/architecture/decisions.md"
 
 fail=0
@@ -47,7 +46,7 @@ while IFS= read -r hit; do
     fail=1
   fi
 done <<EOF
-$(grep -rnoE 'D1[–-]D[0-9]+' "$MASTER" "$TREE" --include='*.md' 2>/dev/null)
+$(grep -rnoE 'D1[–-]D[0-9]+' "$MASTER" "$TREE" --include='*.md' --exclude-dir=node_modules 2>/dev/null)
 EOF
 [ "$range_bad" -eq 0 ] && echo "  OK - all D1-Dn headers = D1-D$MAX"
 echo
@@ -65,7 +64,7 @@ echo
 
 # --- 4. Coverage: files mentioning the latest decision. -------------------------
 echo "== [4] Coverage of D$MAX across the docs =="
-grep -rlw "D$MAX" "$MASTER" "$TREE" --include='*.md' 2>/dev/null | sed "s|$ROOT/||" | sort | sed 's/^/  /'
+grep -rlw "D$MAX" "$MASTER" "$TREE" --include='*.md' --exclude-dir=node_modules 2>/dev/null | sed "s|$TREE/||" | sort | sed 's/^/  /'
 echo
 
 # --- 5. Dangling / forward D-refs above the highest Dn. -------------------------
@@ -82,7 +81,7 @@ while IFS= read -r hit; do
     fail=1
   fi
 done <<EOF
-$(grep -rnoE 'D[0-9]+' "$MASTER" "$TREE" --include='*.md' 2>/dev/null)
+$(grep -rnoE 'D[0-9]+' "$MASTER" "$TREE" --include='*.md' --exclude-dir=node_modules 2>/dev/null)
 EOF
 [ "$dangle" -eq 0 ] && echo "  OK - no D-refs above D$MAX"
 echo

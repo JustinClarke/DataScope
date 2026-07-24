@@ -58,6 +58,8 @@ describe('privacy gate', () => {
       webllmConsent: null,
       // §11.3 / 06-ai/03: the metadata-only-repair toggle is a preference too.
       metadataOnlyRepair: true,
+      // §12.3: the "links I created" list — tokens/labels, never dataset content.
+      shareLinks: [],
     });
 
     const raw = JSON.stringify(persisted);

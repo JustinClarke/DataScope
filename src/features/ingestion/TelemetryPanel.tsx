@@ -3,7 +3,7 @@ import { formatBytes } from '../../lib/formatBytes';
 // Phase labels describe what's happening, not a fabricated percentage —
 // QueryEngine.execute() is a single atomic call with no progress callback,
 // so there is no real sub-step progress to report during 'parsing'.
-export type TelemetryPhase = 'idle' | 'loading-engine' | 'parsing' | 'done' | 'error';
+export type TelemetryPhase = 'idle' | 'fetching' | 'loading-engine' | 'parsing' | 'done' | 'error';
 
 export interface TelemetryStats {
   label: string;
@@ -13,6 +13,8 @@ export interface TelemetryStats {
   columnCount?: number;
   elapsedMs?: number;
   tabMemoryMB?: number | null;
+  /** Pages fetched so far — Tier 1 API ingestion's pagination progress (§7.4). */
+  pagesFetched?: number;
 }
 
 interface TelemetryPanelProps {
@@ -22,6 +24,7 @@ interface TelemetryPanelProps {
 
 const PHASE_LABEL: Record<TelemetryPhase, string> = {
   idle: '',
+  fetching: 'Fetching…',
   'loading-engine': 'Starting the query engine…',
   parsing: 'Parsing…',
   done: 'Done',
@@ -57,6 +60,12 @@ export function TelemetryPanel({ phase, stats }: TelemetryPanelProps) {
           <div>
             <dt className="inline">cols </dt>
             <dd className="inline text-(--color-fg)">{stats.columnCount}</dd>
+          </div>
+        )}
+        {stats.pagesFetched !== undefined && (
+          <div>
+            <dt className="inline">pages </dt>
+            <dd className="inline text-(--color-fg)">{stats.pagesFetched}</dd>
           </div>
         )}
         {stats.elapsedMs !== undefined && (

@@ -4,9 +4,14 @@
 // sent anywhere. With the Join Graph enabled this also carries the inferred
 // relationships; when the graph is cut, the relationships section is simply
 // omitted and the report stays a valid schema-only artifact.
+//
+// This is the concrete DSPS document (D31/D37) — `dsps.ts` layers the version
+// contract, the fact-provenance/snapshot vocabulary, and the compatibility-
+// aware reader on top of the shape built here.
 import type { TableRegistryEntry } from '../types';
 import type { TableInsights } from './dossier';
 import type { FkEdge } from './relationshipInference';
+import { DSPS_VERSION, type DspsProvenance, type DspsSnapshot } from './dsps';
 
 export interface StructureReportColumn {
   name: string;
@@ -28,6 +33,10 @@ export interface StructureReportInsight {
   tableName: string;
   rule: string;
   description: string;
+  /** D45 fact provenance — v0 ships every fact freshly computed this run. */
+  provenance: DspsProvenance;
+  /** D45 snapshot label — when the fact was computed, and the source file's hash when one is available. */
+  snapshot: DspsSnapshot;
 }
 
 export interface StructureReportRelationship {
@@ -41,6 +50,8 @@ export interface StructureReportRelationship {
 }
 
 export interface StructureReport {
+  /** DSPS spec version (D37) — semver; a consumer on an older major reads known fields and ignores the rest. */
+  dspsVersion: string;
   generatedAt: string;
   tables: StructureReportTable[];
   insights: StructureReportInsight[];
@@ -58,8 +69,10 @@ export function buildStructureReport(
   tableInsights: TableInsights[],
   relationships?: FkEdge[],
 ): StructureReport {
+  const generatedAt = new Date().toISOString();
   const report: StructureReport = {
-    generatedAt: new Date().toISOString(),
+    dspsVersion: DSPS_VERSION,
+    generatedAt,
     tables: tables.map((t) => ({
       tableName: t.tableName,
       rowCount: t.rowCount,
@@ -78,6 +91,8 @@ export function buildStructureReport(
         tableName: ti.table.tableName,
         rule: insight.rule,
         description: insight.description,
+        provenance: 'derived-this-run' as const,
+        snapshot: { date: generatedAt, fileHash: ti.table.fileHash ?? null },
       })),
     ),
   };
@@ -95,6 +110,26 @@ export function buildStructureReport(
   }
 
   return report;
+}
+
+/**
+ * Column-name redaction (§12.3) — one of the share dialog's one-click
+ * structure-only controls. Replaces every column name with a positional
+ * placeholder (`column_1`, `column_2`, ...) so the hosted artifact carries no
+ * real column names, which D59 already names as themselves re-identifiable/
+ * sensitive. Renumbers per table, not globally, so two single-column tables
+ * both start at `column_1` rather than leaking a cross-table column count.
+ * Insight/relationship text is left as-is — the D46 nudge and the report's
+ * own insights already run before this transform, over the real names.
+ */
+export function redactColumnNames(report: StructureReport): StructureReport {
+  return {
+    ...report,
+    tables: report.tables.map((table) => ({
+      ...table,
+      columns: table.columns.map((column, index) => ({ ...column, name: `column_${index + 1}` })),
+    })),
+  };
 }
 
 /** Triggers a browser download of the report as formatted JSON. DOM-only — kept separate from the pure builder above so that stays unit-testable without jsdom. */

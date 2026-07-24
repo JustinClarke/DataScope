@@ -1,5 +1,9 @@
+import { useState } from 'react';
+import { Download } from 'lucide-react';
 import { useQueryStore } from '../../stores/query';
+import { useDatasetsStore } from '../../stores/datasets';
 import { classifyStatement } from '../../lib/statementClass';
+import { downloadTable } from '../../services/export';
 import { ResultsGrid } from './ResultsGrid';
 import { AutoChartPanel } from './AutoChartPanel';
 
@@ -16,14 +20,48 @@ export function QueryResultsPanel() {
   const error = useQueryStore((state) => state.error);
   const history = useQueryStore((state) => state.history);
   const sql = useQueryStore((state) => state.sql);
+  const tables = useDatasetsStore((state) => state.tables);
+  const [exportingDerived, setExportingDerived] = useState(false);
 
   const lastRunSql = history[0]?.sql ?? sql;
-  const lastRunWasQuery = classifyStatement(lastRunSql).class === 'query';
+  const lastRunInfo = classifyStatement(lastRunSql);
+  const lastRunWasQuery = lastRunInfo.class === 'query';
+  // A CTAS that just succeeded gets a Parquet shortcut right on the Results
+  // header (§12.2 "wherever a table is") — found by name in the registry
+  // rather than threaded through QueryResult, since every derived table
+  // already lands there the moment `runTransform` registers it.
+  const derivedTable =
+    status === 'success' && lastRunInfo.class === 'ctas' && lastRunInfo.ctasTable
+      ? tables.find((t) => t.tableName === lastRunInfo.ctasTable)
+      : undefined;
+
+  async function handleDownloadDerived() {
+    if (!derivedTable || exportingDerived) return;
+    setExportingDerived(true);
+    try {
+      await downloadTable(derivedTable, 'parquet');
+    } finally {
+      setExportingDerived(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h3 className="mb-2 text-sm font-medium text-(--color-fg)">Results</h3>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-medium text-(--color-fg)">Results</h3>
+          {derivedTable && (
+            <button
+              type="button"
+              onClick={handleDownloadDerived}
+              disabled={exportingDerived}
+              title={`Download "${derivedTable.tableName}" as Parquet`}
+              className="flex items-center gap-1 rounded border border-(--color-border) px-2 py-1 text-xs font-medium text-(--color-fg) disabled:opacity-50"
+            >
+              <Download size={12} aria-hidden="true" /> {exportingDerived ? 'Preparing…' : 'Download Parquet'}
+            </button>
+          )}
+        </div>
         <ResultsGrid status={status} result={result} error={error} sql={lastRunSql} />
       </div>
 

@@ -76,7 +76,7 @@ Shared rate limiter ([02-cors-relay.md](02-cors-relay.md)); R2 bucket provisioni
       public URL (not `wrangler dev`) saved a payload, got it back byte-exact, a forged delete
       proof 404'd with the object intact, the correct proof deleted it, and the repeat get
       404'd — the same shape a second device hitting the share link would see*
-- [ ] 30-day TTL expiry actually removes objects (verified with short-TTL test objects, §22);
+- [x] 30-day TTL expiry actually removes objects (verified with short-TTL test objects, §22);
       the lifecycle number matches the §12.3 disclosed retention — *infrastructure confirmed
       live: the `datascope-terraform-state` bucket was provisioned, Terraform installed, and
       `terraform apply` run in both the `dev` (→ `datascope-persistence-staging`) and `prod` (→
@@ -94,7 +94,21 @@ Shared rate limiter ([02-cors-relay.md](02-cors-relay.md)); R2 bucket provisioni
       own docs say "typically within 24 hours of the expiration value" — so the object is
       expected gone sometime in the window 2026-07-24T09:05:33Z–2026-07-25T09:05:33Z. Still
       unchecked: the deletion itself hasn't been observed yet. This endpoint deliberately does
-      not re-implement expiry itself.*
+      not re-implement expiry itself.
+      **Re-checked 2026-07-24T06:49Z (marker still present, window not yet reached) — and a
+      near-miss worth recording.** A same-session `terraform apply` aimed at a *different*
+      cleanup (reconciling unrelated `dev`-workspace drift) treated this out-of-band
+      `ttl-test-scratch` rule as drift too, since — by design — it was never declared in
+      `infra/r2.tf`, and removed it from the live bucket before this doc's own explanation of
+      why it's deliberately out-of-band was read. Caught before the object expired (the window
+      hadn't opened yet); the identical rule (`ttl-test-scratch`, prefix `ttl-test/`,
+      `--expire-days 1`) was re-added via `wrangler r2 bucket lifecycle add`, the same
+      out-of-band path as originally, confirmed present again alongside `expire-after-30-days`,
+      marker object confirmed still downloadable byte-exact. **Standing note for any future
+      session:** `terraform plan` against the `dev` workspace will keep showing this one rule as
+      a diff for as long as the observation runs — that diff is expected and must not be
+      `terraform apply`'d away until the deletion itself has been observed (or the observation is
+      abandoned and the rule removed by hand).*
 - [x] Delete works only with ownership proof; link 404s after — *`persistence.test.ts` (correct
       proof deletes and a later get 404s; a wrong or missing proof answers the same typed
       `not-found` as an unknown token, vault.ts's precedent for this shape, and the object

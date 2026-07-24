@@ -1,6 +1,5 @@
-// AI session stub (§21.7 state tree — "v0.5; shape defined now"). Materializes
-// the `AISession` type as a store so later phase docs can name this as its home;
-// no AI pipeline runs against it until build/06-ai/*. Never persisted: the
+// The AI conversation store (§21.7 state tree). Holds the AISession — mode, BYOK
+// preference, turn count, and the per-turn transcript. Never persisted: the
 // transcript is content-bearing (D41) and must not reach localStorage.
 import { create } from 'zustand';
 import type { AIMode, AISession, AITurn } from '../types';

@@ -124,7 +124,7 @@ AI work (D2/D43/D56) around one UX thesis: the app **opens on the informative Do
   routes per the D3 toggle — every AI surface degrading cleanly to deterministic when AI is off, down,
   or uncached. Eval-gated like any AI producer (D40/D56): the gate is on the feature, never the tier.
 
-*Build items are tracked in [`../BUILD-ORDER.md`](../BUILD-ORDER.md)'s v0.25 section; its leaf docs live in
+*Build items are tracked in [`../status/BUILD-ORDER.md`](../status/BUILD-ORDER.md)'s v0.25 section; its leaf docs live in
 [`../build/v0.25/`](../build/v0.25/) (the milestone reuses Phase-4's provider routing and the D55/D68
 ViewSpec, so it is partly a re-sequencing of existing build docs rather than all-new scope).*
 

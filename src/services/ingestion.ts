@@ -23,8 +23,26 @@ import {
   SAMPLE_ROW_LIMIT,
 } from '../features/ingestion/aggregateSize';
 import { estimateHeadroomExceeded } from '../lib/memoryHeadroom';
+import { ApiFetchError, fetchApiSource, fetchApiSourceViaRelay, tableNameFromUrl, type ApiFetchErrorCode } from './apiIngestion';
+import { RelayFetchError, type RelayFetchErrorCode } from './relayClient';
+import { getSharedObject } from './export';
+import type { StructureReport } from '../lib/structureReport';
+import { hashBytesHex } from '../lib/dsps';
+import type { PersistenceErrorCode } from '../../edge/protocol';
 
-export class IngestionError extends Error {}
+export class IngestionError extends Error {
+  readonly code?: ApiFetchErrorCode | RelayFetchErrorCode;
+
+  constructor(message: string, code?: ApiFetchErrorCode | RelayFetchErrorCode) {
+    super(message);
+    this.code = code;
+  }
+}
+
+// One id per page load, shared across every relay call this tab makes —
+// keys the relay's dual-keyed rate limiter (build/09-edge/02-cors-relay),
+// same per-page-load-constant pattern AIChatModule.tsx's CLOUD_SESSION_ID uses.
+const RELAY_SESSION_ID = crypto.randomUUID();
 
 type EngineModule = typeof import('../workers/duckdb.worker');
 let engineModule: Promise<EngineModule> | null = null;
@@ -79,6 +97,8 @@ interface IngestedTable {
   sampled: boolean;
   profile: ColumnProfile[];
   columns: ClassifiedColumn[];
+  /** D45 snapshot's file-hash half — undefined for a sampled-tier (never fully buffered) source. */
+  fileHash?: string;
 }
 
 // §8 step 1 — SUMMARIZE extraction. Column order isn't assumed by the reduced
@@ -153,6 +173,12 @@ async function ingestBuffer(
   // 01-file-drop). A File `source` isn't affected (Blob.slice is
   // non-destructive) but reading first either way keeps one code path.
   const headerLine = source instanceof File ? await firstLineTextFromFile(source) : firstLineText(source);
+  // The D45 snapshot's file-hash half — only when `source` is already a fully
+  // in-memory Uint8Array. A sampled-tier File is deliberately never read into
+  // one (§7.5 memory headroom); hashing it here would re-introduce exactly the
+  // full-buffer read that tier exists to avoid, so it stays unhashed (named
+  // gap, `dsps.ts`'s DspsSnapshot.fileHash tolerates `null`).
+  const fileHash = source instanceof Uint8Array ? await hashBytesHex(source) : undefined;
   await engine.duckDBEngine.registerFile(vfsName, source);
 
   const selectSql = `SELECT * FROM ${readerCall(detected, quoteLiteral(vfsName))}`;
@@ -199,6 +225,7 @@ async function ingestBuffer(
     sampled,
     profile,
     columns,
+    fileHash,
   };
 }
 
@@ -210,6 +237,7 @@ function toRegistryEntry(
   ingested: IngestedTable,
   datasetId: string,
   origin: TableRegistryEntry['origin'],
+  sourceUrl?: string,
 ): TableRegistryEntry {
   return {
     id: crypto.randomUUID(),
@@ -224,6 +252,9 @@ function toRegistryEntry(
     sampleRowLimit: ingested.sampled ? SAMPLE_ROW_LIMIT : undefined,
     profile: ingested.profile,
     columns: ingested.columns,
+    sourceUrl,
+    lastFetchedAt: sourceUrl ? ingested.createdAt : undefined,
+    fileHash: ingested.fileHash,
   };
 }
 
@@ -299,6 +330,174 @@ async function loadSample(sampleId: string): Promise<Dataset> {
 
 export function loadDataset(source: File | string): Promise<Dataset> {
   return source instanceof File ? loadFile(source) : loadSample(source);
+}
+
+export interface UrlIngestResult {
+  dataset: Dataset;
+  pagesFetched: number;
+  bytesAccumulated: number;
+  sizeTier: ReturnType<typeof decideSizeTier>;
+  /** True when Tier 1 failed CORS and Tier 2 (the relay) carried the fetch instead — the §5.2 disclosure trigger. */
+  usedRelay: boolean;
+}
+
+// Tier 1 API ingestion (§7.4, build/07-connectivity/01-api-tier1-fetch) — a
+// separate entry point from loadDataset rather than a third branch on its
+// `File | string` union, since a URL and a sample id are both plain strings
+// with no shared shape to dispatch on; the two arrive from different UI
+// controls (UrlInputForm vs SamplePicker) that already know which is which.
+// `onProgress` reports page-by-page telemetry while the fetch loop runs;
+// unlike the file-size gate (checked before any read), the size tier here can
+// only be known once bytes have actually arrived, so it's returned alongside
+// the dataset for the caller to render the same warn/sampled banners the file
+// path shows pre-emptively.
+//
+// Tier 1 → Tier 2 handoff (§7.4, build/07-connectivity/02-api-tier2-relay):
+// a `cors-suspected` failure retries transparently through the relay rather
+// than surfacing an error — the seam 01-api-tier1-fetch.md's own CORS
+// acceptance criterion named as open pending Tier 2's existence. Tier 1
+// fails on its very first fetch attempt when CORS-blocked (fetch() rejects
+// before any response reaches JS), so there's never partial multi-page
+// state to reconcile before retrying from scratch via the relay.
+export async function loadUrl(
+  rawUrl: string,
+  onProgress?: (pagesFetched: number, bytesAccumulated: number) => void,
+): Promise<UrlIngestResult> {
+  let fetchResult;
+  let usedRelay = false;
+  try {
+    fetchResult = await fetchApiSource(rawUrl, { onProgress });
+  } catch (error) {
+    if (!(error instanceof ApiFetchError)) throw error;
+    if (error.code !== 'cors-suspected') throw new IngestionError(error.message, error.code);
+
+    usedRelay = true;
+    try {
+      fetchResult = await fetchApiSourceViaRelay(rawUrl, RELAY_SESSION_ID, { onProgress });
+    } catch (relayError) {
+      if (relayError instanceof RelayFetchError) throw new IngestionError(relayError.message, relayError.code);
+      if (relayError instanceof ApiFetchError) throw new IngestionError(relayError.message, relayError.code);
+      throw relayError;
+    }
+  }
+
+  const engine = await loadEngine();
+  const taken = existingTableNames();
+  const base = sanitizeTableName(tableNameFromUrl(rawUrl));
+  const tableName = dedupeTableName(base, taken);
+  const sampled = fetchResult.sizeTier === 'sampled';
+
+  const ingested = await ingestBuffer(engine, `${tableName}.json`, fetchResult.buffer, tableName, sampled);
+
+  const dataset: Dataset = {
+    id: crypto.randomUUID(),
+    name: rawUrl,
+    sourceType: 'api',
+    tableNames: [ingested.tableName],
+    ingestedAt: ingested.createdAt,
+  };
+  useDatasetsStore.getState().registerDataset(dataset, [toRegistryEntry(ingested, dataset.id, 'api', rawUrl)]);
+
+  return {
+    dataset,
+    pagesFetched: fetchResult.pagesFetched,
+    bytesAccumulated: fetchResult.bytesAccumulated,
+    sizeTier: fetchResult.sizeTier,
+    usedRelay,
+  };
+}
+
+/** True when `sql` references `tableName` as a bare or double-quoted identifier — the only trace of a derived table's sources this codebase keeps (no explicit dependency graph). */
+export function referencesTableName(sql: string, tableName: string): boolean {
+  const escaped = tableName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`"${escaped}"|\\b${escaped}\\b`).test(sql);
+}
+
+export interface RefreshResult {
+  pagesFetched: number;
+  bytesAccumulated: number;
+  sizeTier: ReturnType<typeof decideSizeTier>;
+  /** True when Tier 1 failed CORS and Tier 2 (the relay) carried this refresh instead — same §5.2 disclosure trigger as the original ingest. */
+  usedRelay: boolean;
+}
+
+// §7.4 "Refresh from source" (build/07-connectivity/03-refresh-from-source):
+// re-runs the same Tier 1 → Tier 2 cascade loadUrl used originally, against
+// the table's recorded sourceUrl, then swaps the result in under the
+// existing table name. The new data is ingested under a scratch name first
+// via the unmodified ingestBuffer path — every format/malformed-row check it
+// already runs — so a failure at any point (network, parse, malformed rows)
+// never touches the table currently registered: DROP+RENAME only happens
+// once ingestBuffer has fully succeeded, satisfying "old table stays
+// queryable until the new ingest succeeds" without needing DuckDB
+// transaction semantics this app doesn't otherwise use.
+export async function refreshTableFromSource(
+  tableId: string,
+  onProgress?: (pagesFetched: number, bytesAccumulated: number) => void,
+): Promise<RefreshResult> {
+  const table = useDatasetsStore.getState().tables.find((t) => t.id === tableId);
+  if (!table) throw new IngestionError(`Unknown table id "${tableId}".`);
+  if (table.origin !== 'api' || !table.sourceUrl) {
+    throw new IngestionError(`"${table.tableName}" has no recorded source URL to refresh from.`);
+  }
+
+  let fetchResult;
+  let usedRelay = false;
+  try {
+    fetchResult = await fetchApiSource(table.sourceUrl, { onProgress });
+  } catch (error) {
+    if (!(error instanceof ApiFetchError)) throw error;
+    if (error.code !== 'cors-suspected') throw new IngestionError(error.message, error.code);
+
+    usedRelay = true;
+    try {
+      fetchResult = await fetchApiSourceViaRelay(table.sourceUrl, RELAY_SESSION_ID, { onProgress });
+    } catch (relayError) {
+      if (relayError instanceof RelayFetchError) throw new IngestionError(relayError.message, relayError.code);
+      if (relayError instanceof ApiFetchError) throw new IngestionError(relayError.message, relayError.code);
+      throw relayError;
+    }
+  }
+
+  const engine = await loadEngine();
+  const taken = existingTableNames();
+  const stagingName = dedupeTableName(sanitizeTableName(`${table.tableName}_refresh`), taken);
+  const sampled = fetchResult.sizeTier === 'sampled';
+
+  const ingested = await ingestBuffer(engine, `${stagingName}.json`, fetchResult.buffer, stagingName, sampled);
+
+  await engine.duckDBEngine.execute(`DROP TABLE IF EXISTS ${quoteIdentifier(table.tableName)}`);
+  await engine.duckDBEngine.execute(
+    `ALTER TABLE ${quoteIdentifier(stagingName)} RENAME TO ${quoteIdentifier(table.tableName)}`,
+  );
+
+  const store = useDatasetsStore.getState();
+  store.setTableStats(tableId, {
+    rowCount: ingested.rowCount,
+    columnCount: ingested.columnCount,
+    memoryBytes: ingested.memoryBytes,
+  });
+  store.setTableProfile(tableId, ingested.profile);
+  store.setTableColumns(tableId, ingested.columns);
+  store.setTableRefreshMeta(tableId, {
+    sampled: ingested.sampled,
+    sampleRowLimit: ingested.sampled ? SAMPLE_ROW_LIMIT : undefined,
+    lastFetchedAt: new Date().toISOString(),
+  });
+
+  // Dependent derived tables aren't auto-rebuilt (§12.1 — their recorded SQL
+  // makes a manual re-run cheap); this just flags them so the UI can say so.
+  const dependentIds = store.tables
+    .filter((t) => t.origin === 'derived' && t.generatingSql && referencesTableName(t.generatingSql, table.tableName))
+    .map((t) => t.id);
+  if (dependentIds.length > 0) store.markTablesStale(dependentIds);
+
+  return {
+    pagesFetched: fetchResult.pagesFetched,
+    bytesAccumulated: fetchResult.bytesAccumulated,
+    sizeTier: fetchResult.sizeTier,
+    usedRelay,
+  };
 }
 
 export interface SkippedFile {
@@ -449,6 +648,60 @@ export async function removeTable(tableId: string): Promise<void> {
 // derived table; nothing calls it yet. Re-classification drops any prior
 // per-column manual override, since a reshaped table's columns may no longer
 // correspond to the ones that were overridden.
+const SHARE_OPEN_ERROR_MESSAGE: Partial<Record<PersistenceErrorCode | 'unreachable', string>> = {
+  'not-found': "This share link doesn't exist or has expired.",
+  paused: 'Save/share is temporarily paused — try again later.',
+  unavailable: 'Save/share is temporarily unavailable — try again later.',
+  unreachable: "Couldn't reach the server to open this share link.",
+};
+
+export interface OpenShareResult {
+  kind: 'dataset' | 'structure-report';
+  /** Present when `kind === 'dataset'` — a full-dataset share, ingested and registered like any other table. */
+  dataset?: Dataset;
+  /** Present when `kind === 'structure-report'` — the structure-only default artifact, which carries no rows to register as a table. */
+  structureReport?: StructureReport;
+}
+
+// Opening a share link (§12.3, build/08-persistence/02-r2-save-share). A
+// full-dataset share is a Parquet buffer — ingested through the same
+// ingestBuffer path every other source uses (registry → profile → broker),
+// tagged `origin: 'shared'` so TableList/the Dossier can say so. The
+// structure-only default artifact is JSON with no rows at all, so there is
+// nothing to register as a queryable table — it's returned for a read-only
+// viewer instead.
+export async function loadSharedDataset(token: string): Promise<OpenShareResult> {
+  const result = await getSharedObject(token);
+  if (!result.ok) {
+    throw new IngestionError(SHARE_OPEN_ERROR_MESSAGE[result.code] ?? "Couldn't open this share link.");
+  }
+
+  if (result.contentType.includes('json')) {
+    let structureReport: StructureReport;
+    try {
+      structureReport = JSON.parse(new TextDecoder().decode(result.buffer)) as StructureReport;
+    } catch {
+      throw new IngestionError("This share link's structure report is corrupted or not valid JSON.");
+    }
+    return { kind: 'structure-report', structureReport };
+  }
+
+  const engine = await loadEngine();
+  const taken = existingTableNames();
+  const tableName = dedupeTableName('shared_dataset', taken);
+  const ingested = await ingestBuffer(engine, `${tableName}.parquet`, result.buffer, tableName, false);
+
+  const dataset: Dataset = {
+    id: crypto.randomUUID(),
+    name: 'Shared dataset',
+    sourceType: 'shared',
+    tableNames: [ingested.tableName],
+    ingestedAt: ingested.createdAt,
+  };
+  useDatasetsStore.getState().registerDataset(dataset, [toRegistryEntry(ingested, dataset.id, 'shared')]);
+  return { kind: 'dataset', dataset };
+}
+
 export async function profileTable(tableId: string): Promise<ColumnProfile[]> {
   const store = useDatasetsStore.getState();
   const table = store.tables.find((t) => t.id === tableId);

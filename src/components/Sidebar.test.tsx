@@ -111,6 +111,19 @@ describe('Sidebar', () => {
     expect(findButtonByText(container, 'Ingest')?.disabled).toBe(false);
   });
 
+  it('enables Export / Share with no tables loaded, when a previously created share link exists', () => {
+    useSettingsStore.setState({
+      shareLinks: [
+        { token: 'tok-1', deleteToken: 'del-1', kind: 'structure', label: 'orders', createdAt: '2026-07-23T00:00:00.000Z', ttlSeconds: 2_592_000 },
+      ],
+    });
+
+    // OUTPUT auto-expands on mount, same as the dataset-driven case above —
+    // no click needed (and clicking here would just toggle it shut).
+    const { container } = render(<Sidebar />);
+    expect(findButtonByText(container, 'Export')?.disabled).toBe(false);
+  });
+
   it('enables profile/sql/export/charts cards when tables with chart-eligible columns are present', () => {
     const mockTable: TableRegistryEntry = {
       id: 'table-1',

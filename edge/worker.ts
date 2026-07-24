@@ -6,16 +6,17 @@
 //
 // Scope of this staging deploy: the ai-router endpoint backed by a real Workers
 // AI binding (what the D40 eval harness and the E2E point at), the synthesis
-// endpoint — the Blueprint's warm-start re-phrase/re-rank producer — and the
-// cors-relay endpoint (build/09-edge/02, §7.4 Tier 2), all on the same shared
-// limiter/kill-switch/Analytics-sink infra. The MCP endpoint shares this infra
-// but is not routed yet: its shared-artifact store lands with 08-persistence.
-// Adding it later is one more branch in `dispatch`.
+// endpoint — the Blueprint's warm-start re-phrase/re-rank producer — the
+// cors-relay endpoint (build/09-edge/02, §7.4 Tier 2), the persistence
+// endpoint (build/09-edge/04, R2 save/share), and the MCP endpoint
+// (build/08-persistence/03-dsps-spec, D38 stage A) — all on the same shared
+// limiter/kill-switch/Analytics-sink infra.
 import { handleAiRouter, type AiRouterEnv } from './handlers/ai-router'
 import { handleSynthesis, type SynthesisEnv } from './handlers/synthesis'
 import { handleCorsRelay, type CorsRelayEnv } from './handlers/cors-relay'
 import { handleVault, createVaultResolver, type VaultEnv } from './handlers/vault'
 import { handlePersistence, type PersistenceEnv } from './handlers/persistence'
+import { handleMcp, createR2SharedArtifactStore, type McpEnv } from './handlers/mcp'
 import { createWorkersAiSynthesisProvider, createRoutingSynthesisProvider } from './ai/synthesisProvider'
 import { createByokResolver } from './ai/byok'
 import {
@@ -124,6 +125,17 @@ function buildPersistenceEnv(env: Env): PersistenceEnv {
   }
 }
 
+function buildMcpEnv(env: Env): McpEnv {
+  return {
+    // Same "unbound bucket ⇒ unavailable" shape as /persistence — the two
+    // endpoints share one R2 binding.
+    store: env.PERSISTENCE_BUCKET === undefined ? undefined : createR2SharedArtifactStore(createR2PersistenceStore(env.PERSISTENCE_BUCKET)),
+    rateStore: createDurableObjectRateStore(env.RATE_LIMITER),
+    sink: createAnalyticsSink(env.METRICS),
+    MCP_KILL_SWITCH: env.MCP_KILL_SWITCH,
+  }
+}
+
 function buildSynthesisEnv(env: Env): SynthesisEnv {
   return {
     // The D3 routing wrapper: Workers AI by default, the user's own provider on
@@ -190,6 +202,12 @@ export default {
       // like /cors-relay and /vault, so it stays exercised by this file's own
       // tests rather than only reachable through untested worker.ts.
       const response = await handlePersistence(request, buildPersistenceEnv(env))
+      return withCors(response, cors)
+    }
+
+    if (pathname === '/mcp') {
+      // Method rejection lives inside the handler, like /vault and /persistence.
+      const response = await handleMcp(request, buildMcpEnv(env))
       return withCors(response, cors)
     }
 

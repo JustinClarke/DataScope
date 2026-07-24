@@ -5,6 +5,7 @@ import { useRelationshipsStore } from '../../../stores/relationships';
 import { buildDossierViewSpec, buildDatasetVerdict, type TableInsights, type TimeCoverageRow } from '../../../lib/dossier';
 import { useSynthesisUpgrade } from './useSynthesisUpgrade';
 import { buildStructureReport, downloadStructureReport } from '../../../lib/structureReport';
+import { downloadDspsHtml } from '../../../lib/dspsHtml';
 import { buildAIContext } from '../../../lib/aiContext';
 import { applyOverrides, type FkEdge, type RelationshipOverrides } from '../../../lib/relationshipInference';
 import { JOIN_GRAPH_ENABLED } from '../../../lib/featureFlags';
@@ -147,6 +148,10 @@ export function DatasetDossier({ onOpenTable, onNavigate, onShowSql, onSkipToDat
     downloadStructureReport(buildStructureReport(tables, tableInsights, edges));
   };
 
+  const handleExportHtml = () => {
+    downloadDspsHtml(buildStructureReport(tables, tableInsights, edges));
+  };
+
   const handleCopyForAI = () => {
     void navigator.clipboard?.writeText(buildAIContext(tables, edges));
   };
@@ -213,6 +218,7 @@ export function DatasetDossier({ onOpenTable, onNavigate, onShowSql, onSkipToDat
           onOpenTable,
           onSelectAction: handleSelectAction,
           onExportReport: handleExportReport,
+          onExportHtml: handleExportHtml,
           onCopyForAI: handleCopyForAI,
           onShowSql,
         }}

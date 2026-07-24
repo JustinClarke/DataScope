@@ -1,0 +1,18 @@
+{
+  "name": "dsps-validator",
+  "version": "1.0.0",
+  "description": "Validator/parser for DSPS — the DataScope Profile Spec (an open, versioned JSON document; see dsps.schema.json in this package). Zero runtime dependencies, no dependency on DataScope's own app source — a third-party tool can consume DSPS documents without reading DataScope's repo.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "dsps.schema.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "keywords": ["dsps", "datascope", "json-schema", "data-profiling"],
+  "license": "Apache-2.0"
+}

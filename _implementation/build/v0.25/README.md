@@ -57,7 +57,7 @@ labeled-set check leaves the deterministic Blueprint as the product at zero cost
 
 Where v0.25 slots **relative to `06-ai`** is deliberately **not decided here** (§19/D70). Its
 BYOK and edge-routing items re-sequence v0.5 rows and it reuses 06-ai's provider routing, so
-it does not cleanly precede `06-ai/01-pipeline`; the `▶` in [`../../BUILD-ORDER.md`](../../BUILD-ORDER.md)
+it does not cleanly precede `06-ai/01-pipeline`; the `▶` in [`../../status/BUILD-ORDER.md`](../../status/BUILD-ORDER.md)
 is left at `06-ai/01-pipeline` pending that call. This folder is **order-neutral** — authoring
 it does not move the pointer or commit the sequence.
 

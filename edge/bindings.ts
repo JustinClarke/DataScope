@@ -104,6 +104,8 @@ export interface Env {
   PERSISTENCE_BUCKET?: R2Bucket
   /** Per-endpoint kill-switch for /persistence — same semantics, independent flag. */
   PERSISTENCE_KILL_SWITCH?: string
+  /** Per-endpoint kill-switch for /mcp — same semantics, independent flag. */
+  MCP_KILL_SWITCH?: string
   /** Workers AI model id (ADR-007 default applied when unset). */
   AI_MODEL?: string
   /** Per-session daily Workers-AI turn quota (§11.2 default applied when unset). */

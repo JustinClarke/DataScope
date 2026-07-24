@@ -4,7 +4,7 @@ import type { ClassifiedColumn, ColumnProfile } from './schema';
 export interface Dataset {
   id: string;
   name: string;
-  sourceType: 'file' | 'folder' | 'api' | 'sample' | 'derived';
+  sourceType: 'file' | 'folder' | 'api' | 'sample' | 'derived' | 'shared';
   /** Table names this ingestion registered — one for a single file, several for a folder drop. */
   tableNames: string[];
   ingestedAt: string;
@@ -21,7 +21,7 @@ export interface TableRegistryEntry {
   id: string;
   tableName: string;
   datasetId: string;
-  origin: 'file' | 'derived' | 'api' | 'sample';
+  origin: 'file' | 'derived' | 'api' | 'sample' | 'shared';
   rowCount: number;
   columnCount: number;
   memoryBytes: number;
@@ -36,4 +36,17 @@ export interface TableRegistryEntry {
   sampled?: boolean;
   /** Row cap applied at ingest when `sampled` is true. */
   sampleRowLimit?: number;
+  /** Present for `origin: 'api'` tables — the URL "Refresh from source" (§7.4) re-fetches. */
+  sourceUrl?: string;
+  /** ISO timestamp of the most recent successful fetch — set at ingest and updated by each "Refresh from source" (§7.4). */
+  lastFetchedAt?: string;
+  /** True when this `origin: 'derived'` table's `generatingSql` references a table that has since been refreshed from its source (§7.4) — not auto-rebuilt, just flagged (§12.1). */
+  stale?: boolean;
+  /**
+   * SHA-256 hex of the source file's bytes (D45's DSPS snapshot label) — only
+   * for a non-sampled `origin: 'file'`/`'sample'` table, whose bytes are
+   * already fully in memory at ingest time. `undefined` for a sampled-tier
+   * file (never fully buffered, by design) and for api/derived/shared origins.
+   */
+  fileHash?: string;
 }

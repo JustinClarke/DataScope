@@ -87,38 +87,143 @@ semantics; the renderers themselves are covered in
 
 ## Files
 
-`src/lib/dsps.ts` (schema definition, `dsps_version` + forward/backward-compat rules),
-`src/features/export/` (the three renderers), the **read-only `.dsps` receiver** over the
-Dossier renderer (D62, §13.1), plus the versioned **JSON Schema** and the **npm validator/parser
-library** published alongside the spec (D64). Signed-`.dsps` (D63.2) is its own design round —
-client-side signing against a published public key only.
+`src/lib/dsps.ts` (`DSPS_VERSION`, `DspsProvenance`, `DspsSnapshot`, `hashBytesHex`,
+`formatSnapshotLabel`, `passesFactWordingGuard` — reused verbatim from the Verdict seam's D45
+guard, `parseDsps` — the forward-compatible, version-mismatch-surfacing reader). `dsps.ts`
+layers the spec contract on top of the existing document builder rather than duplicating it:
+`src/lib/structureReport.ts`'s `StructureReport` **is** the concrete DSPS document — extended
+in place with `dspsVersion` and, on every fact (`StructureReportInsight`), `provenance` +
+`snapshot`. `src/services/ingestion.ts`'s `ingestBuffer` computes the snapshot's file-hash half
+(`hashBytesHex` over the already-in-memory `Uint8Array`) for a non-sampled file/sample ingest;
+a sampled-tier (large) file and non-file origins carry `fileHash: null` — a named gap, not a
+silent omission, since hashing a sampled-tier file would mean fully buffering exactly the file
+its own size tier exists to avoid buffering. `src/types/dataset.ts`'s `TableRegistryEntry`
+carries the resulting `fileHash`.
+
+Three renderers, all in `src/features/export/` (a fourth pre-existing one, JSON, already lived
+in `structureReport.ts`'s `downloadStructureReport`): `src/lib/dspsHtml.ts` (`buildDspsHtml` /
+`downloadDspsHtml` — the new HTML renderer, self-contained, HTML-escaped, carrying the D26
+attribution footer) is the one genuinely new renderer; "Copy for AI" (`lib/aiContext.ts`) and
+the DSPS JSON export already existed pre-build. All three now hang off `IdentityBand.tsx`'s
+button row ("Copy for AI" / "Export structure report" / "Export HTML report"), wired through
+`ViewSpecRenderer.tsx`'s `DossierInteractions` and `DatasetDossier.tsx`'s handlers.
+
+The **read-only `.dsps` receiver (D62):** `src/stores/dspsReceiver.ts` (a small store —
+`open`/`fail`/`close`) fed by `IngestionPanel.tsx`'s `handleFiles`, which now branches a
+single `.dsps`-suffixed drop to a local `file.text()` → `JSON.parse` → `parseDsps` path
+**before** it ever reaches ingestion — never a fetch, never the engine. `App.tsx` renders the
+parsed document through the **existing** `SharedStructureReportView.tsx` (already a pure,
+network-free read-only renderer over a `StructureReport` — reused as-is rather than building a
+second renderer), the same component the "open a share link" flow already uses. This is the
+**degraded cut** the spec's own internal cut line names ("degrade to rendering the §12.2 HTML
+report output") rather than a from-scratch static render of the full live Dossier ViewSpec —
+deliberate, not a shortfall. `DropZone.tsx`'s file-picker `accept` list gained `.dsps` (a real,
+live-pass-only finding: without it a `.dsps` file was invisible to click-to-browse, though
+drag-drop was unaffected).
+
+**JSON Schema + npm validator library (D64):** `schemas/dsps.schema.json` at the repo root (the
+published contract) and the standalone package `packages/dsps-validator/` (`package.json`,
+`tsconfig.json`, `README.md`, `src/index.ts` + `src/index.test.ts`, its own copy of the schema
+file) — zero runtime dependencies, zero import from this app's `src/`, typechecks and tests
+standalone. `vitest.config.ts`'s `include` extended to run its suite alongside the app's own.
+
+**MCP wiring (D38), completing the build/09-edge/01 scaffold:** `edge/protocol.ts`'s
+`McpResponse`'s `get_dsps` variant now carries `dsps: unknown` (an opaque pass-through of the
+stored artifact) rather than the narrower `StructuralFacts` shape synthesis still uses — MCP
+transports the client-generated document verbatim, per D38, rather than re-deriving a smaller
+one. `edge/handlers/mcp.ts` gained `createR2SharedArtifactStore(store: PersistenceStore)`: a
+production `SharedArtifactStore` backed by the **same** R2 bucket
+[`../09-edge/04-persistence-endpoints.md`](../09-edge/04-persistence-endpoints.md) already
+writes to (`shareObjectKey`, now exported from `persistence.ts`), gated on the object's stored
+content type (a new specific `application/vnd.datascope.dsps+json`, replacing the generic
+`application/json` `STRUCTURE_REPORT_CONTENT_TYPE` previously used in `services/export.ts`) so
+a full-dataset share (raw Parquet bytes) can never be surfaced through MCP as if it were a DSPS
+document. `McpEnv.store` is now optional (unbound R2 ⇒ a typed `unavailable`, the same
+fail-closed shape `persistence.ts`/`vault.ts` already use), and `handleMcp` now rejects
+non-POST. `listShared` is a **named, deliberate gap**: `persistence.ts`'s object store records
+no session↔token association server-side by design (its own header comment: "nothing stored
+beyond what TTL/ownership need") — building that index is new server-side scope this leaf doc's
+own acceptance criteria never asked for (only `get_dsps`'s pass-through is tested here), so it
+returns `[]` rather than fabricating a list. `edge/worker.ts` wires `/mcp` (mirroring
+`/persistence`'s method-check-inside-the-handler shape), `edge/bindings.ts` gained
+`MCP_KILL_SWITCH`, and `wrangler.toml` (root + `[env.staging]`) declares it — no new binding or
+resource, since `/mcp` reuses the persistence endpoint's existing `PERSISTENCE_BUCKET`.
+
+Signed-`.dsps` (D63.2) is unbuilt, as scoped — its own design round.
 
 ## Dependencies
 
 Profiling ([`../03-profiling/`](../03-profiling/)) and the Join Graph
 ([`../05-charting/05-join-graph-beta.md`](../05-charting/05-join-graph-beta.md)) supply the
-content; the interfaces-first work (D18) designs the schema in Phase 1.
+content; the interfaces-first work (D18) designs the schema in Phase 1. The MCP wiring depends
+on [`../09-edge/04-persistence-endpoints.md`](../09-edge/04-persistence-endpoints.md)'s R2
+store (already shipped) and reuses [`../09-edge/01-ai-router.md`](../09-edge/01-ai-router.md)'s
+Phase-1 `handleMcp`/`SharedArtifactStore` scaffold rather than replacing it.
 
 ## Acceptance criteria
 
-- [ ] Every DSPS document carries a `dsps_version`; a consumer on an older major version
-      reports the version rather than failing opaquely
-- [ ] With the D24 slice cut, DSPS validates as schema-only (relationship section absent, no
-      error)
-- [ ] DSPS JSON round-trips schema/profile metadata; no data rows appear in any renderer
-- [ ] Every DSPS fact carries a snapshot label ({date + file hash}) and a provenance tag
+- [x] Every DSPS document carries a `dsps_version`; a consumer on an older major version
+      reports the version rather than failing opaquely — `dsps.ts`'s `parseDsps` and the
+      independent `dsps-validator` package's own `parseDsps` both tested against a
+      major-version mismatch (reports `seenVersion`), a missing version (`'unversioned'`), and
+      a newer minor/patch within the current major (accepted)
+- [x] With the D24 slice cut, DSPS validates as schema-only (relationship section absent, no
+      error) — tested in `dsps.test.ts`, `dspsHtml.test.ts`, and the `dsps-validator` suite;
+      live-verified (the Titanic sample carries no Join Graph edges, and every renderer/receiver
+      pass below ran against exactly that schema-only document)
+- [x] DSPS JSON round-trips schema/profile metadata; no data rows appear in any renderer —
+      round-trip tests in `dsps.test.ts` and `dsps-validator`; the HTML renderer is
+      HTML-escaping-tested and, live, produced a self-contained file with no `<script>`/`<link>`
+      and no per-row cell values; every renderer type carries only schema/aggregate fields, no
+      row-shaped field exists to leak through
+- [x] Every DSPS fact carries a snapshot label ({date + file hash}) and a provenance tag
       (`derived-this-run` / `user-asserted` / `carried-unverified`); no fact label uses
-      "verified" or permanence/invariant wording (D45)
-- [ ] DSPS carries no metric facts (metrics remain in the semantic model, §20.6); the fact
-      set is structural/quality only, and stateless-per-run (no cross-run accumulation) (D45)
+      "verified" or permanence/invariant wording (D45) — `structureReport.ts` stamps both on
+      every insight; `passesFactWordingGuard` (reused from `producerValidators.ts`'s existing
+      D45 guard, not reimplemented) is unit-tested against "verified"/"always"-shaped text. The
+      current fixed insight templates (`insights.ts`) were manually audited and carry no banned
+      wording; a live-generated-insight regression test (querying a real engine) was judged out
+      of this build's scope, named here rather than silently skipped
+- [x] DSPS carries no metric facts (metrics remain in the semantic model, §20.6); the fact
+      set is structural/quality only, and stateless-per-run (no cross-run accumulation) (D45) —
+      true by construction: `DspsFact`/`StructureReportInsight` carry no numeric-metric field,
+      and every `buildStructureReport` call is a fresh, non-accumulating build
 - [ ] The stage-A MCP endpoint returns the identical client-generated DSPS artifact for a
-      shared share_id (read-only)
+      shared share_id (read-only) — **built and unit-verified** (`mcp.test.ts`'s
+      `createR2SharedArtifactStore` cases: a structure-only share's DSPS JSON returned verbatim,
+      a full-dataset share never surfaced, an unknown token returns `null`), wired into
+      `worker.ts`, and both `wrangler deploy --dry-run` (root + `--env staging`) bundle cleanly
+      with `MCP_KILL_SWITCH` present and the existing `PERSISTENCE_BUCKET` binding reused. **Box
+      stays open** on the one thing not done this session: a live round-trip against the real
+      deployed staging Worker (save a structure-only share, call `/mcp` for it) — a real
+      `wrangler deploy --env staging`, the same deliberate confirmation-gated pause this
+      project's edge items already establish as the norm
 - [ ] A published JSON Schema validates every emitted DSPS document, and the npm
-      validator/parser library round-trips it independently of the app source (D64)
-- [ ] The `.dsps` receiver renders a handed artifact read-only in the Dossier with no network
-      call for data/login/install; it degrades to the HTML report output (D62)
+      validator/parser library round-trips it independently of the app source (D64) — the
+      schema (`schemas/dsps.schema.json`) and the package (`packages/dsps-validator/`, 14
+      passing tests, zero runtime deps, zero import from this app's `src/`, typechecks
+      standalone) are both **built and verified locally**. **Box stays open** on the literal
+      word "published" — `npm publish` is a real, externally-visible, effectively-irreversible
+      action against the public registry, deliberately not run without explicit confirmation,
+      matching this project's own provisioning-pause pattern for R2 buckets/Terraform/deploys
+- [x] The `.dsps` receiver renders a handed artifact read-only in the Dossier with no network
+      call for data/login/install; it degrades to the HTML report output (D62) — unit-tested
+      (`dspsReceiver.test.ts`, `IngestionPanel.test.tsx`'s three `.dsps`-drop cases,
+      `App.test.tsx`'s render/close/error-dismiss cases) and **live-verified** in a real Chrome
+      browser via the dev server: downloaded the DSPS JSON export, dropped it back in through
+      the file picker, and the read-only `SharedStructureReportView` rendered the real schema
+      and insights with the request log showing **zero** network requests during the whole
+      operation
 
 ## Definition of done
 
-Schema + `dsps_version` compat rules defined and versioned; round-trip and schema-only
-degradation verified against all bundled samples; the JSON Schema is published.
+Schema + `dsps_version` compat rules built and versioned; round-trip and schema-only
+degradation verified against the bundled Titanic sample (unit tests + a live browser pass); the
+JSON Schema and its independent npm validator package are built, tested, and typecheck clean,
+but not yet actually published to the npm registry. The `.dsps` receiver and the HTML renderer
+are live-verified end to end, including a real bug the live pass caught and fixed (the
+file-picker's `accept` list excluded `.dsps`). The MCP `get_dsps` wiring is complete and
+unit-verified against a real R2-store shape but not yet exercised against a live staging
+deploy. **Two criteria stay open, both deliberately** — an `npm publish` and a
+`wrangler deploy --env staging` + live MCP round-trip — real external-facing actions withheld
+pending explicit confirmation, not gaps in the work itself.

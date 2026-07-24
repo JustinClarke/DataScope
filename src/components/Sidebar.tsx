@@ -50,6 +50,7 @@ export function Sidebar() {
   const aiMode = useSettingsStore((state) => state.aiMode);
   const skipToData = useSettingsStore((state) => state.skipToData);
   const setSkipToData = useSettingsStore((state) => state.setSkipToData);
+  const shareLinks = useSettingsStore((state) => state.shareLinks);
   const activeModule = useUIStore((state) => state.activeModule);
   const setActiveModule = useUIStore((state) => state.setActiveModule);
   const capabilities = useCapabilities();
@@ -131,7 +132,10 @@ export function Sidebar() {
       id: 'export',
       label: 'Export / Share',
       icon: Share2,
-      enabled: hasDatasets,
+      // Reachable with no dataset loaded too, so a share link created in an
+      // earlier session can still be found and deleted (§12.3's "delete now"
+      // control) even though tables themselves never persist across reloads.
+      enabled: hasDatasets || shareLinks.length > 0,
       disabledReason: 'Drop a dataset to get started',
     },
   ];

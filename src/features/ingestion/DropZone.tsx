@@ -79,7 +79,7 @@ export function DropZone({ onFiles, disabled = false }: DropZoneProps) {
         type="file"
         multiple
         className="hidden"
-        accept=".csv,.tsv,.parquet,.json,.jsonl,.ndjson,.zip"
+        accept=".csv,.tsv,.parquet,.json,.jsonl,.ndjson,.zip,.dsps"
         disabled={disabled}
         onChange={(event) => {
           const files = Array.from(event.target.files ?? []);

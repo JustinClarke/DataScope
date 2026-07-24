@@ -14,6 +14,8 @@ export interface QueryEngine {
    */
   registerFile(name: string, data: Uint8Array | File): Promise<void>;
   summarize(tableName: string): Promise<QueryResult>;
+  /** Copies a whole table to a downloadable buffer via `COPY ... TO` (§12.2) — entirely in-engine, no network. */
+  exportTable(tableName: string, format: 'parquet' | 'csv'): Promise<Uint8Array<ArrayBuffer>>;
 }
 
 export interface QueryResult {

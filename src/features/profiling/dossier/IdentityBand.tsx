@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Download } from 'lucide-react';
+import { Copy, Download, FileCode } from 'lucide-react';
 import { formatBytes } from '../../../lib/formatBytes';
 
 export interface IdentityBandProps {
@@ -15,12 +15,10 @@ export interface IdentityBandProps {
 }
 
 /**
- * The band above the hero (§13.1): dataset label, shape, and the persistent
- * "Export structure report" action (D20). Carries the D45 snapshot line —
- * facts as-of-profile-time, never "verified" — though the file-hash-on-hover
- * detail in the master mockup is deferred: no hashing exists anywhere in this
- * tree yet (that's DSPS spec territory, 08-persistence/03, unbuilt), so this
- * shows only the profiled date rather than fabricating a hash.
+ * The band above the hero (§13.1): dataset label, shape, and DSPS's three
+ * renderers (§12.2, D37) — "Copy for AI" (markdown), "Export structure
+ * report" (DSPS JSON), and "Export HTML report" (the human-facing renderer).
+ * Carries the D45 snapshot line — facts as-of-profile-time, never "verified".
  */
 export function IdentityBand({
   datasetLabel,
@@ -31,8 +29,9 @@ export function IdentityBand({
   grain,
   timeSpan,
   onExportReport,
+  onExportHtml,
   onCopyForAI,
-}: IdentityBandProps & { onExportReport: () => void; onCopyForAI: () => void }) {
+}: IdentityBandProps & { onExportReport: () => void; onExportHtml: () => void; onCopyForAI: () => void }) {
   const [copied, setCopied] = useState(false);
   const profiledDate = new Date(profiledAt).toLocaleDateString(undefined, {
     year: 'numeric',
@@ -72,6 +71,14 @@ export function IdentityBand({
           >
             <Download size={14} aria-hidden="true" />
             Export structure report
+          </button>
+          <button
+            type="button"
+            onClick={onExportHtml}
+            className="flex items-center gap-1.5 rounded border border-(--color-border) px-3 py-1.5 text-sm text-(--color-fg) transition-colors hover:bg-(--color-border)/40"
+          >
+            <FileCode size={14} aria-hidden="true" />
+            Export HTML report
           </button>
         </div>
       </div>

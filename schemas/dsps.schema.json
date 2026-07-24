@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DSPS — the DataScope Profile Spec",
+  "description": "The open, versioned document DataScope emits (D31/D37/D64): schema, inferred types, profile aggregates, the fact feed, and an optional relationship graph. Structural/quality facts only — no data rows, no metric values (master §12.2, §20.6). additionalProperties is true throughout by design: a document from a newer minor/patch within the same major carries fields an older copy of this schema has never seen, and a forward-compatible reader must not reject them.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["dspsVersion", "generatedAt", "tables", "insights"],
+  "properties": {
+    "dspsVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semver. A breaking change bumps the major; a consumer on a different major reports the version it saw rather than failing opaquely."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["tableName", "rowCount", "columnCount", "columns"],
+        "properties": {
+          "tableName": { "type": "string" },
+          "rowCount": { "type": "integer", "minimum": 0 },
+          "columnCount": { "type": "integer", "minimum": 0 },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": ["name", "semanticType", "physicalType", "nullPercentage", "cardinality"],
+              "properties": {
+                "name": { "type": "string" },
+                "semanticType": { "type": "string" },
+                "physicalType": { "type": "string" },
+                "nullPercentage": { "type": ["number", "null"] },
+                "cardinality": { "type": "integer", "minimum": 0 },
+                "classificationReason": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "insights": {
+      "type": "array",
+      "description": "The DSPS fact feed — structural/quality only (D45). Every fact carries a provenance tag and a snapshot label; metrics never appear here (they stay in the §20.6 semantic model).",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["tableName", "rule", "description", "provenance", "snapshot"],
+        "properties": {
+          "tableName": { "type": "string" },
+          "rule": { "type": "string" },
+          "description": { "type": "string" },
+          "provenance": {
+            "type": "string",
+            "enum": ["derived-this-run", "user-asserted", "carried-unverified"]
+          },
+          "snapshot": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["date", "fileHash"],
+            "properties": {
+              "date": { "type": "string", "format": "date-time" },
+              "fileHash": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "description": "Present only when the Join Graph (D24) is enabled and produced edges. Absent = schema-only document, still valid (D20).",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["childTable", "childColumn", "parentTable", "parentColumn", "confidence", "containment", "evidence"],
+        "properties": {
+          "childTable": { "type": "string" },
+          "childColumn": { "type": "string" },
+          "parentTable": { "type": "string" },
+          "parentColumn": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["confident", "candidate"] },
+          "containment": { "type": "number", "minimum": 0, "maximum": 1 },
+          "evidence": { "type": "string" }
+        }
+      }
+    }
+  }
+}

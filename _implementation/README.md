@@ -16,7 +16,11 @@ Read a leaf doc to build a feature; open the cited `§` only when you need the f
 | [`build/`](build/) | **How it's built**, phase by phase, numbered in build order |
 | [`backlog/`](backlog/) | Designed-but-deferred work (§20 remainder; incl. [deferred architecture](backlog/deferred-architecture.md)) |
 | [`maintenance/`](maintenance/) | **Keeping the docs consistent** — the [consistency runbook + mirror map](maintenance/README.md) and `sweep.sh` (run before landing a doc change) |
-| [`BUILD-ORDER.md`](BUILD-ORDER.md) | **Where the build stands** — model-assigned checklist with update/handoff rules and the session log; the only place build status lives |
+| [`status/`](status/) | **Where the build stands** — [`BUILD-ORDER.md`](status/BUILD-ORDER.md) (model-assigned checklist + session log; the only place build status lives), its archived [`BUILD-ORDER-HISTORY.md`](status/BUILD-ORDER-HISTORY.md), and [`DEFERRED-OBSERVATIONS.md`](status/DEFERRED-OBSERVATIONS.md) (time-based checks awaiting real-world passage of time) |
+
+The `_misc/` folder sits **outside** the master-derived canonical tree — exploratory concepts
+(`_misc/ideation/`) and code spikes (`_misc/spike-*/`) that don't cite `§n` and aren't governed
+by the mirror rule.
 
 ## Release tiers (D15 — canonical)
 

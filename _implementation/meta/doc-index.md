@@ -15,12 +15,14 @@ The sibling code repos (`app/`, `spike-ingestion/`) are out of scope by design �
 | [CLAUDE.md](../../CLAUDE.md) | Workspace rules: Part I behavioral guidelines, Part II the DataScope tiered-agent workflow + efficiency rules. |
 | [DATASCOPE.md](../../DATASCOPE.md) | The living master spec — Decision Record (D1–D70), architecture, phases, every §-numbered section. Everything else derives from this. |
 
-## `_implementation/` — tree root (README, build checklist)
+## `_implementation/` — tree root + `status/` (README, build checklist)
 
 | File | Purpose |
 | :--- | :--- |
-| [BUILD-ORDER.md](../BUILD-ORDER.md) | The build checklist — the only place build status, phase language, and process history live. One ▶ marks the next item; the log records w… |
 | [README.md](../README.md) | Entry point to the split tree — how `_implementation/` is organised and how leaf docs cite the master. |
+| [status/BUILD-ORDER.md](../status/BUILD-ORDER.md) | The build checklist — the only place build status, phase language, and process history live. One ▶ marks the next item; the log records w… |
+| [status/BUILD-ORDER-HISTORY.md](../status/BUILD-ORDER-HISTORY.md) | Archived historical execution log, split off from `BUILD-ORDER.md`. |
+| [status/DEFERRED-OBSERVATIONS.md](../status/DEFERRED-OBSERVATIONS.md) | Live table of non-blocking checks that close on real-world passage of time (e.g. R2 lifecycle TTL expiry), not on engineering work. |
 
 ## `product/` — *why*: vision, strategy, roadmap, landscape
 
@@ -77,7 +79,7 @@ The sibling code repos (`app/`, `spike-ingestion/`) are out of scope by design �
 
 ## `build/` — *how it's built*, phase by phase (build order)
 
-Each phase folder's `README.md` states its section dependency and exit criteria; leaf docs are the individual build items. Status lives only in [`BUILD-ORDER.md`](../BUILD-ORDER.md), never here.
+Each phase folder's `README.md` states its section dependency and exit criteria; leaf docs are the individual build items. Status lives only in [`BUILD-ORDER.md`](../status/BUILD-ORDER.md), never here.
 
 ### `01-foundation`
 

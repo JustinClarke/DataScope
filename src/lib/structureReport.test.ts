@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ClassifiedColumn, TableRegistryEntry } from '../types';
 import type { TableInsights } from './dossier';
 import type { FkEdge } from './relationshipInference';
-import { buildStructureReport } from './structureReport';
+import { buildStructureReport, redactColumnNames } from './structureReport';
 
 const edge: FkEdge = {
   id: 'orders.customer_id->customers.id',
@@ -79,7 +79,28 @@ describe('buildStructureReport', () => {
       },
     ];
     const report = buildStructureReport([t], tableInsights);
-    expect(report.insights).toEqual([{ tableName: 'orders', rule: 'duplicates', description: '412 duplicate rows' }]);
+    expect(report.insights).toEqual([
+      {
+        tableName: 'orders',
+        rule: 'duplicates',
+        description: '412 duplicate rows',
+        provenance: 'derived-this-run',
+        snapshot: { date: report.generatedAt, fileHash: null },
+      },
+    ]);
+  });
+
+  it('carries a table\'s D45 file hash into its facts\' snapshot, when the table has one', () => {
+    const t = table({ id: 't1', tableName: 'orders', fileHash: 'ab12cd34' });
+    const tableInsights: TableInsights[] = [
+      {
+        table: t,
+        insights: [{ id: 'x', rule: 'duplicates', description: '412 duplicate rows', sql: 'SELECT 1', effectSize: 1, coverage: 1 }],
+      },
+    ];
+    const report = buildStructureReport([t], tableInsights);
+    expect(report.insights[0].snapshot.fileHash).toBe('ab12cd34');
+    expect(report.insights[0].provenance).toBe('derived-this-run');
   });
 
   it('handles an unclassified table (no columns yet) without throwing', () => {
@@ -115,5 +136,28 @@ describe('buildStructureReport', () => {
     const t = table({ id: 't1', tableName: 'orders' });
     expect(buildStructureReport([t], []).relationships).toBeUndefined();
     expect(buildStructureReport([t], [], []).relationships).toBeUndefined();
+  });
+});
+
+describe('redactColumnNames', () => {
+  it('replaces every column name with a per-table positional placeholder', () => {
+    const t = table({ id: 't1', tableName: 'orders', columns: [column('email'), column('amount')] });
+    const report = redactColumnNames(buildStructureReport([t], []));
+    expect(report.tables[0].columns.map((c) => c.name)).toEqual(['column_1', 'column_2']);
+  });
+
+  it('renumbers independently per table rather than globally', () => {
+    const t1 = table({ id: 't1', tableName: 'orders', columns: [column('email')] });
+    const t2 = table({ id: 't2', tableName: 'customers', columns: [column('name')] });
+    const report = redactColumnNames(buildStructureReport([t1, t2], []));
+    expect(report.tables[0].columns[0].name).toBe('column_1');
+    expect(report.tables[1].columns[0].name).toBe('column_1');
+  });
+
+  it('leaves every other field (type, nullability, cardinality) untouched', () => {
+    const t = table({ id: 't1', tableName: 'orders', columns: [column('email')] });
+    const original = buildStructureReport([t], []).tables[0].columns[0];
+    const redacted = redactColumnNames(buildStructureReport([t], [])).tables[0].columns[0];
+    expect(redacted).toEqual({ ...original, name: 'column_1' });
   });
 });

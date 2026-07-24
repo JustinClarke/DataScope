@@ -7,6 +7,7 @@ import { useUIStore } from '../../stores/ui';
 import { EducationalPanelProvider } from '../../app/EducationalPanelContext';
 import * as sqlService from '../../services/sql';
 import * as transformsService from '../../services/transforms';
+import * as exportService from '../../services/export';
 import type { Dataset, TableRegistryEntry } from '../../types';
 
 // SqlModule always mounts under EducationalPanelProvider in the real app
@@ -47,6 +48,8 @@ vi.mock('../../services/transforms', async () => {
   return { ...actual, runTransform: vi.fn(), materializeInsteadOfMutation: vi.fn(), forceMutation: vi.fn() };
 });
 
+vi.mock('../../services/export', () => ({ downloadTable: vi.fn(async () => {}) }));
+
 describe('SqlModule', () => {
   beforeEach(() => {
     useQueryStore.setState({ sql: '', status: 'idle', result: null, error: null, history: [], charts: [] });
@@ -73,6 +76,7 @@ describe('SqlModule', () => {
     vi.mocked(transformsService.runTransform).mockReset().mockResolvedValue(transformResult);
     vi.mocked(transformsService.materializeInsteadOfMutation).mockReset().mockResolvedValue(transformResult);
     vi.mocked(transformsService.forceMutation).mockReset().mockResolvedValue(transformResult);
+    vi.mocked(exportService.downloadTable).mockReset().mockResolvedValue(undefined);
   });
 
   const dataset: Dataset = {
@@ -253,5 +257,37 @@ describe('SqlModule', () => {
         false,
       ),
     );
+  });
+
+  it('shows a Download Parquet shortcut on the Results header once a CTAS registers its derived table, wired to the export service', async () => {
+    useQueryStore.setState({ sql: 'CREATE TABLE feats AS SELECT 1' });
+    const derivedTable: TableRegistryEntry = {
+      ...sourceTable,
+      id: 'tbl-2',
+      tableName: 'feats',
+      origin: 'derived',
+      generatingSql: 'CREATE TABLE feats AS SELECT 1',
+    };
+    // Mirrors the real runTransform's order (register the derived table, then
+    // resolve) closely enough for this test's purposes: registration must be
+    // visible before QueryResultsPanel re-renders on the resolved status.
+    vi.mocked(transformsService.runTransform).mockImplementation(async () => {
+      useDatasetsStore.getState().registerDataset(dataset, [derivedTable]);
+      return {
+        columnNames: ['result'],
+        columnTypes: ['Utf8'],
+        rows: [['Created derived table "feats".']],
+        rowCount: 1,
+        executionTimeMs: 0,
+      };
+    });
+
+    const { container } = renderSqlModule();
+    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
+
+    const downloadButton = await waitFor(() => within(container).getByRole('button', { name: /download parquet/i }));
+    fireEvent.click(downloadButton);
+
+    await waitFor(() => expect(exportService.downloadTable).toHaveBeenCalledWith(derivedTable, 'parquet'));
   });
 });

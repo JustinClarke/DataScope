@@ -99,7 +99,8 @@ const STATUS: Record<PersistenceErrorCode, number> = {
   unavailable: 503,
 }
 
-function objectKey(token: string): string {
+/** Exported so `mcp.ts`'s `get_dsps` (build/08-persistence/03-dsps-spec) can address the same R2 objects by share token. */
+export function shareObjectKey(token: string): string {
   return `share:${token}`
 }
 
@@ -153,7 +154,7 @@ export async function handlePersistence(request: Request, env: PersistenceEnv): 
   if (request.method === 'GET') {
     const token = searchParams.get('token')
     if (token === null || token === '') return fail('bad-request')
-    const object = await store.get(objectKey(token))
+    const object = await store.get(shareObjectKey(token))
     if (object === null) return fail('not-found')
     record('ok', object.size)
     return new Response(object.body, {
@@ -170,7 +171,7 @@ export async function handlePersistence(request: Request, env: PersistenceEnv): 
     const token = searchParams.get('token')
     const deleteToken = searchParams.get('deleteToken')
     if (token === null || token === '' || deleteToken === null || deleteToken === '') return fail('bad-request')
-    const key = objectKey(token)
+    const key = shareObjectKey(token)
     const meta = await store.head(key)
     if (meta === null || meta.customMetadata?.deleteTokenHash !== (await hashDeleteToken(deleteToken))) {
       return fail('not-found')
@@ -206,7 +207,7 @@ export async function handlePersistence(request: Request, env: PersistenceEnv): 
   const contentType = request.headers.get('content-type') ?? 'application/octet-stream'
 
   try {
-    await store.put(objectKey(token), request.body, {
+    await store.put(shareObjectKey(token), request.body, {
       httpMetadata: { contentType },
       customMetadata: { deleteTokenHash: await hashDeleteToken(deleteToken) },
     })

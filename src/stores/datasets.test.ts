@@ -208,6 +208,36 @@ describe('datasets store', () => {
     });
   });
 
+  it('setTableRefreshMeta updates sampled/sampleRowLimit/lastFetchedAt on the right table only', () => {
+    const otherTable: TableRegistryEntry = { ...table, id: 'tbl-2' };
+    useDatasetsStore.getState().registerDataset(dataset, [table, otherTable]);
+
+    useDatasetsStore
+      .getState()
+      .setTableRefreshMeta('tbl-1', { sampled: true, sampleRowLimit: 100_000, lastFetchedAt: '2026-07-23T00:00:00.000Z' });
+
+    const state = useDatasetsStore.getState();
+    expect(state.tables.find((t) => t.id === 'tbl-1')).toMatchObject({
+      sampled: true,
+      sampleRowLimit: 100_000,
+      lastFetchedAt: '2026-07-23T00:00:00.000Z',
+    });
+    expect(state.tables.find((t) => t.id === 'tbl-2')?.lastFetchedAt).toBeUndefined();
+  });
+
+  it('markTablesStale flags exactly the given ids and nothing else', () => {
+    const derivedA: TableRegistryEntry = { ...table, id: 'tbl-derived-a', origin: 'derived' };
+    const derivedB: TableRegistryEntry = { ...table, id: 'tbl-derived-b', origin: 'derived' };
+    useDatasetsStore.getState().registerDataset(dataset, [table, derivedA, derivedB]);
+
+    useDatasetsStore.getState().markTablesStale(['tbl-derived-a']);
+
+    const state = useDatasetsStore.getState();
+    expect(state.tables.find((t) => t.id === 'tbl-derived-a')?.stale).toBe(true);
+    expect(state.tables.find((t) => t.id === 'tbl-derived-b')?.stale).toBeUndefined();
+    expect(state.tables.find((t) => t.id === 'tbl-1')?.stale).toBeUndefined();
+  });
+
   it('setWorkerStatus records status and an optional error', () => {
     useDatasetsStore.getState().setWorkerStatus('loading');
     expect(useDatasetsStore.getState().workerStatus).toBe('loading');

@@ -21,6 +21,11 @@ interface DatasetsState {
   reclassifyColumn: (tableId: string, columnName: string, semanticType: SemanticType) => void;
   setTableProfile: (tableId: string, profile: ColumnProfile[]) => void;
   setTableStats: (tableId: string, stats: { rowCount: number; columnCount: number; memoryBytes: number }) => void;
+  setTableRefreshMeta: (
+    tableId: string,
+    meta: { sampled: boolean; sampleRowLimit?: number; lastFetchedAt: string },
+  ) => void;
+  markTablesStale: (tableIds: string[]) => void;
   setWorkerStatus: (status: WorkerStatus, error?: string | null) => void;
 }
 
@@ -109,6 +114,27 @@ export const useDatasetsStore = create<DatasetsState>((set) => ({
     set((state) => ({
       tables: state.tables.map((t) => (t.id === tableId ? { ...t, ...stats } : t)),
     })),
+
+  // §7.4 "Refresh from source": the sampled/sampleRowLimit/lastFetchedAt trio
+  // a refresh can change, kept as its own setter since setTableStats already
+  // owns row/column/memory and setTableProfile/setTableColumns own the
+  // classified shape — this only ever touches the three refresh-specific
+  // fields those don't.
+  setTableRefreshMeta: (tableId, meta) =>
+    set((state) => ({
+      tables: state.tables.map((t) => (t.id === tableId ? { ...t, ...meta } : t)),
+    })),
+
+  // Flags every derived table built on a just-refreshed source as possibly
+  // stale (§7.4/§12.1) — never auto-rebuilt, since the point is that a
+  // derived table's recorded SQL already makes a manual re-run cheap.
+  markTablesStale: (tableIds) =>
+    set((state) => {
+      const ids = new Set(tableIds);
+      return {
+        tables: state.tables.map((t) => (ids.has(t.id) ? { ...t, stale: true } : t)),
+      };
+    }),
 
   setWorkerStatus: (status, error = null) => set({ workerStatus: status, workerError: error }),
 }));

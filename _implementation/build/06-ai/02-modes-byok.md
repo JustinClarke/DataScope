@@ -147,18 +147,31 @@ recognizes (`src/services/ai.ts`).
       Blueprint) unit-tested*
 - [x] Local-only: zero network requests after page load (Network tab, §18) — *live browser E2E
       2026-07-22: local-only session, zero requests to any `workers.dev` host at the network layer*
-- [ ] **Re-pointed 2026-07-22 (mode-taxonomy fold-in), re-opened pending a fresh live run:**
+- [x] **Re-pointed 2026-07-22 (mode-taxonomy fold-in), closed 2026-07-24 with a fresh live run:**
       localhost Ollama now reaches the browser through **API** mode's key/endpoint field
-      (auto-detected as a URL), not through "Local model." The underlying capability — the
-      earlier live 2026-07-22 run against a real daemon (Ollama 0.32.1, pinned
-      `qwen2.5-coder:1.5b`): two POSTs to `localhost:11434/api/chat`, a real DuckDB execution
-      (✓ 1 rows), a correct answer (355 survivors), zero external requests — is unchanged
-      evidence that Ollama-via-`ollamaProvider` works and is still zero-egress; what's unverified
-      *live* is the new trigger (typing a URL into API mode's field routes there, rather than
-      selecting "Local model"). `isOllamaEndpoint` shape-detection and the amended
-      `resolveProvider` ladder are unit-tested this session (no live daemon re-run). "Local
-      model" itself narrows to in-browser WebLLM only — that path's own criteria are unaffected
-      and stay under `v0.25/03-webllm-handoff.md`.
+      (auto-detected as a URL), not through "Local model." *Live browser pass (real Chrome via
+      Playwright, real dev server, real Ollama 0.32.1 daemon, pinned `qwen2.5-coder:1.5b`,
+      bundled Titanic sample): the first-run chooser's "API" option selected, `AISettingsPanel`'s
+      routing set to "Prefer my key," `http://localhost:11434` typed into the key/endpoint field
+      — the panel's own copy confirmed detection ("Detected as a local Ollama endpoint —
+      requests go directly from your browser to that address, never through our servers. Zero
+      egress, same as the in-browser model."). Asking "How many passengers survived?" on AI
+      Chat fired exactly two requests, both `POST http://localhost:11434/api/chat` (SQL-mode
+      then answer-mode, the documented two-call shape) and zero requests to any other host.
+      The suggested SQL (`SELECT COUNT(PassengerId) FROM titanic WHERE Survived = 1`) executed
+      for real (✓ 1 rows · 10 ms) and returned the correct count (355, matching the 2026-07-22
+      run) — confirming the routing/execution path is sound.* **One real, separate finding from
+      this run, worth naming but not a plumbing defect:** the model's own prose answer read "192
+      passengers survived," disagreeing with the correct row directly beneath it
+      (`count(PassengerId): 355`) — the 1.5B pinned coder hallucinating in answer-mode text
+      despite being handed the correct tool result. SQL generation, execution, and row delivery
+      to the model were all correct; only the model's own final-answer composition was wrong.
+      Not a regression this leaf doc's criteria cover (they test the routing/egress contract, not
+      small-model answer fidelity) — flagged here as a known sharp edge of the pinned local
+      model, consistent with "Local model"'s own disclosed "SQL generation is weaker than cloud"
+      caveat. `isOllamaEndpoint` shape-detection and the amended `resolveProvider` ladder remain
+      unit-tested alongside this live evidence. "Local model" itself narrows to in-browser WebLLM
+      only — that path's own criteria are unaffected and stay under `v0.25/03-webllm-handoff.md`.
 - [x] Prefer-my-key routes 100% to the user's provider; free-tier-first overflows at ceiling —
       *live against staging 2026-07-22 with a canary key: prefer-key demonstrably reached
       api.openai.com (upstream 401 → typed `upstream-error` 502, never Workers AI); at a

@@ -12,6 +12,24 @@ export type WebLLMConsent = 'accepted' | 'declined' | null;
 
 export const SETTINGS_STORAGE_KEY = 'datascope-settings';
 
+/**
+ * A share link this browser created (§12.3, build/08-persistence/02-r2-save-share)
+ * — the "links I created" list the share dialog's delete control reads.
+ * `deleteToken` is the ownership proof returned once at save time (never the
+ * link's own `token`, which anyone holding the URL already has); losing it
+ * (e.g. a cleared localStorage) leaves the object recoverable only by its
+ * 30-day TTL expiring, since there is no other way to prove ownership.
+ */
+export interface CreatedShareLink {
+  token: string;
+  deleteToken: string;
+  kind: 'structure' | 'full-dataset';
+  /** The table or dataset name shown in the "your share links" list. */
+  label: string;
+  createdAt: string;
+  ttlSeconds: number;
+}
+
 interface SettingsState {
   // D2: no silent default — null means the first-run AI-mode chooser hasn't run yet.
   aiMode: AIMode | null;
@@ -36,6 +54,11 @@ interface SettingsState {
   // loop's stage-5 "data-sampled repair" only resamples real rows on a failed
   // attempt when this is explicitly turned off. A preference, not content.
   metadataOnlyRepair: boolean;
+  // The user's own "links I created" list — local only; the server holds no
+  // reverse index from session to shares (§12.3). Losing this list still
+  // leaves the links working for anyone holding the URL; it only loses the
+  // local "delete now" convenience.
+  shareLinks: CreatedShareLink[];
 
   setAIMode: (mode: AIMode) => void;
   setByokPreference: (preference: BYOKPreference) => void;
@@ -43,6 +66,8 @@ interface SettingsState {
   setSkipToData: (skip: boolean) => void;
   setWebllmConsent: (consent: WebLLMConsent) => void;
   setMetadataOnlyRepair: (metadataOnly: boolean) => void;
+  addShareLink: (link: CreatedShareLink) => void;
+  removeShareLink: (token: string) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -55,6 +80,7 @@ export const useSettingsStore = create<SettingsState>()(
       skipToData: false,
       webllmConsent: null,
       metadataOnlyRepair: true,
+      shareLinks: [],
 
       setAIMode: (mode) => set({ aiMode: mode }),
       setByokPreference: (preference) => set({ byokPreference: preference, byokRoutingTouched: true }),
@@ -62,6 +88,9 @@ export const useSettingsStore = create<SettingsState>()(
       setSkipToData: (skip) => set({ skipToData: skip }),
       setWebllmConsent: (consent) => set({ webllmConsent: consent }),
       setMetadataOnlyRepair: (metadataOnly) => set({ metadataOnlyRepair: metadataOnly }),
+      addShareLink: (link) => set((state) => ({ shareLinks: [link, ...state.shareLinks] })),
+      removeShareLink: (token) =>
+        set((state) => ({ shareLinks: state.shareLinks.filter((link) => link.token !== token) })),
     }),
     {
       name: SETTINGS_STORAGE_KEY,

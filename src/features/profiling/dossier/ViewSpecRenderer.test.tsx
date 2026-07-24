@@ -9,6 +9,7 @@ function noopInteractions(): DossierInteractions {
     onOpenTable: vi.fn(),
     onSelectAction: vi.fn(),
     onExportReport: vi.fn(),
+    onExportHtml: vi.fn(),
     onCopyForAI: vi.fn(),
     onShowSql: vi.fn(),
   };

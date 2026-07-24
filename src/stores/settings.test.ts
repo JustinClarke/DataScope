@@ -6,6 +6,7 @@ const initial = {
   byokPreference: 'free-tier-first' as const,
   theme: 'system' as const,
   metadataOnlyRepair: true,
+  shareLinks: [],
 };
 
 beforeEach(() => {
@@ -41,5 +42,39 @@ describe('settings store', () => {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
     expect(raw).toBeTruthy();
     expect(JSON.parse(raw!).state.theme).toBe('dark');
+  });
+
+  it('addShareLink prepends to the "links I created" list, defaulting to empty', () => {
+    expect(useSettingsStore.getState().shareLinks).toEqual([]);
+
+    const link = {
+      token: 'tok-1',
+      deleteToken: 'del-1',
+      kind: 'structure' as const,
+      label: 'titanic',
+      createdAt: '2026-07-23T00:00:00.000Z',
+      ttlSeconds: 2_592_000,
+    };
+    useSettingsStore.getState().addShareLink(link);
+
+    expect(useSettingsStore.getState().shareLinks).toEqual([link]);
+  });
+
+  it('removeShareLink drops only the matching token', () => {
+    const linkA = {
+      token: 'tok-1',
+      deleteToken: 'del-1',
+      kind: 'structure' as const,
+      label: 'titanic',
+      createdAt: '2026-07-23T00:00:00.000Z',
+      ttlSeconds: 2_592_000,
+    };
+    const linkB = { ...linkA, token: 'tok-2', deleteToken: 'del-2', label: 'orders' };
+    useSettingsStore.getState().addShareLink(linkA);
+    useSettingsStore.getState().addShareLink(linkB);
+
+    useSettingsStore.getState().removeShareLink('tok-1');
+
+    expect(useSettingsStore.getState().shareLinks).toEqual([linkB]);
   });
 });

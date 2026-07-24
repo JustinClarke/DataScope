@@ -25,6 +25,7 @@ export interface DossierInteractions {
   onOpenTable: (tableId: string) => void;
   onSelectAction: (action: RankedAction) => void;
   onExportReport: () => void;
+  onExportHtml: () => void;
   onCopyForAI: () => void;
   onShowSql: (label: string, sql: string) => void;
 }
@@ -37,6 +38,7 @@ function renderPanel(panel: ViewSpec['panels'][number], index: number, interacti
           key={index}
           {...(panel.props as unknown as IdentityBandProps)}
           onExportReport={interactions.onExportReport}
+          onExportHtml={interactions.onExportHtml}
           onCopyForAI={interactions.onCopyForAI}
         />
       );

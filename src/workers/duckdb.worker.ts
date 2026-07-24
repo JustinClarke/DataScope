@@ -166,8 +166,33 @@ async function summarize(tableName: string): Promise<QueryResult> {
   return execute(`SUMMARIZE ${quoteIdentifier(tableName)}`);
 }
 
+const EXPORT_COPY_OPTIONS: Record<'parquet' | 'csv', string> = {
+  parquet: '(FORMAT PARQUET)',
+  csv: '(FORMAT CSV, HEADER)',
+};
+
+/**
+ * `COPY` writes into DuckDB-Wasm's own virtual filesystem, not the real one —
+ * `copyFileToBuffer` reads that VFS entry back out as a `Uint8Array` for the
+ * caller to turn into a download, then `dropFile` frees it so a session with
+ * many exports doesn't leak VFS memory.
+ */
+async function exportTable(tableName: string, format: 'parquet' | 'csv'): Promise<Uint8Array<ArrayBuffer>> {
+  const vfsFile = `export_${crypto.randomUUID()}.${format}`;
+  await execute(`COPY ${quoteIdentifier(tableName)} TO '${vfsFile}' ${EXPORT_COPY_OPTIONS[format]}`);
+  const { db } = await getInstance();
+  try {
+    // duckdb-wasm's own typing declares a bare `Uint8Array` (ArrayBufferLike) —
+    // this VFS read-back is always backed by a plain ArrayBuffer, never a
+    // SharedArrayBuffer, so this narrows to what `Blob` (BlobPart) requires.
+    return (await db.copyFileToBuffer(vfsFile)) as Uint8Array<ArrayBuffer>;
+  } finally {
+    await db.dropFile(vfsFile).catch(() => {});
+  }
+}
+
 /** The DuckDB-Wasm implementation of the engine-agnostic execution boundary. */
-export const duckDBEngine: QueryEngine = { execute, registerFile, summarize };
+export const duckDBEngine: QueryEngine = { execute, registerFile, summarize, exportTable };
 
 export function toErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
