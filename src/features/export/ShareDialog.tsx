@@ -105,7 +105,7 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
       role="dialog"
       aria-modal="true"
       aria-label={`Share ${table.tableName}`}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-(--color-scrim) p-4"
     >
       <div className="w-full max-w-lg rounded-lg border border-(--color-border) bg-(--color-bg) p-6">
         <div className="mb-4 flex items-center justify-between">
@@ -152,7 +152,7 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
             </p>
 
             {findings.length > 0 && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-400/50 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400">
+              <div className="flex items-start gap-2 rounded-lg border border-(--color-warn)/40 bg-(--color-warn)/5 p-3 text-xs text-(--color-warn)">
                 <TriangleAlert size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
                 <span>
                   These columns may contain personal data — review before sharing:{' '}
@@ -169,7 +169,7 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
             )}
 
             {error && (
-              <div className="rounded-lg border border-red-400/50 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-400">
+              <div className="rounded-lg border border-(--color-error)/40 bg-(--color-error)/5 p-3 text-sm text-(--color-error)">
                 {ERROR_MESSAGE[error]}
               </div>
             )}
@@ -198,7 +198,7 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
                 disabled={busy}
                 className={
                   escalated
-                    ? 'rounded border border-red-500 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-600 disabled:opacity-50 dark:text-red-400'
+                    ? 'rounded border border-(--color-error) bg-(--color-error)/10 px-4 py-2 text-sm font-medium text-(--color-error) disabled:opacity-50 dark:text-(--color-error)'
                     : 'rounded border border-(--color-border) px-4 py-2 text-sm font-medium text-(--color-fg) disabled:opacity-50'
                 }
               >

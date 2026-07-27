@@ -21,8 +21,8 @@ import type {
 } from '../protocol'
 
 /** OpenAI-compatible chat-completions endpoint (the canonical pass-through case). */
-const OPENAI_CHAT_URL = 'https://api.openai.com/v1/chat/completions'
-const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini'
+const OPENAI_CHAT_URL = 'http://100.126.157.97:11434/v1/chat/completions'
+const DEFAULT_OPENAI_MODEL = 'qwen2.5-coder:14b'
 
 interface OpenAiChatResult {
   choices?: Array<{

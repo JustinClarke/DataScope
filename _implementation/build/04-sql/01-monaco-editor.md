@@ -2,6 +2,11 @@
 
 **Tier:** v0 · Phase 2 · **Master spec:** §10 Module 2, §15
 
+> **Amended by D73 (2026-07-26) — v0.70 / S3.** The lazy boundary moves: Monaco loads on **the
+> console's first open**, never on the shell's mount, because the drawer hosting it is present in
+> every session. "Never touches the initial bundle" is unchanged as a requirement; what counts as
+> the trigger is not (§15).
+
 ## Objective
 
 Monaco with SQL highlighting and DuckDB-aware autocomplete, lazy-loaded so it never touches

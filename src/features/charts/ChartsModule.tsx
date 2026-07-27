@@ -36,10 +36,24 @@ const TABS: ChartTab[] = [
  * active — tab routing (`activeTabId`/`action.tab`) and thread prefill
  * (`action.prefill`) are separate D68 contracts, deliberately not conflated.
  */
-export function ChartsModule() {
+interface ChartsModuleProps {
+  /** The Workbench tab's own initializer (W7.5) — see `useThreadPrefill`'s `override` doc. */
+  prefill?: ModulePrefill;
+  /**
+   * The Workbench tab's own `subject` (W7.5), which already carries exactly
+   * this value whenever a `RankedAction` named a specific chart sub-type
+   * (`openDestination`'s `tab ?? module` mapping) — falls through to this
+   * component's own first-eligible default when it doesn't match a real
+   * `ChartTabId` (e.g. the palette's plain `'charts'` entry).
+   */
+  requestedTab?: string | null;
+}
+
+export function ChartsModule({ prefill: prefillOverride, requestedTab: requestedTabOverride }: ChartsModuleProps = {}) {
   const capabilities = useCapabilities();
-  const requestedTab = useUIStore((state) => state.activeTabId);
-  const prefill = useThreadPrefill();
+  const globalRequestedTab = useUIStore((state) => state.activeTabId);
+  const requestedTab = requestedTabOverride !== undefined ? requestedTabOverride : globalRequestedTab;
+  const prefill = useThreadPrefill(prefillOverride);
   const eligible = TABS.filter((t) => t.legal(capabilities));
 
   const [tab, setTab] = useState<ChartTabId | null>(null);

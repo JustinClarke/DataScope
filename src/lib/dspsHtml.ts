@@ -2,11 +2,14 @@
 // renderers, alongside the DSPS JSON export (`structureReport.ts`'s
 // `downloadStructureReport`) and "Copy for AI" (`aiContext.ts`). A single
 // self-contained file: inline CSS, no script, no DataScope dependency to open
-// — openable, attachable, and hostable anywhere. Carries the D26 attribution
-// footer, tagged so the D25 edge counters can distinguish report-referred
-// arrivals.
+// — openable, attachable, and hostable anywhere. Its stylesheet mirrors the
+// app's token layer via `exportTheme.ts`, so a shared report looks like the app
+// it came from and follows its reader's register (V6c). Carries the D26
+// attribution footer, tagged so the D25 edge counters can distinguish
+// report-referred arrivals.
 import type { StructureReport } from './structureReport';
 import { formatSnapshotLabel } from './dsps';
+import { EXPORT_THEME_CSS } from './exportTheme';
 
 function escapeHtml(value: string): string {
   return value
@@ -91,22 +94,78 @@ export function buildDspsHtml(report: StructureReport, attributionUrl: string): 
 <meta charset="utf-8">
 <title>DataScope structure report</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; background: #fff; }
-  h1 { font-size: 1.4rem; }
-  h2 { font-size: 1.05rem; margin-top: 2rem; border-bottom: 1px solid #e2e2e2; padding-bottom: 0.4rem; }
-  .meta { color: #666; font-size: 0.85rem; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem; }
-  th, td { text-align: left; padding: 0.35rem 0.6rem; border-bottom: 1px solid #eee; }
-  th { color: #666; font-weight: 600; }
-  code { background: #f4f4f4; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.85em; }
-  .snapshot { color: #888; font-size: 0.8em; }
-  .beta { font-size: 0.7em; color: #888; border: 1px solid #ccc; border-radius: 3px; padding: 0 0.3em; vertical-align: middle; }
-  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #e2e2e2; font-size: 0.8rem; color: #888; }
-  footer a { color: inherit; }
+/* design-system: design.md · designed-as-app — the token declarations are mirrored
+ * by src/lib/exportTheme.ts, which a test pins to src/app/theme.css. */
+${EXPORT_THEME_CSS}
+
+* { box-sizing: border-box; }
+
+body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 { margin: 0; font-size: var(--text-2xl); font-weight: 600; letter-spacing: -0.01em; }
+.mark { color: var(--color-active); }
+
+/* The system's single labelling device: mono, tracked out, uppercase. */
+.micro, th, .beta {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-ink-3);
+}
+.micro { margin: var(--space-2xs) 0 0; }
+
+.meta { margin: var(--space-xs) 0 0; font-family: var(--font-mono); font-size: var(--text-base); color: var(--color-ink-2); }
+
+h2 {
+  margin: var(--space-xl) 0 0;
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--color-rule);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+table { width: 100%; margin-top: var(--space-xs); border-collapse: collapse; font-family: var(--font-mono); font-size: var(--text-base); }
+th, td { text-align: left; padding: var(--space-2xs) var(--space-xs); border-bottom: 1px solid var(--color-rule-2); }
+th { border-bottom: 1px solid var(--color-rule); }
+td { color: var(--color-ink-2); }
+
+code { font-family: var(--font-mono); padding: 0 var(--space-2xs); border-radius: var(--radius-xs); background: var(--color-elev); color: var(--color-ink); }
+
+/* A default disc marker is the last generic left in the document — the system
+ * ships its own dingbat set, so the list wears one. */
+ul { margin: var(--space-xs) 0 0; padding-left: 0; list-style: none; }
+li { margin-top: var(--space-2xs); }
+li::before { content: '◆'; margin-right: var(--space-xs); font-size: var(--text-sm); color: var(--color-ink-3); }
+.snapshot { font-family: var(--font-mono); font-size: var(--text-base); color: var(--color-ink-3); }
+.beta { padding: 0 var(--space-2xs); border: 1px solid var(--color-rule); border-radius: var(--radius-xs); vertical-align: middle; }
+
+footer {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-rule);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--color-ink-3);
+}
+footer a { color: var(--color-active); }
 </style>
 </head>
 <body>
-  <h1>DataScope structure report</h1>
+  <h1>Data<span class="mark">Scope</span></h1>
+  <p class="micro">Structure report</p>
   <p class="meta">Generated ${escapeHtml(generated)} · structure only — no data rows included</p>
   ${tablesHtml}
   ${insightsHtml}

@@ -8,6 +8,15 @@ const AGGREGATES: TimeSeriesAggregate[] = ['avg', 'sum', 'min', 'max', 'count'];
 const DOW_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
+/**
+ * The sequential magnitude ramp (design.md § Chart palette): one hue mixed
+ * toward the surface, which is what makes a single expression ramp up in
+ * lightness on the dark register and down on the light one. Cells with no data
+ * skip this entirely and stay transparent, so "no data" never reads as "low".
+ */
+const sequentialFill = (intensity: number) =>
+  `color-mix(in oklab, var(--chart-seq) ${(12 + intensity * 88).toFixed(1)}%, var(--color-canvas))`;
+
 interface SeasonalityHeatmapProps {
   table: string;
   dateColumn: string;
@@ -73,7 +82,7 @@ export function SeasonalityHeatmap({ table, dateColumn, valueColumn }: Seasonali
       {loading ? (
         <p className="text-sm text-(--color-fg-muted)">Running query…</p>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-(--color-error)">{error}</p>
       ) : !cells || cells.length === 0 ? (
         <p className="text-sm text-(--color-fg-muted)">No rows for this table.</p>
       ) : (
@@ -96,7 +105,7 @@ export function SeasonalityHeatmap({ table, dateColumn, valueColumn }: Seasonali
                       key={hour}
                       title={value === undefined ? `${label} ${hour}:00 — no data` : `${label} ${hour}:00 — ${value.toLocaleString()}`}
                       className="h-6 w-6 rounded-sm border border-(--color-border)"
-                      style={{ backgroundColor: value === undefined ? 'transparent' : 'var(--color-accent)', opacity: value === undefined ? 1 : 0.15 + intensity * 0.85 }}
+                      style={{ backgroundColor: value === undefined ? 'transparent' : sequentialFill(intensity) }}
                     />
                   );
                 })}

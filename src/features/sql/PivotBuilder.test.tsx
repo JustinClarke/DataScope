@@ -195,6 +195,19 @@ describe('PivotBuilder', () => {
     expect(useUIStore.getState().pendingPrefill).toBeNull();
   });
 
+  it('W7.5: a `prefill` prop (the Workbench tab\'s own initializer) wins over whatever the old shell\'s global store holds', async () => {
+    useDatasetsStore.setState({ tables: [baseTable] });
+    // Deliberately different columns from the prop below — proves the prop is
+    // used, not just "no prop passed" falling through to the global.
+    useUIStore.getState().setActiveModule('pivot', null, { tableName: 'orders', columns: ['customer_id'] });
+    const { container } = render(<PivotBuilder prefill={{ tableName: 'orders', columns: ['region', 'revenue'] }} />);
+
+    await waitFor(() => expect(within(container.querySelector('[data-testid="well-rows"]')!).getByText('region')).toBeTruthy());
+    expect(within(container.querySelector('[data-testid="well-values"]')!).getByText('revenue')).toBeTruthy();
+    // The global store's own prefill is untouched — the override path never reads or clears it.
+    expect(useUIStore.getState().pendingPrefill).toEqual({ tableName: 'orders', columns: ['customer_id'] });
+  });
+
   it('Guided mode dropdowns compile the same SQL as the equivalent Builder-mode wells (cut-line parity)', async () => {
     useDatasetsStore.setState({ tables: [baseTable] });
     const { container, unmount } = render(<PivotBuilder />);

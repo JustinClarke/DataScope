@@ -136,7 +136,7 @@ export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
           Running query…
         </div>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-(--color-error)">{error}</p>
       ) : result && result.rows.length === 0 ? (
         <p className="text-sm text-(--color-fg-muted)">No rows for this table.</p>
       ) : result ? (

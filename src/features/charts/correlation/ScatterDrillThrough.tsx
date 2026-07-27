@@ -50,7 +50,7 @@ export function ScatterDrillThrough({ table, columnA, columnB }: ScatterDrillThr
       </div>
     );
   }
-  if (error) return <p className="text-sm text-red-500">{error}</p>;
+  if (error) return <p className="text-sm text-(--color-error)">{error}</p>;
   if (!result || result.rows.length === 0) {
     return <p className="text-sm text-(--color-fg-muted)">No rows with both values present.</p>;
   }

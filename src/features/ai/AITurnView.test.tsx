@@ -4,10 +4,19 @@ import { AITurnView } from './AITurnView';
 import type { AITurn } from '../../types';
 
 describe('AITurnView — transcript audit trail (§11.1)', () => {
-  it('renders a user question as a plain bubble', () => {
+  it('renders a user question as a plain bubble with no accent wash', () => {
     const turn: AITurn = { id: 'u1', role: 'user', content: 'average fare by class', createdAt: '' };
     const { getByText } = render(<AITurnView turn={turn} />);
-    expect(getByText('average fare by class')).toBeTruthy();
+    const bubble = getByText('average fare by class');
+    expect(bubble).toBeTruthy();
+    expect(bubble.className).toContain('bg-(--color-elev)');
+    expect(bubble.className).not.toContain('color-accent');
+  });
+
+  it('gives every assistant turn a ✦ Copilot who-label', () => {
+    const turn: AITurn = { id: 'a1', role: 'assistant', content: 'Class 1 paid the most on average.', createdAt: '' };
+    const { getByText } = render(<AITurnView turn={turn} />);
+    expect(getByText('✦ Copilot')).toBeTruthy();
   });
 
   it('shows the suggested SQL and per-attempt execution log for every attempt', () => {

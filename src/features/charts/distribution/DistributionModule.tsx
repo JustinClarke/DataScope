@@ -213,7 +213,7 @@ export function DistributionModule({ prefill = null }: { prefill?: ModulePrefill
       {loading ? (
         <div className="flex h-48 items-center justify-center text-sm text-(--color-fg-muted)">Running query…</div>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-(--color-error)">{error}</p>
       ) : (
         <>
           <div className="flex flex-col gap-1.5">

@@ -303,7 +303,10 @@ function buildLeakageProbe(tableName: string, quantColumns: ClassifiedColumn[]):
 export function buildInsightProbes(tableName: string, columns: ClassifiedColumn[], rowCount: number): InsightProbe[] {
   const categorical = byType(columns, 'Categorical');
   const quantitative = byType(columns, 'Quantitative');
-  const temporal = byType(columns, 'Temporal');
+  // A bare TIME column has no calendar date component — date_trunc('month', ...)
+  // has no TIME overload in DuckDB, so it would always error; exclude it from
+  // the change-point probe's date-axis candidates.
+  const temporal = byType(columns, 'Temporal').filter((c) => c.physicalType.toUpperCase() !== 'TIME');
 
   const probes: InsightProbe[] = [];
 

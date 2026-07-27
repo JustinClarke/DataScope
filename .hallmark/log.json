@@ -1,5 +1,36 @@
 [
   {
+    "date": "2026-07-25",
+    "scope": "app",
+    "macrostructure": "Workbench (conformance gate — no new surface)",
+    "theme": "custom dark (SqlErd-ported HUD)",
+    "theme_axes": "dark / geometric-sans + mono / warm-amber (+ purple copilot register)",
+    "vibe": "the tier auditing itself (diversification INVERTED — designed-as-app; no new composition emitted)",
+    "enrichment": "none — this run emitted no new surface; Act 0's Tier-B specimen plate is V6d's and was only verified",
+    "slop_test": "58 gates run + six-axis pre-emit critique (P5 H4 E4 S5 R4, variety n/a — diversification inverted). 3 failures, all fixed: g22 zero-chroma light --color-card; g48 five-copy scrim literal -> --color-scrim (bit-identical colour); g40/41 NULL marker at 2.9:1 behind an opacity modifier. 3 adjudicated passes recorded (g19 'acme' is a test fixture; g38a italics are body-copy emphasis; g49 wrapping is row prose, not a CTA label). Contrast: FIXED, was FAIL 40-41. mobile: pass (34, 49, 50-57). tokens: pass (48). honest: pass (46). chrome: pass (47). icons: pass (30).",
+    "brief": "DataScope v0.69 V6e - the conformance gate. Measured what V1-V6d asserted: contrast (7 token failures fixed, incl. the light amber at 3.17:1 on its own wash and light --chart-4 at delta-E 8.6 / 5.7-under-protanopia from --chart-1), the 58-gate slop sweep, live-browser verification in Chrome at 7 viewports in both registers (the tier's first - caught every explorer table name rendering at 1px behind a flex-1 basis, invisible to jsdom), and residual literals 82 -> 0 against a closed allowlist. Common cause across all four: gates evaluated against a representative case rather than a worst case. Dark register unchanged apart from --color-ink-3; four recorded departures still four. Contrast matrix + residual census are now tests (src/app/conformance.test.ts). Two follow-ups deferred with reasons."
+  },
+  {
+    "date": "2026-07-25",
+    "scope": "page",
+    "macrostructure": "Workbench (Entry page — Specimen composition)",
+    "theme": "custom dark (SqlErd-ported HUD)",
+    "theme_axes": "dark / geometric-sans + mono / warm-amber (+ purple FK register)",
+    "vibe": "the front door as a decision surface rather than a scrolling document (diversification INVERTED — designed-as-app, unchanged system)",
+    "enrichment": "Tier B hand-built SVG specimen plate — two entity cards joined on a FK over a distribution strip, drawn from the real `ecommerce` sample's schema; admitted by a design.md § Per-page allowances amendment granting the Entry page (Act 0 only) one Tier-B specimen",
+    "brief": "DataScope Act 0 — re-flowed from the V6d stacked editorial column into a 100svh masthead / editorial | ingest / footer frame: no page scroll at lg+ (columns absorb, verified 1440x900, 1280x800, 1440x720), natural flow below lg. Two design.md amendments recorded (§ Per-page allowances Entry-page clause, § Variants viewport-fit + specimen limits). No entrance animation, no fabricated numbers, ingest behaviour untouched."
+  },
+  {
+    "date": "2026-07-25",
+    "scope": "app",
+    "macrostructure": "Workbench",
+    "theme": "custom dark (SqlErd-ported HUD)",
+    "theme_axes": "dark / geometric-sans + mono / warm-amber (+ purple copilot register)",
+    "vibe": "dark technical HUD instrument, ported from ideation into the shipped app (diversification INVERTED — designed-as-app, every surface coheres with the dataset map)",
+    "enrichment": "none — forbidden on app pages by design.md; the map's SVG is the product, not enrichment",
+    "brief": "DataScope v0.69 V1 — the mocks' visual system landed in real code: design.md + tokens.css + src/app/theme.css (7-surface ladder, translucent rules, dual accent registers, self-hosted Geist + JetBrains Mono), light register derived, --c-fg-3 re-solved for contrast. Chrome phases V2–V5 not started."
+  },
+  {
     "date": "2026-07-24",
     "macrostructure": "Workbench",
     "theme": "custom dark (SqlErd-ported)",

@@ -1,0 +1,2764 @@
+{
+  "ranAt": "2026-07-26T15:01:13.768Z",
+  "aiRouterEndpoint": "https://datascope-edge-staging.justinclarke.workers.dev/ai-router",
+  "ollamaEndpoint": "http://100.126.157.97:11434/v1/chat/completions",
+  "ollamaModel": "qwen2.5-coder:14b",
+  "variantSummary": [
+    {
+      "variant": "production",
+      "headlineWinRate": 0,
+      "actionsUpgradedRate": 0,
+      "validatorRejections": 0
+    },
+    {
+      "variant": "widened-v1-domain-and-dates",
+      "headlineWinRate": 0,
+      "actionsUpgradedRate": 0,
+      "validatorRejections": 0
+    },
+    {
+      "variant": "widened-v2-suited-for",
+      "headlineWinRate": 0,
+      "actionsUpgradedRate": 0,
+      "validatorRejections": 0
+    },
+    {
+      "variant": "production__ollama",
+      "headlineWinRate": 0.6,
+      "actionsUpgradedRate": 1,
+      "validatorRejections": 0
+    },
+    {
+      "variant": "widened-v1-domain-and-dates__ollama",
+      "headlineWinRate": 0.4,
+      "actionsUpgradedRate": 1,
+      "validatorRejections": 0
+    },
+    {
+      "variant": "widened-v2-suited-for__ollama",
+      "headlineWinRate": 0.2,
+      "actionsUpgradedRate": 1,
+      "validatorRejections": 0
+    }
+  ],
+  "variantResults": [
+    {
+      "variant": "production",
+      "dataset": "titanic",
+      "score": {
+        "dataset": "titanic",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+        "composedHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "titanic",
+            "rowCount": 891,
+            "columns": [
+              {
+                "name": "PassengerId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 891
+              },
+              {
+                "name": "Survived",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Pclass",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Name",
+                "semanticType": "Textual",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 120
+              },
+              {
+                "name": "Sex",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Age",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 5.39,
+                "cardinality": 76
+              },
+              {
+                "name": "SibSp",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 4
+              },
+              {
+                "name": "Parch",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Fare",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 836
+              },
+              {
+                "name": "Embarked",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates",
+      "dataset": "titanic",
+      "score": {
+        "dataset": "titanic",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "titanic",
+            "rowCount": 891,
+            "columns": [
+              {
+                "name": "PassengerId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 891
+              },
+              {
+                "name": "Survived",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Pclass",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Name",
+                "semanticType": "Textual",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 120
+              },
+              {
+                "name": "Sex",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Age",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 5.39,
+                "cardinality": 76
+              },
+              {
+                "name": "SibSp",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 4
+              },
+              {
+                "name": "Parch",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Fare",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 836
+              },
+              {
+                "name": "Embarked",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for",
+      "dataset": "titanic",
+      "score": {
+        "dataset": "titanic",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "titanic",
+            "rowCount": 891,
+            "columns": [
+              {
+                "name": "PassengerId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 891
+              },
+              {
+                "name": "Survived",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Pclass",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Name",
+                "semanticType": "Textual",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 120
+              },
+              {
+                "name": "Sex",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Age",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 5.39,
+                "cardinality": 76
+              },
+              {
+                "name": "SibSp",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 4
+              },
+              {
+                "name": "Parch",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Fare",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 836
+              },
+              {
+                "name": "Embarked",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production__ollama",
+      "dataset": "titanic",
+      "score": {
+        "dataset": "titanic",
+        "served": true,
+        "headlineWin": true,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+        "composedHeadline": "The mean Fare for PassengerId 1 is 1.6σ above average."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "titanic",
+            "rowCount": 891,
+            "columns": [
+              {
+                "name": "PassengerId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 891
+              },
+              {
+                "name": "Survived",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Pclass",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Name",
+                "semanticType": "Textual",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 120
+              },
+              {
+                "name": "Sex",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Age",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 5.39,
+                "cardinality": 76
+              },
+              {
+                "name": "SibSp",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 4
+              },
+              {
+                "name": "Parch",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Fare",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 836
+              },
+              {
+                "name": "Embarked",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates__ollama",
+      "dataset": "titanic",
+      "score": {
+        "dataset": "titanic",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+        "composedHeadline": "Analyze survival rates by class and age in the Titanic dataset."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "titanic",
+            "rowCount": 891,
+            "columns": [
+              {
+                "name": "PassengerId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 891
+              },
+              {
+                "name": "Survived",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Pclass",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Name",
+                "semanticType": "Textual",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 120
+              },
+              {
+                "name": "Sex",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Age",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 5.39,
+                "cardinality": 76
+              },
+              {
+                "name": "SibSp",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 4
+              },
+              {
+                "name": "Parch",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Fare",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 836
+              },
+              {
+                "name": "Embarked",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for__ollama",
+      "dataset": "titanic",
+      "score": {
+        "dataset": "titanic",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+        "composedHeadline": "Explore Titanic passengers' fares, ages, and survival rates."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "titanic",
+            "rowCount": 891,
+            "columns": [
+              {
+                "name": "PassengerId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 891
+              },
+              {
+                "name": "Survived",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Pclass",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Name",
+                "semanticType": "Textual",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 120
+              },
+              {
+                "name": "Sex",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 2
+              },
+              {
+                "name": "Age",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 5.39,
+                "cardinality": 76
+              },
+              {
+                "name": "SibSp",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 4
+              },
+              {
+                "name": "Parch",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3
+              },
+              {
+                "name": "Fare",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 836
+              },
+              {
+                "name": "Embarked",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production",
+      "dataset": "stock_prices",
+      "score": {
+        "dataset": "stock_prices",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+        "composedHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "stock_prices",
+            "rowCount": 2500,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 2500,
+                "minDate": "2016-01-04",
+                "maxDate": "2025-08-01"
+              },
+              {
+                "name": "Open",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "High",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2294
+              },
+              {
+                "name": "Low",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2288
+              },
+              {
+                "name": "Close",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "Volume",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2499
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates",
+      "dataset": "stock_prices",
+      "score": {
+        "dataset": "stock_prices",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "stock_prices",
+            "rowCount": 2500,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 2500,
+                "minDate": "2016-01-04",
+                "maxDate": "2025-08-01"
+              },
+              {
+                "name": "Open",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "High",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2294
+              },
+              {
+                "name": "Low",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2288
+              },
+              {
+                "name": "Close",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "Volume",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2499
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for",
+      "dataset": "stock_prices",
+      "score": {
+        "dataset": "stock_prices",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "stock_prices",
+            "rowCount": 2500,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 2500,
+                "minDate": "2016-01-04",
+                "maxDate": "2025-08-01"
+              },
+              {
+                "name": "Open",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "High",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2294
+              },
+              {
+                "name": "Low",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2288
+              },
+              {
+                "name": "Close",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "Volume",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2499
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production__ollama",
+      "dataset": "stock_prices",
+      "score": {
+        "dataset": "stock_prices",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+        "composedHeadline": "\"High\" perfectly matches \"Close\", indicating potential target leakage."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "stock_prices",
+            "rowCount": 2500,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 2500,
+                "minDate": "2016-01-04",
+                "maxDate": "2025-08-01"
+              },
+              {
+                "name": "Open",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "High",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2294
+              },
+              {
+                "name": "Low",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2288
+              },
+              {
+                "name": "Close",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "Volume",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2499
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates__ollama",
+      "dataset": "stock_prices",
+      "score": {
+        "dataset": "stock_prices",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+        "composedHeadline": "Analyze stock prices spanning 2016 to 2025 showing strong correlation between High and Close."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "stock_prices",
+            "rowCount": 2500,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 2500,
+                "minDate": "2016-01-04",
+                "maxDate": "2025-08-01"
+              },
+              {
+                "name": "Open",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "High",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2294
+              },
+              {
+                "name": "Low",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2288
+              },
+              {
+                "name": "Close",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "Volume",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2499
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for__ollama",
+      "dataset": "stock_prices",
+      "score": {
+        "dataset": "stock_prices",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+        "composedHeadline": "Stock Prices (2016-08-31 to 2025-08-01): Analyze Trends and Correlations"
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "stock_prices",
+            "rowCount": 2500,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 2500,
+                "minDate": "2016-01-04",
+                "maxDate": "2025-08-01"
+              },
+              {
+                "name": "Open",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "High",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2294
+              },
+              {
+                "name": "Low",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2288
+              },
+              {
+                "name": "Close",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 2295
+              },
+              {
+                "name": "Volume",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 2499
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production",
+      "dataset": "weather",
+      "score": {
+        "dataset": "weather",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+        "composedHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "weather",
+            "rowCount": 3650,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 3650,
+                "minDate": "2015-01-01",
+                "maxDate": "2024-12-28"
+              },
+              {
+                "name": "City",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 1
+              },
+              {
+                "name": "TempHighC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 281
+              },
+              {
+                "name": "TempLowC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 290
+              },
+              {
+                "name": "Humidity",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 66
+              },
+              {
+                "name": "WindKph",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 381
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates",
+      "dataset": "weather",
+      "score": {
+        "dataset": "weather",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "weather",
+            "rowCount": 3650,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 3650,
+                "minDate": "2015-01-01",
+                "maxDate": "2024-12-28"
+              },
+              {
+                "name": "City",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 1
+              },
+              {
+                "name": "TempHighC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 281
+              },
+              {
+                "name": "TempLowC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 290
+              },
+              {
+                "name": "Humidity",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 66
+              },
+              {
+                "name": "WindKph",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 381
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for",
+      "dataset": "weather",
+      "score": {
+        "dataset": "weather",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "weather",
+            "rowCount": 3650,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 3650,
+                "minDate": "2015-01-01",
+                "maxDate": "2024-12-28"
+              },
+              {
+                "name": "City",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 1
+              },
+              {
+                "name": "TempHighC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 281
+              },
+              {
+                "name": "TempLowC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 290
+              },
+              {
+                "name": "Humidity",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 66
+              },
+              {
+                "name": "WindKph",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 381
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production__ollama",
+      "dataset": "weather",
+      "score": {
+        "dataset": "weather",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+        "composedHeadline": "Explore Correlation: \"TempHighC\" & \"TempLowC\""
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "weather",
+            "rowCount": 3650,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 3650,
+                "minDate": "2015-01-01",
+                "maxDate": "2024-12-28"
+              },
+              {
+                "name": "City",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 1
+              },
+              {
+                "name": "TempHighC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 281
+              },
+              {
+                "name": "TempLowC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 290
+              },
+              {
+                "name": "Humidity",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 66
+              },
+              {
+                "name": "WindKph",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 381
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates__ollama",
+      "dataset": "weather",
+      "score": {
+        "dataset": "weather",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+        "composedHeadline": "7 years of daily weather data spanning 2015 to 2024"
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "weather",
+            "rowCount": 3650,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 3650,
+                "minDate": "2015-01-01",
+                "maxDate": "2024-12-28"
+              },
+              {
+                "name": "City",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 1
+              },
+              {
+                "name": "TempHighC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 281
+              },
+              {
+                "name": "TempLowC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 290
+              },
+              {
+                "name": "Humidity",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 66
+              },
+              {
+                "name": "WindKph",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 381
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for__ollama",
+      "dataset": "weather",
+      "score": {
+        "dataset": "weather",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+        "composedHeadline": "Analyze Weather Data from 2015-2024"
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "weather",
+            "rowCount": 3650,
+            "columns": [
+              {
+                "name": "Date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 3650,
+                "minDate": "2015-01-01",
+                "maxDate": "2024-12-28"
+              },
+              {
+                "name": "City",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 1
+              },
+              {
+                "name": "TempHighC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 281
+              },
+              {
+                "name": "TempLowC",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 290
+              },
+              {
+                "name": "Humidity",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 66
+              },
+              {
+                "name": "WindKph",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 381
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production",
+      "dataset": "product_reviews",
+      "score": {
+        "dataset": "product_reviews",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "baselineHeadline": "20 fully duplicated rows detected.",
+        "composedHeadline": "20 fully duplicated rows detected."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "product_reviews",
+            "rowCount": 520,
+            "columns": [
+              {
+                "name": "ReviewId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 500
+              },
+              {
+                "name": "ProductId",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 119
+              },
+              {
+                "name": "Rating",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "ReviewText",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 10
+              },
+              {
+                "name": "ReviewDate",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 360,
+                "minDate": "2023-01-01",
+                "maxDate": "2024-11-29"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates",
+      "dataset": "product_reviews",
+      "score": {
+        "dataset": "product_reviews",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "20 fully duplicated rows detected."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "product_reviews",
+            "rowCount": 520,
+            "columns": [
+              {
+                "name": "ReviewId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 500
+              },
+              {
+                "name": "ProductId",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 119
+              },
+              {
+                "name": "Rating",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "ReviewText",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 10
+              },
+              {
+                "name": "ReviewDate",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 360,
+                "minDate": "2023-01-01",
+                "maxDate": "2024-11-29"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for",
+      "dataset": "product_reviews",
+      "score": {
+        "dataset": "product_reviews",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "20 fully duplicated rows detected."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "product_reviews",
+            "rowCount": 520,
+            "columns": [
+              {
+                "name": "ReviewId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 500
+              },
+              {
+                "name": "ProductId",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 119
+              },
+              {
+                "name": "Rating",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "ReviewText",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 10
+              },
+              {
+                "name": "ReviewDate",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 360,
+                "minDate": "2023-01-01",
+                "maxDate": "2024-11-29"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production__ollama",
+      "dataset": "product_reviews",
+      "score": {
+        "dataset": "product_reviews",
+        "served": true,
+        "headlineWin": true,
+        "actionsUpgraded": true,
+        "baselineHeadline": "20 fully duplicated rows detected.",
+        "composedHeadline": "Duplicate rows found: 520 total, 20 duplicates."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "product_reviews",
+            "rowCount": 520,
+            "columns": [
+              {
+                "name": "ReviewId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 500
+              },
+              {
+                "name": "ProductId",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 119
+              },
+              {
+                "name": "Rating",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "ReviewText",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 10
+              },
+              {
+                "name": "ReviewDate",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 360,
+                "minDate": "2023-01-01",
+                "maxDate": "2024-11-29"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates__ollama",
+      "dataset": "product_reviews",
+      "score": {
+        "dataset": "product_reviews",
+        "served": true,
+        "headlineWin": true,
+        "actionsUpgraded": true,
+        "baselineHeadline": "20 fully duplicated rows detected.",
+        "composedHeadline": "Product reviews spanning October 2023 to May 2024."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "product_reviews",
+            "rowCount": 520,
+            "columns": [
+              {
+                "name": "ReviewId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 500
+              },
+              {
+                "name": "ProductId",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 119
+              },
+              {
+                "name": "Rating",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "ReviewText",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 10
+              },
+              {
+                "name": "ReviewDate",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 360,
+                "minDate": "2023-01-01",
+                "maxDate": "2024-11-29"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for__ollama",
+      "dataset": "product_reviews",
+      "score": {
+        "dataset": "product_reviews",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": true,
+        "baselineHeadline": "20 fully duplicated rows detected.",
+        "composedHeadline": "Explore 500 unique reviews of 119 products with ratings from January to November."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "product_reviews",
+            "rowCount": 520,
+            "columns": [
+              {
+                "name": "ReviewId",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 500
+              },
+              {
+                "name": "ProductId",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 119
+              },
+              {
+                "name": "Rating",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "ReviewText",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 10
+              },
+              {
+                "name": "ReviewDate",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 360,
+                "minDate": "2023-01-01",
+                "maxDate": "2024-11-29"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production",
+      "dataset": "ecommerce",
+      "score": {
+        "dataset": "ecommerce",
+        "served": true,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+        "composedHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "customers",
+            "rowCount": 400,
+            "columns": [
+              {
+                "name": "customer_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "name",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 64
+              },
+              {
+                "name": "email",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "country",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 8
+              },
+              {
+                "name": "signup_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 363,
+                "minDate": "2019-01-07",
+                "maxDate": "2024-09-27"
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rowCount": 150,
+            "columns": [
+              {
+                "name": "product_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "name",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "category",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 6
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Identifier",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rowCount": 1400,
+            "columns": [
+              {
+                "name": "order_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "customer_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 396
+              },
+              {
+                "name": "order_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 783,
+                "minDate": "2021-12-31",
+                "maxDate": "2024-12-15"
+              },
+              {
+                "name": "status",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 4
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rowCount": 3487,
+            "columns": [
+              {
+                "name": "order_item_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3487
+              },
+              {
+                "name": "order_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "product_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "quantity",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates",
+      "dataset": "ecommerce",
+      "score": {
+        "dataset": "ecommerce",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "customers",
+            "rowCount": 400,
+            "columns": [
+              {
+                "name": "customer_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "name",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 64
+              },
+              {
+                "name": "email",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "country",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 8
+              },
+              {
+                "name": "signup_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 363,
+                "minDate": "2019-01-07",
+                "maxDate": "2024-09-27"
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rowCount": 150,
+            "columns": [
+              {
+                "name": "product_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "name",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "category",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 6
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Identifier",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rowCount": 1400,
+            "columns": [
+              {
+                "name": "order_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "customer_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 396
+              },
+              {
+                "name": "order_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 783,
+                "minDate": "2021-12-31",
+                "maxDate": "2024-12-15"
+              },
+              {
+                "name": "status",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 4
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rowCount": 3487,
+            "columns": [
+              {
+                "name": "order_item_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3487
+              },
+              {
+                "name": "order_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "product_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "quantity",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for",
+      "dataset": "ecommerce",
+      "score": {
+        "dataset": "ecommerce",
+        "served": false,
+        "headlineWin": false,
+        "actionsUpgraded": false,
+        "degradeReason": "ai-down",
+        "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "customers",
+            "rowCount": 400,
+            "columns": [
+              {
+                "name": "customer_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "name",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 64
+              },
+              {
+                "name": "email",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "country",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 8
+              },
+              {
+                "name": "signup_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 363,
+                "minDate": "2019-01-07",
+                "maxDate": "2024-09-27"
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rowCount": 150,
+            "columns": [
+              {
+                "name": "product_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "name",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "category",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 6
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Identifier",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rowCount": 1400,
+            "columns": [
+              {
+                "name": "order_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "customer_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 396
+              },
+              {
+                "name": "order_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 783,
+                "minDate": "2021-12-31",
+                "maxDate": "2024-12-15"
+              },
+              {
+                "name": "status",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 4
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rowCount": 3487,
+            "columns": [
+              {
+                "name": "order_item_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3487
+              },
+              {
+                "name": "order_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "product_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "quantity",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "production__ollama",
+      "dataset": "ecommerce",
+      "score": {
+        "dataset": "ecommerce",
+        "served": true,
+        "headlineWin": true,
+        "actionsUpgraded": true,
+        "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+        "composedHeadline": "4 tables, 5,437 rows, no single dominant finding — dive into structure."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "customers",
+            "rowCount": 400,
+            "columns": [
+              {
+                "name": "customer_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "name",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 64
+              },
+              {
+                "name": "email",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "country",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 8
+              },
+              {
+                "name": "signup_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 363,
+                "minDate": "2019-01-07",
+                "maxDate": "2024-09-27"
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rowCount": 150,
+            "columns": [
+              {
+                "name": "product_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "name",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "category",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 6
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Identifier",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rowCount": 1400,
+            "columns": [
+              {
+                "name": "order_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "customer_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 396
+              },
+              {
+                "name": "order_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 783,
+                "minDate": "2021-12-31",
+                "maxDate": "2024-12-15"
+              },
+              {
+                "name": "status",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 4
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rowCount": 3487,
+            "columns": [
+              {
+                "name": "order_item_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3487
+              },
+              {
+                "name": "order_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "product_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "quantity",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v1-domain-and-dates__ollama",
+      "dataset": "ecommerce",
+      "score": {
+        "dataset": "ecommerce",
+        "served": true,
+        "headlineWin": true,
+        "actionsUpgraded": true,
+        "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+        "composedHeadline": "Customer data spanning from 2019 to 2024 — analyze 4 tables with 5,437 entries."
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "customers",
+            "rowCount": 400,
+            "columns": [
+              {
+                "name": "customer_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "name",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 64
+              },
+              {
+                "name": "email",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "country",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 8
+              },
+              {
+                "name": "signup_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 363,
+                "minDate": "2019-01-07",
+                "maxDate": "2024-09-27"
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rowCount": 150,
+            "columns": [
+              {
+                "name": "product_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "name",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "category",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 6
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Identifier",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rowCount": 1400,
+            "columns": [
+              {
+                "name": "order_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "customer_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 396
+              },
+              {
+                "name": "order_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 783,
+                "minDate": "2021-12-31",
+                "maxDate": "2024-12-15"
+              },
+              {
+                "name": "status",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 4
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rowCount": 3487,
+            "columns": [
+              {
+                "name": "order_item_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3487
+              },
+              {
+                "name": "order_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "product_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "quantity",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "variant": "widened-v2-suited-for__ollama",
+      "dataset": "ecommerce",
+      "score": {
+        "dataset": "ecommerce",
+        "served": true,
+        "headlineWin": true,
+        "actionsUpgraded": true,
+        "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+        "composedHeadline": "4 tables · 5,437 rows · Analyze customer trends and product sales from 2019 to 2024"
+      },
+      "facts": {
+        "tables": [
+          {
+            "name": "customers",
+            "rowCount": 400,
+            "columns": [
+              {
+                "name": "customer_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "name",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 64
+              },
+              {
+                "name": "email",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 400
+              },
+              {
+                "name": "country",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 8
+              },
+              {
+                "name": "signup_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 363,
+                "minDate": "2019-01-07",
+                "maxDate": "2024-09-27"
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rowCount": 150,
+            "columns": [
+              {
+                "name": "product_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "name",
+                "semanticType": "Identifier",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "category",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 6
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Identifier",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rowCount": 1400,
+            "columns": [
+              {
+                "name": "order_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "customer_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 396
+              },
+              {
+                "name": "order_date",
+                "semanticType": "Temporal",
+                "physicalType": "DATE",
+                "nullPercentage": 0,
+                "cardinality": 783,
+                "minDate": "2021-12-31",
+                "maxDate": "2024-12-15"
+              },
+              {
+                "name": "status",
+                "semanticType": "Categorical",
+                "physicalType": "VARCHAR",
+                "nullPercentage": 0,
+                "cardinality": 4
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rowCount": 3487,
+            "columns": [
+              {
+                "name": "order_item_id",
+                "semanticType": "Identifier",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 3487
+              },
+              {
+                "name": "order_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 1400
+              },
+              {
+                "name": "product_id",
+                "semanticType": "Quantitative",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 150
+              },
+              {
+                "name": "quantity",
+                "semanticType": "Categorical",
+                "physicalType": "BIGINT",
+                "nullPercentage": 0,
+                "cardinality": 5
+              },
+              {
+                "name": "unit_price",
+                "semanticType": "Quantitative",
+                "physicalType": "DOUBLE",
+                "nullPercentage": 0,
+                "cardinality": 150
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

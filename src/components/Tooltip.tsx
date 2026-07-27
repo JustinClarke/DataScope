@@ -17,7 +17,7 @@ export function Tooltip({ content, children }: TooltipProps) {
       <div aria-describedby={tooltipId}>{children}</div>
       <div
         id={tooltipId}
-        className="absolute left-full top-1/2 ml-2 -translate-y-1/2 z-10 whitespace-nowrap rounded bg-black px-3 py-2 text-sm text-white opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none"
+        className="absolute left-full top-1/2 ml-2 -translate-y-1/2 z-10 whitespace-nowrap rounded-(--radius-sm) border border-(--color-rule) bg-(--color-elev) px-3 py-2 font-mono text-[length:var(--text-md)] text-(--color-ink) shadow-(--shadow-card) opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none"
       >
         {content}
       </div>

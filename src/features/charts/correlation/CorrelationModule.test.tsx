@@ -136,6 +136,19 @@ describe('CorrelationModule', () => {
     expect(useUIStore.getState().pendingPrefill).toBeNull();
   });
 
+  it('W7.5: a `prefill` prop (the Workbench tab\'s own initializer) wins over whatever the old shell\'s global store holds', async () => {
+    vi.mocked(chartsService.runChartQuery).mockResolvedValueOnce(matrixResult([0.8, -0.2, 0.05]));
+    useDatasetsStore.setState({ tables: [weather] });
+    // Deliberately different from the prop below — proves the prop is used.
+    useUIStore.getState().setActiveModule('correlation', null, { tableName: 'weather', columns: ['temp', 'humidity'] });
+
+    const { container } = render(<CorrelationModule prefill={{ tableName: 'weather', columns: ['humidity', 'wind'] }} />);
+    await waitFor(() => expect(within(container).getByLabelText('humidity vs wind: 0.050')).toBeTruthy());
+    expect(container.textContent).toContain('humidity vs wind');
+    // The global store's own prefill is untouched — the override path never reads or clears it.
+    expect(useUIStore.getState().pendingPrefill).toEqual({ tableName: 'weather', columns: ['temp', 'humidity'] });
+  });
+
   it('a mismatched prefill pair (names columns not on this table) silently no-ops', async () => {
     vi.mocked(chartsService.runChartQuery).mockResolvedValueOnce(matrixResult([0.8, -0.2, 0.05]));
     useDatasetsStore.setState({ tables: [weather] });

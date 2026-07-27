@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, fireEvent, act } from '@testing-library/react';
+import { render, fireEvent, act, within } from '@testing-library/react';
 import { TableList } from './TableList';
 import { useDatasetsStore } from '../../stores/datasets';
+import { useSelectionStore } from '../../stores/selection';
 import type { Dataset, TableRegistryEntry } from '../../types';
 
 const dataset: Dataset = {
@@ -37,6 +38,7 @@ const orders: TableRegistryEntry = {
 
 beforeEach(() => {
   useDatasetsStore.setState({ tables: [], datasets: [], workerStatus: 'idle', workerError: null });
+  useSelectionStore.setState({ selectedTableId: null, selectedColumn: null, selectedEdgeId: null, lastSelectionKind: null });
 });
 
 function renderTableList(overrides: Partial<Parameters<typeof TableList>[0]> = {}) {
@@ -200,5 +202,73 @@ describe('TableList', () => {
     const staleRow = container.querySelector('button[aria-label="Undo stale_orders"]')!.closest('li');
     expect(ordersRow?.textContent).not.toContain('possibly stale');
     expect(staleRow?.textContent).toContain('possibly stale');
+  });
+
+  describe('onSelectTable (Workbench W2, D68d)', () => {
+    it('renders the table name as plain text (not a button) when onSelectTable is omitted', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const { container } = renderTableList();
+
+      const buttons = Array.from(container.querySelectorAll('button'));
+      expect(buttons.some((button) => button.textContent?.includes('customers'))).toBe(false);
+      expect(container.querySelector('.trow__name')?.textContent).toBe('customers');
+    });
+
+    it('calls onSelectTable with the table id when its name is clicked', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const onSelectTable = vi.fn();
+
+      const { container } = renderTableList({ onSelectTable });
+      fireEvent.click(within(container).getByText('customers'));
+
+      expect(onSelectTable).toHaveBeenCalledWith('t-customers');
+    });
+  });
+
+  describe('hideHeading (V3, 13-hallmark-replication/03-explorer-status-bar.md)', () => {
+    it('renders the "Registered tables" heading by default', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const { container } = renderTableList();
+
+      expect(container.querySelector('h2')?.textContent).toBe('Registered tables');
+    });
+
+    it('omits the heading when hideHeading is true', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const { container } = renderTableList({ hideHeading: true });
+
+      expect(container.querySelector('h2')).toBeNull();
+    });
+  });
+
+  describe('row selection (V3, 13-hallmark-replication/03-explorer-status-bar.md)', () => {
+    it('highlights only the row matching useSelectionStore().selectedTableId', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers, orders]);
+      useSelectionStore.setState({ selectedTableId: 't-customers' });
+
+      const { container } = renderTableList();
+      const customersRow = container.querySelector('.trow__name')!.closest('li')!;
+      const ordersRow = Array.from(container.querySelectorAll('li')).find((li) => li !== customersRow)!;
+
+      expect(customersRow.className).toContain('shadow-[inset_2px_0_0_var(--color-active)]');
+      expect(ordersRow.className).not.toContain('shadow-[inset_2px_0_0_var(--color-active)]');
+    });
+
+    it('moves the highlight when the selection changes', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers, orders]);
+      useSelectionStore.setState({ selectedTableId: 't-customers' });
+
+      const { container } = renderTableList();
+      act(() => {
+        useSelectionStore.setState({ selectedTableId: 't-orders' });
+      });
+
+      const rows = Array.from(container.querySelectorAll('li'));
+      const customersRow = rows.find((li) => li.textContent?.includes('customers'))!;
+      const ordersRow = rows.find((li) => li.textContent?.includes('orders'))!;
+
+      expect(customersRow.className).not.toContain('shadow-[inset_2px_0_0_var(--color-active)]');
+      expect(ordersRow.className).toContain('shadow-[inset_2px_0_0_var(--color-active)]');
+    });
   });
 });

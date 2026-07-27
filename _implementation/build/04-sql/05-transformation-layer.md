@@ -2,6 +2,15 @@
 
 **Tier:** v0 · Phase 2 · **Master spec:** §10 Module 2 (transformation), §12.1 (undo)
 
+> **Amended by D73 (2026-07-26) — v0.70 / S4, and this one is not optional.**
+> `TransformGuardModal` is an **interception**, not an affordance: it fires *between* Run and
+> execution when a statement would mutate a source table. Once query tabs exist, the app carries
+> **N independent runners**, so the guard must live in the **shared run path** the console and
+> every query tab call — never re-mounted per surface. A query tab that executes unguarded is a
+> data-loss path this single page never had. The **export-recipe** action moves with the query
+> tabs (and is surfaced in the drawer as deliberate chrome), as do auto-charting and the
+> Download-Parquet-on-CTAS shortcut.
+
 ## Objective
 
 The playground is not read-only: users run DDL against their session — joins across

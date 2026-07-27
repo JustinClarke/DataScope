@@ -77,6 +77,24 @@ describe('ChartsModule — D68d internal chart tabs', () => {
     expect(container.querySelector('[aria-label="Bin count"]')).not.toBeNull();
   });
 
+  it('W7.5: a `requestedTab` prop (the Workbench tab\'s own subject) wins over the old shell\'s global activeTabId', () => {
+    useDatasetsStore.setState({
+      tables: [table([col('Temporal', 'date'), col('Quantitative', 'amount'), col('Categorical', 'status')])],
+    });
+    // Deliberately different from the prop below — proves the prop is used.
+    useUIStore.setState({ activeModule: 'charts', activeTabId: 'time-series' });
+
+    const { container } = render(<ChartsModule requestedTab="categorical" />);
+    expect(container.querySelector('[aria-label="Categorical column"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Value column"]')).toBeNull();
+  });
+
+  it('W7.5: a `requestedTab` prop that matches no eligible tab (e.g. the palette\'s plain "charts" entry) falls back to the first eligible tab, same as an unmatched global request', () => {
+    useDatasetsStore.setState({ tables: [table([col('Categorical', 'status'), col('Quantitative', 'amount')])] });
+    const { container } = render(<ChartsModule requestedTab="charts" />);
+    expect(container.querySelector('[aria-label="Bin count"]')).not.toBeNull();
+  });
+
   it('never reverts a manual tab switch when capabilities recompute unchanged', () => {
     const t = table([col('Temporal', 'date'), col('Quantitative', 'amount'), col('Categorical', 'status')]);
     useDatasetsStore.setState({ tables: [t] });

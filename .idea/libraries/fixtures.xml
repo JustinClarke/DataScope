@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="fixtures">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/_implementation/_misc/spike-ingestion/fixtures.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { rankedActionValidator, narrationValidator, passesPhrasingGuard } from './producerValidators'
+import type { CitableFact } from './citableFacts'
 import type { FactRef, RankedAction } from '../types'
 
 const fact: FactRef = {
@@ -67,6 +68,35 @@ describe('narrationValidator', () => {
     expect(narrationValidator(fact, { ...fact, statement: 'Revenue always exceeds cost.' })).toBe(false)
     expect(narrationValidator(fact, { ...fact, statement: 'Growth is caused by price.' })).toBe(false)
     expect(narrationValidator(fact, { ...fact, statement: 'This is a verified relationship.' })).toBe(false)
+  })
+})
+
+// The clause-citation-binding candidate's amendment (03-clause-citation-binding.md,
+// "What to build" item 3): an optional third `citedFact` argument, additive
+// over every test above (all still call the 2-arg form, unmodified).
+describe('narrationValidator with a citedFact', () => {
+  const outlierFact: CitableFact = {
+    id: 'fact:titanic.outlier-group:Pclass:Fare',
+    entities: ['titanic', 'Pclass', 'Fare'],
+    values: ['1', '1.6'],
+    vocabulary: ['titanic', 'Survived', 'Pclass', 'Fare'],
+    ref: fact,
+  }
+
+  it('accepts a re-phrase that stays inside the cited fact\'s own entities/values', () => {
+    expect(narrationValidator(fact, { ...fact, statement: 'Fare for Pclass group "1" runs 1.6σ above the rest.' }, outlierFact)).toBe(
+      true,
+    )
+  })
+
+  it('rejects a real column named by inflection that the cited fact never named (misattribution)', () => {
+    expect(
+      narrationValidator(fact, { ...fact, statement: 'Fares for survivors average 1.6σ higher than non-survivors.' }, outlierFact),
+    ).toBe(false)
+  })
+
+  it('still enforces the byte-identity checks even with a citedFact given', () => {
+    expect(narrationValidator(fact, { ...fact, sql: 'SELECT 1', statement: 'Fare for Pclass group "1".' }, outlierFact)).toBe(false)
   })
 })
 

@@ -1,0 +1,180 @@
+/* Hallmark · tokens · DataScope Workbench
+ * theme: custom dark (SqlErd-ported HUD) · paper band: dark · display: geometric-sans + mono · accent hue: warm-amber
+ *
+ * Portable export of the design system locked in ../design.md. The app itself consumes these
+ * through src/app/theme.css (which adds the Tailwind v4 `@theme` mapping and the legacy alias
+ * layer); this file is the framework-free copy.
+ *
+ * Dark is the primary register. The light register is DERIVED — see design.md § Light register.
+ * Every value is in sRGB gamut and every ink/accent pair clears 4.5:1 against its own surface.
+ */
+
+:root {
+  /* Per-register, not `dark light` — a two-value color-scheme gets normalised back to
+   * `light dark` by some build pipelines (Lightning CSS does), handing light UA widgets to
+   * users with no OS preference against these dark surfaces. */
+  color-scheme: dark;
+
+  /* Surfaces: recessed → raised */
+  --color-void: oklch(12.8% 0.0056 262);
+  --color-canvas: oklch(15.4% 0.0092 264);
+  --color-chrome: oklch(16.8% 0.0116 261);
+  --color-panel: oklch(17.7% 0.0114 261);
+  --color-card: oklch(19.5% 0.0112 261);
+  --color-elev: oklch(22.1% 0.0132 258);
+  --color-footer: oklch(14.4% 0.0094 263);
+
+  /* Rules */
+  --color-rule: oklch(100% 0 0 / 0.1);
+  --color-rule-2: oklch(100% 0 0 / 0.05);
+  --color-rule-hi: oklch(100% 0 0 / 0.3);
+
+  /* Ink */
+  --color-ink: oklch(96.6% 0.0045 258);
+  --color-ink-2: oklch(65.9% 0.002 248);
+  --color-ink-3: oklch(61% 0.006 262);
+
+  /* Data semantics */
+  --color-pk: oklch(76.9% 0.1647 70);
+  --color-fk: oklch(62.7% 0.2325 304);
+  --color-edge: oklch(100% 0 0 / 0.22);
+  --color-edge-hi: oklch(100% 0 0 / 0.75);
+
+  /* UI state */
+  --color-active: oklch(76.9% 0.1647 70);
+  --color-active-ink: oklch(18.6% 0.0173 79);
+  --color-focus: oklch(84.4% 0.1154 71);
+
+  /* Status register: reserved for state, never reused as data encoding, never
+   * colour-alone. `warn` IS the amber — ported from the mocks' own
+   * `.ev__i--warn { color: var(--c-active) }`, since amber is this system's
+   * single "look here" register. `error` is DERIVED (no mock has an error
+   * state): 5.49:1 dark / 5.26:1 light against its worst surface. */
+  --color-ok: oklch(77.3% 0.1535 163);
+  --color-warn: var(--color-active);
+  --color-error: oklch(68% 0.2 25);
+
+  /* Chart palette: the only colours data marks may wear. Four slots because
+   * `error`/`active`/`ok`/`ai` reserve four hue families outright; assigned in
+   * fixed order, never cycled. Validated for CVD separation and for >=3:1
+   * against canvas/card/elev in both registers. */
+  --chart-1: oklch(67% 0.165 245);
+  --chart-2: oklch(54% 0.215 342);
+  --chart-3: oklch(63% 0.17 130);
+  --chart-4: oklch(53% 0.215 270);
+  --chart-other: var(--color-ink-3);
+  --chart-seq: var(--chart-1);
+  --chart-pos: var(--chart-1);
+  --chart-neg: var(--chart-2);
+  --chart-mid: var(--color-elev);
+
+  /* Copilot register */
+  --color-ai: oklch(62.7% 0.2325 304);
+  --color-ai-2: oklch(72.2% 0.1767 306);
+  --color-ai-ink: oklch(19.2% 0.0629 303);
+  --color-ai-soft: color-mix(in oklab, var(--color-ai) 12%, var(--color-card));
+
+  /* Modal scrim — the mocks' own `.scrim` value. Declared once, deliberately outside the
+   * light block: a scrim must recede what is behind it, and light paper needs darkening too. */
+  --color-scrim: rgba(4, 5, 7, 0.6);
+
+  /* Type */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --text-2xs: 0.5rem;
+  --text-xs: 0.5625rem;
+  --text-sm: 0.625rem;
+  --text-md: 0.6875rem;
+  --text-base: 0.75rem;
+  --text-lg: 0.82rem;
+  --text-xl: 0.95rem;
+  --text-2xl: 1.15rem;
+  --text-3xl: 1.2rem;
+  --text-display-s: clamp(1.4rem, 2vw + 1rem, 1.9rem);
+
+  /* Space — 4pt scale */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 11px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-pill: 999px;
+  --radius-shell: clamp(14px, 1.6vw, 22px);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur-med: 260ms;
+
+  /* Depth */
+  --shadow-shell: 0 50px 100px -50px oklch(0% 0 0 / 0.85);
+  --shadow-card: 0 18px 30px -22px oklch(0% 0 0 / 0.9);
+  --shadow-overlay: 0 40px 80px -30px oklch(0% 0 0 / 0.8);
+
+  /* Layering */
+  --z-svg: 5;
+  --z-cards: 10;
+  --z-strip: 30;
+  --z-overlay: 900;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --color-void: oklch(93.5% 0.004 262);
+    --color-canvas: oklch(98.8% 0.003 262);
+    --color-chrome: oklch(96.5% 0.005 262);
+    --color-panel: oklch(97.5% 0.004 262);
+    --color-card: oklch(99.5% 0.003 262); /* not pure white: every neutral carries the anchor hue */
+    --color-elev: oklch(94.5% 0.006 262);
+    --color-footer: oklch(92% 0.005 262);
+
+    --color-rule: oklch(0% 0 0 / 0.12);
+    --color-rule-2: oklch(0% 0 0 / 0.06);
+    --color-rule-hi: oklch(0% 0 0 / 0.32);
+
+    --color-ink: oklch(19% 0.014 262);
+    --color-ink-2: oklch(43% 0.012 262);
+    --color-ink-3: oklch(51% 0.01 262);
+
+    --color-pk: oklch(46% 0.106 62);
+    --color-fk: oklch(50.5% 0.23 304);
+    --color-edge: oklch(0% 0 0 / 0.28);
+    --color-edge-hi: oklch(0% 0 0 / 0.72);
+
+    --color-active: oklch(46% 0.106 62);
+    --color-active-ink: oklch(99% 0.004 62);
+    --color-focus: oklch(52% 0.119 62);
+    --color-ok: oklch(49.5% 0.107 163);
+    /* `--color-warn` needs no light entry — it aliases `--color-active`, which
+     * re-solves itself above. */
+    --color-error: oklch(49% 0.2 25);
+
+    /* Re-solved per register, not flipped: the light steps trade lightness for
+     * contrast on white while staying clear of the darker light-register accents. */
+    --chart-1: oklch(62% 0.155 245);
+    --chart-2: oklch(44% 0.19 342);
+    --chart-3: oklch(61% 0.16 130);
+    --chart-4: oklch(45% 0.22 270);
+
+    --color-ai: oklch(50.5% 0.23 304);
+    --color-ai-2: oklch(47% 0.22 304);
+    --color-ai-ink: oklch(99% 0.004 304);
+
+    --shadow-shell: 0 40px 80px -50px oklch(0% 0 0 / 0.25);
+    --shadow-card: 0 12px 24px -18px oklch(0% 0 0 / 0.22);
+    --shadow-overlay: 0 32px 64px -30px oklch(0% 0 0 / 0.28);
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "ranAt": "2026-07-26T10:15:25.113Z",
+  "endpoint": "https://datascope-edge-staging.justinclarke.workers.dev/ai-router",
+  "results": [
+    {
+      "dataset": "titanic",
+      "structureOnly": {
+        "text": "This dataset contains information on 891 passengers aboard the Titanic, including details such as their class of travel, age, fare paid, and whether they survived. It is well-suited for survival analysis to identify factors that influenced a passenger's likelihood of survival, as well as demographic analysis to understand the composition of passengers aboard the ship.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset appears to be a passenger list from the Titanic, with 891 rows and 12 columns. It includes details such as passenger ID, survival status, ticket class, name, sex, age, number of siblings/spouses, number of parents/children, fare paid, and port of embarkation. The covered date range is not explicitly stated in the data. This dataset is well-suited for survival analysis based on passenger characteristics, as well as fare analysis by ticket class and embarkation port.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "titanic": 891
+        },
+        "totalRowsAvailable": 891,
+        "bytes": 124184
+      }
+    },
+    {
+      "dataset": "stock_prices",
+      "structureOnly": {
+        "text": "This dataset contains stock price data for 2,500 trading days from January 4, 2016, to August 1, 2025, with daily open, high, low, and close prices, along with trading volume. It is well-suited for analyzing price trends over time, identifying patterns in trading volume, and performing technical analysis to inform investment strategies.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset appears to be a collection of historical stock prices, containing 2,500 rows of daily data spanning from January 4, 2016 to August 1, 2025. It is well-suited for analyzing trends in stock prices over time and for performing technical analysis to identify patterns that may predict future price movements.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "stock_prices": 1250
+        },
+        "totalRowsAvailable": 2500,
+        "bytes": 117099
+      }
+    },
+    {
+      "dataset": "weather",
+      "structureOnly": {
+        "text": "This dataset contains daily weather observations for a single city, spanning from January 1, 2015, to December 28, 2024, with 3,650 rows of data. It is well-suited for analyzing temperature trends, humidity patterns, and wind speed variations over time, as well as for comparing daily high and low temperatures.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset appears to be a collection of daily weather observations for the city of Springfield, covering the period from January 1, 2015 to December 28, 2024. It includes 3,650 rows of data, with each row representing a day's weather metrics. The dataset is well-suited for analyzing trends in temperature, humidity, and wind speed over time, as well as for identifying correlations between different weather variables.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "weather": 1825
+        },
+        "totalRowsAvailable": 3650,
+        "bytes": 191597
+      }
+    },
+    {
+      "dataset": "product_reviews",
+      "structureOnly": {
+        "text": "This dataset contains product reviews from January 1, 2023, to November 29, 2024, with 520 reviews across 119 products. It is well-suited for sentiment analysis of review text and for identifying trends in product ratings over time.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset contains product reviews, with 520 reviews covering a range of 119 products from January 1, 2023, to November 29, 2024. It is well-suited for sentiment analysis of customer feedback and identifying trends in product ratings over time. Additionally, the dataset can be used to evaluate the frequency and impact of specific review phrases, such as \"shipping was fast\" or \"broke after a week.\"",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "product_reviews": 520
+        },
+        "totalRowsAvailable": 520,
+        "bytes": 68738
+      }
+    },
+    {
+      "dataset": "ecommerce",
+      "structureOnly": {
+        "text": "This ecommerce dataset contains 400 customers, 150 products, and 1,400 orders, with order dates ranging from December 2021 to December 2024. It is well-suited for analyzing customer purchasing behavior, identifying best-selling products, and evaluating order trends over time.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset appears to be an e-commerce dataset containing 400 customers, 150 products, and 1400 orders. The orders span from December 31, 2021 to December 15, 2024. This dataset is well-suited for analyzing customer purchasing behavior and product sales trends. For example, you could analyze which products are most frequently purchased together, or identify which customers are most likely to make repeat purchases.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "customers": 200,
+          "products": 75,
+          "orders": 700,
+          "order_items": 1744
+        },
+        "totalRowsAvailable": 5437,
+        "bytes": 240193
+      }
+    }
+  ]
+}

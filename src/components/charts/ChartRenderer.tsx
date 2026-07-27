@@ -21,10 +21,16 @@ import { buildChart } from '../../lib/chartMapper';
 // here is imported until an actual chart is shown. The full chart modules
 // reuse this renderer rather than re-wiring the library per module.
 
-// A small, distinct series palette that reads in both light and dark themes.
-const SERIES_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#a855f7'];
+// The four validated categorical slots (design.md § Chart palette), assigned in
+// fixed order and never cycled — `chartMapper.ts`'s MAX_Y_SERIES caps a spec at
+// three series, so a slot is never reused inside one chart.
+const SERIES_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)'];
 const AXIS = 'var(--color-fg-muted)';
 const GRID = 'var(--color-border)';
+
+// Past the fourth series the palette is exhausted rather than recycled — a
+// repeated hue would claim two series are the same entity.
+const seriesColor = (i: number) => SERIES_COLORS[i] ?? 'var(--chart-other)';
 
 function axisTick() {
   return { fill: AXIS, fontSize: 11 };
@@ -85,12 +91,12 @@ export default function ChartRenderer({ result, spec }: { result: QueryResult; s
               key={field}
               type="monotone"
               dataKey={field}
-              stroke={SERIES_COLORS[i % SERIES_COLORS.length]}
+              stroke={seriesColor(i)}
               dot={false}
               connectNulls
             />
           ) : (
-            <Bar key={field} dataKey={field} fill={SERIES_COLORS[i % SERIES_COLORS.length]} />
+            <Bar key={field} dataKey={field} fill={seriesColor(i)} />
           ),
         )}
       </ChartComponent>

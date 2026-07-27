@@ -81,8 +81,13 @@ docker-logs:
 docker-clean: docker-stop
 	docker rmi datascope:local >/dev/null 2>&1 || true
 
-OLLAMA_URL := http://localhost:11434
-OLLAMA_MODEL := qwen2.5-coder:1.5b
+# Local device defaults (on the side):
+# OLLAMA_URL := http://localhost:11434
+# OLLAMA_MODEL := qwen2.5-coder:1.5b
+
+# Remote M4 Air over Tailscale:
+OLLAMA_URL := http://100.126.157.97:11434
+OLLAMA_MODEL := qwen2.5-coder:14b
 
 ollama-start:
 	@curl -s -m 1 $(OLLAMA_URL)/api/version >/dev/null 2>&1 && echo "Ollama already running at $(OLLAMA_URL)" || \

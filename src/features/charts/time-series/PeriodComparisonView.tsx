@@ -91,7 +91,7 @@ export function PeriodComparisonView({ table, dateColumn, valueColumn }: PeriodC
       {loading ? (
         <p className="text-sm text-(--color-fg-muted)">Running query…</p>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-(--color-error)">{error}</p>
       ) : !comparison ? (
         <p className="text-sm text-(--color-fg-muted)">No rows for this table.</p>
       ) : (
@@ -105,8 +105,8 @@ export function PeriodComparisonView({ table, dateColumn, valueColumn }: PeriodC
                   comparison.deltaPct === null
                     ? 'text-(--color-fg-muted)'
                     : comparison.deltaPct >= 0
-                      ? 'text-emerald-500'
-                      : 'text-red-500'
+                      ? 'text-(--color-ok)'
+                      : 'text-(--color-error)'
                 }`}
               >
                 {comparison.deltaPct === null

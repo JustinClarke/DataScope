@@ -41,13 +41,13 @@ function QuotaExhaustedOffer() {
   return (
     <div className="flex items-center justify-between gap-3 rounded border border-(--color-border) px-3 py-2">
       <p className="flex items-center gap-2 text-xs text-(--color-fg-muted)">
-        <Cpu size={14} aria-hidden="true" className="shrink-0 text-(--color-accent)" />
+        <Cpu size={14} aria-hidden="true" className="shrink-0 text-(--color-ai-2)" />
         Switch to the local model? A one-time {WEBLLM_DOWNLOAD_SIZE} download, then zero-egress.
       </p>
       <button
         type="button"
         onClick={() => setConsent('accepted')}
-        className="shrink-0 rounded-lg bg-(--color-accent) px-3 py-1 text-xs text-(--color-bg)"
+        className="shrink-0 rounded-lg bg-(--color-ai) px-3 py-1 text-xs text-(--color-ai-ink)"
       >
         Download
       </button>
@@ -80,17 +80,17 @@ function OllamaOverflowNote() {
 function AttemptView({ attempt }: { attempt: SqlAttempt }) {
   const ok = attempt.status === 'ok';
   return (
-    <div className="flex flex-col gap-1 rounded border border-(--color-border) p-2">
+    <div className="flex flex-col gap-1 rounded border border-(--color-ai)/20 bg-(--color-ai-soft) p-2">
       <div className="flex items-center justify-between text-xs text-(--color-fg-muted)">
         <span>Suggested SQL{attempt.attempt > 1 ? ` · retry ${attempt.attempt - 1}` : ''}</span>
-        <span className={ok ? 'text-(--color-accent)' : 'text-red-500'}>
+        <span className={ok ? 'text-(--color-ai-2)' : 'text-(--color-error)'}>
           {ok
             ? `✓ ${attempt.rowCount?.toLocaleString()} rows · ${Math.round(attempt.executionTimeMs)} ms`
             : '✗ failed'}
         </span>
       </div>
       <pre className="overflow-x-auto rounded bg-(--color-border)/40 p-2 font-mono text-xs text-(--color-fg)">{attempt.sql}</pre>
-      {!ok && attempt.error && <p className="font-mono text-xs text-red-500">{attempt.error}</p>}
+      {!ok && attempt.error && <p className="font-mono text-xs text-(--color-error)">{attempt.error}</p>}
       {attempt.sampledRows && (
         <p className="text-xs text-(--color-fg-muted)">
           Repair included up to 3 real sample rows — metadata-only repair was off for this retry.
@@ -115,7 +115,7 @@ export function AITurnView({ turn }: { turn: AITurn }) {
   if (turn.role === 'user') {
     return (
       <div className="flex justify-end">
-        <p className="max-w-[80%] rounded-lg bg-(--color-accent)/15 px-3 py-2 text-sm text-(--color-fg)">{turn.content}</p>
+        <p className="max-w-[80%] rounded-lg bg-(--color-elev) px-3 py-2 text-sm text-(--color-fg)">{turn.content}</p>
       </div>
     );
   }
@@ -123,13 +123,16 @@ export function AITurnView({ turn }: { turn: AITurn }) {
   const chart = turn.chart ? chartLabel(turn.chart) : null;
   return (
     <div className="flex flex-col gap-2">
+      <div className="font-mono text-[length:var(--text-2xs)] uppercase tracking-[0.1em] text-(--color-ai-2)">
+        ✦ Copilot
+      </div>
       {turn.corrections && <CorrectionNote corrections={turn.corrections} />}
       {turn.attempts?.map((a) => <AttemptView key={a.attempt} attempt={a} />)}
       {turn.content && <p className="text-sm text-(--color-fg)">{turn.content}</p>}
-      {chart && <p className="text-xs font-medium text-(--color-accent)">{chart}</p>}
+      {chart && <p className="text-xs font-medium text-(--color-ai-2)">{chart}</p>}
       {turn.servedByOllamaOverflow && <OllamaOverflowNote />}
       {turn.error && (
-        <p className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-500">{turn.error}</p>
+        <p className="rounded border border-(--color-error)/40 bg-(--color-error)/10 px-3 py-2 text-sm text-(--color-error)">{turn.error}</p>
       )}
       {turn.quotaExhausted && <QuotaExhaustedOffer />}
     </div>

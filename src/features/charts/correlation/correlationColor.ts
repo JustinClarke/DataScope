@@ -1,20 +1,20 @@
-// Diverging color scale for the heatmap (§10 Module 4's fixed spec): dark
-// blue (strong positive) → white (no correlation) → dark red (strong
-// negative), linear per channel from the white midpoint toward whichever
-// pole the sign points to. `null` (no value — e.g. a constant column DuckDB's
-// `corr()` can't compute) gets no fill at all rather than a color, so "no
-// data" never reads as "zero correlation".
-const POSITIVE_POLE = { r: 30, g: 58, b: 138 }; // dark blue
-const NEGATIVE_POLE = { r: 127, g: 29, b: 29 }; // dark red
+import { divergingScale, type DivergingScale } from '../../../lib/chartPalette';
 
-export function correlationCellColor(value: number | null): string {
+// Diverging color scale for the heatmap (§10 Module 4's fixed spec, on the
+// palette design.md § Chart palette locks): the azure pole (strong positive) →
+// a surface-neutral midpoint (no correlation) → the magenta pole (strong
+// negative), linear per channel from the midpoint toward whichever pole the
+// sign points to. The negative arm is deliberately not a red — the status red
+// is reserved, and a cell is not an error. `null` (no value — e.g. a constant
+// column DuckDB's `corr()` can't compute) gets no fill at all rather than a
+// color, so "no data" never reads as "zero correlation".
+
+export function correlationCellColor(value: number | null, scale: DivergingScale = divergingScale()): string {
   if (value === null) return 'transparent';
   const clamped = Math.max(-1, Math.min(1, value));
-  const pole = clamped >= 0 ? POSITIVE_POLE : NEGATIVE_POLE;
+  const pole = clamped >= 0 ? scale.pos : scale.neg;
   const t = Math.abs(clamped);
-  const r = Math.round(255 + (pole.r - 255) * t);
-  const g = Math.round(255 + (pole.g - 255) * t);
-  const b = Math.round(255 + (pole.b - 255) * t);
+  const [r, g, b] = scale.mid.map((mid, i) => Math.round(mid + (pole[i] - mid) * t));
   return `rgb(${r}, ${g}, ${b})`;
 }
 
@@ -29,8 +29,8 @@ function relativeLuminance(rgb: string): number {
   return 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
 }
 
-/** Black or white, whichever contrasts more against the given cell fill (0.179 is the standard WCAG break-even point). */
+/** The darkest or lightest ink, whichever contrasts more against the given cell fill (0.179 is the standard WCAG break-even point). */
 export function correlationTextColor(cellColor: string): string {
   if (cellColor === 'transparent') return 'var(--color-fg-muted)';
-  return relativeLuminance(cellColor) > 0.179 ? '#0b0b0b' : '#ffffff';
+  return relativeLuminance(cellColor) > 0.179 ? 'var(--color-void)' : 'var(--color-ink)';
 }

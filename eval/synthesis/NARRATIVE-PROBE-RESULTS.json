@@ -1,0 +1,89 @@
+{
+  "ranAt": "2026-07-26T08:08:21.967Z",
+  "endpoint": "https://datascope-edge-staging.justinclarke.workers.dev/ai-router",
+  "results": [
+    {
+      "dataset": "titanic",
+      "structureOnly": {
+        "text": "This dataset contains information on 891 passengers from the Titanic, including their ticket class, age, fare, and whether they survived. It is well-suited for survival analysis, exploring demographic factors such as gender and age, and examining the impact of ticket class and fare on survival outcomes.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset contains 891 rows of passenger information from the Titanic, including their survival status, ticket class, age, fare, and other details. The data does not include a date range. This dataset is well-suited for survival analysis to identify factors that influenced passengers' chances of survival, as well as fare analysis to explore how ticket prices varied by class and other passenger attributes.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "titanic": 354
+        },
+        "totalRowsAvailable": 891,
+        "bytes": 49954
+      }
+    },
+    {
+      "dataset": "stock_prices",
+      "structureOnly": {
+        "text": "This dataset contains stock price information with 2,500 daily records, each including opening, closing, high, and low prices, as well as trading volume. It is well-suited for analyzing price trends over time and examining the relationship between trading volume and price movements.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset contains historical stock prices for a single stock, with 2,500 daily records spanning from January 2016 to June 2018. Each record includes the date, opening price, highest price, lowest price, closing price, and trading volume. This dataset is well-suited for analyzing daily price trends and volatility, as well as examining the relationship between trading volume and price movements.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "stock_prices": 529
+        },
+        "totalRowsAvailable": 2500,
+        "bytes": 49750
+      }
+    },
+    {
+      "dataset": "weather",
+      "structureOnly": {
+        "text": "This dataset contains daily weather observations for a single city, with 3650 rows spanning ten years of data. It is well-suited for time-series analysis of temperature and humidity trends, as well as investigating the relationship between wind speed and other weather variables.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset appears to be a weather dataset for the city of Springfield, containing 3650 daily records. The data spans from January 1, 2015 to December 31, 2015. It is well-suited for analyzing daily temperature trends, humidity patterns, and wind speed variations over the course of the year.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "weather": 471
+        },
+        "totalRowsAvailable": 3650,
+        "bytes": 49963
+      }
+    },
+    {
+      "dataset": "product_reviews",
+      "structureOnly": {
+        "text": "This dataset contains product reviews, with 520 reviews spanning an unspecified date range. It is well-suited for sentiment analysis of review text and for evaluating product ratings across different items.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset contains product reviews, with 520 reviews covering an unspecified date range. It includes 119 unique products, each reviewed multiple times. This dataset is well-suited for sentiment analysis of product reviews and identifying trends in customer satisfaction over time. Additionally, it can be used to evaluate the relationship between product ratings and specific review phrases.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "product_reviews": 376
+        },
+        "totalRowsAvailable": 520,
+        "bytes": 49939
+      }
+    },
+    {
+      "dataset": "ecommerce",
+      "structureOnly": {
+        "text": "This ecommerce dataset contains information on 400 customers, 150 products, and 1400 orders, with detailed order items for each purchase. The data spans a range of dates for customer signups and orders, although the exact date range is not specified. This dataset is well-suited for analyzing customer purchasing behavior, identifying popular products by category, and evaluating order fulfillment statuses over time.",
+        "servedBy": "workers-ai"
+      },
+      "withRows": {
+        "text": "This dataset appears to be from an e-commerce platform, containing 400 customers, 150 products, 1400 orders, and 3487 order items. The data spans from May 2015 to November 2023. This dataset is well-suited for analyzing customer purchasing behavior and product performance, as well as for identifying trends in order statuses over time.",
+        "servedBy": "workers-ai",
+        "rowsSent": {
+          "customers": 41,
+          "products": 15,
+          "orders": 142,
+          "order_items": 354
+        },
+        "totalRowsAvailable": 5437,
+        "bytes": 49969
+      }
+    }
+  ]
+}

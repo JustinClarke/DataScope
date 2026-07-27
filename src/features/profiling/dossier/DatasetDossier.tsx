@@ -1,16 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
 import { SkipForward } from 'lucide-react';
 import { useDatasetsStore } from '../../../stores/datasets';
-import { useRelationshipsStore } from '../../../stores/relationships';
-import { buildDossierViewSpec, buildDatasetVerdict, type TableInsights, type TimeCoverageRow } from '../../../lib/dossier';
-import { useSynthesisUpgrade } from './useSynthesisUpgrade';
+import { buildDossierViewSpec } from '../../../lib/dossier';
+import { useDatasetBaseline } from './useDatasetBaseline';
 import { buildStructureReport, downloadStructureReport } from '../../../lib/structureReport';
 import { downloadDspsHtml } from '../../../lib/dspsHtml';
 import { buildAIContext } from '../../../lib/aiContext';
-import { applyOverrides, type FkEdge, type RelationshipOverrides } from '../../../lib/relationshipInference';
-import { JOIN_GRAPH_ENABLED } from '../../../lib/featureFlags';
-import { loadDossierInsights, loadTimeCoverage } from '../../../services/dossier';
-import { loadRelationships } from '../../../services/relationships';
 import type { RankedAction } from '../../../types';
 import type { SidebarModule } from '../../../stores/ui';
 import { ViewSpecRenderer } from './ViewSpecRenderer';
@@ -36,69 +30,15 @@ interface DatasetDossierProps {
 export function DatasetDossier({ onOpenTable, onNavigate, onShowSql, onSkipToData }: DatasetDossierProps) {
   const tables = useDatasetsStore((state) => state.tables);
   const datasets = useDatasetsStore((state) => state.datasets);
-  // Stable per-field selection — a fresh-object selector would loop under Zustand v5.
-  const removed = useRelationshipsStore((s) => s.removed);
-  const repointed = useRelationshipsStore((s) => s.repointed);
-  const added = useRelationshipsStore((s) => s.added);
-  const overrides = useMemo<RelationshipOverrides>(() => ({ removed, repointed, added }), [removed, repointed, added]);
-  const [tableInsights, setTableInsights] = useState<TableInsights[] | null>(null);
-  const [timeCoverage, setTimeCoverage] = useState<TimeCoverageRow[] | null>(null);
-  const [inferredEdges, setInferredEdges] = useState<FkEdge[]>([]);
-
-  const classifiedCount = tables.filter((t) => t.columns).length;
-
-  useEffect(() => {
-    if (classifiedCount === 0) {
-      setTableInsights(null);
-      setTimeCoverage(null);
-      setInferredEdges([]);
-      return;
-    }
-    let cancelled = false;
-    setTableInsights(null);
-    setTimeCoverage(null);
-    void loadDossierInsights(tables).then((result) => {
-      if (!cancelled) setTableInsights(result);
-    });
-    void loadTimeCoverage(tables).then((result) => {
-      if (!cancelled) setTimeCoverage(result);
-    });
-    // The join graph needs at least two tables; below that it stays schema-only.
-    if (JOIN_GRAPH_ENABLED && classifiedCount >= 2) {
-      void loadRelationships(tables).then((edges) => {
-        if (!cancelled) setInferredEdges(edges);
-      });
-    } else {
-      setInferredEdges([]);
-    }
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tables.map((t) => `${t.id}:${t.columns?.length ?? 0}`).join(','), classifiedCount]);
-
-  const liveTableNames = useMemo(() => tables.map((t) => t.tableName), [tables]);
-  const edges = useMemo(
-    () => (JOIN_GRAPH_ENABLED ? applyOverrides(inferredEdges, overrides, liveTableNames) : []),
-    [inferredEdges, overrides, liveTableNames],
-  );
-
-  // The deterministic Verdict baseline the edge-synthesis producer re-phrases and
-  // re-ranks in place (null while profiling, so the upgrade never fires early).
-  const baseline = useMemo(() => {
-    if (tables.length === 0 || tableInsights === null || timeCoverage === null) return null;
-    const latest = [...datasets].sort((a, b) => a.ingestedAt.localeCompare(b.ingestedAt)).at(-1) ?? null;
-    const verdict = buildDatasetVerdict({
-      datasetLabel: datasets.length > 1 ? `${datasets.length} datasets` : (latest?.name ?? 'Dataset'),
-      tables,
-      tableInsights,
-      timeCoverage,
-      profiledAt: latest?.ingestedAt ?? '',
-      relationships: edges,
-    });
-    return { headlineFact: verdict.headlineFact, actions: verdict.actions };
-  }, [tables, tableInsights, timeCoverage, datasets, edges]);
-  const { tailored, paused, headlineFact: aiHeadline, actions: aiActions } = useSynthesisUpgrade(tables, baseline);
+  const {
+    tableInsights,
+    timeCoverage,
+    edges,
+    tailored,
+    paused,
+    headlineFact: aiHeadline,
+    actions: aiActions,
+  } = useDatasetBaseline(tables, datasets);
 
   if (tables.length === 0) {
     return <p className="text-center text-(--color-fg-muted)">Drop a dataset to get started.</p>;

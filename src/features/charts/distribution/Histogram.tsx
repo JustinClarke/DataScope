@@ -17,7 +17,7 @@ export function Histogram({ buckets }: { buckets: HistogramBucket[] }) {
         {buckets.map((bucket, i) => (
           <div
             key={i}
-            className="flex-1 rounded-t-sm bg-(--color-accent)/60"
+            className="flex-1 rounded-t-sm bg-(--chart-1)/70"
             style={{ height: `${Math.max(2, (bucket.count / max) * 100)}%` }}
             title={`${bucket.rangeStart.toFixed(2)}–${bucket.rangeEnd.toFixed(2)}: ${bucket.count.toLocaleString()}`}
           />

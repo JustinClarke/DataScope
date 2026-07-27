@@ -1,5 +1,6 @@
 import { RefreshCw, Trash2, Undo2 } from 'lucide-react';
 import { useDatasetsStore } from '../../stores/datasets';
+import { useSelectionStore } from '../../stores/selection';
 import { formatBytes } from '../../lib/formatBytes';
 import type { TableRegistryEntry } from '../../types';
 
@@ -19,6 +20,20 @@ interface TableListProps {
   refreshingTableId: string | null;
   /** True while any ingest/refresh already has the engine busy — every refresh button is disabled together to avoid overlapping DuckDB writes. */
   refreshDisabled: boolean;
+  /**
+   * (Workbench W2, D68d) When provided, the table name becomes clickable —
+   * the explorer's "click a table, land on its Profile tab" behavior. Omitted
+   * by the flag-off `IngestionPanel` call site, whose rows render exactly as
+   * before.
+   */
+  onSelectTable?: (tableId: string) => void;
+  /**
+   * (V3, `13-hallmark-replication/03-explorer-status-bar.md`) When true, omits the
+   * "Registered tables" `<h2>`. Additive/default-false so `IngestionPanel`'s call site
+   * (which needs its own section heading) renders exactly as before; only `ExplorerPanel`
+   * passes it, since the Workbench explorer draws its own `.explorer__head` instead.
+   */
+  hideHeading?: boolean;
 }
 
 /**
@@ -28,37 +43,65 @@ interface TableListProps {
  * siblings. Reads `stores/datasets.ts` directly, so it updates live with no
  * separate fetch or cache.
  */
-export function TableList({ onRemove, onRefresh, refreshingTableId, refreshDisabled }: TableListProps) {
+export function TableList({
+  onRemove,
+  onRefresh,
+  refreshingTableId,
+  refreshDisabled,
+  onSelectTable,
+  hideHeading = false,
+}: TableListProps) {
   const tables = useDatasetsStore((state) => state.tables);
+  const selectedTableId = useSelectionStore((state) => state.selectedTableId);
 
   if (tables.length === 0) return null;
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">Registered tables</h2>
+      {!hideHeading && <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">Registered tables</h2>}
       <ul className="flex flex-col gap-2">
-        {tables.map((table) => (
+        {tables.map((table) => {
+          const isSelected = table.id === selectedTableId;
+          return (
           <li
             key={table.id}
-            className="flex items-center justify-between rounded-lg border border-(--color-border) px-4 py-2"
+            className={`group flex items-center justify-between gap-2 rounded-(--radius-sm) px-4 py-2 outline outline-2 -outline-offset-2 outline-transparent ${
+              isSelected
+                ? 'bg-(--color-elev) shadow-[inset_2px_0_0_var(--color-active)]'
+                : 'hover:bg-(--color-elev)'
+            }`}
           >
-            <div>
-              <span className="font-medium text-(--color-fg)">{table.tableName}</span>
-              <span className="ml-2 font-mono text-sm text-(--color-fg-muted)">
+            <div className="flex min-w-0 items-center gap-2">
+              <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-(--radius-xs) bg-(--color-ink-3)" />
+              {onSelectTable ? (
+                <button
+                  type="button"
+                  onClick={() => onSelectTable(table.id)}
+                  className="trow__name min-w-0 flex-auto truncate text-left font-mono text-[length:var(--text-base)] text-(--color-ink) underline-offset-2 hover:underline"
+                >
+                  {table.tableName}
+                </button>
+              ) : (
+                <span className="trow__name min-w-0 flex-auto truncate font-mono text-[length:var(--text-base)] text-(--color-ink)">
+                  {table.tableName}
+                </span>
+              )}
+              <span className="font-mono text-[length:var(--text-xs)] text-(--color-ink-3)">
                 {table.rowCount.toLocaleString()} rows × {table.columnCount} cols
               </span>
-              <span className="ml-2 text-sm text-(--color-fg-muted)">
-                {ORIGIN_LABEL[table.origin]} · {formatBytes(table.memoryBytes)}
+              <span className="font-mono text-[length:var(--text-2xs)] uppercase tracking-[0.1em] text-(--color-ink-3)">
+                {ORIGIN_LABEL[table.origin]}
               </span>
+              <span className="text-[length:var(--text-xs)] text-(--color-ink-3)">{formatBytes(table.memoryBytes)}</span>
               {table.origin === 'api' && table.lastFetchedAt && (
-                <span className="ml-2 text-sm text-(--color-fg-muted)">
+                <span className="text-[length:var(--text-xs)] text-(--color-ink-3)">
                   fetched {new Date(table.lastFetchedAt).toLocaleString()}
                 </span>
               )}
               {table.origin === 'derived' && table.stale && (
                 // No dismiss control, same reasoning as the sampled badge below —
                 // stays visible for as long as the flag holds, straight from the store.
-                <span className="ml-2 rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                <span className="ml-2 rounded bg-(--color-warn)/10 px-1.5 py-0.5 text-xs font-medium text-(--color-warn)">
                   possibly stale — a source table was refreshed
                 </span>
               )}
@@ -66,12 +109,12 @@ export function TableList({ onRemove, onRefresh, refreshingTableId, refreshDisab
                 // No dismiss control — reads straight from the store, so it
                 // stays visible for as long as this table does rather than
                 // only for the ingestion moment.
-                <span className="ml-2 rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                <span className="ml-2 rounded bg-(--color-warn)/10 px-1.5 py-0.5 text-xs font-medium text-(--color-warn)">
                   sampled — first {(table.sampleRowLimit ?? table.rowCount).toLocaleString()} rows
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
               {table.origin === 'api' && (
                 <button
                   type="button"
@@ -106,7 +149,8 @@ export function TableList({ onRemove, onRefresh, refreshingTableId, refreshDisab
               </button>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

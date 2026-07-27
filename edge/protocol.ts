@@ -51,6 +51,9 @@ export interface StructuralFacts {
       physicalType: string;
       nullPercentage: number | null;
       cardinality: number;
+      /** Earliest/latest value, Temporal columns only — never present otherwise. */
+      minDate?: string | null;
+      maxDate?: string | null;
     }>;
   }>;
 }

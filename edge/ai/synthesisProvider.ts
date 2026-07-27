@@ -50,8 +50,10 @@ interface ModelAnswer {
 
 // Wording the client's honesty guard rejects (permanence / causal / "verified"
 // claims). Named in the prompt so a compliant answer passes the guard instead of
-// burning the call on a rephrase that gets degraded client-side.
-const FORBIDDEN_WORDS =
+// burning the call on a rephrase that gets degraded client-side. Exported so a
+// widened-prompt variant (S0 Probe A) cites the identical guard instead of a
+// second, drifting copy.
+export const FORBIDDEN_WORDS =
   'always, never, permanent, permanently, guaranteed, invariant, certain, certainly, proven, verified, confirmed, because, causes, caused, due to, leads to, results in, drives'
 
 // Exported (with `synthesisUserPrompt` and `parseModelAnswer`) so the
@@ -146,8 +148,11 @@ export function parseModelAnswer(raw: string, actionCount: number): ModelAnswer 
   return { headline: parsed.headline.trim(), actions: parsed.actions }
 }
 
-/** Reassembles the full slice from the baseline + the model's answer — the only path to a response. */
-function sliceFromAnswer(req: SynthesisRequest, answer: ModelAnswer): SynthesisResponse {
+/** Reassembles the full slice from the baseline + the model's answer — the only
+ * path to a response. Exported so a harness testing a substitute system prompt
+ * (S0 Probe A) can reassemble a `SynthesisResponse` from a `ModelAnswer` too,
+ * without a second reassembly path (D58). */
+export function sliceFromAnswer(req: SynthesisRequest, answer: ModelAnswer): SynthesisResponse {
   return {
     headlineFact: { ...req.baseline.headlineFact, statement: answer.headline },
     actions: answer.actions.map(({ index, verb }) => ({

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
-import { CategoricalModule } from './CategoricalModule';
+import { CategoricalModule, DONUT_MAX_SLICES } from './CategoricalModule';
+import { CHART_SERIES_DARK } from '../../../lib/chartPalette';
 import { useDatasetsStore } from '../../../stores/datasets';
 import * as chartsService from '../../../services/charts';
 import type { QueryResult, TableRegistryEntry } from '../../../types';
@@ -71,6 +72,10 @@ describe('CategoricalModule', () => {
     expect(freqSql).toContain('"Pclass"');
     expect(freqSql).toContain('ORDER BY 2 DESC');
     await waitFor(() => expect(container.textContent).toContain('Frequency'));
+  });
+
+  it('caps donut wedges at the palette it has slots for, plus Other', () => {
+    expect(DONUT_MAX_SLICES - 1).toBe(CHART_SERIES_DARK.length);
   });
 
   it('offers the Donut tab at low cardinality and switches views', async () => {

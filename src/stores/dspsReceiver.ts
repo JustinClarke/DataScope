@@ -4,9 +4,10 @@ import type { StructureReport } from '../lib/structureReport';
 /**
  * The universal `.dsps` receiver's render state (D62) — a dropped/opened
  * `.dsps` file, parsed locally with no network call, rendered read-only via
- * the same view the "open a share link" flow uses (`SharedStructureReportView`).
- * Kept separate from that flow's own App-local state: two producers (a share
- * fetch, a local file read) into one shared, read-only render target.
+ * `ViewerMode`, the same shared render target the "open a share link" flow
+ * (`WorkbenchShell`'s `useShareLinkOpener`) now routes through too: two
+ * producers (a share fetch, a local file read) into one shared, read-only
+ * render target — this store is why they can share one renderer.
  */
 interface DspsReceiverState {
   document: StructureReport | null;

@@ -114,8 +114,25 @@ It consumes the **single** insight feed (Module 1 / §20.5's matured `HeuristicF
 one pipeline, no parallel generator, D58/D69); the tier-1 Verdict and the v0.5 tier-2 data-sniffer
 grid render that *same* feed at different disclosure tiers, never two competing authorities.
 
+**The strip is retired by D73 (2026-07-26, master §9/§13.3, v0.70 / S6) — but the contract
+below is not.** `OptionsStrip.tsx` goes; the ranked list relocates onto the restreamlined map,
+and whatever renders it inherits every rule in this paragraph verbatim, one ranker included.
+One routing change rides with it: **`RankedAction`s carrying SQL — today the `duplicates`
+insight, which opens on the exact query that found the rows (D68e) — route to the drawer
+console**, since the standalone SQL tab is deleted.
+
+**Where each action renders — resolved 2026-07-26 by scope, into four homes that already exist**
+(master §13.3's routing table). Dataset-wide *"go explore this"* → the map's **Suggested
+Explorations** (opening a pre-run query tab); dataset-wide **quality findings that carry a query**
+→ a **run action on the finding** in the explorer's Data Quality & Health panel (opening the
+console) — **this is where `duplicates` lands**, and without it that action would have had no
+destination at all once the SQL page went; **selection-scoped** findings → the drawer's Info view;
+**legal-but-unranked or gated** → the command palette, disabled-with-reason copy intact. Four
+render sites, **still one ranker** — the subject-scoped filter below is unchanged, and none of
+these is a second ranking path (D58).
+
 **Workbench options strip — a second consumer, not a second ranker (2026-07-24, D71 —
-master §9/§13.3).** In the flag-on shell the map tab's options strip renders this same
+master §9/§13.3; retired 2026-07-26, contract inherited per above).** In the flag-on shell the map tab's options strip renders this same
 `RankedAction[]`: **membership = the capability gate resolved against the selected subject's
 legal operations; order = the D68a ranking applied to that legal set** — implemented as a
 **client-side, subject-scoped filter of the dataset-wide `RankedAction[]`** (via each

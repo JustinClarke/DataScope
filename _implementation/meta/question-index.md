@@ -25,7 +25,7 @@ Lives in `_implementation/meta/` alongside [`technical-overview.md`](technical-o
   - §19 Development Phases
 - Implementation reference: `../architecture/system-design.md`
 - Data flow: `../architecture/data-flow.md`
-- Decisions: `../architecture/decisions.md` (D1–D69 — settled)
+- Decisions: `../architecture/decisions.md` (D1–D73 — settled; D73 amends D71's §13.3 shell)
 - ADRs (library/tool rationale — **mostly pending, not settled**): `../architecture/adr/*` (see §10a below)
 - App flow: `../architecture/app-flow.md`
 
@@ -147,15 +147,49 @@ When answering a question, the agent should:
 - How is the UI laid out / what is the Workbench?
   - `../../DATASCOPE.md` §13 — two shells: §13.0 (current shell, the flag-off spec of record) and §13.3 (the Workbench behind `WORKBENCH_ENABLED`, D71); build leaves `../build/12-workbench/README.md`.
 
+- What is the app's visual design system / where do colours, fonts and spacing come from?
+  - `.hallmark/design.md` — the locked system (genre, macrostructure families, the seven-surface depth ladder, both accent registers, the derived light register, the Act 0 variant question). Portable copy: `tokens.css`; live copy with the Tailwind mapping and legacy aliases: `src/app/theme.css`.
+  - Why it looks like this / how it was sequenced: `../../DATASCOPE.md` §19's v0.69 subsection + `Revised (15)`, build leaves `../build/13-hallmark-replication/README.md`. Visual source of record: the five signed-off mocks, formerly `_misc/ideation/hallmark/` (D71), deleted once v0.69/§19 V6e closed on them; iteration record `.hallmark/log.json`.
+
 - Where did the sidebar go in the Workbench?
-  - `../../DATASCOPE.md` §13.3, D68(d)-superseded-by-D71 — the intent-group sidebar becomes explorer + dataset map + options strip + command palette; §13.2 stays the flag-off nav until W8.
+  - `../../DATASCOPE.md` §13.3, D68(d)-superseded-by-D71 — the intent-group sidebar becomes explorer + dataset map + options strip + command palette; §13.2 stays the flag-off nav until W8. **The options strip itself is retired by D73** (2026-07-26); its prompts relocate into the map's Suggested Explorations, and its one-ranker contract is inherited whole by whatever renders the ranked list next.
+
+- Where do I write SQL / what happened to the SQL tab?
+  - `../../DATASCOPE.md` §13.3 (the drawer paragraphs), §10 Module 2, D73 — the standalone SQL tab is **deleted**; SQL is written in exactly one place, the **console** in the bottom drawer. Every surface that displays SQL gains a run action into it; keepers promote into **query tabs**. Build: `../build/14-workspace-streamline/README.md`, `../build/04-sql/README.md`.
+
+- What is in the bottom region — inspector or console?
+  - `../../DATASCOPE.md` §13.3, D73 — **both**, as two user-controlled views of one drawer: `Info` (the W7 inspector, unchanged, still "scent, not dashboard") and the SQL console. Exactly one console instance; results never auto-expand the drawer. Viewer mode gets Info only.
+
+- What is a query tab / what finally uses the artifact tab kind?
+  - `../../DATASCOPE.md` §13.3 (the tab-registry paragraph), D73 — the query tab is the artifact kind's first live member, with two producers (pin-from-console, or a chosen suggestion born pre-run), per-instance and never deduped. Registry: seven singletons → six + one artifact type. Build: `../build/12-workbench/04-tab-model-maturation.md`'s amendment note.
+
+- Why does the transform guard live in a shared run path?
+  - `../../DATASCOPE.md` §10 Module 2, §13.3, D73 — it is an **interception**, not an affordance, and with N independent query-tab runners a per-surface mount would leave a data-loss path the single SQL page never had. `../build/04-sql/05-transformation-layer.md`.
+
+- Is the "AI Dataset Synthesis" block on the map decided?
+  - **No — blocked on the S0 probe** (D73, §19's v0.70). Note the gate is narrower than it first reads: a producer already exists and already ships — v0.25's `edge/handlers/synthesis.ts` and `src/services/webllmSynthesis.ts` both emit synthesis through the ADR-010 seam, structure-only (never rows), opt-in, stateless, kill-switched, passing `eval/synthesis`. What that seam cannot do is invent a claim absent from the deterministic slice, and §4's "well-suited for CLV / churn" is that category. Measured in `../build/14-workspace-streamline/00-synthesis-and-limits-probe.md` (Probe A).
+
+- I click a table — where do I see its details? (rail vs. drawer vs. tab)
+  - `../../DATASCOPE.md` §13.3's **detail ladder** table, D73 — one escalation, three levels: **rail** = lightest signpost (structure only, always links out), **drawer Info** = ambient scent that fills from the selection and links to the tab, **tab** = full depth. No rung duplicates the one below; the rail deliberately has no stats panels and Info deliberately has no charts.
+
+- Where does a suggestion / ranked action open now that the strip and SQL tab are gone?
+  - `../../DATASCOPE.md` §13.3's routing table, D73, D58 — by scope into four existing homes: map **Suggested Explorations** → a pre-run query tab; **Data Quality & Health findings** carrying a query → a run action into the console (this is where D68e's `duplicates` lands); **selection-scoped** findings → the drawer's Info; **legal-but-unranked** → the palette with disabled-with-reason copy. Four render sites, still one ranker. `../build/03-profiling/03-capability-engine.md`.
+
+- How many SQL/query tabs can I open?
+  - **Undecided — measured, not guessed** (D73). Horizontal tab-strip scrolling is decided and ships regardless; the ceiling number, refuse-vs-evict at the ceiling, and whether the ceiling scales with the device are the S0 probe's Probe B (`../build/14-workspace-streamline/00-synthesis-and-limits-probe.md`), measured on an M1 Air base and an M4 Air. **No leaf doc may write a ceiling number until that reports.**
+
+- Can I choose which local model to download / see its accuracy?
+  - **Not built, and it needs a decision first** — recorded as item C in `../build/14-workspace-streamline/00-synthesis-and-limits-probe.md` with a pending-amendment note on `../architecture/adr/007-ai-routing.md`. ADR-007 pins exactly one model (the one measured to coexist with DuckDB-Wasm) and D40 gates any local accuracy number shown to a user. Blocks nothing in v0.70.
+
+- Is Settings a tab or an overlay?
+  - **An overlay modal** (D73, §13.3) — this rejects the earlier "Settings tab" line in favour of what the code ships (`AISettingsPanel`). Export is the opposite call: still a **tab**, with only its entry point moving to the title-bar cluster.
 
 - How do tabs remember state when I switch away?
   - `../../DATASCOPE.md` §13.3, D71 — keep-mounted is the v0 norm; restore-from-spec is per-type opt-in; full tab-list serialization is deferred to the D61 hosted-tier round.
 
 - Where is AI consent in the Workbench / where did the first-run chooser go?
   - `../../DATASCOPE.md` §5.1 (shell-conditional: the current shell keeps the chooser; the Workbench renders flat mode switches + "Configure workspace"), §5.2 (egress modes never persist across sessions), D2/D71; `../build/06-ai/02-modes-byok.md`.
-  - Note: an earlier ideation proposal — the per-upload data-handling gate in `../_misc/ideation/UI-REDESIGN-LIFECYCLES.md` §4/§7 — was considered and **superseded** by the shipped flat-switch model (AI-V2 review, Change A). If you open LIFECYCLES.md, read its §4 and §7 items 1–2 as history, not live design.
+  - Note: an earlier ideation proposal — a per-upload data-handling gate (formerly `UI-REDESIGN-LIFECYCLES.md` §4/§7, deleted post-v0.69) — was considered and **superseded** by the shipped flat-switch model (AI-V2 review, Change A). History only, not live design.
 
 - Can I send actual data rows to the AI for a better answer (D72)?
   - `../../DATASCOPE.md` §5.2, §11.3, D72 (deeper cloud grounding — graduated, hard-capped, per-session, transmit-only; never the whole dataset); `../build/06-ai/03-privacy-disclosure.md`.
@@ -164,7 +198,7 @@ When answering a question, the agent should:
   - `../../DATASCOPE.md` §13.3, D62/D63 — the read-only Workbench shell over a `?share=` URL or dropped `.dsps`; `../build/08-persistence/03-dsps-spec.md`.
 
 - How does the Workbench behave on small viewports / tablets?
-  - **Open, explicitly deferred (2026-07-24, owner call — not prioritized).** No decision in master or the build tree yet; the SqlErd "optimized for desktop" precedent vs. a Phase 6 tablet commitment is unresolved. Tracked at `../_misc/ideation/UI-REDESIGN-SPEC.md` §9 item 7 and `UI-REDESIGN-PLAN.md` §5 item 7.
+  - **Open, explicitly deferred (2026-07-24, owner call — not prioritized).** No decision in master or the build tree yet; the SqlErd "optimized for desktop" precedent vs. a Phase 6 tablet commitment is unresolved. Formerly tracked at `UI-REDESIGN-SPEC.md` §9 item 7 / `UI-REDESIGN-PLAN.md` §5 item 7, both deleted post-v0.69 — this bullet is now the only record of the open question; resolve it here or in master (§13.3) when picked up.
 
 ### 4) Ingestion / file input questions
 

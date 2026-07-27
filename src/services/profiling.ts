@@ -59,6 +59,13 @@ async function loadColumnStats(engine: EngineModule, tableName: string, column: 
       return { kind: 'Categorical', topValues: stats.parseTopValues(result), sql };
     }
     case 'Temporal': {
+      // A bare TIME column (time-of-day, no calendar date) can't be CAST to
+      // DATE — DuckDB has no such cast — so buildDateRangeSql's query would
+      // always error for it. Skip the query rather than run one guaranteed
+      // to fail.
+      if (column.physicalType.toUpperCase() === 'TIME') {
+        return { kind: 'Temporal', range: null, sql: '' };
+      }
       const sql = stats.buildDateRangeSql(tableName, column.name);
       const result = await engine.duckDBEngine.execute(sql);
       return { kind: 'Temporal', range: stats.parseDateRange(result), sql };

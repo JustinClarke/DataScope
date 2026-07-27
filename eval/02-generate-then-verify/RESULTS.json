@@ -1,0 +1,623 @@
+{
+  "ranAt": "2026-07-26T14:07:48.562Z",
+  "ollamaModel": "qwen2.5-coder:14b",
+  "closureRules": [
+    "case-insensitive match for table names, column names, and semanticType values",
+    "numeric normalization — thousands separators and trailing %/σ stripped before comparing digit runs",
+    "year extraction — the 4-digit year prefix of any minDate/maxDate is allowed",
+    "date-span arithmetic — |maxYear - minYear| and |maxYear - minYear| + 1 are both allowed as span-length numbers",
+    "baseline-headline carryover — every numeric token and quoted substring already present in the given baseline headline is allowed verbatim (it crossed the wire in the request's `headline` field, and the system prompt requires the model preserve it)"
+  ],
+  "records": [
+    {
+      "dataset": "titanic",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Analyze Titanic passenger data featuring survival rates, classes, and fares.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Analyze Titanic data with diverse passenger categories.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Titanic dataset: Pclass distribution impacts Fare.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Analyze Titanic dataset with insights on passenger survival, class, and fare",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Titanic dataset: Fare differences by passenger class",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v2-suited-for",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Titanic dataset: Explore survival rates and passenger demographics.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Explore"
+      ]
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v2-suited-for",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Analyze Titanic passenger data for survival insights and fare comparisons.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v2-suited-for",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Titanic Dataset - Analyze Passenger Survival Factors",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Dataset",
+        "Analyze",
+        "Passenger",
+        "Survival",
+        "Factors"
+      ]
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v2-suited-for",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Analyze Titanic dataset survival trends by passenger class; fare varies significantly.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "titanic",
+      "variant": "widened-v2-suited-for",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "Analyze survival rates and fare distributions by passenger class.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Stock prices spanning from 2016 to 2025 show perfect correlation between High and Close.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Analyze daily stock prices spanning 2016 to 2025",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Stock prices span 2016 to 2025, showing high correlation between Close and High.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Analyze stock prices spanning 2016 to 2025 with perfect High-Close correlation.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Stock Prices Analyzed: No Leakage, Spanning 2016 to 2025",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Prices",
+        "Analyzed",
+        "No",
+        "Leakage",
+        "Spanning"
+      ]
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v2-suited-for",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Stock Prices from 2016-2025: High and Close show perfect correlation.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Prices"
+      ]
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v2-suited-for",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Explore stock prices trends from 2016 to 2025 through daily open, high, low, close, and volume data.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v2-suited-for",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Analyze stock prices from 2016 to 2025 for trends and correlations.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v2-suited-for",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Analyze stock prices from 2016 to 2025: Potential target leakage detected between 'High' and 'Close'.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Potential"
+      ]
+    },
+    {
+      "dataset": "stock_prices",
+      "variant": "widened-v2-suited-for",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "Analyze stock price trends from 2016 to 2025",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "Weather Data from 2015 to 2024 Reveals Strong Temperature Correlation",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Data",
+        "Reveals",
+        "Strong",
+        "Temperature",
+        "Correlation"
+      ]
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "Weather Data from 2015 to 2024 Correlates Temperature High and Low with Very Strong Correlation of 0.976",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Data",
+        "Correlates",
+        "Temperature",
+        "High",
+        "Low",
+        "Very",
+        "Strong",
+        "Correlation"
+      ]
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "Daily weather data for a specific city from January 1, 2015 to December 28, 2024 shows strong temperature correlation.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "January",
+        "December",
+        "28,"
+      ]
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "Weather Data spanning 2015 to 2024 shows strong daily temperature correlation",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Data"
+      ]
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "Daily weather data spanning 2015 to 2024",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v2-suited-for",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "Analyzing daily weather data from 2015 to 2024 for Seattle",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Seattle"
+      ]
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v2-suited-for",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "7-year city weather trends show strong temperature correlations.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "7"
+      ]
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v2-suited-for",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "Explore 7-year weather trends from 2015 to 2024 for Boston.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Boston",
+        "7"
+      ]
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v2-suited-for",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "5-Year Weather Data Shows Correlation Between High and Low Temperatures Across 365 Days Per Year",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Year",
+        "Data",
+        "Shows",
+        "Correlation",
+        "Between",
+        "High",
+        "Low",
+        "Temperatures",
+        "Across",
+        "Days",
+        "Per",
+        "Year",
+        "5",
+        "365"
+      ]
+    },
+    {
+      "dataset": "weather",
+      "variant": "widened-v2-suited-for",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "A decade of weather data for Berlin offers trend analysis.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Berlin"
+      ]
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Explore 520 product reviews dating from January to November 2024.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "January",
+        "November"
+      ]
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Detected 20 identical review entries.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "520 reviews of 119 products, spanning 2023 to 2024",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Product Reviews spanning 2023 to 2024",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Reviews"
+      ]
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Product Reviews Dataset spanning 2023 to 2024",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Reviews",
+        "Dataset"
+      ]
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v2-suited-for",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Explore 119 unique products' 500 reviews from Jan to Nov 2024",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Jan",
+        "Nov"
+      ]
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v2-suited-for",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Analyze 520 reviews spanning from January to November 2024.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "January",
+        "November"
+      ]
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v2-suited-for",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Explore 500 unique reviews of 119 products from Jan 2023 to Nov 2024.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Jan",
+        "Nov"
+      ]
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v2-suited-for",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Explore 119 Products Across 5 Ratings (2023-01-01 to 2024-11-29)",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Products",
+        "Across",
+        "Ratings",
+        "01",
+        "01",
+        "11",
+        "29"
+      ]
+    },
+    {
+      "dataset": "product_reviews",
+      "variant": "widened-v2-suited-for",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "Explore 520 reviews of 119 products from 2023-01 to 2024-11, focusing on rating trends and product analysis.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "01",
+        "11,"
+      ]
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "E-commerce dataset spanning 2021 to 2024",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "Customer and order dataset spanning 2019 to 2024 · 4 tables · 5,687 rows",
+      "groundingOk": false,
+      "groundingOffending": [
+        "5,687"
+      ]
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables with 5,437 rows spanning 2021 to 2024 — explore customer and order trends.",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "Customers and Orders spanning 2019-2024 · Explore insights!",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Explore"
+      ]
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v1-domain-and-dates",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables · 5,437 rows · analyze customer and order dynamics",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v2-suited-for",
+      "repeat": 1,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables with 5,437 records — trends and segments",
+      "groundingOk": true,
+      "groundingOffending": []
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v2-suited-for",
+      "repeat": 2,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "Customer Orders Analysis - 5,437 Rows - Explore Trends and Segments",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Analysis",
+        "Rows",
+        "Explore",
+        "Trends",
+        "Segments"
+      ]
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v2-suited-for",
+      "repeat": 3,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "Customer & Order Data from January 2019 to December 2024 - Dive into trends and segments.",
+      "groundingOk": false,
+      "groundingOffending": [
+        "Order",
+        "Data",
+        "January",
+        "December",
+        "Dive"
+      ]
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v2-suited-for",
+      "repeat": 4,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables, 5,437 rows — explore trends and segments in customer order data from 2019-01 to 2024-12",
+      "groundingOk": false,
+      "groundingOffending": [
+        "01",
+        "12"
+      ]
+    },
+    {
+      "dataset": "ecommerce",
+      "variant": "widened-v2-suited-for",
+      "repeat": 5,
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables · 5,437 rows · customer and product insights from 2019 to 2024",
+      "groundingOk": true,
+      "groundingOffending": []
+    }
+  ]
+}

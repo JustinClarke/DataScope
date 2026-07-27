@@ -382,38 +382,55 @@ export function IngestionPanel() {
   }, [redoOffer]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <DropZone onFiles={handleFiles} disabled={busy} />
+    <div className="flex flex-col gap-4">
+      {/* V6d built the mock's `.ingest` grid here — the drop zone spanning both
+          rows of a 1.3fr/1fr split with the URL form over the samples beside
+          it. That split is superseded, not abandoned: Act 0's own viewport-fit
+          frame is now the two-column grid (`WorkbenchShell.tsx`), and this
+          panel *is* its right column, so re-splitting a ~640px column at `lg:`
+          would leave a 330px drop target beside a 250px sidebar. The three
+          entry points stack in the order the mock reads them instead.
+          Everything below — the telemetry, the status blocks V6a voiced, the
+          toast and the table list — is re-slotted, never re-styled. */}
+      <div>
+        <h2 className="micro mb-2 text-(--color-ink-3)">File, folder, or .zip</h2>
+        <DropZone onFiles={handleFiles} disabled={busy} />
+      </div>
 
       <div>
-        <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">Or pull from an API</h2>
+        <h2 className="micro mb-2 text-(--color-ink-3)">From a URL</h2>
         <UrlInputForm onSubmit={runIngestUrl} disabled={busy} />
+      </div>
+
+      <div>
+        <h2 className="micro mb-2 text-(--color-ink-3)">Or try a sample</h2>
+        <SamplePicker onSelect={runIngest} disabled={busy} />
       </div>
 
       <TelemetryPanel phase={phase} stats={stats} />
 
       {error && !error.isModal && (
-        <div className="rounded-lg border border-red-400/50 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-400">
+        <div className="rounded-lg border border-(--color-error)/40 bg-(--color-error)/5 p-4 text-sm text-(--color-error)">
           {error.message}
         </div>
       )}
 
       {aggregateWarningBytes != null && (
-        <div className="rounded-lg border border-amber-400/50 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-400">
+        <div className="rounded-lg border border-(--color-warn)/40 bg-(--color-warn)/5 p-4 text-sm text-(--color-warn)">
           Large batch detected — {formatBytes(aggregateWarningBytes)} combined. Performance may vary on devices
           with limited memory.
         </div>
       )}
 
       {sizeBanner?.kind === 'warn' && (
-        <div className="rounded-lg border border-amber-400/50 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-400">
+        <div className="rounded-lg border border-(--color-warn)/40 bg-(--color-warn)/5 p-4 text-sm text-(--color-warn)">
           Large file detected. Performance may vary on devices with limited memory. Estimated memory footprint:{' '}
           {formatBytes(sizeBanner.footprintBytes)}.
         </div>
       )}
 
       {sizeBanner?.kind === 'sampled' && (
-        <div className="rounded-lg border border-amber-400/50 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-400">
+        <div className="rounded-lg border border-(--color-warn)/40 bg-(--color-warn)/5 p-4 text-sm text-(--color-warn)">
           Showing a 100K-row sample. Full dataset exceeds browser memory limits.
         </div>
       )}
@@ -458,11 +475,6 @@ export function IngestionPanel() {
           onDismiss={() => setToast(null)}
         />
       )}
-
-      <div>
-        <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">Or start from a sample</h2>
-        <SamplePicker onSelect={runIngest} disabled={busy} />
-      </div>
 
       <TableList
         onRemove={handleRemove}

@@ -1,0 +1,440 @@
+{
+  "ranAt": "2026-07-26T16:58:33.304Z",
+  "ollamaModel": "qwen2.5-coder:14b",
+  "records": [
+    {
+      "dataset": "titanic",
+      "repeat": 1,
+      "factCount": 4,
+      "compliant": true,
+      "claimCount": 0,
+      "survivorCount": 0,
+      "rejected": [],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+    },
+    {
+      "dataset": "titanic",
+      "repeat": 2,
+      "factCount": 4,
+      "compliant": true,
+      "claimCount": 1,
+      "survivorCount": 1,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "titanic has 891 rows."
+    },
+    {
+      "dataset": "titanic",
+      "repeat": 3,
+      "factCount": 4,
+      "compliant": true,
+      "claimCount": 3,
+      "survivorCount": 3,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "The dataset contains 891 rows. \"PassengerId\" is near-unique and excluded from analysis (override in Profile). First-class passengers' mean fare is 1.6σ above the rest."
+    },
+    {
+      "dataset": "titanic",
+      "repeat": 4,
+      "factCount": 4,
+      "compliant": true,
+      "claimCount": 4,
+      "survivorCount": 4,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "The dataset contains 891 rows. \"PassengerId\" is near-unique — excluded from analysis (override in Profile). \"1\"'s mean Fare is 1.6σ above the rest. Missing values concentrated in \"Age\" (5.4% null)."
+    },
+    {
+      "dataset": "titanic",
+      "repeat": 5,
+      "factCount": 4,
+      "compliant": true,
+      "claimCount": 4,
+      "survivorCount": 4,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "titanic has 891 rows. \"PassengerId\" is near-unique and excluded from analysis (override in Profile). \"1\"'s mean Fare is 1.6σ above the rest. Missing values are concentrated in \"Age\" (5.4% null)."
+    },
+    {
+      "dataset": "stock_prices",
+      "repeat": 1,
+      "factCount": 12,
+      "compliant": true,
+      "claimCount": 12,
+      "survivorCount": 12,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "The dataset contains 2,500 rows of stock prices. Date spans from 2016-01-04 to 2025-08-01. The correlation between 'High' and 'Close' is 1.000, indicating potential target leakage. The correlation between 'Open' and 'Low' is 1.000, indicating potential target leakage. The correlation between 'High' and 'Low' is 1.000, indicating potential target leakage. The correlation between 'Open' and 'High' is 1.000, indicating potential target leakage. The correlation between 'Low' and 'Close' is 1.000, indicating potential target leakage. The correlation between 'Open' and 'Close' is 1.000, indicating potential target leakage. \"Volume\" is near-unique and has been excluded from analysis. Close dropped 96% in 2025-08, the largest period-over-period move. Low dropped 96% in 2025-08, the largest period-over-period move. High dropped 95% in 2025-08, the largest period-over-period move."
+    },
+    {
+      "dataset": "stock_prices",
+      "repeat": 2,
+      "factCount": 12,
+      "compliant": true,
+      "claimCount": 3,
+      "survivorCount": 3,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "The dataset spans from 2016-01-04 to 2025-08-01. \"Open\" and \"Close\" correlate precisely at 1.000, raising potential target leakage concerns. Close dropped by 96% in the period ending 2025-08, representing the largest change."
+    },
+    {
+      "dataset": "stock_prices",
+      "repeat": 3,
+      "factCount": 12,
+      "compliant": true,
+      "claimCount": 5,
+      "survivorCount": 5,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "The dataset contains 2,500 rows of stock prices. The data spans from 2016-01-04 to 2025-08-01. There is a possible target leakage between the 'High' and 'Close' prices, with a correlation of 1.000. The 'Volume' column is near-unique and has been excluded from analysis. In 2025-08, the closing price dropped by 96%, representing the largest period-over-period move."
+    },
+    {
+      "dataset": "stock_prices",
+      "repeat": 4,
+      "factCount": 12,
+      "compliant": false,
+      "claimCount": 0,
+      "survivorCount": 0,
+      "rejected": [],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+    },
+    {
+      "dataset": "stock_prices",
+      "repeat": 5,
+      "factCount": 12,
+      "compliant": true,
+      "claimCount": 3,
+      "survivorCount": 3,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "\"Close\" dropped 96% in 2025-08 — largest period-over-period move. \"Low\" dropped 96% in 2025-08 — largest period-over-period move. \"High\" dropped 95% in 2025-08 — largest period-over-period move."
+    },
+    {
+      "dataset": "weather",
+      "repeat": 1,
+      "factCount": 7,
+      "compliant": true,
+      "claimCount": 7,
+      "survivorCount": 2,
+      "rejected": [
+        {
+          "text": "Date spans from January 1, 2015, to December 28, 2024.",
+          "cites": "fact:weather.Date.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "TempLowC rose 19350% in February 2016 — largest period-over-period move.",
+          "cites": "fact:weather.change-point:Date:TempLowC",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "TempHighC rose 78% in March 2021 — largest period-over-period move.",
+          "cites": "fact:weather.change-point:Date:TempHighC",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "WindKph rose 44% in December 2015 — largest period-over-period move.",
+          "cites": "fact:weather.change-point:Date:WindKph",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Humidity rose 22% in May 2017 — largest period-over-period move.",
+          "cites": "fact:weather.change-point:Date:Humidity",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "The dataset has 3,650 rows. \"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+    },
+    {
+      "dataset": "weather",
+      "repeat": 2,
+      "factCount": 7,
+      "compliant": true,
+      "claimCount": 2,
+      "survivorCount": 2,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "TempLowC rose 19350% in 2016-02 — the largest period-over-period change. WindKph increased by 44% in 2015-12 — its most significant rise over a single period."
+    },
+    {
+      "dataset": "weather",
+      "repeat": 3,
+      "factCount": 7,
+      "compliant": true,
+      "claimCount": 7,
+      "survivorCount": 7,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "The dataset contains 3,650 rows of weather data. Date spans from 2015-01-01 to 2024-12-28. \"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage. TempLowC rose 19350% in 2016-02 — largest period-over-period move. TempHighC rose 78% in 2021-03 — largest period-over-period move. WindKph rose 44% in 2015-12 — largest period-over-period move. Humidity rose 22% in 2017-05 — largest period-over-period move."
+    },
+    {
+      "dataset": "weather",
+      "repeat": 4,
+      "factCount": 7,
+      "compliant": false,
+      "claimCount": 0,
+      "survivorCount": 0,
+      "rejected": [],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+    },
+    {
+      "dataset": "weather",
+      "repeat": 5,
+      "factCount": 7,
+      "compliant": true,
+      "claimCount": 7,
+      "survivorCount": 2,
+      "rejected": [
+        {
+          "text": "The date range of the dataset spans from January 1, 2015, to December 28, 2024.",
+          "cites": "fact:weather.Date.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "The temperature low (TempLowC) increased by 19,350% from the period ending in February 2016, showing the largest period-over-period move.",
+          "cites": "fact:weather.change-point:Date:TempLowC",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "The temperature high (TempHighC) saw a significant rise of 78% in March 2021, marking the largest percentage increase over any other period.",
+          "cites": "fact:weather.change-point:Date:TempHighC",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Wind speed (WindKph) increased by 44% from December 2015 to its next measurement, representing the largest change in wind speed for any period.",
+          "cites": "fact:weather.change-point:Date:WindKph",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Humidity levels rose by 22% in May 2017, indicating the most substantial increase in humidity over the given periods.",
+          "cites": "fact:weather.change-point:Date:Humidity",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "The dataset contains weather data for 3,650 rows. \"TempHighC\" and \"TempLowC\" correlate at 0.976, indicating possible target leakage."
+    },
+    {
+      "dataset": "product_reviews",
+      "repeat": 1,
+      "factCount": 5,
+      "compliant": true,
+      "claimCount": 3,
+      "survivorCount": 2,
+      "rejected": [
+        {
+          "text": "Review dates range from January 1, 2023, to November 29, 2024.",
+          "cites": "fact:product_reviews.ReviewDate.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "The dataset contains 520 product reviews. There are 20 fully duplicated rows in the dataset."
+    },
+    {
+      "dataset": "product_reviews",
+      "repeat": 2,
+      "factCount": 5,
+      "compliant": true,
+      "claimCount": 4,
+      "survivorCount": 2,
+      "rejected": [
+        {
+          "text": "Review dates range from January 1, 2023, to November 29, 2024.",
+          "cites": "fact:product_reviews.ReviewDate.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Product ID experienced a 73% increase from the largest period-over-period move.",
+          "cites": "fact:product_reviews.change-point:ReviewDate:ProductId",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "The dataset contains 520 product reviews. There are 20 fully duplicated rows in the dataset."
+    },
+    {
+      "dataset": "product_reviews",
+      "repeat": 3,
+      "factCount": 5,
+      "compliant": true,
+      "claimCount": 2,
+      "survivorCount": 2,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "The dataset contains 520 rows. ReviewDate spans from 2023-01-01 to 2024-11-29."
+    },
+    {
+      "dataset": "product_reviews",
+      "repeat": 4,
+      "factCount": 5,
+      "compliant": true,
+      "claimCount": 2,
+      "survivorCount": 1,
+      "rejected": [
+        {
+          "text": "Product reviews span from January 1, 2023, to November 29, 2024.",
+          "cites": "fact:product_reviews.ReviewDate.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "There are 520 rows in the product reviews dataset."
+    },
+    {
+      "dataset": "product_reviews",
+      "repeat": 5,
+      "factCount": 5,
+      "compliant": true,
+      "claimCount": 4,
+      "survivorCount": 2,
+      "rejected": [
+        {
+          "text": "ReviewDate ranges from January 1, 2023, to November 29, 2024.",
+          "cites": "fact:product_reviews.ReviewDate.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "ProductId increased by 73% during November 2024, representing the largest change over any period.",
+          "cites": "fact:product_reviews.change-point:ReviewDate:ProductId",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "The dataset contains 520 rows. 20 fully duplicated rows were found in the dataset."
+    },
+    {
+      "dataset": "ecommerce",
+      "repeat": 1,
+      "factCount": 14,
+      "compliant": true,
+      "claimCount": 3,
+      "survivorCount": 3,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "orders: 1,400 rows. order_date spans 2021-12-31 to 2024-12-15. customer_id rose 1750% in 2022-01 — largest period-over-period move."
+    },
+    {
+      "dataset": "ecommerce",
+      "repeat": 2,
+      "factCount": 14,
+      "compliant": true,
+      "claimCount": 5,
+      "survivorCount": 2,
+      "rejected": [
+        {
+          "text": "Signup dates range from January 7, 2019, to September 27, 2024.",
+          "cites": "fact:customers.signup_date.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Order dates span from December 31, 2021, to December 15, 2024.",
+          "cites": "fact:orders.order_date.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "The number of customer IDs increased by 1750% in the period January 2022.",
+          "cites": "fact:orders.change-point:order_date:customer_id",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "Customers dataset contains 400 rows. Orders dataset includes 1,400 rows."
+    },
+    {
+      "dataset": "ecommerce",
+      "repeat": 3,
+      "factCount": 14,
+      "compliant": true,
+      "claimCount": 7,
+      "survivorCount": 4,
+      "rejected": [
+        {
+          "text": "Signup dates range from January 7, 2019, to September 27, 2024.",
+          "cites": "fact:customers.signup_date.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Order dates span from December 31, 2021, to December 15, 2024.",
+          "cites": "fact:orders.order_date.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Customer ID changed significantly in 2022-01, rising by 1750%.",
+          "cites": "fact:orders.change-point:order_date:customer_id",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "The dataset contains 400 customer entries. There are 150 unique products in the dataset. The orders table includes 1,400 entries. The order_items table has 3,487 rows."
+    },
+    {
+      "dataset": "ecommerce",
+      "repeat": 4,
+      "factCount": 14,
+      "compliant": true,
+      "claimCount": 7,
+      "survivorCount": 4,
+      "rejected": [
+        {
+          "text": "Customers signed up between January 7, 2019, and September 27, 2024.",
+          "cites": "fact:customers.signup_date.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Orders were placed between December 31, 2021, and December 15, 2024.",
+          "cites": "fact:orders.order_date.dateRange",
+          "reason": "entity/value/phrasing check rejected"
+        },
+        {
+          "text": "Customer IDs rose by 1750% between January 1, 2021, and January 1, 2022.",
+          "cites": "fact:orders.change-point:order_date:customer_id",
+          "reason": "entity/value/phrasing check rejected"
+        }
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "The dataset contains 400 customers. There are 150 products in the dataset. The orders table has 1,400 rows. The order_items table contains 3,487 rows."
+    },
+    {
+      "dataset": "ecommerce",
+      "repeat": 5,
+      "factCount": 14,
+      "compliant": true,
+      "claimCount": 6,
+      "survivorCount": 6,
+      "rejected": [],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "The customers dataset contains 400 rows. Signups span from 2019-01-07 to 2024-09-27. The products dataset has 150 rows. There are 1,400 orders in the orders dataset. Orders span from 2021-12-31 to 2024-12-15. The order_items dataset contains 3,487 rows."
+    }
+  ]
+}

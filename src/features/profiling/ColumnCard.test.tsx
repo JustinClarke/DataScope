@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, within } from '@testing-library/react';
+import { fireEvent, render, within } from '@testing-library/react';
 import { ColumnCard } from './ColumnCard';
 import type { ColumnCardStats } from '../../services/profiling';
 import type { ClassifiedColumn } from '../../types';
@@ -127,5 +127,50 @@ describe('ColumnCard', () => {
       <ColumnCard column={column({ name: 'row_uuid', semanticType: 'Identifier' })} stats={{ kind: 'Identifier' }} onShowSql={vi.fn()} />,
     );
     expect(within(container).getByText(/excluded from most analysis/)).toBeTruthy();
+  });
+
+  it('omitting onSelect (existing call sites) renders no clickable header (W7 — additive only)', () => {
+    const { container } = render(
+      <ColumnCard column={column({ name: 'fare', semanticType: 'Identifier' })} stats={undefined} onShowSql={vi.fn()} />,
+    );
+    expect(container.querySelector('[role="button"]')).toBeNull();
+  });
+
+  it('clicking the header calls onSelect (W7 — inspector column selection)', () => {
+    const onSelect = vi.fn();
+    const { container } = render(
+      <ColumnCard
+        column={column({ name: 'fare', semanticType: 'Identifier' })}
+        stats={undefined}
+        onShowSql={vi.fn()}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(within(container).getByText('fare'));
+    expect(onSelect).toHaveBeenCalled();
+  });
+
+  it('selected renders an accent border', () => {
+    const { container } = render(
+      <ColumnCard
+        column={column({ name: 'fare', semanticType: 'Identifier' })}
+        stats={undefined}
+        onShowSql={vi.fn()}
+        selected
+      />,
+    );
+    expect(container.firstElementChild?.className).toContain('border-(--color-accent)');
+  });
+
+  it('type badges carry no hue encoding — the reserved amber/purple registers stay data-free (V6a)', () => {
+    for (const semanticType of ['Temporal', 'Quantitative', 'Categorical', 'Textual', 'Identifier'] as const) {
+      const { container, unmount } = render(
+        <ColumnCard column={column({ name: 'c', semanticType })} stats={undefined} onShowSql={vi.fn()} />,
+      );
+      // The type name is still the encoding — it just isn't carried by colour.
+      expect(container.textContent).toContain(semanticType);
+      expect(container.innerHTML).not.toMatch(/(text|bg|border)-(red|amber|emerald|purple|blue)-[0-9]/);
+      unmount();
+    }
   });
 });

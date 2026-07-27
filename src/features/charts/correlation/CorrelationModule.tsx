@@ -4,7 +4,7 @@ import type { ClassifiedColumn, TableRegistryEntry } from '../../../types';
 import { runChartQuery } from '../../../services/charts';
 import { buildCorrelationMatrixSql, parseCorrelationMatrix, type CorrelationMatrix } from '../../../lib/correlationSql';
 import { useThreadPrefill } from '../../../hooks/useThreadPrefill';
-import { prefillColumns, prefillTableName } from '../../../lib/threadPrefill';
+import { prefillColumns, prefillTableName, type ModulePrefill } from '../../../lib/threadPrefill';
 import { CorrelationHeatmap } from './CorrelationHeatmap';
 import { ScatterDrillThrough } from './ScatterDrillThrough';
 import { GeneratedSql } from './GeneratedSql';
@@ -33,10 +33,15 @@ function hasCorrelationShape(table: TableRegistryEntry): table is CorrelationTab
  * in this matrix (a stale/mismatched prefill) silently no-ops rather than
  * pointing the drill-through at a nonexistent column.
  */
-export function CorrelationModule() {
+interface CorrelationModuleProps {
+  /** The Workbench tab's own initializer (W7.5) — see `useThreadPrefill`'s `override` doc. */
+  prefill?: ModulePrefill;
+}
+
+export function CorrelationModule({ prefill: prefillOverride }: CorrelationModuleProps = {}) {
   const tables = useDatasetsStore((state) => state.tables);
   const eligibleTables = useMemo(() => tables.filter(hasCorrelationShape), [tables]);
-  const prefill = useThreadPrefill();
+  const prefill = useThreadPrefill(prefillOverride);
   const prefillTable = prefillTableName(prefill);
   const prefillPair = prefillColumns(prefill);
   const appliedPrefillPair = useRef(false);
@@ -118,7 +123,7 @@ export function CorrelationModule() {
       {loading ? (
         <div className="flex h-40 items-center justify-center text-sm text-(--color-fg-muted)">Running query…</div>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-(--color-error)">{error}</p>
       ) : matrix ? (
         <>
           <CorrelationHeatmap matrix={matrix} selectedPair={selectedPair} onCellClick={(a, b) => setSelectedPair([a, b])} />

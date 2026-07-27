@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { chartSeries } from '../../../lib/chartPalette';
 
 export interface ScatterPoint {
   x: number;
@@ -14,7 +15,7 @@ interface CanvasScatterProps {
 const HEIGHT = 320;
 const PADDING = { top: 12, right: 16, bottom: 32, left: 48 };
 const POINT_RADIUS = 1.5;
-const POINT_COLOR = 'rgba(99, 102, 241, 0.35)'; // SERIES_COLORS[0] from ChartRenderer, alpha'd for density at high point counts
+const POINT_ALPHA = 0.35; // density relief at high point counts — a render property, not part of the color
 
 function niceRange(values: number[]): [number, number] {
   let min = Math.min(...values);
@@ -67,10 +68,14 @@ export function CanvasScatter({ points, xLabel, yLabel }: CanvasScatterProps) {
     const toPy = (y: number) => PADDING.top + plotHeight - ((y - yMin) / (yMax - yMin)) * plotHeight;
 
     // Canvas 2D can't resolve CSS custom properties directly — read the
-    // computed values so axes/labels still match the active light/dark theme.
+    // computed values so axes/labels/points still match the active light/dark
+    // theme, falling back to the register's own resolved literals
+    // (`lib/chartPalette.ts`) where the computed style is unavailable.
     const computed = getComputedStyle(container);
-    const axisColor = computed.getPropertyValue('--color-border').trim() || '#c3c2b7';
-    const labelColor = computed.getPropertyValue('--color-fg-muted').trim() || '#898781';
+    const read = (token: string, fallback: string) => computed.getPropertyValue(token).trim() || fallback;
+    const axisColor = read('--color-border', 'oklch(100% 0 0 / 0.1)');
+    const labelColor = read('--color-fg-muted', 'oklch(65.9% 0.002 248)');
+    const pointColor = read('--chart-1', chartSeries()[0]);
 
     // Axes
     ctx.strokeStyle = axisColor;
@@ -82,12 +87,14 @@ export function CanvasScatter({ points, xLabel, yLabel }: CanvasScatterProps) {
     ctx.stroke();
 
     // Points
-    ctx.fillStyle = POINT_COLOR;
+    ctx.fillStyle = pointColor;
+    ctx.globalAlpha = POINT_ALPHA;
     for (const p of points) {
       ctx.beginPath();
       ctx.arc(toPx(p.x), toPy(p.y), POINT_RADIUS, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.globalAlpha = 1;
 
     // Axis labels + min/max ticks
     ctx.fillStyle = labelColor;

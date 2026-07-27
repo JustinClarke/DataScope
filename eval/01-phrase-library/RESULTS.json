@@ -1,0 +1,606 @@
+{
+  "ranAt": "2026-07-26T13:09:52.747Z",
+  "ollamaModel": "qwen2.5-coder:14b",
+  "records": [
+    {
+      "dataset": "titanic",
+      "arm": "selective",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "selective",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "selective",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "selective",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "selective",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "extractive-floor",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "1 table, 891 rows. This dataset looks well suited for titanic.Survived splitting into 2 groups alongside titanic.Age and titanic carrying 2 numeric columns (Age, Fare)."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "extractive-floor",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "1 table, 891 rows. This dataset looks well suited for titanic.Survived splitting into 2 groups alongside titanic.Age and titanic carrying 2 numeric columns (Age, Fare)."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "extractive-floor",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "1 table, 891 rows. This dataset looks well suited for titanic.Survived splitting into 2 groups alongside titanic.Age and titanic carrying 2 numeric columns (Age, Fare)."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "extractive-floor",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "1 table, 891 rows. This dataset looks well suited for titanic carrying 2 numeric columns (Age, Fare) and titanic.Survived splitting into 2 groups alongside titanic.Age."
+    },
+    {
+      "dataset": "titanic",
+      "arm": "extractive-floor",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "group-comparison",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
+      "composedHeadline": "1 table, 891 rows. This dataset looks well suited for titanic.Survived splitting into 2 groups alongside titanic.Age and titanic carrying 2 numeric columns (Age, Fare)."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "selective",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "selective",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "1 table, 2,500 rows, spanning 2016-01-04 to 2025-08-01. This dataset looks well suited for finding which measurements move together."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "selective",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "selective",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "selective",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "extractive-floor",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "1 table, 2,500 rows, spanning 2016-01-04 to 2025-08-01. This dataset looks well suited for stock_prices carrying 4 numeric columns (Open, High, Low, Close)."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "extractive-floor",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "1 table, 2,500 rows, spanning 2016-01-04 to 2025-08-01. This dataset looks well suited for stock_prices carrying 4 numeric columns (Open, High, Low, Close)."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "extractive-floor",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "extractive-floor",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "1 table, 2,500 rows, spanning 2016-01-04 to 2025-08-01. This dataset looks well suited for stock_prices carrying 4 numeric columns (Open, High, Low, Close)."
+    },
+    {
+      "dataset": "stock_prices",
+      "arm": "extractive-floor",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
+      "composedHeadline": "1 table, 2,500 rows, spanning 2016-01-04 to 2025-08-01. This dataset looks well suited for stock_prices carrying 4 numeric columns (Open, High, Low, Close)."
+    },
+    {
+      "dataset": "weather",
+      "arm": "selective",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+    },
+    {
+      "dataset": "weather",
+      "arm": "selective",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+    },
+    {
+      "dataset": "weather",
+      "arm": "selective",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+    },
+    {
+      "dataset": "weather",
+      "arm": "selective",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+    },
+    {
+      "dataset": "weather",
+      "arm": "selective",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
+    },
+    {
+      "dataset": "weather",
+      "arm": "extractive-floor",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "1 table, 3,650 rows, spanning 2015-01-01 to 2024-12-28. This dataset looks well suited for weather carrying 4 numeric columns (TempHighC, TempLowC, Humidity, WindKph) and weather.Date alongside weather.City (1 distinct) and weather.TempHighC."
+    },
+    {
+      "dataset": "weather",
+      "arm": "extractive-floor",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "1 table, 3,650 rows, spanning 2015-01-01 to 2024-12-28. This dataset looks well suited for weather.Date alongside weather.City (1 distinct) and weather.TempHighC and weather carrying 4 numeric columns (TempHighC, TempLowC, Humidity, WindKph)."
+    },
+    {
+      "dataset": "weather",
+      "arm": "extractive-floor",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "1 table, 3,650 rows, spanning 2015-01-01 to 2024-12-28. This dataset looks well suited for weather carrying 4 numeric columns (TempHighC, TempLowC, Humidity, WindKph) and weather.Date alongside weather.City (1 distinct) and weather.TempHighC."
+    },
+    {
+      "dataset": "weather",
+      "arm": "extractive-floor",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "1 table, 3,650 rows, spanning 2015-01-01 to 2024-12-28. This dataset looks well suited for weather carrying 4 numeric columns (TempHighC, TempLowC, Humidity, WindKph) and weather.Date alongside weather.City (1 distinct) and weather.TempHighC."
+    },
+    {
+      "dataset": "weather",
+      "arm": "extractive-floor",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "seasonality",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
+      "composedHeadline": "1 table, 3,650 rows, spanning 2015-01-01 to 2024-12-28. This dataset looks well suited for weather carrying 4 numeric columns (TempHighC, TempLowC, Humidity, WindKph) and weather.Date alongside weather.City (1 distinct) and weather.TempHighC."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "selective",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "20 fully duplicated rows detected."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "selective",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "20 fully duplicated rows detected."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "selective",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "1 table, 520 rows, spanning 2023-01-01 to 2024-11-29. This dataset looks well suited for comparing periods to find recurring patterns."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "selective",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "20 fully duplicated rows detected."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "selective",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "20 fully duplicated rows detected."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "extractive-floor",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "1 table, 520 rows, spanning 2023-01-01 to 2024-11-29. This dataset looks well suited for product_reviews.ReviewDate alongside product_reviews.Rating (5 distinct) and product_reviews.ProductId."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "extractive-floor",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "20 fully duplicated rows detected."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "extractive-floor",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "20 fully duplicated rows detected."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "extractive-floor",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "20 fully duplicated rows detected."
+    },
+    {
+      "dataset": "product_reviews",
+      "arm": "extractive-floor",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "seasonality"
+      ],
+      "served": true,
+      "baselineHeadline": "20 fully duplicated rows detected.",
+      "composedHeadline": "1 table, 520 rows, spanning 2023-01-01 to 2024-11-29. This dataset looks well suited for product_reviews.ReviewDate alongside product_reviews.Rating (5 distinct) and product_reviews.ProductId."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "selective",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables, 5,437 rows, spanning 2019-01-07 to 2024-12-15. This dataset looks well suited for tracking repeat activity per customer over time and comparing periods to find recurring patterns."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "selective",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables, 5,437 rows, spanning 2019-01-07 to 2024-12-15. This dataset looks well suited for comparing periods to find recurring patterns, tracking repeat activity per customer over time, and estimating how much each customer is worth over time."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "selective",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "selective",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "selective",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": false,
+      "degradeReason": "ai-down",
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "extractive-floor",
+      "repeat": 1,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables, 5,437 rows, spanning 2019-01-07 to 2024-12-15. This dataset looks well suited for orders.order_date alongside orders.status (4 distinct) and orders.customer_id, orders and order_items sharing order_id, with orders.order_date and order_items.unit_price, orders.customer_id (396 distinct values over 1400 rows) repeating alongside orders.order_date, and order_items carrying 3 numeric columns (order_id, product_id, unit_price)."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "extractive-floor",
+      "repeat": 2,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables, 5,437 rows, spanning 2019-01-07 to 2024-12-15. This dataset looks well suited for orders.order_date alongside orders.status (4 distinct) and orders.customer_id, orders.customer_id (396 distinct values over 1400 rows) repeating alongside orders.order_date, orders and order_items sharing order_id, with orders.order_date and order_items.unit_price, and order_items carrying 3 numeric columns (order_id, product_id, unit_price)."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "extractive-floor",
+      "repeat": 3,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables, 5,437 rows, spanning 2019-01-07 to 2024-12-15. This dataset looks well suited for orders and order_items sharing order_id, with orders.order_date and order_items.unit_price, orders.order_date alongside orders.status (4 distinct) and orders.customer_id, orders.customer_id (396 distinct values over 1400 rows) repeating alongside orders.order_date, and order_items carrying 3 numeric columns (order_id, product_id, unit_price)."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "extractive-floor",
+      "repeat": 4,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables, 5,437 rows, spanning 2019-01-07 to 2024-12-15. This dataset looks well suited for orders.order_date alongside orders.status (4 distinct) and orders.customer_id, orders and order_items sharing order_id, with orders.order_date and order_items.unit_price, orders.customer_id (396 distinct values over 1400 rows) repeating alongside orders.order_date, and order_items carrying 3 numeric columns (order_id, product_id, unit_price)."
+    },
+    {
+      "dataset": "ecommerce",
+      "arm": "extractive-floor",
+      "repeat": 5,
+      "detectedCapabilities": [
+        "seasonality",
+        "cohort-retention",
+        "lifetime-value",
+        "correlation-study"
+      ],
+      "served": true,
+      "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
+      "composedHeadline": "4 tables, 5,437 rows, spanning 2019-01-07 to 2024-12-15. This dataset looks well suited for orders and order_items sharing order_id, with orders.order_date and order_items.unit_price, orders.order_date alongside orders.status (4 distinct) and orders.customer_id, orders.customer_id (396 distinct values over 1400 rows) repeating alongside orders.order_date, and order_items carrying 3 numeric columns (order_id, product_id, unit_price)."
+    }
+  ]
+}

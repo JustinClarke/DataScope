@@ -4,7 +4,12 @@
 // re-point it to a different parent, restore one you removed, or add a
 // relationship by hand. Presentational — the module owns the override store.
 import { useState } from 'react';
-import type { FkEdge } from '../../../lib/relationshipInference';
+import {
+  CONTAINMENT_SOLID,
+  MIN_STRUCTURE_COVERAGE,
+  KEY_UNIQUENESS_MIN,
+  type FkEdge,
+} from '../../../lib/relationshipInference';
 
 export interface ColumnRef {
   table: string;
@@ -15,18 +20,51 @@ function refValue(ref: ColumnRef): string {
   return `${ref.table}.${ref.column}`;
 }
 
+function pct(fraction: number): string {
+  return `${Math.round(fraction * 100)}%`;
+}
+
 function ConfidenceBadge({ confidence }: { confidence: FkEdge['confidence'] }) {
   const confident = confidence === 'confident';
   return (
     <span
-      className={
-        confident
-          ? 'rounded bg-(--color-accent)/15 px-1.5 py-0.5 text-xs font-medium text-(--color-accent)'
-          : 'rounded border border-dashed border-(--color-fg-muted) px-1.5 py-0.5 text-xs font-medium text-(--color-fg-muted)'
-      }
+      className={`inline-flex items-center gap-1.5 rounded-full border px-1.5 py-0.5 font-mono text-[length:var(--text-2xs)] uppercase tracking-[0.04em] ${
+        confident ? 'border-(--color-active)/40 text-(--color-active)' : 'border-(--color-rule-hi) text-(--color-ink-2)'
+      }`}
     >
+      <span
+        aria-hidden="true"
+        className={`inline-block h-0 w-5 border-t-[1.5px] ${confident ? 'border-solid' : 'border-dashed'}`}
+      />
       {confident ? 'Confident' : 'Candidate'}
     </span>
+  );
+}
+
+function EvidenceRow({ edge }: { edge: FkEdge }) {
+  const items: { ok: boolean; label: string }[] = [
+    { ok: edge.nameAgreement, label: `Name ${edge.nameAgreement ? 'agrees' : 'differs'}` },
+    { ok: edge.containment >= CONTAINMENT_SOLID, label: `Containment ${pct(edge.containment)}` },
+    { ok: edge.coverage >= MIN_STRUCTURE_COVERAGE, label: `Coverage ${pct(edge.coverage)}` },
+    {
+      ok: edge.parentKeyUniqueness >= KEY_UNIQUENESS_MIN,
+      label: `Parent key ${pct(edge.parentKeyUniqueness)} unique`,
+    },
+  ];
+  return (
+    <div className="flex flex-wrap gap-x-6 gap-y-1.5">
+      {items.map((item) => (
+        <span
+          key={item.label}
+          className="flex items-center gap-1.5 font-mono text-[length:var(--text-xs)] text-(--color-ink-2)"
+        >
+          <span aria-hidden="true" className={item.ok ? 'text-(--color-ok)' : 'text-(--color-active)'}>
+            {item.ok ? '✓' : '⚠'}
+          </span>
+          {item.label}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -49,10 +87,10 @@ export function EdgeEvidencePanel({ edge, allColumns, onRemove, onRepoint }: Edg
         <ConfidenceBadge confidence={edge.confidence} />
       </div>
 
-      <p className="text-sm text-(--color-fg-muted)">{edge.evidence}</p>
+      <EvidenceRow edge={edge} />
 
       {edge.ambiguity && (
-        <p className="text-xs text-amber-600 dark:text-amber-400">
+        <p className="text-xs text-(--color-active)">
           Ambiguous: also matches {edge.ambiguity.parentTable}.{edge.ambiguity.parentColumn} (
           {(edge.ambiguity.scoreGap * 100).toFixed(0)}% apart).{' '}
           <button

@@ -4,6 +4,7 @@ import { AISettingsPanel } from './AISettingsPanel';
 import { SETTINGS_STORAGE_KEY, useSettingsStore } from '../../stores/settings';
 import { useByokKeyStore } from '../../stores/byokKey';
 import { VAULT_STORAGE_KEY, useVaultStore } from '../../stores/vault';
+import { usePauseSignalStore } from '../../stores/pauseSignal';
 import { storeVaultedKey, deleteVaultedKey } from '../../services/vaultClient';
 
 // The vault endpoint is mocked: this suite asserts the panel's custody behavior
@@ -129,11 +130,26 @@ describe('AISettingsPanel', () => {
     fireEvent.click(getByLabelText('Close'));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('hideModeSwitch omits the Mode fieldset but leaves every other section intact (W7 — mode selection moves to ModeSwitches)', () => {
+    const { queryByText, getByLabelText } = render(<AISettingsPanel onClose={noop} hideModeSwitch />);
+    expect(queryByText('Mode')).toBeNull();
+    expect(queryByText(/Local model \(in-browser\)/i)).toBeNull();
+    // Everything else (routing, key field, metadata-only repair) still renders.
+    expect(getByLabelText('Your API key or local endpoint')).toBeTruthy();
+    expect(getByLabelText(/Metadata-only repair/i)).toBeTruthy();
+  });
+
+  it('omitting hideModeSwitch (old-shell call sites) still renders the Mode fieldset unchanged', () => {
+    const { getByText } = render(<AISettingsPanel onClose={noop} />);
+    expect(getByText('Mode')).toBeTruthy();
+  });
 });
 
 describe('AISettingsPanel — "Remember my key" (D9 opt-in vault, 09-edge/03)', () => {
   beforeEach(() => {
     useVaultStore.setState({ session: null, ref: null });
+    usePauseSignalStore.setState({ lastPaused: null });
     vi.mocked(storeVaultedKey).mockReset();
     vi.mocked(deleteVaultedKey).mockReset();
   });
@@ -232,5 +248,25 @@ describe('AISettingsPanel — "Remember my key" (D9 opt-in vault, 09-edge/03)', 
     const { getByText } = render(<AISettingsPanel onClose={noop} />);
     expect(getByText(/expires\s+after 90 days without use, and unchecking this deletes it/i)).toBeTruthy();
     expect(getByText(/Stores the key on our servers, encrypted/i)).toBeTruthy();
+  });
+
+  it('a paused vault store attempt reports the pause signal (W7 status bar)', async () => {
+    vi.mocked(storeVaultedKey).mockResolvedValue({ ok: false, code: 'paused' });
+    useByokKeyStore.setState({ key: 'sk-secret-123' });
+    const { getByLabelText, findByText } = render(<AISettingsPanel onClose={noop} />);
+
+    fireEvent.click(getByLabelText(/Remember my key across sessions/i));
+    expect(await findByText(/vault is paused right now/i)).toBeTruthy();
+    expect(usePauseSignalStore.getState().lastPaused?.surface).toBe('vault');
+  });
+
+  it('a non-paused vault failure does not report a pause signal', async () => {
+    vi.mocked(storeVaultedKey).mockResolvedValue({ ok: false, code: 'unavailable' });
+    useByokKeyStore.setState({ key: 'sk-secret-123' });
+    const { getByLabelText, findByText } = render(<AISettingsPanel onClose={noop} />);
+
+    fireEvent.click(getByLabelText(/Remember my key across sessions/i));
+    expect(await findByText(/isn’t available on this deployment/i)).toBeTruthy();
+    expect(usePauseSignalStore.getState().lastPaused).toBeNull();
   });
 });

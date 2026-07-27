@@ -13,7 +13,7 @@ The sibling code repos (`app/`, `spike-ingestion/`) are out of scope by design �
 | File | Purpose |
 | :--- | :--- |
 | [CLAUDE.md](../../CLAUDE.md) | Workspace rules: Part I behavioral guidelines, Part II the DataScope tiered-agent workflow + efficiency rules. |
-| [DATASCOPE.md](../../DATASCOPE.md) | The living master spec — Decision Record (D1–D72), architecture, phases, every §-numbered section. Everything else derives from this. |
+| [DATASCOPE.md](../../DATASCOPE.md) | The living master spec — Decision Record (D1–D73), architecture, phases, every §-numbered section. Everything else derives from this. |
 
 ## `_implementation/` — tree root + `status/` (README, build checklist)
 
@@ -215,4 +215,17 @@ Each phase folder's `README.md` states its section dependency and exit criteria;
 
 | File | Purpose |
 | :--- | :--- |
-| [README.md](../build/12-workbench/README.md) | Tier: parallel shell work, flag-gated (D71) · Phases W0–W8 (§19) · Master spec: §13.3 — the leaf-group charter; per-phase leaves land as picked up |
+| [README.md](../build/12-workbench/README.md) | Tier: parallel shell work, flag-gated (D71) · Phases W0–W8 (§19) · Master spec: §13.3 — the leaf-group charter; per-phase leaves land as picked up. Cut over to the app's only shell 2026-07-25; amended by D73 |
+
+### `13-hallmark-replication`
+
+| File | Purpose |
+| :--- | :--- |
+| [README.md](../build/13-hallmark-replication/README.md) | Tier: v0.69 · Phases V1–V6e (§19) · Master spec: §13.3 + §19's v0.69 subsection · D71 execution, **no new decision** — the Workbench's deferred visual layer, ported from the five signed-off hallmark mocks against the locked `.hallmark/design.md`. Complete 2026-07-25 |
+
+### `14-workspace-streamline`
+
+| File | Purpose |
+| :--- | :--- |
+| [README.md](../build/14-workspace-streamline/README.md) | Tier: v0.70 · Phases S0–S7 (§19) · Master spec: §13.3 + §19's v0.70 subsection · **decision D73** (amends D71) — the shell after a dataset is loaded: the two-view drawer with the SQL console, query tabs, the shared guarded run path, the retired options strip, and the map's findings surfaces. Act 0/Act 1 out of scope |
+| [00-synthesis-and-limits-probe.md](../build/14-workspace-streamline/00-synthesis-and-limits-probe.md) | **S0 — a D18-style probe, not a feature.** Measures the two things D73 refused to guess at: whether a widened prompt reaches the §4 purpose narrative *inside* the ADR-010 honesty seam (Probe A, on the v0.25 edge + WebLLM rungs, structure-only), and the query-tab memory ceiling on real hardware (Probe B, M1 Air base + M4 Air). Also records item **C** — the Settings model-rating pane — as new scope needing an ADR-007 amendment |

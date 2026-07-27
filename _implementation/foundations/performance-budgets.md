@@ -25,7 +25,7 @@ ML training targets live with the deferred modules ([`../build/11-ml/`](../build
 | :--- | :--- |
 | DuckDB blocking main thread | Dedicated Web Worker via `@duckdb/duckdb-wasm` (library default) |
 | DuckDB-Wasm init size (~8MB) | Lazy-load only after a file is dropped or sample selected; progress bar during WASM compile; cache compiled module via the Cache API |
-| Monaco bundle size (~2MB) | Lazy-load via `React.lazy()` + `Suspense` when the SQL tab first opens |
+| Monaco bundle size (~2MB) | Lazy-load via `React.lazy()` + `Suspense` **when the console first opens** — D73 moved the boundary off the shell's mount, since the drawer hosting the console is present in every session (master §15/§13.3) |
 | Chart rendering with 10k+ points | Canvas-based rendering (D3 canvas mode) instead of SVG for scatter |
 | Large file ingestion (100MB+) | Stream via `FileReader` chunks + progress; tiered fallback (§7.3) |
 | AI latency (cloud mode) | Streaming responses in the chat UI; retry loop caps at 3 |
@@ -37,7 +37,7 @@ ML training targets live with the deferred modules ([`../build/11-ml/`](../build
 
 - [ ] Initial JS bundle (gzipped) under 500KB excluding lazy chunks
 - [ ] DuckDB-Wasm chunk lazy-loaded and cached via Cache API
-- [ ] Monaco chunk lazy-loaded on first SQL tab interaction
+- [ ] Monaco chunk lazy-loaded on the console's first open, not the shell's mount (D73)
 
 ## Memory gate (§22)
 

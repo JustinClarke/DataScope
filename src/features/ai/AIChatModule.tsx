@@ -147,9 +147,9 @@ export function AIChatModule() {
 
       <p className="flex items-center gap-1.5 text-xs text-(--color-fg-muted)" role="status">
         {status.kind === 'cloud' || status.kind === 'not-connected' ? (
-          <Cloud size={14} aria-hidden="true" className="text-(--color-accent)" />
+          <Cloud size={14} aria-hidden="true" className="text-(--color-ai-2)" />
         ) : (
-          <ShieldCheck size={14} aria-hidden="true" className="text-(--color-accent)" />
+          <ShieldCheck size={14} aria-hidden="true" className="text-(--color-ai-2)" />
         )}
         {aiStatusLabel(status)}
       </p>
@@ -165,13 +165,13 @@ export function AIChatModule() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="e.g. average fare by passenger class"
-          className="flex-1 rounded-lg border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm text-(--color-fg)"
+          className="flex-1 rounded-lg border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm text-(--color-fg) focus:border-(--color-ai)/50"
           aria-label="Ask a question about your data"
         />
         <button
           type="submit"
           disabled={busy || draft.trim() === ''}
-          className="rounded-lg bg-(--color-accent) px-3 py-2 text-(--color-bg) disabled:opacity-40"
+          className="rounded-lg bg-(--color-ai) px-3 py-2 text-(--color-ai-ink) disabled:opacity-40"
           aria-label="Send"
         >
           <SendHorizontal size={18} aria-hidden="true" />

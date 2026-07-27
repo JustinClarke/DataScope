@@ -2,6 +2,12 @@
 
 **Tier:** v0 · Phase 2 (surface) / Phase 3 (ship gate) · **Master spec:** §10 Module 7 (D53), §12.2 (export)
 
+> **Amended by D73 (2026-07-26) — v0.70 / S5.** Pivot **keeps its tab and gains its own results
+> home.** It shares `QueryResultsPanel` with the SQL page today, and that sharing is deliberate
+> (D49 — one execution path, not two), so deleting the page cannot leave Pivot inheriting its
+> leftovers. J6 — pivot without SQL — is a D53 commitment, not a nice-to-have, and must survive
+> the deletion intact.
+
 ## Objective
 
 The no-SQL on-ramp for the business analyst (§2): drag fields into **rows**, **columns**, and

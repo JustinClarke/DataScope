@@ -4,6 +4,7 @@
 // receives the candidate, and applies these. A false result degrades in place to
 // the baseline. Pure — no I/O, no model call.
 import type { FactRef, RankedAction } from '../types'
+import { checkCitation, type CitableFact } from './citableFacts'
 
 /**
  * A stable key over everything the action-ranking re-ranker may NOT change:
@@ -58,13 +59,21 @@ export function passesPhrasingGuard(statement: string): boolean {
  * to the baseline (the numeric claim, its SQL/snapshot provenance, and its
  * confidence/provenance tags are the model's to keep, not to touch) and the
  * re-phrased statement clears the D45 phrasing guard.
+ *
+ * `citedFact` is the clause-citation-binding candidate's amendment
+ * (03-clause-citation-binding.md, "What to build" item 3): when given, the
+ * candidate's statement must also name only entities/values that belong to
+ * the one fact it cites (`checkCitation`) — the per-clause check that catches
+ * a real statistic attached to the wrong column, not just an invented one.
+ * Optional and additive: every existing 2-arg call site is unaffected.
  */
-export function narrationValidator(baseline: FactRef, candidate: FactRef): boolean {
-  return (
+export function narrationValidator(baseline: FactRef, candidate: FactRef, citedFact?: CitableFact): boolean {
+  const structurallyIntact =
     candidate.sql === baseline.sql &&
     candidate.snapshot === baseline.snapshot &&
     candidate.confidence === baseline.confidence &&
     candidate.provenance === baseline.provenance &&
     passesPhrasingGuard(candidate.statement)
-  )
+  if (!structurallyIntact) return false
+  return citedFact === undefined || checkCitation(candidate.statement, citedFact).ok
 }

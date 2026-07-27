@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDatasetsStore } from '../../stores/datasets';
+import { useSelectionStore } from '../../stores/selection';
 import { useEducationalPanel } from '../../app/useEducationalPanel';
 import { loadTableCardStats, type ColumnCardStats } from '../../services/profiling';
 import { ColumnCard } from './ColumnCard';
@@ -50,6 +51,8 @@ interface ProfileDashboardProps {
  */
 export function ProfileDashboard({ initialTableId = null, onBack }: ProfileDashboardProps = {}) {
   const tables = useDatasetsStore((state) => state.tables);
+  const selectedColumn = useSelectionStore((state) => state.selectedColumn);
+  const selectColumn = useSelectionStore((state) => state.selectColumn);
   const { setContent } = useEducationalPanel();
   const [activeTableId, setActiveTableId] = useState<string | null>(initialTableId);
   const [cardStats, setCardStats] = useState<Record<string, ColumnCardStats> | null>(null);
@@ -129,6 +132,8 @@ export function ProfileDashboard({ initialTableId = null, onBack }: ProfileDashb
               column={column}
               stats={cardStats?.[column.name]}
               onShowSql={handleShowSql}
+              onSelect={() => selectColumn(activeTable.id, column.name)}
+              selected={selectedColumn?.tableId === activeTable.id && selectedColumn?.column === column.name}
             />
           ))}
         </div>

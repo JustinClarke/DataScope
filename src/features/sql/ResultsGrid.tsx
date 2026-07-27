@@ -56,7 +56,7 @@ export function ResultsGrid({ status, result, error, sql }: ResultsGridProps) {
     return (
       <div
         role="alert"
-        className="rounded-lg border border-red-400/50 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-400"
+        className="rounded-lg border border-(--color-error)/40 bg-(--color-error)/5 p-4 text-sm text-(--color-error)"
       >
         {error}
       </div>
@@ -91,7 +91,7 @@ export function ResultsGrid({ status, result, error, sql }: ResultsGridProps) {
 
   function renderCell(value: unknown, columnIndex: number, rowIndex: number) {
     if (value === null || value === undefined) {
-      return <span className="italic text-(--color-fg-muted)/60">NULL</span>;
+      return <span className="italic text-(--color-ink-3)">NULL</span>;
     }
     const columnType = result!.columnTypes[columnIndex] ?? '';
     const text = formatCellText(value, columnType);

@@ -2,17 +2,18 @@ import type { ClassifiedColumn, SemanticType } from '../../types';
 import type { ColumnCardStats } from '../../services/profiling';
 import { Tooltip } from '../../components/Tooltip';
 
-const SEMANTIC_TYPE_STYLE: Record<SemanticType, string> = {
-  Temporal: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
-  Quantitative: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-  Categorical: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
-  Textual: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-  Identifier: 'bg-(--color-fg-muted)/10 text-(--color-fg-muted)',
-};
-
+// Semantic type is carried by the label text, not by hue (V6a). The four-colour
+// encoding this replaced spent two reserved registers on data — purple on
+// `Categorical` and amber on `Textual` — which made a profiling badge
+// indistinguishable from an AI marker or a selection (design.md: neither
+// register is available for data encoding). `Identifier` was already neutral,
+// so this makes all five consistent with what it always did. Same mono
+// micro-cap treatment as the explorer row's origin badge.
 function TypeBadge({ type }: { type: SemanticType }) {
   return (
-    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${SEMANTIC_TYPE_STYLE[type]}`}>{type}</span>
+    <span className="rounded-(--radius-xs) bg-(--color-elev) px-1.5 py-0.5 font-mono text-[length:var(--text-2xs)] uppercase tracking-[0.1em] text-(--color-ink-2)">
+      {type}
+    </span>
   );
 }
 
@@ -37,7 +38,7 @@ function Histogram({ buckets }: { buckets: { rangeStart: number; rangeEnd: numbe
       {buckets.map((bucket, i) => (
         <div
           key={i}
-          className="flex-1 rounded-t-sm bg-(--color-accent)/60"
+          className="flex-1 rounded-t-sm bg-(--chart-1)/70"
           style={{ height: `${Math.max(2, (bucket.count / max) * 100)}%` }}
           title={`${bucket.rangeStart.toFixed(2)}–${bucket.rangeEnd.toFixed(2)}: ${bucket.count.toLocaleString()}`}
         />
@@ -64,6 +65,9 @@ interface ColumnCardProps {
   column: ClassifiedColumn;
   stats: ColumnCardStats | undefined;
   onShowSql: (label: string, sql: string) => void;
+  /** Additive (W7): selects this column in the shell-wide selection store for the bottom inspector. Omitted call sites are unaffected. */
+  onSelect?: () => void;
+  selected?: boolean;
 }
 
 function SqlButton({ label, sql, onShowSql }: { label: string; sql: string; onShowSql: (label: string, sql: string) => void }) {
@@ -85,10 +89,27 @@ function SqlButton({ label, sql, onShowSql }: { label: string; sql: string; onSh
  * since ColumnProfile's own fields (null %, min/max/mean/stddev) are already
  * available synchronously from the registry and render immediately either way.
  */
-export function ColumnCard({ column, stats, onShowSql }: ColumnCardProps) {
+export function ColumnCard({ column, stats, onShowSql, onSelect, selected = false }: ColumnCardProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-(--color-border) p-4">
-      <div className="flex items-center justify-between gap-2">
+    <div
+      className={`flex flex-col gap-3 rounded-lg border p-4 ${selected ? 'border-(--color-accent) ring-1 ring-(--color-accent)' : 'border-(--color-border)'}`}
+    >
+      <div
+        className={`flex items-center justify-between gap-2 ${onSelect ? 'cursor-pointer' : ''}`}
+        role={onSelect ? 'button' : undefined}
+        tabIndex={onSelect ? 0 : undefined}
+        onClick={onSelect}
+        onKeyDown={
+          onSelect
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelect();
+                }
+              }
+            : undefined
+        }
+      >
         <span className="truncate font-medium text-(--color-fg)" title={column.name}>
           {column.name}
         </span>
@@ -133,7 +154,7 @@ export function ColumnCard({ column, stats, onShowSql }: ColumnCardProps) {
                     </span>
                     <div className="h-3 flex-1 overflow-hidden rounded bg-(--color-border)">
                       <div
-                        className="h-full rounded bg-(--color-accent)/60"
+                        className="h-full rounded bg-(--chart-1)/70"
                         style={{ width: `${(v.count / max) * 100}%` }}
                       />
                     </div>
@@ -162,7 +183,7 @@ export function ColumnCard({ column, stats, onShowSql }: ColumnCardProps) {
             ) : (
               <p className="text-sm text-(--color-fg-muted)">No dates.</p>
             )}
-            <SqlButton label={`${column.name} — date range`} sql={stats.sql} onShowSql={onShowSql} />
+            {stats.sql && <SqlButton label={`${column.name} — date range`} sql={stats.sql} onShowSql={onShowSql} />}
           </div>
         ) : (
           <p className="text-sm text-(--color-fg-muted)">Loading…</p>

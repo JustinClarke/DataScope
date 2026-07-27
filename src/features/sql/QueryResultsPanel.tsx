@@ -84,7 +84,7 @@ export function QueryResultsPanel() {
                 className="flex items-center justify-between gap-3 rounded border border-(--color-border) px-2 py-1"
               >
                 <span className="truncate text-(--color-fg-muted)">{entry.sql}</span>
-                <span className={entry.error ? 'text-red-500' : 'text-(--color-fg-muted)'}>
+                <span className={entry.error ? 'text-(--color-error)' : 'text-(--color-fg-muted)'}>
                   {entry.error ? 'error' : `${entry.result?.executionTimeMs.toFixed(0)} ms`}
                 </span>
               </li>

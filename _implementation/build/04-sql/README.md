@@ -6,6 +6,18 @@
 Monaco-based SQL editor with contextual suggestions, results grid, the shared SQL → Chart
 translator, and the transformation layer (derived tables + undo). JSON/JSONL ingestion also
 lands in Phase 2 (extends [`../02-ingestion/01-file-drop.md`](../02-ingestion/01-file-drop.md)).
+
+> **Re-homed by D73 (2026-07-26) — v0.70,
+> [`../14-workspace-streamline/`](../14-workspace-streamline/README.md).** Everything this
+> section builds still ships; **the page it shipped on does not.** The standalone SQL tab is
+> deleted and this module becomes **the console** — one instance, docked in the bottom drawer
+> beside the Info view, and the app's only free-typing SQL surface. Four consequences land on
+> the leaves below: results worth keeping are promoted with **Pin to tab** into independent,
+> re-runnable **query tabs** (the console is a scratchpad); every *other* surface that displays
+> SQL gains a **run action** into the console rather than a Copy button and a navigation;
+> **`TransformGuardModal` moves into the shared run path** every runner calls, because a query
+> tab executing unguarded is a data-loss path this single page never had; and Monaco's lazy
+> boundary moves to **the console's first open**, since the drawer mounts in every session.
 The **analyst-completion surface (D53)** rides on this section's machinery — a no-SQL floor for
 the business analyst — since pivot, guided answers, and take-with-me export are all thin layers
 over the same engine. Modules in this section accept an optional **`ThreadConfig` prefill (D68e)**

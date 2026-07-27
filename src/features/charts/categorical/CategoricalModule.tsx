@@ -37,9 +37,11 @@ type ViewTab = 'frequency' | 'donut' | 'grouped';
 // "reactively cap, no extra round trip" shape PivotBuilder's own top-N cap
 // uses off a column's already-classified `cardinality`.
 const DONUT_CARDINALITY_LIMIT = 15;
-// Even under that offer-limit, cap visible slices and lump the remainder —
-// e.g. exactly 15 distinct categories still renders a legible 8-slice donut.
-const DONUT_MAX_SLICES = 8;
+// Even under that offer-limit, cap visible slices and lump the remainder — at
+// the palette's four categorical slots plus "Other" (design.md § Chart palette),
+// so e.g. 15 distinct categories renders four wedges and one lumped tail rather
+// than repeating a hue and claiming two categories are the same.
+export const DONUT_MAX_SLICES = 5;
 const RUN_DEBOUNCE_MS = 300;
 
 const chartFallback = (
@@ -247,7 +249,7 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
       {loading ? (
         <div className="flex h-48 items-center justify-center text-sm text-(--color-fg-muted)">Running query…</div>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-(--color-error)">{error}</p>
       ) : (
         <>
           <Suspense fallback={chartFallback}>

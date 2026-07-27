@@ -1,32 +1,269 @@
 @import 'tailwindcss';
 
+/* Self-hosted, not the mocks' Google Fonts CDN: a third-party font request on every load
+ * contradicts this product's "nothing leaves your machine" posture. `wght.css` is the
+ * variable-weight, roman-only face — the italic files are deliberately not imported, since the
+ * design system bans italic headers and nothing here sets body copy in italic.
+ * These carry unicode-range per subset, so a browser downloads only the subsets it needs. */
+@import '@fontsource-variable/geist/wght.css';
+@import '@fontsource-variable/jetbrains-mono/wght.css';
+
+/* Hallmark · genre: atmospheric · macrostructure: Workbench · design-system: design.md · designed-as-app
+ * theme: custom dark (SqlErd-ported HUD) · accent: amber oklch(76.9% 0.165 70) · copilot register: purple oklch(62.7% 0.233 304)
+ * chrome: app-surface — the title/tab/status bar ARE the product UI (not fake browser chrome, no N#/Ft# archetypes)
+ * Ported from the five signed-off ideation mocks in _implementation/_misc/ideation/hallmark/.
+ * Diversification deliberately SUSPENDED (see .hallmark/log.json) — every surface of this app
+ * must cohere with the dataset map, not differ from it.
+ * Dark is the primary register (the mocks' own); the light register is DERIVED — see design.md § Light register.
+ */
+
 :root {
-  --color-bg: #ffffff;
-  --color-fg: #08060d;
-  --color-fg-muted: #6b6375;
-  --color-border: #e5e4e7;
-  --color-accent: #aa3bff;
-  --color-accent-fg: #ffffff;
+  /* Declared per-register rather than as `dark light`: Lightning CSS normalises a two-value
+   * `color-scheme` back to `light dark`, which would hand light scrollbars and form controls to
+   * any user with no OS preference — against these dark surfaces. A single value can't be
+   * reordered, and it matches the real structure below (dark unconditionally, light only inside
+   * the media query). */
+  color-scheme: dark;
 
-  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, Consolas, monospace;
+  /* ---- Surfaces: recessed → raised. In dark, raised is lighter. ---- */
+  --color-void: oklch(12.8% 0.0056 262); /* board, behind the shell */
+  --color-canvas: oklch(15.4% 0.0092 264); /* the stage: map, tab content */
+  --color-chrome: oklch(16.8% 0.0116 261); /* title bar, tab strip, status bar */
+  --color-panel: oklch(17.7% 0.0114 261); /* explorer, inspector, ai pane, options strip */
+  --color-card: oklch(19.5% 0.0112 261); /* entity cards, active tab, palette */
+  --color-elev: oklch(22.1% 0.0132 258); /* hover / selected / button face */
+  --color-footer: oklch(14.4% 0.0094 263);
 
-  color-scheme: light dark;
+  /* ---- Rules: translucent, so one value reads correctly over all seven surfaces ---- */
+  --color-rule: oklch(100% 0 0 / 0.1);
+  --color-rule-2: oklch(100% 0 0 / 0.05);
+  --color-rule-hi: oklch(100% 0 0 / 0.3);
+
+  /* ---- Ink. ink-3 is raised from the mock's white/0.35 (3.16:1) to clear 4.5:1
+          against every surface it lands on — V6e re-measured it at 4.03:1 on `elev`,
+          because V1 had solved it against `canvas` alone. ---- */
+  --color-ink: oklch(96.6% 0.0045 258);
+  --color-ink-2: oklch(65.9% 0.002 248);
+  --color-ink-3: oklch(61% 0.006 262);
+
+  /* ---- Data semantics: the functional legend ---- */
+  --color-pk: oklch(76.9% 0.1647 70); /* primary key */
+  --color-fk: oklch(62.7% 0.2325 304); /* foreign key */
+  --color-edge: oklch(100% 0 0 / 0.22);
+  --color-edge-hi: oklch(100% 0 0 / 0.75);
+
+  /* ---- UI state: amber is the HUD "active" accent ---- */
+  --color-active: oklch(76.9% 0.1647 70);
+  --color-active-ink: oklch(18.6% 0.0173 79);
+  --color-focus: oklch(84.4% 0.1154 71);
+
+  /* ---- Status register: reserved for state, never data encoding, never colour-alone.
+          `warn` IS the amber — ported from the mocks' own `.ev__i--warn { color: var(--c-active) }`,
+          since amber is this system's single "look here" register (design.md § Status register).
+          `error` is DERIVED — no mock has an error state — and measured, not eyeballed:
+          5.49:1 dark / 5.26:1 light against `--color-elev`, its worst surface. ---- */
+  --color-ok: oklch(77.3% 0.1535 163); /* on-device posture, success */
+  --color-warn: var(--color-active);
+  --color-error: oklch(68% 0.2 25);
+
+  /* ---- Copilot register: purple, deliberately distinct from the amber HUD ---- */
+  /* Chart palette: the only colours data marks may wear (design.md § Chart palette).
+   * Four slots because `error`/`active`/`ok`/`ai` reserve four hue families outright;
+   * assigned in fixed order, never cycled. Validated for CVD separation and for >=3:1
+   * against canvas/card/elev in both registers. `src/lib/chartPalette.ts` mirrors these
+   * for the canvas and colour-maths paths, pinned by its own test. */
+  --chart-1: oklch(67% 0.165 245);
+  --chart-2: oklch(54% 0.215 342);
+  --chart-3: oklch(63% 0.17 130);
+  --chart-4: oklch(53% 0.215 270);
+  --chart-other: var(--color-ink-3);
+  --chart-seq: var(--chart-1);
+  --chart-pos: var(--chart-1);
+  --chart-neg: var(--chart-2);
+  --chart-mid: var(--color-elev);
+
+  --color-ai: oklch(62.7% 0.2325 304);
+  --color-ai-2: oklch(72.2% 0.1767 306);
+  --color-ai-ink: oklch(19.2% 0.0629 303);
+  --color-ai-soft: color-mix(in oklab, var(--color-ai) 12%, var(--color-card));
+
+  /* ---- Modal scrim. The mocks' own `.scrim` value, ported literally by V5 and V6a but
+          left at five hardcoded call sites until V6e gave it a home (design.md § Drift
+          policy: amend the system, never override locally). Declared ONCE, outside the
+          light block on purpose — a scrim's job is to recede what is behind it, and in
+          the light register that is light paper, which a light scrim would not recede. ---- */
+  --color-scrim: rgba(4, 5, 7, 0.6);
+
+  /* ---- Legacy aliases: the seven token names the existing 76 components already use.
+          Keeping them is what makes this a token-layer swap and not 76 rewrites.
+          (`--color-bg-subtle` was referenced by a component but never defined — it is
+          real now, mapped to the panel surface it was reaching for.) ---- */
+  --color-bg: var(--color-canvas);
+  --color-bg-subtle: var(--color-panel);
+  --color-fg: var(--color-ink);
+  --color-fg-muted: var(--color-ink-2);
+  --color-border: var(--color-rule);
+  --color-accent: var(--color-active);
+  --color-accent-fg: var(--color-active-ink);
+
+  /* ---- Type ---- */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --text-2xs: 0.5rem; /* role micro-caps */
+  --text-xs: 0.5625rem; /* micro labels, counts, type badges */
+  --text-sm: 0.625rem; /* micro caps, status bar */
+  --text-md: 0.6875rem; /* mono UI: buttons, tabs, rows */
+  --text-base: 0.75rem; /* mono table cells, explorer names */
+  --text-lg: 0.82rem;
+  --text-xl: 0.95rem; /* wordmark, palette input */
+  --text-2xl: 1.15rem; /* pane titles */
+  --text-3xl: 1.2rem; /* stat values */
+  --text-display-s: clamp(1.4rem, 2vw + 1rem, 1.9rem);
+
+  /* ---- Space: 4pt scale ---- */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+
+  /* ---- Radius ---- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 11px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-pill: 999px;
+  --radius-shell: clamp(14px, 1.6vw, 22px);
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur-med: 260ms;
+
+  /* ---- Depth ---- */
+  --shadow-shell: 0 50px 100px -50px oklch(0% 0 0 / 0.85);
+  --shadow-card: 0 18px 30px -22px oklch(0% 0 0 / 0.9);
+  --shadow-overlay: 0 40px 80px -30px oklch(0% 0 0 / 0.8);
+
+  /* ---- Layering ---- */
+  --z-svg: 5;
+  --z-cards: 10;
+  --z-strip: 30;
+  --z-overlay: 900;
 }
 
-@media (prefers-color-scheme: dark) {
+/* The light register is DERIVED, not ported — no mock specifies it (design.md § Light register).
+ * Two deliberate non-mechanical inversions:
+ *   1. The raised end of the ladder flips direction — `card` is white (most raised) but `elev`
+ *      (hover/selected) goes DARKER than canvas, because that is what "more contrast from the
+ *      page" means in a light UI.
+ *   2. `active`/`focus`/`ok`/`pk` darken substantially. The mocks' bright amber reads 2.1:1 on
+ *      light paper; these are the same hues re-solved for >=4.5:1 and clamped into sRGB gamut.
+ */
+@media (prefers-color-scheme: light) {
   :root {
-    --color-bg: #16171d;
-    --color-fg: #f3f4f6;
-    --color-fg-muted: #9ca3af;
-    --color-border: #2e303a;
-    --color-accent: #c084fc;
-    --color-accent-fg: #16171d;
+    color-scheme: light;
+
+    --color-void: oklch(93.5% 0.004 262);
+    --color-canvas: oklch(98.8% 0.003 262);
+    --color-chrome: oklch(96.5% 0.005 262);
+    --color-panel: oklch(97.5% 0.004 262);
+    --color-card: oklch(99.5% 0.003 262); /* not pure white: every neutral carries the anchor hue */
+    --color-elev: oklch(94.5% 0.006 262);
+    --color-footer: oklch(92% 0.005 262);
+
+    --color-rule: oklch(0% 0 0 / 0.12);
+    --color-rule-2: oklch(0% 0 0 / 0.06);
+    --color-rule-hi: oklch(0% 0 0 / 0.32);
+
+    --color-ink: oklch(19% 0.014 262);
+    --color-ink-2: oklch(43% 0.012 262);
+    --color-ink-3: oklch(51% 0.01 262);
+
+    --color-pk: oklch(46% 0.106 62);
+    --color-fk: oklch(50.5% 0.23 304);
+    --color-edge: oklch(0% 0 0 / 0.28);
+    --color-edge-hi: oklch(0% 0 0 / 0.72);
+
+    /* V6e re-solved the amber a second time. V1 solved it for >=4.5:1 against `canvas`;
+     * this register's real worst cases are `footer` (4.06:1) and — the one V1 never
+     * measured — amber text on its OWN 10/12/20% wash, the badge and ranked-action
+     * pattern V4/V5 built, which measured 3.17–3.86:1 on every surface. Chroma is
+     * clamped to the sRGB gamut at this lightness. Dark is untouched (8.05:1 worst). */
+    --color-active: oklch(46% 0.106 62);
+    --color-active-ink: oklch(99% 0.004 62);
+    --color-focus: oklch(52% 0.119 62);
+    --color-ok: oklch(49.5% 0.107 163);
+    /* `--color-warn` needs no light entry — it aliases `--color-active`, re-solved just above. */
+    --color-error: oklch(49% 0.2 25);
+
+    /* Re-solved per register, not flipped: the light steps trade lightness for contrast on
+     * white while staying clear of the darker light-register accents.
+     * `--chart-4` was re-solved again at V6e: at 63% it sat ΔE 8.6 from `--chart-1`
+     * (5.7 under simulated protanopia), because V6b's gate measured only slots adjacent
+     * in assignment order and 1-vs-4 is never adjacent — yet all four are on screen at
+     * once in a four-series chart. Now 19.9 / 15.6. Dark already passed all pairs. */
+    --chart-1: oklch(62% 0.155 245);
+    --chart-2: oklch(44% 0.19 342);
+    --chart-3: oklch(61% 0.16 130);
+    --chart-4: oklch(45% 0.22 270);
+
+    --color-ai: oklch(50.5% 0.23 304);
+    --color-ai-2: oklch(47% 0.22 304);
+    --color-ai-ink: oklch(99% 0.004 304);
+
+    --shadow-shell: 0 40px 80px -50px oklch(0% 0 0 / 0.25);
+    --shadow-card: 0 12px 24px -18px oklch(0% 0 0 / 0.22);
+    --shadow-overlay: 0 32px 64px -30px oklch(0% 0 0 / 0.28);
   }
 }
 
 @theme {
+  --color-void: var(--color-void);
+  --color-canvas: var(--color-canvas);
+  --color-chrome: var(--color-chrome);
+  --color-panel: var(--color-panel);
+  --color-card: var(--color-card);
+  --color-elev: var(--color-elev);
+  --color-footer: var(--color-footer);
+  --color-rule: var(--color-rule);
+  --color-rule-2: var(--color-rule-2);
+  --color-rule-hi: var(--color-rule-hi);
+  --color-ink: var(--color-ink);
+  --color-ink-2: var(--color-ink-2);
+  --color-ink-3: var(--color-ink-3);
+  --color-pk: var(--color-pk);
+  --color-fk: var(--color-fk);
+  --color-edge: var(--color-edge);
+  --color-edge-hi: var(--color-edge-hi);
+  --color-active: var(--color-active);
+  --color-active-ink: var(--color-active-ink);
+  --color-focus: var(--color-focus);
+  --color-scrim: var(--color-scrim);
+  --color-ok: var(--color-ok);
+  --color-warn: var(--color-warn);
+  --color-error: var(--color-error);
+  --chart-1: var(--chart-1);
+  --chart-2: var(--chart-2);
+  --chart-3: var(--chart-3);
+  --chart-4: var(--chart-4);
+  --chart-other: var(--chart-other);
+  --chart-seq: var(--chart-seq);
+  --chart-pos: var(--chart-pos);
+  --chart-neg: var(--chart-neg);
+  --chart-mid: var(--chart-mid);
+  --color-ai: var(--color-ai);
+  --color-ai-2: var(--color-ai-2);
+  --color-ai-ink: var(--color-ai-ink);
+  --color-ai-soft: var(--color-ai-soft);
+
   --color-bg: var(--color-bg);
+  --color-bg-subtle: var(--color-bg-subtle);
   --color-fg: var(--color-fg);
   --color-fg-muted: var(--color-fg-muted);
   --color-border: var(--color-border);
@@ -36,9 +273,47 @@
   --font-mono: var(--font-mono);
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-fg);
+  background: var(--color-void);
+  color: var(--color-ink);
   font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The HUD's micro-caps label: mono, tracked out, uppercase. Used for every
+ * eyebrow, count, role badge and column header across the instrument. */
+.micro {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

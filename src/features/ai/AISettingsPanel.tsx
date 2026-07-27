@@ -13,6 +13,7 @@ import { useSettingsStore } from '../../stores/settings';
 import { useByokKeyStore } from '../../stores/byokKey';
 import { useVaultStore } from '../../stores/vault';
 import { useWebLLMStore } from '../../stores/webllm';
+import { usePauseSignalStore } from '../../stores/pauseSignal';
 import { WEBLLM_DOWNLOAD_SIZE } from '../../services/webllm';
 import { isOllamaEndpoint } from '../../services/ollamaProvider';
 import { storeVaultedKey, deleteVaultedKey } from '../../services/vaultClient';
@@ -42,9 +43,11 @@ const STORE_FAILURE: Partial<Record<VaultErrorCode | 'unreachable', string>> = {
 
 interface AISettingsPanelProps {
   onClose: () => void;
+  /** Skips the `Mode` fieldset — the Workbench's `ModeSwitches` (W7) owns mode selection there, above this panel. Old-shell call sites omit this and are unaffected. */
+  hideModeSwitch?: boolean;
 }
 
-export function AISettingsPanel({ onClose }: AISettingsPanelProps) {
+export function AISettingsPanel({ onClose, hideModeSwitch = false }: AISettingsPanelProps) {
   const aiMode = useSettingsStore((s) => s.aiMode);
   const setAIMode = useSettingsStore((s) => s.setAIMode);
   const byokPreference = useSettingsStore((s) => s.byokPreference);
@@ -86,12 +89,18 @@ export function AISettingsPanel({ onClose }: AISettingsPanelProps) {
         const session = vaultSession ?? crypto.randomUUID();
         const result = await storeVaultedKey({ sessionId: session, provider: 'openai', key });
         if (result.ok) remember(session, result.ref);
-        else setVaultMessage(STORE_FAILURE[result.code] ?? UNREACHABLE);
+        else {
+          if (result.code === 'paused') usePauseSignalStore.getState().reportPaused('vault');
+          setVaultMessage(STORE_FAILURE[result.code] ?? UNREACHABLE);
+        }
       } else {
         if (vaultRef === null || vaultSession === null) return;
         const result = await deleteVaultedKey({ sessionId: vaultSession, ref: vaultRef });
         if (result.ok) forget();
-        else setVaultMessage('Couldn’t reach the vault — your key is still stored. Try again.');
+        else {
+          if (result.code === 'paused') usePauseSignalStore.getState().reportPaused('vault');
+          setVaultMessage('Couldn’t reach the vault — your key is still stored. Try again.');
+        }
       }
     } finally {
       setVaultBusy(false);
@@ -99,7 +108,7 @@ export function AISettingsPanel({ onClose }: AISettingsPanelProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="presentation" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--color-scrim) p-4" role="presentation" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
@@ -114,21 +123,23 @@ export function AISettingsPanel({ onClose }: AISettingsPanelProps) {
           </button>
         </div>
 
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-(--color-fg)">Mode</legend>
-          {(Object.keys(MODE_LABELS) as AIMode[]).map((mode) => (
-            <label key={mode} className="flex items-center gap-2 text-sm text-(--color-fg)">
-              <input
-                type="radio"
-                name="ai-mode"
-                checked={aiMode === mode}
-                onChange={() => setAIMode(mode)}
-                className="accent-(--color-accent)"
-              />
-              {MODE_LABELS[mode]}
-            </label>
-          ))}
-        </fieldset>
+        {!hideModeSwitch && (
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium text-(--color-fg)">Mode</legend>
+            {(Object.keys(MODE_LABELS) as AIMode[]).map((mode) => (
+              <label key={mode} className="flex items-center gap-2 text-sm text-(--color-fg)">
+                <input
+                  type="radio"
+                  name="ai-mode"
+                  checked={aiMode === mode}
+                  onChange={() => setAIMode(mode)}
+                  className="accent-(--color-accent)"
+                />
+                {MODE_LABELS[mode]}
+              </label>
+            ))}
+          </fieldset>
+        )}
 
         {(aiMode === 'cloud' || aiMode === 'local-model') && (
           <div className="mt-5 border-t border-(--color-border) pt-4">

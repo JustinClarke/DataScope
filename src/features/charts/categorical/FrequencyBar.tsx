@@ -1,7 +1,7 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { FrequencyRow } from '../../../lib/categoricalSql';
 
-const BAR_COLOR = '#6366f1';
+const BAR_COLOR = 'var(--chart-1)';
 const AXIS = 'var(--color-fg-muted)';
 const GRID = 'var(--color-border)';
 

@@ -12,7 +12,7 @@ import {
   type PivotValueField,
 } from '../../lib/pivotCompiler';
 import { useThreadPrefill } from '../../hooks/useThreadPrefill';
-import { prefillColumns, prefillTableName } from '../../lib/threadPrefill';
+import { prefillColumns, prefillTableName, type ModulePrefill } from '../../lib/threadPrefill';
 import type { ClassifiedColumn, TableRegistryEntry } from '../../types';
 
 type WellKind = 'rows' | 'columns' | 'values';
@@ -122,10 +122,15 @@ function Well({ label, kind, fields, onDropField, onRemoveField, renderExtra }: 
  * one — Quantitative goes to Values (summed by default), everything else to
  * Rows — rather than guessing at rows/columns/values placement.
  */
-export function PivotBuilder() {
+interface PivotBuilderProps {
+  /** The Workbench tab's own initializer (W7.5) — see `useThreadPrefill`'s `override` doc. */
+  prefill?: ModulePrefill;
+}
+
+export function PivotBuilder({ prefill: prefillOverride }: PivotBuilderProps = {}) {
   const tables = useDatasetsStore((state) => state.tables);
   const classifiedTables = useMemo(() => tables.filter((t): t is TableRegistryEntry & { columns: ClassifiedColumn[] } => Array.isArray(t.columns) && t.columns.length > 0), [tables]);
-  const prefill = useThreadPrefill();
+  const prefill = useThreadPrefill(prefillOverride);
   const prefillTable = prefillTableName(prefill);
   const prefillFields = prefillColumns(prefill);
 

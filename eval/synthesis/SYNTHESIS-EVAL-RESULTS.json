@@ -1,49 +1,49 @@
 {
-  "ranAt": "2026-07-22T15:04:17.736Z",
+  "ranAt": "2026-07-26T15:01:13.765Z",
   "endpoint": "https://datascope-edge-staging.justinclarke.workers.dev/synthesis",
   "scores": [
     {
       "dataset": "titanic",
       "served": true,
-      "headlineWin": true,
-      "actionsUpgraded": true,
+      "headlineWin": false,
+      "actionsUpgraded": false,
       "baselineHeadline": "\"1\"'s mean Fare is 1.6σ above the rest.",
-      "composedHeadline": "Fares of 1's are 1.6σ higher than other groups."
+      "composedHeadline": "\"1\"'s mean Fare is 1.6σ above the rest."
     },
     {
       "dataset": "stock_prices",
       "served": true,
-      "headlineWin": true,
-      "actionsUpgraded": true,
+      "headlineWin": false,
+      "actionsUpgraded": false,
       "baselineHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage.",
-      "composedHeadline": "Explore \"High\" and \"Close\" with their perfect 1.000 correlation."
+      "composedHeadline": "\"High\" and \"Close\" correlate at 1.000 — possible target leakage."
     },
     {
       "dataset": "weather",
       "served": true,
-      "headlineWin": true,
-      "actionsUpgraded": true,
+      "headlineWin": false,
+      "actionsUpgraded": false,
       "baselineHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage.",
-      "composedHeadline": "Explore the 0.976 correlation between \"TempHighC\" and \"TempLowC\"."
+      "composedHeadline": "\"TempHighC\" and \"TempLowC\" correlate at 0.976 — possible target leakage."
     },
     {
       "dataset": "product_reviews",
       "served": true,
-      "headlineWin": true,
-      "actionsUpgraded": true,
+      "headlineWin": false,
+      "actionsUpgraded": false,
       "baselineHeadline": "20 fully duplicated rows detected.",
-      "composedHeadline": "20 rows in product_reviews are exact duplicates."
+      "composedHeadline": "20 fully duplicated rows detected."
     },
     {
       "dataset": "ecommerce",
       "served": true,
-      "headlineWin": true,
-      "actionsUpgraded": true,
+      "headlineWin": false,
+      "actionsUpgraded": false,
       "baselineHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure.",
-      "composedHeadline": "4 tables, 5,437 rows, 0% null values — see what's inside."
+      "composedHeadline": "4 tables · 5,437 rows · no single dominant finding — here's the structure."
     }
   ],
-  "headlineRate": 1,
-  "actionsRate": 1,
-  "pass": true
+  "headlineRate": 0,
+  "actionsRate": 0,
+  "pass": false
 }

@@ -3094,3 +3094,2028 @@
   citations across 177 files in `src/`, `edge/` and `eval/` are conformant as written; no
   retroactive cleanup pass is needed and none should be run. `BUILD-ORDER.md` **Writing
   rules for the code repo** updated to match.
+
+- **2026-07-22** — **DESIGN DECISION, not yet implemented — recorded here to fold into the next
+  build session (whichever item is ticked off next; human instruction: "document it in the logs,
+  we will implement it along with the next item we tick off the list").** Human directive:
+  re-shape the AI mode taxonomy — rename **"Cloud AI" → "API"**, and move **local Ollama access
+  out of "Local model" mode and into "API" mode**, reached the same way a cloud key is: through
+  the key/endpoint field, not a separate mode. Four sub-decisions made (via clarifying questions
+  this session, each confirmed by the human):
+  **(1) Ollama reaches the browser directly, not through the edge Worker.** Same shape as today's
+  client-side BYOK pass-through (`services/ollamaProvider.ts` already does a direct `fetch` to
+  `localhost:11434` — that provider is reused, just re-triggered from "API" mode's key/endpoint
+  field instead of being gated behind "local-model" mode). `edge/byok.ts`'s server-side pass-through
+  is unaffected — this does not add Ollama proxying to the Worker.
+  **(2) "API" mode keeps both routing choices.** It is "Cloud AI" renamed, not re-scoped — still
+  offers "free shared budget first" vs "prefer my key/endpoint"; supplying a key or Ollama URL does
+  not become mandatory.
+  **(3) The key/endpoint field auto-detects its own shape.** One field, not two: if the entered
+  value looks like a URL, treat it as an Ollama base endpoint (no bearer auth); otherwise treat it
+  as an OpenAI-style bearer key. Rejected alternative: an explicit provider-type selector — the
+  human chose the simpler single-field UI over the cleaner data model.
+  **(4) "Local model" mode narrows to in-browser (WebLLM) only.** Drop "or localhost Ollama" from
+  its label/description and from the mode's provider resolution — Ollama moves entirely to "API"
+  mode's key/endpoint path. `services/webllmProvider.ts` and the download/warm state machine are
+  unaffected; only the mode's Ollama fallback branch goes away.
+  **What this touches when built (docs first, then code, per this session's human instruction):**
+  master `DATASCOPE.md` §5.1 (mode table) and §11.2 (routing), the settled **Decision Record**
+  entries **D2** (mode chooser — now two modes' worth of behavior change, not three-way), **D3**
+  (routing toggle — confirmed unchanged in shape, now serves "API" instead of "Cloud AI"), and
+  **D9** (key custody — the field's contents branch on shape now, still never persisted/logged);
+  human instruction is the required authorization to edit the settled D-record (per this repo's
+  own rule). Leaf doc `build/06-ai/02-modes-byok.md` mirrors the master change. **Already-built app
+  code that will need a follow-up edit pass** (not touched this session — docs-only workspace):
+  `AIModeChooser.tsx` / `AISettingsPanel.tsx` (mode copy, the single auto-detecting field, dropping
+  the separate Ollama path), `services/ollamaProvider.ts` (triggered from API mode's resolver, not
+  `local-model`'s), `src/services/aiProvider.ts` `resolveProvider` (ladder changes: `local-model` →
+  WebLLM only; `cloud`/`API` → Workers AI / user key / Ollama-by-URL-detection). `edge/byok.ts`,
+  `edge/ai-router.ts`, and the vault seam (`09-edge/03-vault`) are unaffected by this change.
+  **Why not implemented now:** human instruction was to log the decision only; implementation is
+  deferred to land together with the next build-order item pulled (currently `▶ 06-ai/03-privacy-
+  disclosure`, Sonnet) rather than as its own out-of-sequence session.
+  **Next concrete action:** build `06-ai/03-privacy-disclosure` (Sonnet), folding in this mode-
+  taxonomy change (master-first edits to §5.1/§11.2/D2/D3/D9, mirrored to `06-ai/02-modes-byok`,
+  then the app-code follow-up listed above) rather than treating them as separate sessions.
+  **Blocker:** none — deliberately deferred, not stuck.
+
+- **2026-07-22** — **Local-model mode is now demonstrably functional against a real localhost
+  Ollama daemon, and the leaf's mode-switch matrix E2E ran end-to-end and PASSED — closing every
+  `06-ai/02-modes-byok` criterion except the vault round-trip. The box stays unchecked on that one
+  criterion (`09-edge/03-vault` unbuilt); `▶` stays.** Ollama 0.32.1 was installed on this machine
+  (Homebrew; daemon run ad hoc, not a login service) with the pinned `qwen2.5-coder:1.5b` (~986 MB),
+  and a scripted browser session drove the real chat: "How many passengers survived?" → two POSTs to
+  `localhost:11434/api/chat` → `SELECT COUNT("PassengerId") FROM titanic WHERE "Survived" = 1` →
+  ✓ 1 rows · 8 ms → "There were 355 passengers who survived the Titanic." — zero external requests
+  across the whole phase.
+  **Two real bugs found by the run, both fixed.** (1) The pinned coder **never emits Ollama's
+  structured tool_calls** (probed live against the daemon: 0/4, replying instead with prose, a raw
+  JSON blob, or fenced SQL) — so the pipeline's loop took the text as a final answer and **no SQL
+  ever ran in local-model mode**. `services/ollamaProvider.ts` now drives the model with the same
+  deterministic SQL-mode/answer-mode control flow + plain-text `extractSql` the D43 spike proved and
+  the WebLLM provider already uses (instructions + helpers now exported from `webllmProvider.ts`);
+  answer mode omits `tools` entirely so the turn can only end as text, and a tool-tuned model's
+  structured call is still honored. (2) The matrix's network assertions caught the dataset-open
+  **synthesis request reaching the workers.dev host in local-model mode** — the ladder's cold local
+  rung fell through to the edge rung, violating §5.1's zero-external contract for the mode.
+  `services/synthesis.ts` now gates the edge rung to cloud mode: local-model's only AI synthesis
+  rung is the warm in-browser engine, degrading to the deterministic baseline (`ai-uncached`) when
+  cold or failed.
+  **Matrix result (one scripted headless-Chromium session, 2000×1250, per-phase network
+  classification):** chooser — 0 non-devserver requests before a mode is chosen; local-model —
+  Ollama only, 0 edge/external; local-only — refusal rendered, 0 requests of any kind; cloud —
+  exactly two `200 POST /ai-router` against the live staging Worker and "The average fare was
+  approximately $36.93." (One earlier cloud attempt died at the client's 30 s §21.6 abort — a direct
+  probe showed Workers AI at ~9 s that minute; retried clean.) ~4 real cloud inference calls total,
+  all deliberate; Ollama inference is free.
+  **Verification:** suite **886 → 891** (+5: three ollamaProvider control-flow tests built from the
+  probed reply shapes, two synthesis egress-gate tests; one synthesis test rewritten to the stronger
+  no-request-at-all guarantee), `tsc -b` / `oxlint` / `vite build` clean.
+  **Docs, master-first:** no master edit — §5.1's mode table already states local model sends
+  nothing; this change set realizes it. Leaves updated: `06-ai/02` (Ollama criterion ticked with
+  evidence, Files rewritten to the built provider shape, test-plan note recording the matrix run and
+  the leak it caught), `v0.25/02-edge-synthesis` (local-model never calls the edge), and
+  `v0.25/03-webllm-handoff` (the ladder's cloud-only edge rung).
+  **Model note:** built on **Opus** per the row's corrected model column.
+  **Next concrete action:** `06-ai/03-privacy-disclosure` (Sonnet). `06-ai/02`'s box checks when
+  `09-edge/03-vault` lands and its round-trip criterion closes.
+  **Blocker:** none.
+
+- **2026-07-22** — **`06-ai/03-privacy-disclosure` ships, folding in the mode-taxonomy rename
+  logged above in the same session, per that entry's own instruction not to split them.**
+  **Mode-taxonomy rename (docs master-first, then app code):** "Cloud AI" → **"API"** everywhere
+  user-facing; localhost Ollama moved out of "Local model" (now in-browser WebLLM only) and into
+  API mode, reached through the same key/endpoint field a cloud key uses. That field auto-detects
+  its own shape (`services/ollamaProvider.ts`'s new `isOllamaEndpoint` — a URL is a local Ollama
+  base endpoint, anything else a bearer key). Master edits: §5.1's mode table, §11.2, and D2/D3/D9
+  (human-authorized per this repo's own rule for touching the settled Decision Record) — mirrored
+  into `foundations/privacy-model.md` and `build/06-ai/02-modes-byok.md` (whose one re-pointed
+  acceptance criterion — Ollama's live 2026-07-22 daemon run — is reopened with a note: the
+  underlying capability evidence stands, only the trigger moved, and that specific move is
+  unit-tested, not re-run live). App code: `aiProvider.ts`'s `resolveProvider` ladder (local-model
+  is warm-WebLLM-or-nothing now, no Ollama fallback; API mode branches on field shape before
+  falling to the edge router), `AIChatModule.tsx`'s status line (now reports a URL-shaped API-mode
+  field honestly as zero-egress local, never as "API"), and the `AIModeChooser`/`AISettingsPanel`
+  copy.
+  **`06-ai/03-privacy-disclosure` itself:** a `metadataOnlyRepair` setting (default on, persisted
+  like the other AI preferences) gates stage 5's retry behavior in `services/ai.ts` — off, a failed
+  attempt resamples up to 3 real rows from the question's relevant table (a defensive slice, not
+  just the SQL `LIMIT 3`) alongside the error trace, and a resample that itself fails degrades
+  silently to metadata-only rather than crashing the turn; the terminal (turn-ending) failed attempt
+  never resamples, since there's no further retry to enrich. Every sampled attempt carries
+  `sampledRows: true`, which `AITurnView` renders as a transcript badge. `AISettingsPanel` gained
+  the toggle plus a disclosure paragraph enumerating the exact §5.1 API-mode payload list
+  (schema/prompts/SQL/error-traces, sample rows only if the toggle is off); `AIModeChooser`'s
+  first-run blurb was extended to match ("error traces" was missing there before).
+  **Verification:** suite **891 → 904** (+13: mode-taxonomy ladder/status/copy tests plus the new
+  `isOllamaEndpoint` cases, and the metadata-only-repair/data-sampled-repair cases in `ai.test.ts`
+  including the sampling-failure and terminal-attempt-never-samples cases); `tsc -b` / `oxlint` /
+  full `vitest run` (904 passed) / `vite build` all clean.
+  **Not run this session:** a live E2E flipping the toggle mid-conversation or re-confirming Ollama
+  reachability specifically through the new API-mode trigger against a real daemon — both are
+  unit/component-tested; the mode-taxonomy fold-in's underlying Ollama-reachability evidence is the
+  unchanged 2026-07-22 live run logged above, just re-pointed. Flag if a future session wants the
+  live re-confirmation.
+  **Docs, master-first:** DATASCOPE.md §5.1/§11.2/D2/D3/D9 amended (dated inline); mirrored to
+  `foundations/privacy-model.md` and `build/06-ai/02-modes-byok.md` (Modes/BYOK-routing/Key-custody
+  sections and the Files section rewritten to the amended ladder; one acceptance criterion reopened
+  per above). `build/06-ai/03-privacy-disclosure.md`'s acceptance criteria checked with evidence
+  annotations; its Files/Test-plan/Definition-of-done sections rewritten to the built shape.
+  **Next concrete action:** `09-edge/02-cors-relay` (Sonnet) — `06-ai/02`'s box still checks only
+  when `09-edge/03-vault` lands and closes the vault round-trip criterion.
+  **Blocker:** none.
+
+- **2026-07-23** — Ollama-shaped API-mode fields now honor the D3 routing toggle instead of
+  always bypassing it, closing a gap the master spec was silent on (no Decision-Record edit —
+  §5.1/§11.2 already define the toggle; this realizes it for Ollama and adds the previously
+  undocumented default rule). "Prefer my key" is unchanged: straight to Ollama. "Use free tier
+  first", when explicitly chosen, tries the shared Workers-AI budget first and falls back to the
+  local Ollama endpoint only on the router's existing keyless quota-exhausted/pool-exhausted/
+  paused response — the overflow is client-orchestrated (`src/services/ai.ts`) since the edge
+  Worker cannot reach the user's `localhost`; no edge/router code changed. New default rule: an
+  Ollama-shaped field defaults to prefer-endpoint (zero-egress) until routing is explicitly
+  touched, so the stored D3 default of `free-tier-first` never silently sends a local-Ollama
+  user's payloads to the cloud. Master edits: §5.1's API mode table row, §11.2's BYOK bullet.
+  Mirrored into `foundations/privacy-model.md` and `build/06-ai/02-modes-byok.md` (mode table,
+  BYOK routing section, Files paragraph) and `build/09-edge/01-ai-router.md` (a note that the
+  router needs no Ollama awareness — the overflow trigger is its existing keyless typed-error
+  response). App code: `aiProvider.ts`'s `resolveProvider` (new `{ provider, overflowProvider? }`
+  return shape; a new settings flag tracks whether routing was ever explicitly chosen), `ai.ts`'s
+  tool-use loop (persists the provider swap for the rest of the turn on a quota-family error,
+  marks `servedByOllamaOverflow`), `AIChatModule.tsx`'s status line and `AITurnView.tsx`'s inline
+  disclosure, and `AISettingsPanel.tsx`'s copy (the "never at all"/"Zero egress" strings are now
+  conditioned on whether routing was explicitly set to free-tier-first).
+
+- **2026-07-23** — **`09-edge/02-cors-relay` built and unit/local-verified; the box stays open
+  on one outstanding criterion (a live staging deploy), `▶` stays.** Before writing code, a
+  genuinely open design question surfaced: the leaf doc's own spec text ("target URL in,
+  response out; nothing rewritten beyond CORS headers") conflicted with master §7.4's summary
+  line ("Worker-side [pagination] for Tier 2/3"), and ADR-006 — the doc both leaves cite as the
+  authority — had never actually recorded a pagination decision. Resolved by human decision
+  (2026-07-23, asked via clarifying question with a use-case comparison across the three named
+  v0.5 platforms): **pagination is client-driven, not Worker-side** — the client loops, calling
+  the relay once per page; the relay stays a strict single-fetch pass-through. Reasoning: only
+  GitHub (of GitHub/Lichess/Chess.com) has generic follow-able pagination at all; Worker-side
+  following would need bespoke response-framing (violates "nothing rewritten"), re-implements
+  the SSRF check internally instead of reusing the per-call path, and holds one Worker
+  invocation open across many upstream fetches (worse for the §23.5 cost ceiling than many
+  short, independently-killable ones); the launch defaults' "pagination-friendly burst" rate
+  sizing only makes sense if a multi-page ingest is already many relay calls. **Docs,
+  master-first:** DATASCOPE.md §7.4 (the pagination bullet and the abuse/rate-limit sentence)
+  and §23.5 (a stale "50-subrequest cap" clause that assumed Worker-side page-following).
+  Mirrored into ADR-006 (new "Pagination — Tier 2 relay" decision section, status line updated)
+  and both leaf docs (`09-edge/02-cors-relay.md`'s spec + acceptance criteria + test plan;
+  `07-connectivity/02-api-tier2-relay.md`'s pagination bullet + a new acceptance criterion for
+  the 20-call client-side cap it now owns).
+  **`edge/cors-relay.ts` built to the amended spec:** `GET /cors-relay?url=&sessionId=` (no
+  body — there's nothing to carry one), kill-switch → validate → SSRF-check → dual-keyed
+  rate-limit (two independent windows, per-minute *and* per-hour, both session+IP — a first for
+  this codebase's limiter usage; `checkRateLimit` called twice with distinct namespaces so the
+  windows don't collide) → a manual `redirect:'manual'` follow loop capped at 5 hops, each hop
+  re-entering the same SSRF check (closes a redirect-based SSRF bypass a naive `redirect:
+  'follow'` would open) → a streamed `ReadableStream` relay with a byte-count cutoff (100MB
+  default): a declared `content-length` over the cap rejects cleanly before any byte streams;
+  an undeclared/chunked response that exceeds the cap mid-stream errors the stream (the
+  cleanest signal achievable without buffering Worker-side to inspect it first — noted as an
+  inherent property of "streamed, never buffered", not a gap). No client-supplied headers ever
+  reach the target (the outbound fetch carries only `{method:'GET', signal}`, nothing from the
+  inbound request). Content-free metrics via the existing `shared/counters.ts` sink, extended
+  with a new `CorsRelayMetric` shape (outcome/size/latency only, same discipline as the other
+  three endpoints' metrics — never a URL). New `CorsRelayErrorCode` wire type in `protocol.ts`.
+  Wired into `worker.ts` (`buildCorsRelayEnv`, `/cors-relay` dispatch — this endpoint's own
+  405-on-non-GET check lives inside the handler itself, not worker.ts's pre-check like the
+  other two routes, specifically so it's exercised by this file's own test suite rather than
+  only reachable through untested `worker.ts`), `bindings.ts` (`CORS_RELAY_KILL_SWITCH`), and
+  `wrangler.toml` (root + `[env.staging]`, matching the non-inheritable-keys pattern the other
+  kill switches already established).
+  **Verification:** `cors-relay.test.ts`, 26 cases (pass-through + status forwarding, header
+  non-forwarding, method rejection, malformed input, 8 SSRF cases including
+  `169.254.169.254`/IPv6 `::1`, redirect-following allowed/blocked/too-many, both response-cap
+  paths, both rate-limit windows including the forged-session-token/per-IP-floor case, the kill
+  switch, content-free counters). Two real test-harness bugs caught and fixed while writing
+  these (not production bugs): the mock `fetchTarget` initially reused one `Response` object
+  across multiple calls (a body stream can only be read once — surfaced as a spurious 502 on
+  the second of three calls in the per-IP-floor test) and a counters test checked the sink
+  before consuming the streamed body (the metric only lands once the stream actually drains,
+  same as a real client). Full suite **904 → 940** (+36 incl. the 26 new), `tsc -b` / `oxlint` /
+  `vite build` all clean. Supplemented by a live local `wrangler dev` smoke pass (real
+  Miniflare + real DO binding): `GET /health` → 200; `GET /cors-relay?url=http://10.0.0.1&…` →
+  `400 {"error":"blocked"}`; `GET /cors-relay?url=https://example.com&…` → the real page body,
+  streamed through; `POST /cors-relay?...` → `405 {"error":"bad-request"}`.
+  **Not run this session — the one open Definition-of-done criterion:** the public-ship gate
+  ("rate limits active satisfied on staging") needs a live `wrangler deploy --env staging` +
+  audit, the same shape as the `ai-router` burst audit that produced ADR-006's rate-limiter
+  correction. Held deliberately: a real deploy to shared Cloudflare infrastructure, not done
+  autonomously without confirmation.
+  **Next concrete action:** confirm and run the staging deploy + live rate-limit audit to close
+  `09-edge/02-cors-relay`'s box; then `09-edge/03-vault` (Opus) — which also closes
+  `06-ai/02-modes-byok`'s one remaining open criterion (the vault round-trip).
+  **Blocker:** none — the staging step is a deliberate pause for confirmation, not stuck.
+
+- **2026-07-23** — **`09-edge/02-cors-relay` closes: staging deploy done and the live rate-limit
+  audit confirms the DO-backed limiter enforces correctly — box now checked, `▶` moves to
+  `09-edge/03-vault`.** Human confirmed the deploy this session (deliberate pause from the entry
+  above, resolved). `CLOUDFLARE_API_TOKEN` (`app/.env.local`) + `npm run edge:deploy:staging` →
+  `datascope-edge-staging.justinclarke.workers.dev`, `RATE_LIMITER` DO binding recognized, bundle
+  40.76 KiB. Live smoke: `/health` → 200; SSRF block on `http://10.0.0.1` → `400 {"error":"blocked"}`;
+  non-GET → `405 {"error":"bad-request"}`; pass-through of `https://example.com` → real body, 200.
+  **The burst audit itself hit a false alarm first, worth recording since it shaped the
+  methodology:** two early bursts (22 requests spaced ~1.5–2s apart via `sleep 1` plus curl
+  overhead, and 30 requests back-to-back) both returned 200 for every request — looked exactly
+  like the KV under-count bug ADR-006 found on `ai-router`. Ran `wrangler tail --env staging` live
+  against a repeat to see what the DO was actually doing, and the tail log resolved it
+  immediately: both suspect bursts spanned **two** 60s fixed-window buckets (an `Alarm` fired
+  mid-burst marking the rollover), splitting ~22–30 requests across two windows so neither bucket
+  alone crossed 20 — a **test-methodology artifact** (burst too slow / badly timed against the
+  window boundary), not a limiter bug. A clean, fast, boundary-safe burst (23 requests, all
+  landing inside one window, tail-confirmed via `RateLimiterDo.increment` firing on every request)
+  gave the real signal: requests 1–20 → 200, 21–23 → genuine `429 {"error":"rate-limited"}` with
+  `retry-after: 60`, exactly at the declared 20/min/session ceiling. A fresh session id from the
+  same IP immediately after (well under the 60/min per-IP floor at that point) still passed —
+  confirms the dual-keyed shape is live, not just the session ceiling. Matches the `ai-router`
+  precedent shape (DO fixes the KV staleness class of bug) — this is the first time that DO path
+  was exercised by a *second* endpoint's own namespace (`cors-relay-min`/`cors-relay-hour`
+  vs. `ai-router`), confirming the shared-limiter design doesn't collide across endpoints.
+  **Not separately live-burst-tested:** the per-hour window (200/session, 3600s — a live burst
+  would take too long to be worth it; unit-tested, and the per-minute window's live pass exercises
+  the identical code path with a different constant) and the kill switch (flipping it live would
+  require a second deploy disrupting the audit in progress; unit-tested, no live-only risk like
+  the rate limiter's KV-vs-DO consistency class had).
+  **Docs:** no master/ADR change — ADR-006's existing DO-limiter decision already covers this;
+  this is the second endpoint proving it, not a new decision. Leaf `09-edge/02-cors-relay.md`'s
+  Definition of done — the one outstanding line — closed with this evidence (no acceptance
+  criteria reworded; all were already `[x]` from local verification).
+  **Next concrete action:** `09-edge/03-vault` (Opus) — also closes `06-ai/02-modes-byok`'s
+  remaining open criterion (the vault round-trip).
+  **Blocker:** none.
+
+- **2026-07-23** — **`09-edge/03-vault` built and unit/local-verified — the opt-in half of D9
+  custody works end to end from the settings checkbox: "Remember my key" now stores a bearer key
+  server-side (encrypted, idle-expiring, deletable) and the browser keeps only a reference. The
+  box stays open on one criterion (a live staging deploy, which needs two account resources),
+  `▶` stays.**
+  **Three properties are structural rather than conventions**, which is the substance of this
+  build: (1) the endpoint has **two** client operations, store and delete — resolution is an
+  in-process function the router calls, so no response shape on `/vault` can carry key material
+  back; (2) records are AES-GCM ciphertext under a Worker-held secret, and a deploy missing that
+  secret (or the KV binding) answers typed `unavailable` rather than storing a key in the clear
+  — the vault fails closed, never quietly weaker; (3) session scoping *is* the storage key
+  (`vault:{session}:{ref}`), so a reference presented under another session addresses nothing
+  and there is no comparison to forget to write. Entropy lives in the 256-bit reference; the
+  session id is client-minted (§23.1's server-minted tokens remain ADR-006's, unbuilt) and the
+  code treats it as a scoping key, never a second secret.
+  **A durable, vault-specific session id was the one genuinely open design question.** The id
+  every other edge call carries is per-page-load, so it cannot address a key across tab closes —
+  which is the entire feature. Resolved by minting a durable id **only on the first store**: a
+  user who never opts into the vault gains no durable identifier at all, and opting in is
+  already opting into a server-side association. Both halves (`vaultRef` + `vaultSession`) are
+  required to resolve. Recorded master-first in §5.2.
+  **A test caught a real coupling bug before it shipped.** Refresh-on-resolve was written with a
+  fixed 24h threshold; with any TTL tuned below a day that silently stops refreshing, turning
+  "expires after 90 days *without use*" into a hard expiry. It is now a *fraction* of the TTL
+  (1% ≈ 21.6h on the 90-day default — still ~4 writes/year per credential instead of one per
+  question).
+  **Also decided and documented:** a router-internal resolve is not a vault "operation" and does
+  not spend the 10/session/hour budget — it rides an already-rate-limited ai-router call, and
+  counting it would cap a remembered-key user at ten questions an hour (master §11.2). The
+  3-credential cap is a hygiene bound, not the anti-stuffing control — KV's listing is eventually
+  consistent, so the strongly consistent DO-backed op limiter is what actually holds. A vaulted
+  record's own provider is authoritative, so a stored key can't be redirected at another provider
+  by someone holding only the reference. A failed *delete* deliberately leaves the checkbox
+  checked: dropping the reference locally would strand a real stored key with nothing left to
+  address it.
+  **KV returns to the edge, in the role it is good at.** ADR-006's counter correction ended with
+  "the edge Worker no longer uses KV at all"; that line is now corrected there, not contradicted
+  — a stale *count* is a wrong number, while a stale *value* read is a brief typed "not found
+  yet" the client retries, and KV's native `expirationTtl` is exactly the idle-TTL primitive.
+  The edge now runs both backends split by need: DO for counts, KV for values with a TTL.
+  **Verification:** suite **940 → 995** (+55: 29 in `edge/vault.test.ts`, 5 vault cases in
+  `byok.test.ts`, 6 client-service, 8 settings-panel including the §22 storage row — after
+  remembering a key no localStorage entry contains it while the reference does — 3 ladder, 5
+  status-line, plus one existing test re-pointed); `tsc -b` / `oxlint` / `vite build` clean.
+  Supplemented by a live local `wrangler dev` pass through `worker.ts`'s own wiring (real
+  Miniflare KV + DO limiter): store → ref; cross-session delete → 404; the cap → `200 200 409`;
+  non-POST → 400; delete → `{"deleted":true}` then 404; the op limiter → 429 from the 11th, with
+  a fresh session unaffected. **Custody audit, the piece this build owed alongside the
+  ai-router's:** after a live store, the key appears in zero Worker log lines and zero bytes of
+  the on-disk KV store (`grep -ri` over `.wrangler/` — the record is ciphertext), and a record
+  written under a rotated secret does not resolve.
+  **Docs, master-first:** DATASCOPE.md §5.2 (the durable vault session id), §11.2 (resolves not
+  counted against vault ops; the lazy-refresh and cap-vs-limiter notes) — no Decision-Record
+  edit, D9's custody choice is unchanged and this realizes it. Mirrored into ADR-006 (a new
+  "KV's remaining role" section correcting the stale line, and the routing-layout interim fact:
+  four of five paths now share one Worker), `foundations/privacy-model.md`,
+  `build/09-edge/README.md`, `build/09-edge/03-vault.md` (criteria checked with evidence, Files
+  and Test-plan rewritten to the built shape, design notes, the outstanding staging line), and
+  `build/06-ai/02-modes-byok.md` (its vault criterion now checked, custody + seam notes updated).
+  **Model note:** built on **Opus** per the row's model column.
+  **Next concrete action:** confirm and run the staging deploy to close `09-edge/03-vault`'s box
+  — it needs `wrangler kv namespace create VAULT_KV` (then uncomment the two binding blocks in
+  `wrangler.toml`, root + `[env.staging]`) and `wrangler secret put VAULT_SECRET --env staging`,
+  followed by a live round-trip + custody audit against staging. Then
+  `09-edge/04-persistence-endpoints` (Sonnet). **Correction to the previous entry's
+  expectation:** `06-ai/02-modes-byok` does *not* check on this build — its vault criterion is
+  now closed, but the re-pointed Ollama criterion (a live run through API mode's key/endpoint
+  field) is still open, and is now that row's only remaining blocker.
+  **Blocker:** none — the staging step is a deliberate pause for confirmation, not stuck.
+
+- **2026-07-23** — **`09-edge/03-vault` closes: staging deploy done, live round-trip and custody
+  audit both pass — box checked, `▶` moves to `09-edge/04-persistence-endpoints`.** Human
+  confirmed the deploy this session ("close it up" — the deliberate pause above, resolved).
+  **Two namespaces, not one.** `wrangler kv namespace create VAULT_KV` plus a separate
+  `--env staging` one (`staging-VAULT_KV`), against the config's own comment, which assumed the
+  staging block would repeat the root id: a shared namespace would let the staging Worker
+  resolve production vault records, and the isolation costs nothing. `wrangler.toml`'s two
+  binding blocks are now uncommented with their distinct ids and the comment corrected.
+  `VAULT_SECRET` was set with `wrangler secret put --env staging` from `openssl rand -base64 32`
+  piped straight in — never written to a file, never echoed. Redeploy: 48.90 KiB, `VAULT_KV` +
+  `RATE_LIMITER` both bound.
+  **Live audit (HTTP-level against the deployed Worker, not through the browser UI — the
+  settings-UI path was verified locally last session):** store → ref; cross-session delete →
+  `404 not-found`; non-POST → `400 bad-request`; delete → `{"deleted":true}` and the repeat →
+  `404`, so the delete is verifiable against production KV and not just Miniflare; the op
+  limiter → clean `200`s through op 10 and `429 rate-limited` from op 11, with a fresh session
+  id from the same IP unaffected; every record's TTL lands ~90 days out.
+  **Custody audit — the piece this build owed.** Every record in the namespace (13) dumped via
+  `wrangler kv key get`: all AES-GCM ciphertext, zero occurrences of the stored key, of the
+  string `sk-`, or of the provider name across the entire dump. A `wrangler tail` capture
+  spanning a store, a delete, and a malformed request: zero occurrences of the key across
+  request lines, DO events, logs, and exceptions.
+  **The one real finding: the credential cap is *eventual* against real KV, by a much wider
+  margin than the design note assumed.** A back-to-back burst seated **5** credentials under a
+  cap of 3; spacing stores 3s apart still let all four through; the 4th was rejected
+  `409 cap-reached` only after a **~120s** settle. KV's prefix *listing* lags materially longer
+  than the ≤60s value propagation ADR-006 reasoned about. This does not change the design — the
+  cap was already documented as hygiene with the strongly consistent op limiter (10/session/hour)
+  as the actual anti-stuffing ceiling, and that limiter held exactly — but "momentarily one over
+  the cap" understated the window, so master §11.2 and ADR-006 now carry the measured numbers.
+  **A methodology note, since it wasted a pass:** the first audit run returned route-level
+  `404 not-found` for `/vault` on some requests and skewed the limiter count — the new version
+  was still propagating across colos and older ones had no `/vault` route. Re-running after it
+  settled gave the results above. Same shape as the cors-relay window-boundary false alarm:
+  suspect a just-deployed edge before suspecting the code.
+  **Docs, master-first:** DATASCOPE.md §11.2 (the measured cap slop), mirrored into ADR-006's
+  KV-role section and `build/09-edge/03-vault.md` (the cap criterion's evidence, and the
+  Definition of done's outstanding staging line now closed with this audit).
+  **Next concrete action:** `09-edge/04-persistence-endpoints` (Sonnet) — the last `09-edge`
+  row. `06-ai/02-modes-byok` still waits only on the re-pointed Ollama live run.
+  **Blocker:** none.
+
+- **2026-07-23** — **`09-edge/04-persistence-endpoints` built and verified against a real (local)
+  R2 binding — the Worker side of R2 save/share works end to end: save a dataset buffer, get it
+  back by token, delete only with the ownership proof returned at save time. The box stays open
+  (`▶` stays) on three things that need real Cloudflare account resources this session
+  deliberately did not create: the R2 bucket itself, the Terraform-owned lifecycle TTL rule, and
+  a staging deploy for a real cross-device share URL.**
+  **Two design decisions, both forced by a real R2 API constraint found live, not in unit
+  tests.** `R2Bucket.put()` requires its value stream to have a *known length* — the runtime's
+  own error, hit against a real local Miniflare R2 binding: `"Provided readable stream must have
+  a known length (request/response body or readable half of FixedLengthStream)"`. The first
+  implementation wrapped `request.body` in an app-level byte-counting passthrough stream (the
+  same shape cors-relay uses on its response side) specifically to catch a lying
+  `Content-Length`; that wrapper is exactly what R2 rejects, since authoring a new `ReadableStream`
+  strips the known-length property even when everything it reads comes from a request body. Fixed
+  by passing `request.body` to `store.put` **unwrapped** — which turns out to be the more correct
+  defense, not a weaker one: the HTTP layer already frames the body to its declared
+  `Content-Length` before the handler runs, so a body shorter or longer than declared fails as a
+  transport-level error before R2 even sees it. The declared-size pre-check (`> 100MB` →
+  `too-large` before any streaming starts) is still app logic; the actual-vs-declared match is
+  the runtime's, not re-implemented here — and the in-memory test store can't simulate an
+  R2-specific contract, so that defense is verified by the live run, not by the unit suite.
+  **Second, a shared-infra extension:** the 300MB/session/day aggregate save cap sums *bytes*,
+  which the existing dual-keyed limiter (request-counting only) couldn't express.
+  `RateLimiterDo.increment`/`rateWindow.ts`'s `stepWindow` gained an optional `amount` parameter
+  (default 1 — every existing caller, ai-router's quota and cors-relay's dual window, is
+  unaffected) and `shared/limiter.ts`'s `incrementSessionQuota` passes it through. Fixed a latent
+  bug the extension exposed rather than caused: the DO's "did a fresh window just open" check was
+  `count === 1`, which only ever held because every prior caller's amount was 1 — corrected to a
+  direct bucket-number comparison, since a byte-summing key could otherwise never schedule its
+  cleanup alarm.
+  **Delete's ownership-proof shape follows vault.ts's established precedent exactly:** the token
+  (the link — anyone holding it can `get`) is separate from the `deleteToken` (returned once at
+  save time, stored only as a SHA-256 hash in R2 custom metadata); a wrong or missing proof
+  answers the same typed `not-found` as an unknown token, so a dead/foreign object never reports
+  *why*. Save/get carry the object as a raw body, not JSON (a dataset buffer can run to the
+  100MB cap; base64-in-JSON would inflate that by a third for nothing); control fields
+  (`sessionId`, `token`, the proof) travel as query params, and delete stays a POST + `op=delete`
+  query param rather than the DELETE method, so the Worker's fixed GET/POST CORS allow-list
+  needed no change.
+  **Verification:** suite **995 → 1015** (+20 in `persistence.test.ts`, +2 in `rateWindow.test.ts`
+  for the `amount` parameter); `tsc -b` / `oxlint` / `vite build` clean; both
+  `wrangler deploy --dry-run` (root and `--env staging`) bundle cleanly with the new R2 binding
+  listed. **Live local `wrangler dev` pass (real Miniflare R2 + the real DO rate limiter, not the
+  test store):** save → get round-trips exact bytes and content-type; unknown-token get → `404`;
+  forged-proof delete → `404` with the object surviving; correct-proof delete →
+  `{"deleted":true}` then `404`; the kill switch → `503` on all three operations. **Custody
+  audit** against the local Miniflare R2 metadata database: every record holds only a
+  `deleteTokenHash` (SHA-256 hex) — the raw delete token appears in zero metadata rows and zero
+  object blobs.
+  **Not live-burst-tested at the real launch numbers** (10 saves/session/day, 100MB/object,
+  300MB/session/day) — would mean transferring hundreds of MB just to trip a counter; the
+  underlying DO window primitive this reuses unchanged is already live-audited twice (ai-router's
+  daily quota, cors-relay's per-minute/per-hour pair), and this build's own addition (the
+  `amount` parameter) is covered by `rateWindow.test.ts`'s byte-summing cases plus the live round
+  trip exercising the real code path end to end.
+  **Docs, master-first:** no master/Decision-Record edit — §12.3's spec (endpoints, retention,
+  abuse-control numbers) already covers this build; nothing here revises it, only realizes it (R2
+  lifecycle enforcement and the Terraform tree remain as master already described them, D19/
+  §23.3). Leaf `build/09-edge/04-persistence-endpoints.md` rewritten to the built shape: Files
+  section documents the shared-infra `amount` extension; acceptance criteria checked with
+  evidence where the local live run supports it, left open with a named reason otherwise (TTL/
+  lifecycle — infra doesn't exist yet; cross-device round-trip and the abuse-report `mailto:` —
+  need staging and are partly client-scope); Test plan records the run; Definition of done names
+  the three provisioning steps still open.
+  **Next concrete action:** provisioning, not more code — confirm and run: `wrangler r2 bucket
+  create datascope-persistence` (+ `datascope-persistence-staging`), the Terraform-owned
+  lifecycle TTL rule (this repo's first load-bearing use of an `infra/` tree — D19/§23.3's
+  sequencing point that Terraform becomes load-bearing at v0.5 is now), and a
+  `wrangler deploy --env staging` to close the cross-device criterion. That closes
+  `09-edge/04-persistence-endpoints` (the last `09-edge` row) and `09-edge/README.md`'s own exit
+  criteria (all four endpoints on staging). After that: `07-connectivity/01-api-tier1-fetch`
+  (Sonnet) — `06-ai/02-modes-byok` still separately waits only on the re-pointed Ollama live run.
+  **Blocker:** none — the provisioning steps are a deliberate pause for confirmation (real
+  Cloudflare account resources), not stuck.
+
+- **2026-07-23** — **R2 buckets provisioned for `09-edge/04-persistence-endpoints`: `datascope-
+  persistence` and `datascope-persistence-staging` both created (`wrangler r2 bucket create`),
+  matching the isolation `wrangler.toml` already assumed.** One real gap found and fixed along
+  the way, not a code issue: the `CLOUDFLARE_API_TOKEN` in `app/.env.local` initially lacked the
+  Workers R2 Storage:Edit scope (`10000` auth error on the first create attempt) and the account
+  itself hadn't enabled R2 yet (`10042` after the scope was added) — both fixed by the human via
+  the dashboard, confirmed live after each fix. Box stays open (`▶` stays) — the bindings now
+  resolve, but the Terraform lifecycle TTL rule and the staging deploy are still outstanding.
+  **Next concrete action:** author the `infra/` tree's R2 lifecycle rule (Terraform not yet
+  installed on this machine), then `wrangler deploy --env staging`.
+  **Blocker:** none — Terraform install/authoring is next, paused for confirmation per this
+  item's established provisioning pattern.
+
+- **2026-07-23** — **`infra/` Terraform tree authored — R2 lifecycle rule now exists as code,
+  closing the design half of `09-edge/04-persistence-endpoints`'s last open criterion. `▶` stays:
+  three provisioning steps remain and each needs real Cloudflare account resources or a local
+  tool install this session deliberately didn't do without asking first.**
+  **ADR-009 decided, from evidence, not left pending any longer.** The stub asked one question:
+  R2 S3-compatible backend (native lockfile locking) vs. Terraform Cloud free tier. Checked
+  Cloudflare's own R2 API docs and Terraform's S3-backend docs directly rather than assuming:
+  Terraform's native `use_lockfile` (GA 1.10, Nov 2024) needs only a conditional `PutObject`
+  (`If-None-Match`) to write a `.tflock` object — no DynamoDB-equivalent table — and R2's S3 API
+  documents exactly that conditional-write support. (A real but irrelevant caveat surfaced
+  alongside it: R2 has no S3 Object Lock/WORM support — a different, compliance-retention
+  feature unrelated to what `use_lockfile` actually uses; worth naming so a future reader doesn't
+  reopen this as a blocker.) Decided **R2-backed state** — one Cloudflare account to reason
+  about, zero external dependency, matching this project's existing KV/R2 isolation-by-environment
+  pattern — over Terraform Cloud. Human confirmed the recommendation via a clarifying question
+  before it was recorded, same as the cors-relay pagination and vault session-id decisions above.
+  **`infra/` bootstrapped** (`app/infra/`, sibling to `app/edge/`): `providers.tf` (Cloudflare
+  provider + the R2-backed `backend "s3"`, `use_lockfile = true`, `required_version >= 1.10.0`),
+  `variables.tf`, `r2.tf` (one parameterized `cloudflare_r2_bucket` + `cloudflare_r2_bucket_lifecycle`
+  pair, 30-day `Age`-type delete transition — the same number §12.3 discloses), and
+  `envs/{dev,prod}.tfvars` (bucket name is the one axis that differs; account id and R2
+  backend credentials are supplied via `TF_VAR_…`/`-backend-config` at apply time, never
+  committed, §23.1). Both existing buckets (`datascope-persistence`,
+  `datascope-persistence-staging`, provisioned in the prior session) are adopted via Terraform
+  `import` blocks rather than recreated. `.gitignore` extended for `infra/.terraform`,
+  `*.tfstate`, and the backend-config file — `.terraform.lock.hcl` deliberately left committed
+  (provider hashes, same reasoning as `package-lock.json`).
+  **One real bug caught before it shipped, not by a test — by re-reading Terraform's own docs
+  while writing `providers.tf`:** the first draft interpolated `var.cloudflare_account_id` into
+  the backend's `endpoints` block; backend blocks are parsed before the rest of the configuration
+  and cannot reference variables at all, so that block would have failed at `terraform init`
+  outright. Fixed by moving the account-specific endpoint (and the R2 credentials) to partial
+  configuration (`-backend-config=backend.hcl`, gitignored) supplied at init time instead of the
+  checked-in file — which is also the more correct shape per §23.1 (nothing account- or
+  credential-specific belongs in a committed `.tf` file).
+  **Docs, master-first:** no `DATASCOPE.md`/Decision-Record edit — §23.3 already specced this
+  fully; ADR-009 is a separate mechanism explicitly meant to be filled in from evidence once
+  v0.5 infra work starts (D18), not a D-record entry, so no human re-authorization was needed to
+  write it. `architecture/adr/009-terraform-state-backend.md` rewritten from stub to decided
+  (Decision/Alternatives/Consequences/Spike-evidence sections, with links). Mirrored into
+  `foundations/infrastructure.md` (State-backend bullet) and `build/09-edge/04-persistence-endpoints.md`
+  (Files section, the TTL acceptance criterion, a stale "bucket doesn't exist yet" line fixed
+  in the same pass since the buckets were in fact provisioned last session, and Definition of
+  done rewritten to name exactly what's left).
+  **Next concrete action — three provisioning steps, none blocked on a design question:**
+  (1) install Terraform locally (not present on this machine); (2) `wrangler r2 bucket create
+  datascope-terraform-state` + a bucket-scoped R2 API token, then `terraform init
+  -backend-config=backend.hcl` and `terraform apply -var-file=envs/dev.tfvars` (repeat for
+  `prod` in its own workspace) to actually land the lifecycle rule; (3) `wrangler deploy --env
+  staging` to close the cross-device share-URL criterion. Confirm before running any of these —
+  real Cloudflare account resources and the first `apply` against them, same pause pattern as
+  every other provisioning step in this section.
+  **Blocker:** none — paused for confirmation before touching real infrastructure, not stuck.
+
+- **2026-07-23** — **The three provisioning steps left open on `09-edge/04-persistence-endpoints`
+  are done: Terraform installed, both environments' R2 lifecycle rules applied for real, and a
+  staging deploy serving a live cross-device save/get/delete round trip. `▶` moves to
+  `07-connectivity/01-api-tier1-fetch`; the persistence-endpoints box stays open on one
+  deliberately-deferred criterion (below).**
+  **Terraform (1.15.8, via the `hashicorp/tap` — plain `brew install terraform` no longer works,
+  HashiCorp pulled it from Homebrew core over licensing) installed; `datascope-terraform-state`
+  bucket created (`wrangler r2 bucket create`).** `terraform init -backend-config=backend.hcl`
+  against the R2 S3 backend succeeded; a `dev` and `prod` `terraform workspace` were created so
+  the two environments' state never collide (matching `r2.tf`'s own comment). `terraform apply`
+  ran clean in both — `dev` imported `datascope-persistence-staging`, `prod` imported
+  `datascope-persistence`, each creating its `expire-after-30-days` lifecycle rule with 0 drift.
+  Confirmed live with a direct R2 API read on both buckets afterward (not just trusting
+  Terraform's own state): `enabled: true`, `Age` transition, `maxAge: 2592000`.
+  **A credential design question came up mid-session, resolved and worth recording since it
+  isn't obvious: does Terraform's R2 state backend need its own separate API token, or can it
+  share the account's general-purpose one?** Answer: technically one token can do both — any
+  Cloudflare Account API Token that includes an R2 permission group gets a derived S3-style
+  Access Key ID/Secret Access Key alongside its bearer value, so the same token `wrangler` and
+  the Cloudflare provider already use *could* supply `backend.hcl` too. This project uses **two**
+  anyway, deliberately, per `providers.tf`'s own least-privilege comment (§23.1): the
+  `backend.hcl` credential is scoped to R2 read/write on `datascope-terraform-state` only, kept
+  separate from the account's general token (Entire Account: Workers R2 Storage/KV Storage/
+  Scripts/AI) everything else uses — so a leak via a state file, CI log, or plan output caps at
+  one bucket rather than the whole account. Human confirmed this tradeoff explicitly before
+  proceeding ("as long as it's documented, move on").
+  **One real incident while setting this up, logged so the next session doesn't repeat it:**
+  attempting to reuse/narrow the account's *existing* general-purpose token in place (editing
+  its policy down to test an R2-only scope, then deleting what looked like a stale duplicate)
+  came within one step of leaving the project with no working `CLOUDFLARE_API_TOKEN` at all —
+  every `wrangler`/Terraform call started failing with an invalid-token error, and enough retries
+  while diagnosing it tripped Cloudflare's own auth-failure lockout (`code 10502`, temporary).
+  Recovered by creating a fresh token with the original full permission set and updating
+  `.env.local`, then a **third**, separately-named token (`datascope-tfstate`-shaped, R2-only on
+  the one bucket) for `backend.hcl`. **Rule for future sessions: always create a new,
+  separately-named token for a new credential need — never edit an existing token's policy in
+  place**, even to "just test" a narrower scope.
+  **`wrangler deploy --env staging` redeployed clean** (54.78 KiB, all bindings present
+  including `PERSISTENCE_BUCKET` → `datascope-persistence-staging`); `/health` → 200. A live save
+  → get → delete round trip against the public staging URL (not `wrangler dev`): save → token +
+  deleteToken; get → the exact bytes back; a forged delete proof → `404` with the object intact;
+  the correct proof → `{"deleted":true}`; the repeat get → `404` — the same shape a second
+  device opening the share link would see, closing the cross-device acceptance criterion.
+  **Docs:** no master/Decision-Record edit — this realizes what §12.3/§23.3/ADR-009 already
+  specced, doesn't change it. `build/09-edge/04-persistence-endpoints.md` rewritten: the
+  cross-device acceptance criterion checked with the staging-round-trip evidence above; the
+  30-day-TTL criterion **stays unchecked on purpose** — the infrastructure is confirmed live via
+  direct API read, but actually observing an object expire needs either waiting out the real
+  30 days or standing up a separate short-TTL rule/bucket to watch a deletion fire, neither done
+  this session; Definition of done rewritten to record all this plus the credential-design note.
+  **Next concrete action:** `07-connectivity/01-api-tier1-fetch` (Sonnet). `06-ai/02-modes-byok`
+  still separately waits only on the re-pointed Ollama live run; `09-edge/04-persistence-
+  endpoints`'s box waits only on the short-TTL expiry observation, whenever a session wants to
+  spend the time on it.
+  **Blocker:** none.
+
+- **2026-07-23** — **Short-TTL live-expiry observation for `09-edge/04-persistence-endpoints`
+  started (not yet closed — this needs a wait, not more code).** Rather than waiting out the real
+  30-day production rule, added a scratch lifecycle rule directly to the real
+  `datascope-persistence-staging` bucket via `wrangler r2 bucket lifecycle add
+  datascope-persistence-staging ttl-test-scratch ttl-test/ --expire-days 1` — deliberately done
+  through `wrangler`, not `infra/r2.tf`, so this throwaway verification rule never enters the
+  Terraform-owned config or risks being applied against the production `datascope-persistence`
+  bucket. Uploaded a real remote test object at `ttl-test/marker.txt` (`wrangler r2 object put
+  --remote`; confirmed downloadable byte-exact after upload). Cloudflare's lifecycle docs state
+  objects are typically swept within ~24h of crossing their configured age, not instantly, so with
+  a 1-day `max_age` the object is expected gone sometime in **2026-07-24T09:05:33Z –
+  2026-07-25T09:05:33Z**, not immediately and not in 30 days.
+  **Next concrete action:** in a future session (dated 2026-07-24 or later), run `wrangler r2
+  object get datascope-persistence-staging/ttl-test/marker.txt --remote` — a 404/not-found
+  confirms the sweep fired and closes this criterion; update
+  `build/09-edge/04-persistence-endpoints.md`'s TTL acceptance criterion with that evidence and
+  check `09-edge/04`'s box. Either way, clean up the scratch rule afterward with `wrangler r2
+  bucket lifecycle remove datascope-persistence-staging ttl-test-scratch` (and delete the marker
+  object if the sweep hasn't already removed it) so it doesn't linger on the staging bucket.
+  Meanwhile the `▶` stays at `07-connectivity/01-api-tier1-fetch` (Sonnet) — this observation
+  doesn't block it.
+  **Blocker:** none — waiting on Cloudflare's own sweep, not stuck.
+
+- **2026-07-23** — **`07-connectivity/01-api-tier1-fetch` built and live-verified against real
+  public APIs — the zero-infra direct-fetch path works end to end: paste a URL, get a
+  registered/profiled table, with GitHub-style `Link` header pagination auto-followed and
+  size-tier gating on the accumulated response. Box stays open (`▶` stays) on two named
+  criteria, neither a gap in this session's work.**
+  **New module `src/services/apiIngestion.ts`** — pure fetch/pagination/size-tier logic
+  (`fetchApiSource`, `tableNameFromUrl`), deliberately independent of DuckDB so it's
+  unit-testable with an injected `fetchImpl` (mirrors `services/vaultClient.ts`'s own
+  dependency-injection shape) rather than needing the live browser `ingestion.test.ts` already
+  notes its DuckDB-touching half requires. `services/ingestion.ts` gained `loadUrl` as a
+  **separate** entry point from `loadDataset` rather than a third branch on its `File | string`
+  union — a URL and a sample id are both bare strings with no shared shape to dispatch on, and
+  the two already arrive from different UI controls (`UrlInputForm` vs `SamplePicker`) that
+  know which is which. `loadUrl` calls `fetchApiSource` then hands the buffer to the same
+  `ingestBuffer`/registry path file upload uses — no changes to that path at all.
+  **A real Fetch API constraint shaped the CORS-handling design, found while writing the code,
+  not by a test:** `fetch()` rejects with an opaque `TypeError` for CORS failures, DNS
+  failures, and offline networks alike — the spec deliberately gives JS no way to tell these
+  apart (no status, no headers, nothing reaches the page). §7.4 calls CORS "the most common
+  blocker, ahead of auth," so a bare fetch rejection is classified as a typed `cors-suspected`
+  `IngestionError` (presumptive, not confirmed) rather than attempting to actually detect CORS
+  specifically, which the platform makes impossible. `IngestionError` gained an optional `code`
+  field to carry this — the seam Tier 2 (`02-api-tier2-relay`, next in sequence) plugs into to
+  retry via the relay instead of terminating in an error.
+  **Pagination follows GitHub's `Link: rel="next"` header** (RFC 5988) up to a 20-page cap —
+  chosen to match the Tier-2 relay's own per-ingestion-action cap (§7.4) so the cascade behaves
+  the same regardless of which tier lands the pages. Per-page bodies are parsed and merged into
+  one JSON array only when more than one page is fetched; a single-page response's raw bytes
+  pass through unchanged (no parse/reserialize round-trip, preserving exact number formatting).
+  A body-level cursor (any pagination scheme other than the Link header) has no generic
+  detection — ADR-006's own research already found GitHub is the only one of the three v0.5
+  token/no-auth platforms (D34) with a generically follow-able scheme at all — so the leaf
+  spec's "manual load more pages" fallback for that case is **not built**, named as a deliberate
+  scope gap rather than a speculative control with no real detection behind it.
+  **Size tiers are re-checked after every page** against the running byte total (an API's total
+  size is generally unknown ahead of pagination, unlike a file's known `File.size`): `refuse`
+  throws before any JSON parse is attempted; `sampled` stops the pagination loop early — no
+  reason to keep fetching pages that would just be discarded past `SAMPLE_ROW_LIMIT`; `warn`
+  surfaces the same footprint banner the file-drop path already shows, computed post-hoc since
+  the size isn't known upfront the way a file's is.
+  **Verification:** suite **1015 → 1030** (+15 in `apiIngestion.test.ts`: URL validation,
+  single-page array/non-array bodies, Link-header pagination + merge, the `maxPages` cutoff,
+  the sampled-tier early-stop, all five `ApiFetchError` codes, `tableNameFromUrl`); `tsc -b` /
+  `oxlint` / `vitest run` (1030 passed) / `vite build` all clean. **Live Playwright pass against
+  the real dev server and real public endpoints** (no mock API server — `chromium-cli` wasn't
+  available in this environment, so the npx-cached `playwright` package drove a real headless
+  Chromium directly instead): `https://api.github.com/repos/duckdb/duckdb/labels` → 1 table, 31
+  rows, profiled, Blueprint landing rendered; `https://api.github.com/repos/duckdb/duckdb/
+  issues?per_page=5` → telemetry's `pages` stat observed growing 1→2→3 mid-fetch, final table
+  landed at exactly 100 rows (20 pages × 5/page — a real, unplanned confirmation that the
+  `MAX_PAGES` cap engages correctly against a genuinely multi-page live API); `https://
+  example.com/` (real, genuine CORS block, no `Access-Control-Allow-Origin`) → browser console
+  shows the real CORS block, UI renders "Couldn't reach this URL directly — it may be blocking
+  cross-origin requests," table count unaffected — no half-registered table, no hang, no
+  unhandled exception.
+  **Docs, master-first:** no master/Decision-Record edit — §7.4 already specced this fully;
+  nothing here revises it, only realizes it. Leaf `build/07-connectivity/01-api-tier1-fetch.md`
+  rewritten to the built shape: Files/Dependencies corrected (the Tier-2-client dependency line
+  was backwards — 02 depends on 01, per 02's own Dependencies section, not the other way
+  round), acceptance criteria checked with evidence, the two open criteria named with reasons,
+  Test plan and Definition of done rewritten.
+  **Next concrete action:** `07-connectivity/02-api-tier2-relay` (Sonnet) — closes this item's
+  one open Tier-2-handoff criterion by having the `cors-suspected` code retry through the relay
+  client this build's `apiIngestion.ts`/`loadUrl` seam is already shaped for, rather than
+  terminating in an error.
+  **Blocker:** none.
+
+- **2026-07-23** — **`07-connectivity/02-api-tier2-relay` built — the client half of the Tier-2
+  CORS relay (Worker side, `09-edge/02-cors-relay`, already deployed/closed). Box checked on
+  `07-connectivity/01-api-tier1-fetch` above (all five of its own acceptance criteria now hold,
+  including the Tier-2 handoff this item closes); `▶` moves to this item and stays here — one
+  criterion of its own needs a real browser + DuckDB to close, unavailable in this session.**
+  **New module `src/services/relayClient.ts`** — `fetchViaRelay`, one GET per page through the
+  relay (`url`+`sessionId` as query params, no body, mirrors `vaultClient.ts`'s injected-`fetchImpl`
+  DI shape). Classifies the relay's own 429/503 control-plane responses as a typed
+  `RelayFetchError('rate-limited' | 'paused', …)`; every other status (400/502/504, or a target
+  error the relay passed through verbatim) is left as an ordinary `Response` for the existing
+  `http-error` classification to handle, since the relay forwards a passed-through target status
+  verbatim and there's no reliable way to distinguish "relay's own 502" from "target returned
+  502" beyond the two fixed-status control signals (§7.4's acceptance criteria only asks the
+  client to distinguish those two anyway). Deviates from this leaf doc's original "Files" sketch
+  (`src/features/ingestion/`) in favor of the convention every other edge-calling client in this
+  codebase already follows (`vaultClient.ts`/`synthesis.ts`/`cloudProvider.ts`, all in
+  `src/services/`) — noted in the doc, not treated as silent scope creep.
+  **`src/services/apiIngestion.ts`'s pagination loop is now shared, not duplicated:** extracted
+  into `accumulatePages`, parameterized by a per-transport `fetchPage` function — Tier 1's
+  `fetchApiSource` and the new `fetchApiSourceViaRelay` both call into it, so the maxPages cap,
+  size-tier re-check, and JSON-parse/merge logic exist in exactly one place for both tiers.
+  **A real constraint found while building this, not by a test:** `cors-relay.ts`'s handler
+  forwards only `content-type` on a successful pass-through — every other response header,
+  including `Link`, is dropped. Confirmed two ways: reading the handler source, and a live
+  `curl` probe of the real deployed staging relay (`datascope-edge-staging.justinclarke.workers.dev/
+  cors-relay?url=https%3A%2F%2Fexample.com%2F&sessionId=probe-headers-1` → only `content-type`
+  plus ordinary Cloudflare edge headers came back, no `Link`). GitHub's `Link` header is the one
+  generically-follow-able pagination scheme among the v0.5 platforms (D34, ADR-006) — so Tier 2
+  as built today always resolves to exactly one page regardless of the target's own pagination,
+  even though the shared loop's cap/merge machinery is fully built and tested (against a mocked
+  response that does carry a `Link` header, proving the loop itself is correct and ready if the
+  relay ever forwards more headers). Named here the same way `01-api-tier1-fetch.md` names its
+  own non-Link-header gap — a real, evidence-backed limitation, not a hidden bug.
+  **Tier 1 → Tier 2 handoff wired:** `loadUrl` (`services/ingestion.ts`) now catches a
+  `cors-suspected` `ApiFetchError` and retries via `fetchApiSourceViaRelay` before surfacing
+  anything, closing `01-api-tier1-fetch.md`'s own previously-open criterion of the same name.
+  Tier 1 always fails on its first fetch attempt when CORS-blocked, so there's no partial
+  multi-page state to reconcile before the relay retry starts clean. A `usedRelay` flag flows
+  back through `UrlIngestResult` to `IngestionPanel.tsx`, which renders a one-line §5.2
+  disclosure note when true; 429/503 render through the existing generic error banner every
+  other ingest failure already uses (its message text is the user-facing copy — no new UI
+  states needed beyond the disclosure note itself).
+  **Verification:** suite **1030 → 1042** (+12: 5 cases in new `relayClient.test.ts`, 5 more in
+  `apiIngestion.test.ts`'s `fetchApiSourceViaRelay` block, 2 new `IngestionPanel.test.tsx` cases
+  for the disclosure note and the rate-limit error banner); `tsc -b` / `oxlint` / `vitest run`
+  (1042 passed) / `vite build` all clean. **No `wrangler dev`/Playwright pass** — neither is
+  installed in this repo, no cached Chromium was present (`~/.cache/ms-playwright` absent), and
+  `npx playwright install chromium` didn't complete in this sandboxed session (network-gated,
+  not attempted further) — unlike `01-api-tier1-fetch`'s own live Playwright pass, which had
+  browser access this session didn't. Supplemented with live `curl` probes of the real deployed
+  staging relay instead: confirmed the header-stripping finding above and that the SSRF block
+  still returns 400 on a cloud-metadata target live. Did not chase a live 429 trip against the
+  shared staging limiter — `09-edge/02-cors-relay`'s own definition of done already closed and
+  burst-audited that exact behavior; re-probing it here would be duplicative.
+  **Docs, master-first:** no master/Decision-Record edit — §7.4 already specced this fully.
+  Leaf `build/07-connectivity/02-api-tier2-relay.md` rewritten to the built shape (Files section
+  corrected, four of six acceptance criteria checked with evidence, the remaining two named with
+  reasons and a next concrete action); `01-api-tier1-fetch.md`'s Tier-2-handoff criterion and
+  Definition of done updated to reflect the closure.
+  **Next concrete action:** in a future session with Playwright/browser access, run the real dev
+  server against a genuinely CORS-blocked public JSON API through the deployed staging relay
+  (mirroring `01-api-tier1-fetch.md`'s own GitHub live passes), confirm the disclosure note
+  renders and the resulting table matches a direct ingest, then check `02-api-tier2-relay`'s
+  last two boxes and move `▶` to `07-connectivity/03-refresh-from-source`.
+  **Blocker:** none — waiting on browser-automation tool access, not stuck on design or code.
+
+- **2026-07-23** — **`07-connectivity/02-api-tier2-relay` closes: both remaining criteria
+  live-verified against the real deployed staging relay, and a real live-only bug the pass
+  caught is fixed. `▶` moves to `07-connectivity/03-refresh-from-source`.** This session had
+  real browser-automation access the prior one lacked: `npx playwright` resolved a cached
+  package (from an earlier `npx` invocation, `~/.npm/_npx`) with no sandboxed Chromium binary
+  available, but launching it with `channel: 'chrome'` drives the machine's already-installed
+  Google Chrome directly — no download needed, no sandbox network dependency.
+  **A real, live-only bug found and fixed, not by a test:** `IngestionPanel.tsx`'s
+  `runIngestUrl` set the relay-disclosure flag and then, in the same synchronous continuation,
+  called `navigateToPostIngestLanding()`; React batches both into one commit, so the panel (and
+  the §5.2 disclosure note inside it) unmounted before the browser ever painted it. Every unit/
+  component test passed anyway because the isolated component test never renders the full `App`
+  shell and so never exercises the unmount — only driving the real app in a real browser
+  surfaced it. No real user could ever have seen the note this build's own acceptance criteria
+  had marked "visible." Fixed by skipping the auto-navigate specifically when `usedRelay` is
+  true — every other ingest path's landing behavior (D48/D70) is unchanged. Two new
+  `IngestionPanel.test.tsx` cases lock in both directions (relay path stays on the Ingestion
+  panel; a non-relay URL ingest still auto-navigates as before).
+  **A genuine environment constraint, not a code issue:** this sandbox's browser egress appears
+  to inject a permissive `access-control-allow-origin` header on responses that a direct `curl`
+  from the same host does not see (confirmed on a real no-CORS public API — `curl` saw no ACAO
+  header, the Playwright-driven Chrome saw `acao: *` on the identical request) — so an
+  organically CORS-blocked target can't be produced live from this specific environment.
+  Worked around with a deterministic `page.route(...).abort('failed')` on the direct request,
+  reproducing the identical opaque `fetch()` rejection a real CORS block causes (the platform
+  gives the app no way to tell the two apart either, which is exactly why both take the
+  `cors-suspected` path) — everything downstream (the relay call, the real deployed staging
+  Worker, the ingest pipeline) was real and unmocked.
+  **Live result:** direct fetch aborted → Tier 2 relay called → real `200` from
+  `datascope-edge-staging.justinclarke.workers.dev/cors-relay` with the exact live JSON body →
+  registered as a table (1 row × 9 cols, matching the source JSON's top-level keys, single-page
+  so unaffected by the already-named Link-header gap) → disclosure note rendered and stayed
+  visible (screenshotted) → the panel did not auto-navigate away, confirming the fix.
+  **Verification:** suite **1042 → 1043** (+1: the fix's own regression-guarding case; a second
+  new case reused an existing assertion path); `tsc -b` / `oxlint` / `vitest run` (1043 passed) /
+  `vite build` all clean, re-run after the fix.
+  **Docs:** no master/Decision-Record edit — §5.2/§7.4 already specced the disclosure and the
+  relay; nothing here revises the spec, only closes the verification gap and fixes a bug in
+  realizing it. `build/07-connectivity/02-api-tier2-relay.md` rewritten: both acceptance criteria
+  checked with evidence, Files section documents the navigation fix, Test plan records the live
+  pass and the sandbox CORS-injection finding, Definition of done rewritten to record the bug,
+  the fix, and the closure.
+  **Next concrete action:** `07-connectivity/03-refresh-from-source` (Sonnet).
+  **Blocker:** none.
+
+- **2026-07-23** — **`07-connectivity/03-refresh-from-source` closes — the last `07
+  connectivity` row. Every API-sourced table now gets a "Refresh from source" action that
+  atomically replaces it in place, live-verified against a real DuckDB engine including a
+  real failure. `▶` moves to `08-persistence/01-parquet-export`.**
+  **The atomic-replace design:** a refresh re-runs the same Tier 1 → Tier 2 cascade `loadUrl`
+  already used (unchanged `fetchApiSource`/`fetchApiSourceViaRelay`) against the table's now-
+  recorded `sourceUrl`, ingests the response under a scratch table name through the
+  **unmodified** `ingestBuffer` — every format/malformed-row check it already runs — and only
+  swaps it in (`DROP` + `RENAME`) once that fully succeeds. A failure at any point before the
+  swap never touches the registered table; no DuckDB transaction semantics were needed for
+  this, just ordering. `TableRegistryEntry` gained `sourceUrl`/`lastFetchedAt`/`stale`;
+  `useDatasetsStore` gained `setTableRefreshMeta` and `markTablesStale`.
+  **Staleness is a text match, not a dependency graph.** This codebase has no explicit
+  derived-table dependency tracking — the new `referencesTableName(sql, tableName)` helper
+  (bare-word or double-quoted-identifier match) finds which derived tables' `generatingSql`
+  references a just-refreshed table, the same shape `runTransform`'s own mutation-target
+  matching already uses. Flagged tables aren't auto-rebuilt (§12.1 — their recorded SQL
+  already makes a manual re-run cheap), just marked with a "possibly stale" badge in
+  `TableList`, next to a new "fetched …" timestamp every API-sourced row now shows.
+  **Verification:** suite **1043 → 1061** (+18: pre-engine-rejection and `referencesTableName`
+  cases in `ingestion.test.ts`, `setTableRefreshMeta`/`markTablesStale` in `datasets.test.ts`,
+  refresh-button/last-fetched/stale-badge cases in `TableList.test.tsx`, refresh success/
+  failure/relay-disclosure/staleness wiring in `IngestionPanel.test.tsx`); `tsc -b` / `oxlint`
+  / `vitest run` (1061 passed) / `vite build` all clean. **Live pass** (real dev server, real
+  Chrome via Playwright, real DuckDB-Wasm, real GitHub API): ingested
+  `api.github.com/repos/duckdb/duckdb/labels`, refreshed it — telemetry showed a genuine
+  second fetch (`pages 2`, incidentally exercising a paginated refresh) and the real
+  DROP+RENAME swap succeeded. Then a `page.route(...).abort('failed')` on the direct request
+  forced `cors-suspected`, which retried through the Tier 2 relay exactly as `loadUrl` does;
+  the relay's own live call to GitHub hit a real `403` (this session had already made several
+  GitHub calls) — the resulting error banner rendered while the table's last-fetched
+  timestamp and row/column text stayed byte-for-byte identical to before the failed attempt,
+  confirming atomicity against a real engine and a real, if incidental, failure.
+  **Not live-driven:** the staleness badge's Monaco-SQL path (create a derived table via the
+  SQL playground, refresh its source, watch the badge appear) — covered instead by a component
+  test exercising the identical store→render path a live pass would, judged sufficient rather
+  than spending a second live session chasing GitHub's rate limit further.
+  **Docs:** no master/Decision-Record edit — §7.4 already specced "Refresh from source" fully;
+  this realizes it. `build/07-connectivity/03-refresh-from-source.md` rewritten: Files section
+  documents the built shape, all four acceptance criteria checked with evidence, Test plan
+  records the unit suite plus the live pass, Definition of done rewritten.
+  **Next concrete action:** `08-persistence/01-parquet-export` (Sonnet) — the first `08`
+  row; `06-ai/02-modes-byok` still separately waits only on the re-pointed Ollama live run,
+  and `09-edge/04-persistence-endpoints`'s box still waits only on the short-TTL expiry
+  observation (2026-07-24 or later).
+  **Blocker:** none.
+
+- **2026-07-23** — **`08-persistence/01-parquet-export` closes — the first `08 persistence`
+  row. Client-side Parquet/CSV export and the copy-to-Jupyter snippet, live-verified against
+  a real DuckDB-Wasm engine for both a source and a derived table. `▶` moves to
+  `08-persistence/02-r2-save-share`.**
+  **The engine-boundary choice:** rather than a duckdb-wasm-specific back door, `exportTable`
+  was added as a fourth method on the `QueryEngine` interface (D49) alongside `execute`/
+  `registerFile`/`summarize` — a table export always needs a buffer handoff regardless of
+  engine, even though *how* that buffer is produced (`COPY` into DuckDB-Wasm's VFS, then
+  `copyFileToBuffer`) is duckdb-wasm-specific. `services/export.ts` and
+  `features/export/ExportModule.tsx` are the thin orchestration/UI on top; `jupyterSnippet.ts`
+  is a pure, fully unit-tested snippet builder. The Results-header shortcut in
+  `QueryResultsPanel.tsx` (the spec's "wherever a table is" for the SQL playground) finds a
+  just-created derived table by re-classifying the last-run SQL rather than threading a table
+  name through the shared `QueryResult` type — every derived table is already in the registry
+  by the time `status` flips to `success`, so no new field was needed on a widely-shared type.
+  **A real finding from the live pass, not a bug — flagged rather than silently checked:** the
+  "zero network requests during export" criterion holds for every CSV export and every
+  *repeat* Parquet export, but the very first Parquet export against a fresh DuckDB-Wasm
+  instance fetches `parquet.duckdb_extension.wasm` from `extensions.duckdb.org` — DuckDB-Wasm's
+  own loadable-extension mechanism, carrying no user data, and the exact same CDN dependency
+  [ADR-001](architecture/adr/001-duckdb-wasm-worker-setup.md) already documents for Parquet/
+  JSON *ingestion* (its own Backlog line already defers self-hosting those extension binaries,
+  unscoped to any current checklist item). Recorded as a documented exception on this leaf's
+  acceptance criteria rather than fixed here — self-hosting the extension is a separate,
+  already-tracked infrastructure decision, not something this build should absorb.
+  **Verification:** suite **1061 → 1071** (+10: `jupyterSnippet.test.ts`'s pure-function cases,
+  `ExportModule.test.tsx`'s render/wiring cases, one new `SqlModule.test.tsx` case for the
+  Results-header shortcut); `tsc -b` / `oxlint` / `vitest run` (1071 passed) / `vite build` all
+  clean. **Live pass** (real dev server, real Chrome via Playwright, real DuckDB-Wasm): ingested
+  the bundled Titanic sample; downloaded it as Parquet and CSV from the Export module and
+  copied its Jupyter snippet (clipboard confirmed, correctly no `# Generated by:` header for a
+  source table); ran `CREATE TABLE titanic_over_30 AS SELECT * FROM titanic WHERE Age > 30` in
+  the SQL playground, downloaded it via the new Results-header shortcut, downloaded it again
+  from the Export module (zero network requests, confirming the extension-fetch is genuinely
+  one-time per engine instance), and copied its snippet (clipboard confirmed the CTAS SQL as a
+  leading comment). All three Parquet files and the CSV were opened and validated in a scratch
+  Python venv (pandas 3.0.5 / pyarrow 25.0.0 — installed in an isolated venv under the session
+  scratchpad, not a project dependency): row/column counts matched (891×10 for `titanic`, both
+  formats; 508×10 for the derived table), and every row of the derived export satisfied
+  `Age > 30`, confirming the filter survived the export intact.
+  **Not independently stress-tested:** a synthetic multi-GB export, for the "doesn't freeze the
+  UI" criterion — judged architecturally guaranteed instead (COPY/`copyFileToBuffer` run inside
+  DuckDB-Wasm's own dedicated Worker via the same `execute()` every other query already uses;
+  this build added no new main-thread work), rather than spending a session manufacturing a
+  multi-GB dataset to prove a property the existing engine architecture already guarantees.
+  **Docs:** no master/Decision-Record edit — §12.2 already specced client-side export and the
+  Jupyter handoff fully; this realizes it. `build/08-persistence/01-parquet-export.md`
+  rewritten: Files section documents the built shape (including the `QueryEngine` boundary
+  addition), all four acceptance criteria checked with evidence (including the documented CDN
+  exception), Test plan records the unit suite plus the live pass, Definition of done rewritten.
+  **Next concrete action:** `08-persistence/02-r2-save-share` (Sonnet).
+  **Blocker:** none.
+
+- **2026-07-23** — **`08-persistence/02-r2-save-share` built and live-verified against the
+  real deployed staging Worker + real R2 — structure-only and full-dataset shares both
+  round-trip end to end, including a real cross-device open and a real delete. `▶` stays:
+  the box is left unchecked on one deliberately-deferred sub-criterion (TTL expiry).**
+  **D20 structure-first, D46 detector, D21 language rule — all built and live-checked, not
+  just unit-tested.** `ShareDialog.tsx` defaults to a structure-only save (`buildStructureReport`
+  scoped to §12.3's own field list — no insights/relationships, named below as a scope
+  boundary, not an oversight); escalating to a full-dataset share is a second, distinctly
+  red-styled step ("Include raw data rows instead" → "Save full dataset (includes raw
+  rows)"). A live save of the structure-only artifact was fetched back directly from the
+  real R2 object afterward: its JSON carries only `generatedAt`/`tables`/`insights`, and
+  each column only `name`/`semanticType`/`physicalType`/`nullPercentage`/`cardinality`/
+  `classificationReason` — literally no field exists in the shape for a raw value to
+  occupy. The D46 `sensitiveColumns.ts` detector is column-name-pattern-only (no cell reads,
+  no engine cost); it renders positives-only in the dialog (an empty result renders nothing,
+  never a "none found" line) and pairs with a functional column-name-redaction toggle.
+  **Rare-category suppression is named, not built:** `StructureReportColumn` never carried
+  raw category values (only `cardinality`, a count), so there's nothing for a suppression
+  control to act on without adding a new per-column value-frequency query — out of this
+  build's scope, recorded as a gap in the leaf doc rather than shipped as a no-op checkbox.
+  **A real bug from real data, not a synthetic test:** the bundled Titanic sample's actual
+  `Name` column went unflagged by the D46 detector until a live pass against it (see below)
+  caught it — the detector's personal-name pattern required a qualifier
+  (`first_name`/`last_name`/`surname`) and never matched a bare `name` column. Fixed with an
+  exact-match case for bare `name` (deliberately exact, not substring, so `table_name`/
+  `column_name` stay unflagged).
+  **A second real bug, also live-pass-only:** `Sidebar.tsx`'s "Export / Share" card and
+  `ExportModule.tsx`'s own early return were both gated on `hasDatasets` — since tables are
+  in-memory only (never persisted) while `shareLinks` *is* persisted (settings store), a user
+  who created a share link and then reloaded, or came back in a fresh session with no
+  dataset loaded, could not navigate to Export/Share at all to find their own "delete now"
+  control. Every unit/component test passed anyway, the same shape as the
+  `02-api-tier2-relay` navigation bug this codebase already hit once before — isolated
+  component tests never exercise the real cross-page-reload state boundary. Fixed: the card
+  is now `enabled: hasDatasets || shareLinks.length > 0`, and `ExportModule` renders
+  `ShareLinksList` unconditionally rather than behind the "drop a dataset" message.
+  **Live verification (real Chrome via Playwright `channel: 'chrome'`, real dev server,
+  the already-deployed `datascope-edge-staging.justinclarke.workers.dev` — no local
+  `wrangler dev` needed, the Worker side shipped with `09-edge/04-persistence-endpoints`):**
+  structure-only path — save → real share URL → opened in a second, storage-isolated
+  browser context → `SharedStructureReportView` rendered the real fetched schema (zero rows,
+  confirmed by direct object inspection above) → back on the first context, reloaded (tables
+  gone, share link persisted) → "Export / Share" reachable, "Your share links" showed the
+  entry with no dataset loaded → delete → local entry removed → a third context re-opening
+  the identical URL got a genuine `404` (both the browser's network log and the app's own
+  "doesn't exist or has expired" banner confirmed it) — the rest of the app (ingestion) still
+  rendered normally alongside that error banner. Full-dataset path — escalated, saved the
+  real Titanic Parquet export → opened on a second context → the real bytes were re-ingested
+  through the unmodified `ingestBuffer` path into a genuinely queryable 891-row table
+  (`origin: 'shared'`), landing on the Blueprint with "Tables (1)" in the sidebar. Every share
+  object created during these passes was deleted afterward — nothing left lingering on the
+  real staging bucket.
+  **Verification:** suite **1071 → 1121** (+50 across `sensitiveColumns.test.ts`,
+  `structureReport.test.ts`, `export.test.ts`, `ingestion.test.ts`, `settings.test.ts`,
+  `ShareDialog.test.tsx`, `ShareLinksList.test.tsx`, `SharedStructureReportView.test.tsx`,
+  `ExportModule.test.tsx`, `App.test.tsx`, `TableList.test.tsx`, `Sidebar.test.tsx`);
+  `tsc -b` / `oxlint` / `vitest run` (1121 passed) / `vite build` all clean.
+  **The one thing deliberately not done:** TTL-expiry observation — same open reason
+  `09-edge/04-persistence-endpoints.md` already recorded for its own TTL criterion (needs a
+  real 30-day wait or a dedicated short-TTL scratch rule, not more code). Every other §18/§22
+  row this leaf owns passed live.
+  **Docs, master-first:** no master/Decision-Record edit — §12.3/D20/D21/D46 already specced
+  this fully; nothing here revises it, only realizes it. `build/08-persistence/02-r2-save-share.md`
+  rewritten: Files section documents the built shape plus the two live-pass-found bugs and
+  their fixes, acceptance criteria checked with live evidence (the TTL sub-criterion named
+  and left open), Test plan records both the unit suite and the live passes, Definition of
+  done rewritten.
+  **Next concrete action:** `08-persistence/03-dsps-spec` is next in file order, but this
+  item's own box stays open — a future session should first decide whether to spend the
+  TTL-expiry wait (mirroring `09-edge/04`'s short-TTL-scratch-rule approach) before moving
+  `▶` on, or move on and revisit it later the way `09-edge/04`'s own TTL line was left.
+  **Blocker:** none — the TTL wait is a deliberate deferral, not stuck.
+
+- **2026-07-23** — **Decision on the fork left open above: `▶` moves to
+  `08-persistence/03-dsps-spec` now rather than spending this session on the r2-save-share
+  TTL-expiry wait.** Precedent followed exactly: `09-edge/04-persistence-endpoints` already
+  moved `▶` forward once with a TTL criterion deliberately left open (its own short-TTL
+  scratch-rule observation is itself still pending a 2026-07-24-or-later check), and today's
+  date still doesn't clear even that earlier wait — starting a second parallel TTL wait
+  before the first has resolved adds nothing. `08-persistence/02-r2-save-share`'s box stays
+  unchecked on its named TTL sub-criterion only; every other criterion is live-verified.
+  **Blocker:** none.
+
+- **2026-07-23** — **`08-persistence/03-dsps-spec` built, unit-verified, and live-verified —
+  DSPS formalized as a real versioned interface end to end: schema/version/provenance
+  contract, all three renderers (the new HTML one plus the two that already existed),
+  the `.dsps` receiver, a published-shape JSON Schema + independent npm validator package,
+  and the MCP `get_dsps` wiring the Phase-1 scaffold had been waiting on. `▶` stays on this
+  item — two criteria stay open, both deliberate external-action pauses, not gaps.**
+  **The schema/version/provenance layer:** new `src/lib/dsps.ts` (`DSPS_VERSION`,
+  `DspsProvenance`, `DspsSnapshot`, `hashBytesHex`, `formatSnapshotLabel`, `parseDsps` — the
+  forward-compatible, version-mismatch-surfacing reader) layers the D37 contract onto the
+  **existing** document rather than duplicating it: `structureReport.ts`'s `StructureReport`
+  *is* the concrete DSPS document, extended in place with `dspsVersion` and, per fact,
+  `provenance` + `snapshot`. `passesFactWordingGuard` is `producerValidators.ts`'s existing
+  D45 phrasing guard **reused verbatim**, not reimplemented — found while designing the
+  banned-wording criterion, it already bans "verified"/"always"/"guaranteed"/etc. for exactly
+  this reason on the Verdict seam.
+  **The file-hash half of D45's snapshot label, previously an explicitly named gap** (
+  `IdentityBand.tsx`'s own comment: "no hashing exists anywhere in this tree yet") **is now
+  built:** `ingestion.ts`'s `ingestBuffer` computes a SHA-256 over an already-in-memory
+  `Uint8Array` source before it's handed to the worker (source bytes must be read before
+  `registerFile` transfers/detaches the buffer — the same ordering `01-file-drop` already
+  established). A sampled-tier (large) file is deliberately left unhashed — hashing it would
+  mean fully buffering exactly the file its own size tier exists to avoid buffering — a named
+  scope boundary, not a silent omission. `TableRegistryEntry` gained `fileHash?: string`.
+  **The third renderer, HTML, is genuinely new** (`src/lib/dspsHtml.ts` — self-contained,
+  HTML-escaped, the D26 attribution footer); "Copy for AI" and the DSPS JSON export already
+  existed pre-build and needed no new renderer, only the version/provenance fields threading
+  through. All three now sit on `IdentityBand.tsx`'s button row.
+  **The `.dsps` receiver (D62) reuses `SharedStructureReportView.tsx` as-is** — it was already
+  a pure, network-free read-only renderer over a `StructureReport` (the share-open flow's own
+  view) — rather than building a second renderer or the full live-Dossier ViewSpec path; the
+  spec's own internal cut line explicitly sanctions exactly this degraded shape. New
+  `stores/dspsReceiver.ts` (open/fail/close) is fed by `IngestionPanel.tsx`'s `handleFiles`,
+  which now recognizes a single `.dsps`-suffixed drop and routes it to a local
+  `file.text()` → `JSON.parse` → `parseDsps` path *before* ingestion ever sees it — never a
+  fetch. `App.tsx` renders the parsed document through that same shared view.
+  **JSON Schema + npm validator (D64):** `schemas/dsps.schema.json` (draft 2020-12) at the repo
+  root, and a genuinely standalone package, `packages/dsps-validator/` — its own
+  `package.json`/`tsconfig.json`/`README.md`, zero runtime dependencies, zero import from this
+  app's `src/`, 14 passing tests, typechecks independently of the root `tsc -b` project graph.
+  `vitest.config.ts`'s `include` extended so its suite runs alongside the app's own.
+  **MCP wiring — completing the build/09-edge/01 Phase-1 scaffold** (`handleMcp`/
+  `SharedArtifactStore` already existed, unrouted, since that session; this build is what
+  D38 called for it to actually serve): `protocol.ts`'s `get_dsps` response now carries
+  `dsps: unknown` (an opaque pass-through) rather than the narrower `StructuralFacts` shape
+  synthesis still uses — MCP transports the client-generated artifact verbatim, per D38, never
+  re-deriving a smaller one. New `createR2SharedArtifactStore` in `mcp.ts`, backed by the
+  **same** R2 bucket `09-edge/04` already writes to, gated on a new specific content type
+  (`application/vnd.datascope.dsps+json`, replacing the generic `application/json`
+  `STRUCTURE_REPORT_CONTENT_TYPE` `services/export.ts` used before this build) so a
+  full-dataset share (raw Parquet bytes) can never surface through MCP as if it were DSPS.
+  `listShared` is a **named, deliberate gap** — `persistence.ts`'s object store records no
+  session↔token association server-side by its own original design ("nothing stored beyond
+  what TTL/ownership need"), and building that index is new server-side scope this leaf doc's
+  own acceptance criteria never asked for (only `get_dsps` is tested); it returns `[]` rather
+  than fabricating a list. `worker.ts` wires `/mcp` (method check inside the handler, like
+  `/persistence`); `bindings.ts` gained `MCP_KILL_SWITCH`; `wrangler.toml` (root +
+  `[env.staging]`) declares it — no new binding, since `/mcp` reuses `PERSISTENCE_BUCKET`.
+  **A real bug found live, not by a test:** the file-picker's `accept` attribute
+  (`DropZone.tsx`) never listed `.dsps` — drag-drop was unaffected, but click-to-browse would
+  never show a `.dsps` file as selectable at all. Fixed (accept list now includes `.dsps`),
+  confirmed by re-running the live pass.
+  **Verification:** suite **1121 → 1168** (+47 across `dsps.test.ts`, `dspsHtml.test.ts`,
+  `dspsReceiver.test.ts`, `structureReport.test.ts`'s two new cases, three new
+  `IngestionPanel.test.tsx` cases, three new `App.test.tsx` cases, `mcp.test.ts`'s rewrite +
+  `createR2SharedArtifactStore` cases, and `dsps-validator`'s own 14); `tsc -b` / `oxlint` /
+  `vitest run` (1168 passed) / `vite build` all clean; both root and `--env staging`
+  `wrangler deploy --dry-run` bundle cleanly with `MCP_KILL_SWITCH` present. **Live pass** (real
+  dev server, real Chrome via Playwright `channel: 'chrome'`, the bundled Titanic sample): all
+  three renderer buttons render on the real Blueprint; "Export HTML report" downloaded a
+  self-contained file with no `<script>`/`<link>` tags and the real attribution footer; "Export
+  structure report" downloaded real DSPS JSON (`dspsVersion: "1.0.0"` confirmed); that same
+  file dropped back onto the Ingest drop zone rendered the real read-only viewer with the
+  request log showing zero network requests for the entire operation — screenshotted both the
+  Blueprint and the receiver's rendered view.
+  **Docs, master-first:** no master/Decision-Record edit — §12.2/§1/§6 and D31/D37/D38/D45/
+  D62/D64 already specced this fully; nothing here revises the spec, only realizes it.
+  `build/08-persistence/03-dsps-spec.md` rewritten: Files section documents the built shape
+  (including which of the "three renderers" were genuinely new vs. already-existing), six of
+  eight acceptance criteria checked with evidence, the remaining two named with reasons
+  (npm publish; a live staging MCP round-trip), Definition of done rewritten.
+  **Next concrete action:** two deliberate, confirmation-gated provisioning steps would close
+  this item's box: `npm publish` from `packages/dsps-validator/` (a real, externally-visible,
+  effectively-irreversible action against the public registry), and a
+  `wrangler deploy --env staging` + a live save-a-structure-only-share → `/mcp` `get_dsps`
+  round-trip against the real deployed Worker (mirroring every other edge item's own live-audit
+  pattern). Neither was run this session without asking first, matching this project's
+  established provisioning-pause norm. After those: `08-persistence/02-r2-save-share`'s own
+  still-open TTL-expiry wait, or `10-studio` (v1 arc, gated on profiling proven in the wild).
+  **Blocker:** none — both open criteria are deliberate pauses for confirmation before touching
+  real external systems, not stuck.
+
+- **2026-07-24** — **`06-ai/02-modes-byok` closes: the re-pointed Ollama live run — the one
+  criterion left open since the 2026-07-22 mode-taxonomy fold-in — ran for real against a live
+  daemon through API mode's own key/endpoint field, not the old Local-model path. Box checked.**
+  **Live browser pass** (real Chrome via Playwright, real dev server on `localhost:5174`, a real
+  Ollama 0.32.1 daemon restarted fresh for the run, pinned `qwen2.5-coder:1.5b`, the bundled
+  Titanic sample): first-run chooser → "API"; `AISettingsPanel` → routing set to "Prefer my key,"
+  `http://localhost:11434` typed into the key/endpoint field — the panel's own copy confirmed
+  detection ("Detected as a local Ollama endpoint … Zero egress, same as the in-browser model").
+  Asking "How many passengers survived?" on AI Chat fired exactly two requests, both
+  `POST http://localhost:11434/api/chat` (SQL-mode then answer-mode) and nothing to any other
+  host. The suggested SQL (`SELECT COUNT(PassengerId) FROM titanic WHERE Survived = 1`) executed
+  for real (✓ 1 rows · 10 ms) and returned the correct count, 355 — matching the original
+  2026-07-22 run and confirming the new trigger routes correctly.
+  **One real, separate finding, not a plumbing defect:** the model's own prose answer read "192
+  passengers survived," disagreeing with the correct row directly beneath it
+  (`count(PassengerId): 355`) — the pinned 1.5B coder hallucinating in answer-mode text despite
+  being handed the correct tool result. Routing, SQL generation, execution, and row delivery to
+  the model were all correct; only the small model's own final-answer composition was wrong.
+  Named in the leaf doc as a known sharp edge of the pinned local model (consistent with "Local
+  model"'s own disclosed "SQL generation is weaker than cloud" caveat), not a regression against
+  anything this leaf doc's criteria test.
+  **An unrelated environment issue surfaced and was resolved before the pass above:** the first
+  attempt hit a `500` from Ollama itself (`llama-server reported out-of-memory during startup` /
+  a macOS Metal-compiler XPC error) — a stale daemon state, not a DataScope or Ollama-model bug.
+  Restarting `ollama serve` cleared it; the retried run is the one recorded above.
+  **Docs:** no master/Decision-Record edit — D2/D3/D9 already specced this fully as of the
+  2026-07-22 fold-in; nothing here revises the spec, only closes its one outstanding live-run
+  criterion. `build/06-ai/02-modes-byok.md`'s re-pointed criterion checked with the evidence
+  above.
+  **Next concrete action:** `08-persistence/03-dsps-spec` remains `▶` (per the prior entry, its
+  own two provisioning steps are still open and deliberately deferred this session). Separately,
+  `09-edge/04-persistence-endpoints` and `08-persistence/02-r2-save-share` each still wait on
+  their own named provisioning/wait steps (Terraform apply + staging deploy; a TTL-expiry
+  observation), unaffected by this entry.
+  **Blocker:** none.
+
+- **2026-07-24** — **Documentation catch-up: `09-edge/04-persistence-endpoints`'s three
+  provisioning steps were actually completed in an untracked prior session (evidence already
+  sitting in the leaf doc, timestamped 2026-07-23T09:05:33Z) but this file was never updated to
+  match — corrected here. Box stays unchecked; two criteria are still legitimately open.**
+  Asked to estimate remaining work for this item and `08-persistence/02-r2-save-share`, checking
+  the real infra directly (rather than trusting this file's stale "still needs provisioning"
+  language) turned up that `terraform plan` already reports **"No changes"** against production
+  (`datascope-persistence`) and, for staging, matches too apart from one deliberate out-of-band
+  rule (below). A fresh live save→get→delete round trip against the public
+  `datascope-edge-staging.justinclarke.workers.dev` confirmed the staging deploy itself is live
+  and correct (`ttlSeconds: 2592000` returned, matching the 30-day rule exactly); the probe
+  object was deleted afterward.
+  **A real near-miss, caught and fixed this session, worth naming plainly.** Before reading the
+  leaf doc's own explanation, an unrelated `terraform apply` (run to reconcile what looked like
+  plain drift on the `dev` workspace) deleted the leaf doc's own `ttl-test-scratch` lifecycle
+  rule — a 1-day-TTL rule on a `ttl-test/` prefix, deliberately kept **out of** `infra/r2.tf` so
+  a throwaway verification rule never lands in the Terraform-owned production config, set up in
+  that same prior untracked session specifically to observe `08-persistence/02-r2-save-share`'s
+  TTL-expiry criterion faster than a real 30-day wait. The live marker object
+  (`ttl-test/marker.txt`) had not yet expired (the expected deletion window,
+  2026-07-24T09:05:33Z–2026-07-25T09:05:33Z, hadn't opened yet) — caught before any data was
+  lost. The identical rule was re-added the same out-of-band way (`wrangler r2 bucket lifecycle
+  add`, not Terraform), confirmed present again, marker confirmed still byte-exact. **Lesson
+  recorded in the leaf doc itself:** `terraform plan` against `dev` will keep showing this one
+  rule as a diff for as long as the observation runs — expected, and must not be reconciled away
+  until the deletion is actually observed.
+  **What's still genuinely open, both correctly unchecked:** `09-edge/04-persistence-endpoints`
+  waits on (1) the TTL-expiry observation itself completing (marker not yet deleted as of this
+  entry) and (2) an operator runbook line for manual `wrangler`-console deletion (documentation,
+  not code — the capability itself is already confirmed structurally). `08-persistence/
+  02-r2-save-share`'s own TTL-expiry criterion waits on the same observation. Neither is an
+  effort estimate in the usual sense — the blocking factor is calendar time on a live R2
+  lifecycle sweep ("typically within 24 hours" per Cloudflare's own docs), not engineering work.
+  **Docs:** no master/Decision-Record edit. `build/09-edge/04-persistence-endpoints.md`'s TTL
+  criterion appended with the 2026-07-24 re-check and the near-miss + recovery, plus the standing
+  note for future sessions.
+  **Next concrete action:** re-check `ttl-test/marker.txt` after 2026-07-25T09:05:33Z; if
+  deleted, check both the TTL-expiry criterion here and in `08-persistence/02-r2-save-share`,
+  clean up the now-unneeded scratch rule, and both boxes can close pending only the runbook line.
+  `▶` stays at `08-persistence/03-dsps-spec` per the entry above.
+  **Blocker:** none — a calendar wait, not a stuck state.
+
+- **2026-07-24** — **File maintenance, no build work:** the 2026-07-22→2026-07-24 log entries
+  (DESIGN DECISION mode-taxonomy rename through the doc-catchup TTL entry — everything since the
+  last archive point) moved to `BUILD-ORDER-HISTORY.md` per human instruction, keeping this file
+  to the pointer line. **New `### v0.60 — the Workbench (D71)` section added between v0.5 and
+  v1**, per human instruction — the nine W0–W8 rows from `build/12-workbench/README.md` /
+  master §19's W0–W8 table, all unchecked, no leaf docs yet (none exist beyond the charter; each
+  is authored when its phase is picked up, per the fold's own binding constraint). Model column
+  is a proposal built from this doc's own Model rule (Opus for the envelope-invariant seam W0,
+  the auto-layout spike W4, the AI-defaults/consent surface W6, and the cutover W8; Sonnet
+  elsewhere), not yet confirmed against any actual build. **No checklist state changed** — the
+  `▶` stays exactly where it was, at `08-persistence/03-dsps-spec`; v0.5's existing rows
+  (including 06-ai/02 and 06-ai/03, whose leaf docs now carry Workbench-fold deltas building in
+  W6/W7) are untouched, since those deltas are new spec content for the *new* W6/W7 leaves, not
+  reopened criteria on the already-closed v0.5 ones.
+  **Next concrete action:** `08-persistence/03-dsps-spec` (Sonnet) — unchanged; its own two
+  open criteria (`npm publish`, a staging `/mcp` round-trip) are still deliberate confirmation
+  pauses, per the entry now archived. Separately, whenever `build/12-workbench/`'s W0 leaf is
+  authored and picked up, this section's first row and the file's single `▶` move there.
+  **Blocker:** none.
+
+- **2026-07-24** — **`▶` moves from `08-persistence/03-dsps-spec` to `12-workbench/W0`, per
+  human instruction ("skip the dsps spec we will do it later and lets move to v0.60").**
+  `03-dsps-spec` stays unchecked and deferred, not reopened — its remaining two criteria
+  (`npm publish`, a live staging `/mcp` round-trip) were already deliberate confirmation
+  pauses per the 2026-07-24 entries above, so nothing about its state changed, only its
+  priority. Authored `build/12-workbench/01-tab-contract.md` (W0's leaf doc) from the
+  charter (`build/12-workbench/README.md`), master §13.3 (envelope invariant, tab model,
+  keep-mounted norm) and §19's W0 row — the first leaf doc in this section, so the row now
+  links to it.
+  **Docs:** no master/Decision-Record edit — §13.3/§19/D71 already specced W0 fully; the new
+  leaf doc only restates it as a buildable DoD, per the section's own binding constraint
+  (no `src/` code starts until a phase's leaf doc lands).
+  **Next concrete action:** build W0 to `build/12-workbench/01-tab-contract.md`'s definition
+  of done — `types/tabs.ts` (the closed `TabType` registry + envelope), `stores/tabs.ts`,
+  `services/navigation.ts` (`openDestination`, flag-off routes through the existing
+  `stores/ui.ts`), `lib/featureFlags.ts` (`WORKBENCH_ENABLED`, same pattern as
+  `JOIN_GRAPH_ENABLED`) — flag-off and invisible, envelope-invariant unit tests passing
+  before anything renders.
+  **Blocker:** none.
+
+- **2026-07-24** — **W0 — Tab contract shipped.** Built to `build/12-workbench/01-tab-contract.md`'s
+  definition of done, inline in the orchestrating session (no docs pipeline — implementation
+  is reviewed as code, per this repo's `CLAUDE.md`). Added `src/types/tabs.ts` (`TabType`
+  closed union, seeded with the `'map'` placeholder; `TabSpec` envelope: `id`/`type`/`subject`/
+  `initializer`), `src/stores/tabs.ts` (`useTabsStore` — `openTab`/`closeTab`; `openTab` accepts
+  an `artifactSpec` fourth parameter for signature stability but does not persist it onto the
+  tab, so a hostile/model-shaped payload with envelope-looking keys has no path into the
+  envelope at all — proven by an adversarial test in `stores/tabs.test.ts`), `src/services/
+  navigation.ts` (`openDestination(module, tab?, prefill?)` — flag-off calls `stores/ui.ts`'s
+  `setActiveModule` unchanged; flag-on calls `stores/tabs.ts`'s `openTab`, wrapping `prefill` as
+  the D68e `ThreadConfig` initializer; the module→tab-type/subject mapping is a documented
+  placeholder until later phases migrate real modules off the flat sidebar), and
+  `src/lib/featureFlags.ts`'s `WORKBENCH_ENABLED` (same read-once `import.meta.env` pattern as
+  `JOIN_GRAPH_ENABLED`, default off, `VITE_WORKBENCH` override). Flag-off parity against
+  `stores/ui.test.ts` ported through the facade (the `setActiveModule`-touching cases only —
+  `setActiveTabId`/`clearPendingPrefill` are separate store methods the facade doesn't wrap);
+  flag-on routing proven via `vi.stubEnv('VITE_WORKBENCH', 'true')` + `vi.resetModules()` +
+  dynamic re-import (the flag is a module-load-time const, same as `JOIN_GRAPH_ENABLED`, so
+  flipping it for a test requires a fresh module graph). `grep -rn WORKBENCH_ENABLED src` is
+  clean outside `services/navigation.ts` / `lib/featureFlags.ts`; full existing suite green
+  (116 files / 1179 tests); `tsc -b` clean; `graphify update .` run.
+  **Model column corrected Opus → Sonnet (Update rule 5):** the proposal anticipated an
+  adversarial-design-judgment build, but the envelope invariant reduced to a mechanical,
+  fully-specified typed-construction proof once §13.3/the leaf doc pinned the exact fields —
+  no open design call was left to make, so the orchestrating (Sonnet) session built it inline
+  per this repo's efficiency rules rather than routing to Opus.
+  **Docs:** none — the leaf doc's DoD is met as written, no spec gap found during the build.
+  **Next concrete action:** `▶` moves to `12-workbench/W1` (Workbench scaffold — grid shell,
+  act assembly, crude tab host) — its leaf doc does not exist yet; author it from
+  `build/12-workbench/README.md` + master §13.3 before building.
+  **Blocker:** none.
+
+- **2026-07-24** — **W1 — Workbench scaffold shipped.** Authored
+  `build/12-workbench/02-workbench-scaffold.md` from the charter + master §13.3/§19, then built
+  to its definition of done inline in the orchestrating session, same as W0 (no docs pipeline —
+  implementation is reviewed as code). Added `src/app/workbenchActs.ts` (`selectWorkbenchAct` —
+  a pure function of `{ hasDatasets, workerStatus }` deciding among `'act0' | 'act1' | 'shell'`;
+  Act 2 gets no branch — §13.3's "no forced gate" already folded it into the shell's mode
+  switches, W7's job), `src/app/WorkbenchShell.tsx` (the flag-on composition root: Act 0/Act 1
+  render chrome-free per the signed-off hallmark finding that "the VS Code shell only assembles
+  Act 3"; the `'shell'` act mounts five empty, individually-targetable placeholder regions
+  —explorer/canvas/ai-pane/inspector/status-bar — plus a crude tab host in the canvas region
+  that lists `useTabsStore` tabs read-only, no switching/dedup/preservation, W3's job), and
+  `src/app/App.tsx` (branches on `WORKBENCH_ENABLED` to render `WorkbenchShell` instead of the
+  existing `AppContent` — the flag now lives at the composition root exactly as §13.3 specifies,
+  alongside the nav facade from W0). Suite green (118 files / 1190 tests, up from 116/1179);
+  `tsc -b` clean; `graphify update .` run. `grep -rln WORKBENCH_ENABLED src/` shows the flag read
+  in `App.tsx` (composition root, expected per §13.3) plus the pre-existing W0 sites — no feature
+  module branches on it directly.
+  **Docs:** none beyond the new leaf doc — §13.3/§19's W1 row already specced the scope; no gap
+  found during the build.
+  **Next concrete action:** `▶` moves to `12-workbench/W2` (Left explorer — grown from
+  `TableList` + a shell-wide selection store) — its leaf doc does not exist yet; author it from
+  `build/12-workbench/README.md` + master §13.3 (`explorer (left)` paragraph) + the existing
+  `TableList` component before building.
+  **Blocker:** none.
+
+- **2026-07-24** — **W2 — Left explorer shipped, narrower scope than §13.3's full explorer
+  paragraph — a deliberate call, confirmed with the human before building.** Authored
+  `build/12-workbench/03-left-explorer.md` from the charter + master §13.3 + the existing
+  `TableList` component, then built to its definition of done inline in the orchestrating
+  session (no docs pipeline). **Scope call:** §13.3's explorer paragraph names five things —
+  table list, per-table actions, Add data, the share-links list, click-to-Profile — but only
+  the table list + selection store are named in the phase-table row itself, and no later
+  W-phase claims Add-data or the share-links list the way W4/W7 unambiguously claim map/AI-pane
+  content. Given the human's choice between the two, this leaf takes the narrower reading:
+  Add-data (`IngestionPanel.tsx`'s drop/URL/sample pieces don't fit a 256px rail as-is — a real
+  recompose, not a corollary of growing `TableList`) and the share-links list (reachable-with-
+  zero-datasets in the flat sidebar, but the Workbench explorer only mounts under the `'shell'`
+  act — the zero-datasets entry point is Act 0/W6's job) are left as **explicitly open scope**
+  for a later leaf, not cut. Built: `src/types/tabs.ts` (`TabType` gains `'profile'` — W0 named
+  this as the next registry member), `src/stores/selection.ts` (`useSelectionStore` —
+  `selectedTableId` + `selectTable`/`clearSelection`; column/map-edge slots deferred to their
+  first consumer, W4 for map edges), `src/features/ingestion/TableList.tsx` (grows an optional
+  `onSelectTable` prop — additive only, the flag-off `IngestionPanel` call site is unchanged and
+  its existing tests pass unmodified), `src/features/explorer/ExplorerPanel.tsx` (new — wraps
+  `TableList` with the Workbench wiring: a table click selects it and calls `openDestination
+  ('profile', tableId)`; remove/refresh call the same `services/ingestion.ts` functions
+  `IngestionPanel` already calls), `src/services/navigation.ts` (module→tab-type mapping gains
+  `profile → 'profile'`; every other module still provisionally maps to `'map'`, unchanged), and
+  `src/app/WorkbenchShell.tsx` (explorer region mounts `ExplorerPanel`). **A real cross-test
+  bug found and fixed during this build, not a design issue:** the new `ExplorerPanel.test.tsx`
+  initially raced `Promise.all([import('./ExplorerPanel'), import('../../services/ingestion'),
+  ...])` after `vi.resetModules()` — since `../../services/ingestion` was `vi.mock`'d with an
+  async factory (`await importOriginal()`), the concurrent imports let the factory resolve
+  twice, so the panel's closure and the test's own `ingestion` reference silently landed on two
+  different mock instances (calls recorded on one, asserted on the other — 0 calls, no thrown
+  error). Fixed by awaiting the mocked module first, sequentially, before importing the panel
+  that depends on it — the same hazard would hit any future flag-on test that both mocks a
+  module and dynamic-imports a consumer of it in the same `Promise.all`. Suite green (120 files
+  / 1200 tests, up from 118/1190); `tsc -b` clean; `oxlint` clean on every changed file;
+  `graphify update .` run.
+  **Docs:** none beyond the new leaf doc — the scope call above is recorded there and here, not
+  as a master/Decision-Record edit, since it's choosing which already-specced piece to defer, not
+  changing spec.
+  **Next concrete action:** `▶` moves to `12-workbench/W3` (Tab model maturation — singletons/
+  artifacts, keep-mounted-first preservation, pinning) — its leaf doc does not exist yet; author
+  it from `build/12-workbench/README.md` + master §13.3 + §19's W3 row before building. Separately,
+  Add-data and the share-links list remain open scope on the explorer — flag for whichever future
+  session picks up explorer polish.
+  **Blocker:** none.
+
+- **2026-07-24** — **W3 — Tab model maturation shipped, pinning deferred to W5 — a scope call
+  confirmed with the human before building.** Authored `build/12-workbench/04-tab-model-
+  maturation.md` from the charter + master §13.3 + §19's W3 row, then built to its definition of
+  done inline (no docs pipeline). **Scope call:** §13.3's "pin" is the `[pin]` action that
+  promotes a produced SQL/chart result into a new artifact tab (confirmed against the pre-fold
+  `UI-REDESIGN-LIFECYCLES.md`/`-SPEC.md`, which the master paragraph condenses) — not a
+  tab-pinning toggle. The Workbench has no result-producing content yet (SQL/Pivot/Charts arrive
+  in W5 via the strip/palette), so there is nothing real to pin; building the affordance now
+  would mean inventing a placeholder artifact type with no consumer. Pinning is deferred to W5,
+  same pattern as W2's Add-data/share-links deferral. Built: `src/types/tabs.ts` (`TabKind` +
+  `TAB_KIND` — a `Record<TabType, TabKind>` exhaustive over the closed registry, both current
+  members classified `'singleton'`), `src/stores/tabs.ts` (`openTab` now dedupes singleton types
+  by `(type, subject)` — reuses and activates an existing tab without touching its `initializer`,
+  set once atomically per D68e; artifact types keep today's unconditional-append behavior
+  unchanged; new `setActiveTab(id)`, a no-op for an unknown id), `src/app/WorkbenchShell.tsx`
+  (the crude W1 list host replaced with a real one: clickable headers switch/close via the store,
+  and every open tab's content stays mounted simultaneously — `hidden`, never a conditional
+  unmount — so `'profile'` tabs can mount the real `ProfileDashboard` component and prove state
+  survives a switch; `'map'` tabs still render a placeholder, no content exists before W4; the
+  shell now wraps in `EducationalPanelProvider`, which `ProfileDashboard`'s column-card/insight
+  "Show SQL" actions require and which nothing under the Workbench branch had ever provided
+  before, since nothing mounted needed it). **Deliberately used `ProfileDashboard` directly, not
+  `ProfileModule`:** the latter reads the old shell's `useUIStore.activeTabId` global, which
+  would make every mounted Profile tab show whichever table that global names instead of its own
+  `tab.subject` — wrong the moment two Profile tabs are open at once. The preservation contract
+  is proven, not asserted: two Profile tabs opened for two different tables, one tab's local
+  table-picker selection changed away from its own subject, switched away and back — the changed
+  local state (not store state) is still there, which a remount would have reset. Suite green
+  (120 files / 1208 tests, up from 120/1200); `tsc -b` clean; `oxlint` clean on every changed
+  file; `grep -rln WORKBENCH_ENABLED src` shows only the existing facade/flag/composition-root
+  sites plus one pre-existing comment mention in `WorkbenchShell.tsx` — no new behavioral
+  reference; `graphify update .` run.
+  **Docs:** none beyond the new leaf doc — the scope call is recorded there and here, not as a
+  master/Decision-Record edit, since it narrows *when* an already-specced piece (pinning) lands,
+  not what it means.
+  **Next concrete action:** `▶` moves to `12-workbench/W4` (Dataset map — multi-table ERD +
+  single-table Blueprint face + persistent Verdict band; auto-layout spike first, timeboxed) —
+  its leaf doc does not exist yet; author it from `build/12-workbench/README.md` + master §13.3
+  ("The dataset map" paragraph) + §19's W4 row before building. W4 is Opus per the Model rule
+  (the auto-layout spike is a genuine judgment call) — confirm that proposal holds once the spike
+  scope is actually read. Separately, pinning remains open scope, deferred to whichever phase
+  first wires a real result-producing tab type (named W5 above).
+  **Blocker:** none.
+
+- **2026-07-24** — **`WORKBENCH_ENABLED` default flipped to on, ahead of the W8 cutover — an
+  explicit human directive, deliberately partial.** Not a build-order item; `▶` stays exactly
+  where it was, at `12-workbench/W4`, and no box above is checked. A fresh, unconfigured session
+  now lands on the Workbench instead of the current shell. This is *only* the default flip:
+  old-shell code (`AppContent`/`Sidebar`/the module router in `App.tsx`), §13.0's spec, and the
+  `WORKBENCH_ENABLED` flag itself are all untouched and stay reachable with
+  `VITE_WORKBENCH=false` — deletion remains gated on W4–W7 landing plus soak, per the existing
+  W8 row, unchanged. Presented to the human as an explicit choice (flip-only vs. flip-and-delete-
+  now) before building; flip-only was chosen precisely because W5's palette hard gate ("palette
+  reaches every feature home") isn't met yet — SQL, Pivot, Charts, Correlation, Relationships, AI
+  Chat, and Export have no way to open inside the Workbench until then, so deleting the old shell
+  today would strand those features entirely. Built: `src/lib/featureFlags.ts` (`WORKBENCH_ENABLED`'s
+  read-once default, `false` → `true`), `vitest.config.ts` (new `test.env: { VITE_WORKBENCH:
+  'false' }` — pins the test baseline to the old behavior so `App.test.tsx`, `navigation.test.ts`,
+  and `ExplorerPanel.test.tsx`'s existing flag-off coverage keeps exercising the old shell
+  unchanged, without rewriting any of those suites; their per-test `vi.stubEnv('VITE_WORKBENCH',
+  'true')` + `vi.resetModules()` pattern for flag-on coverage is unaffected). Two test names
+  reworded for accuracy (`App.test.tsx`, `navigation.test.ts`) since they no longer describe the
+  app's real default, only the test-pinned baseline — no assertion logic changed.
+  **Docs:** master-first. `DATASCOPE.md` — D71's row gains a dated amendment (flag-flip decoupled
+  from cutover, deletion ungated only by W0–W8 landing as before); the "Two shells during the
+  flag-parallel period" paragraph (§13, near line 939) gains the same amendment; §19's W8 table
+  row drops "flag default flip" (already done) and gains a footnote. Mirrored into
+  `build/12-workbench/README.md` (header note + W8 table row). No Decision Record row renumbered
+  or removed — D71 amended in place, same pattern as D2/D68's prior dated amendments.
+  **Next concrete action:** `▶` is unchanged, still `12-workbench/W4` (Dataset map). Whoever picks
+  up W4 should know the Workbench is now what a fresh session sees by default — worth keeping the
+  map's placeholder state in mind for anyone testing manually, not just via `VITE_WORKBENCH=true`.
+  **Blocker:** none.
+
+- **2026-07-25** — **W4 — Dataset map shipped.** Authored `build/12-workbench/05-dataset-map.md`
+  from the charter + master §13.3 ("The dataset map" paragraph) + §19's W4 row, then built to its
+  definition of done inline in the orchestrating session (no docs pipeline). The map tab now
+  opens on a real multi-table ERD with a persistent Verdict band, or the single-table Blueprint
+  face — the W3 `<div>Dataset map (W4)</div>` placeholder is gone. Built: `src/features/map/
+  layout.ts` (the longest-path-layering + barycenter auto-layout, ported from the signed-off
+  hallmark mock `_implementation/_misc/ideation/hallmark/dataset-map.html` rather than re-derived
+  — see the leaf doc's Objective for why that moves this phase off the charter's Opus proposal),
+  `src/features/map/Erd.tsx` (field-row-anchored connectors via `getBoundingClientRect`, D24
+  solid/dashed confidence, click-to-select), `src/features/profiling/dossier/
+  useDatasetBaseline.ts` (the Dossier's fetch-and-build logic extracted out of `DatasetDossier`
+  so the map's Verdict band can share it instead of re-fetching — `DatasetDossier`'s own output
+  is unchanged), `src/features/map/VerdictBand.tsx` (props-driven, identity + one headline
+  `FactRef` under D68c tier-1 discipline, no action buttons — a deliberately slimmer echo of the
+  full Blueprint's Verdict), `src/features/map/DatasetMap.tsx` (the tab's actual content: one
+  table → `DatasetDossier` unchanged; two or more → `VerdictBand` + `Erd` hero with a
+  `ProfileDashboard` side panel on selection, sharing `useSelectionStore` with the W2 explorer),
+  and `src/app/WorkbenchShell.tsx` (`TabContent` wired to `DatasetMap`; a new ref-guarded
+  auto-open effect opens the map tab once, the first time datasets exist *and* the tab set is
+  still genuinely empty — not just "datasets exist," which would force a second map tab into any
+  session that already had tabs open, including this repo's own pre-existing
+  `WorkbenchShell.test.tsx` "tab host" tests, found the hard way when they broke on first pass).
+  **Model column corrected Opus → Sonnet (Update rule 5):** the charter proposed Opus because the
+  auto-layout spike looked like an open judgment call; it wasn't, by the time this phase started
+  — the hallmark ideation pass had already designed, prototyped, and gotten human sign-off on the
+  exact algorithm (and the visual/interaction pattern), so this phase was a typed, tested port of
+  a proven reference implementation, the same class of correction as W0's.
+  **A real finding surfaced and corrected during the build, not assumed upfront:** the leaf doc's
+  first draft claimed barycenter reordering "measurably reduces the naive crossing count" —
+  empirically false for the ported algorithm (checked by actually running it against several
+  permutations of the mock's own six-table fixture; one went from 5 crossings to 7, worse, not
+  better). This is an inherited property of the mock's frozen-per-pass-snapshot heuristic, not a
+  porting bug — the leaf doc and `layout.test.ts` were corrected to assert determinism against
+  the reference fixture instead of a false improvement guarantee, with the reasoning kept in both
+  places so a future session doesn't re-introduce the same wrong assumption.
+  **Scope calls, decided before building, not silently:** functional-first styling on the
+  existing `--color-*` tokens rather than the mock's dark-HUD skin (confirmed with the human via
+  AskUserQuestion — the mock's palette was signed off as visual reference only, and map
+  light-mode theming is still an open ideation question this build didn't want to resolve as a
+  side effect); no manual ERD/Blueprint toggle (face selection is structural on table count); the
+  "selected-table side panel" reuses `ProfileDashboard`, not `DatasetDossier` (which has no
+  per-table view); no edge-editing UI in the ERD (stays the W7 inspector's job). Full reasoning
+  for each is in the leaf doc. Suite green (124 files / 1238 tests, up from 120/1208); `tsc -b`
+  clean; `oxlint` clean on every changed file; `graphify update .` run.
+  **Docs:** none beyond the new leaf doc — §13.3/§19's W4 row already specced the scope; no gap
+  found during the build.
+  **Next concrete action:** `▶` moves to `12-workbench/W5` (Options strip + command palette —
+  subject-scoped filter, disabled-with-reason; hard gate: the palette must reach every feature
+  home) — its leaf doc does not exist yet; author it from `build/12-workbench/README.md` +
+  master §13.3 (the options-strip and command-palette paragraphs) + §19's W5 row before building.
+  Pinning (deferred at W3) is named as W5's job in the W3 log — worth checking against the actual
+  strip/palette design once that leaf doc exists, not assumed still correct.
+
+- **2026-07-25** — **W5 — Options strip + command palette shipped, mechanism-only — a scope call
+  confirmed with the human before building (AskUserQuestion).** Authored `build/12-workbench/
+  06-options-strip-palette.md` from the charter + master §13.3 ("The options strip"/"The command
+  palette" paragraphs) + §19's W5 row. §13.3's hard gate reads "the palette's action registry must
+  reach every feature home," but today only `'map'` and `'profile'` are real `TabType`s — `sql`,
+  `pivot`, `charts`, `correlation`, `export` still have none. Asked directly: wire all five for
+  real now (new `TabType` members, mounting `SqlModule`/`PivotModule`/`ChartsModule`/
+  `CorrelationModule`/`ExportModule` the way W3 mounted `ProfileDashboard`), or build the strip/
+  palette mechanism against today's two real destinations, rendering the rest disabled-with-reason.
+  **Answer: mechanism-only.** No new `TabType`, no `TAB_KIND` change, no module mounted — wiring
+  the five is explicit open scope for a follow-up leaf, not silently assumed done. Pinning
+  (deferred at W3, "or whichever phase first wires a real result-producing tab type") stays
+  deferred too — this phase wired no artifact-kind tab type, so there is still nothing real to pin.
+  **Built:** `src/lib/paletteRegistry.ts` (pure — `buildPaletteEntries(tables)`: the map entry,
+  one profile entry per table, then the seven not-yet-wired destinations disabled-with-reason;
+  `dossier`/`relationships` omitted as separate entries — both superseded by the map entry, D71),
+  `src/features/palette/CommandPalette.tsx` (⌘K/Ctrl+K global toggle, Escape closes, substring
+  filter, mounted once in `WorkbenchShell`'s `ShellGrid`), `src/features/map/OptionsStrip.tsx`
+  (multi-table face only — the single-table Blueprint already renders its own tier-1 action band,
+  D68c, so a second strip there would duplicate it over the same data; filters
+  `rankNextActions(tables, tableInsights)`'s dataset-wide list by the selected subject's table
+  name, keeping dataset-wide/unresolvable actions regardless of selection — a client-side filter,
+  never a second ranker, D58). `MultiTableMap` (`DatasetMap.tsx`) now also destructures
+  `tableInsights` from its existing `useDatasetBaseline` call to feed the strip — no new fetch.
+  `services/navigation.ts` gained `isDestinationReady()` and `MODULE_LABELS`, the one shared
+  source both surfaces check/label from; `WorkbenchShell.tsx` exported its existing
+  `MAP_TAB_SUBJECT` constant for the palette's map entry to reuse rather than re-declaring it.
+  **A real fallout found while testing, not assumed:** `DatasetMap.test.tsx` already fully
+  replaced `services/navigation`'s module (`vi.mock(() => ({ openDestination: ... }))`) — adding
+  named exports to that module left them `undefined` in that test file once `OptionsStrip` started
+  importing them, caught by the test run itself, fixed by switching that one mock to a partial
+  (`vi.importActual` + spread), the same pattern already used in this leaf's own new test files.
+  **Consequence, stated plainly (also in the leaf doc):** with nothing else wired, the strip and
+  palette mostly render disabled entries right now — the honest state of "mechanism built, content
+  not yet mounted," not a bug. Suite green (127 files / 1253 tests, up from 124/1238); `tsc -b`
+  clean; `oxlint` clean on every changed file; `graphify update .` run.
+  **Docs:** the new leaf doc's inventory table is the accounting for the "every feature home" gate
+  — the only doc gap found.
+  **Next concrete action:** `▶` moves to `12-workbench/W6` (Acts 0–2 — welcome page + AI defaults
+  per the §5.1 switch model) — its leaf doc does not exist yet; author it from
+  `build/12-workbench/README.md` + master §13.3 (Act 0/1/2 paragraphs) + §5.1 + §19's W6 row before
+  building. The module-wiring follow-up this leaf deferred (`sql`/`pivot`/`charts`/`correlation`/
+  `export` as real `TabType`s) is **not** W6's job either per the charter table — it has no named
+  phase yet; whoever picks it up should treat it as its own leaf, not fold it into W6 or W7 by
+  default.
+  **Blocker:** none.
+
+- **2026-07-25** — **W6 — Acts 0–2 shipped, two scope calls confirmed with the human before
+  building (AskUserQuestion).** Authored `build/12-workbench/07-acts-welcome-ai-defaults.md` from
+  the charter + master §13.3 (Act 0/1/2 paragraphs) + §5.1 + §19's W6 row. **Scope call 1: Act 0
+  fidelity.** Functional-first on the existing `--color-*` tokens, same precedent W4 set for the
+  map — the signed-off hallmark mock `welcome-act0.html` (light-violet editorial register) is
+  content/copy reference only; the mocks' own open "welcome is light-editorial vs. map is
+  dark-HUD" register-coherence question stays open ideation scope, not resolved as a side effect
+  here. **Scope call 2: AI defaults wiring.** §13.3 attributes "capable-device WebLLM pre-select"
+  to W6, but the only surface that could ever display or act on a recommendation — the flat
+  Off/Cloudflare/WebLLM/Your-own-key switches — is explicitly W7's ("Right AI pane," charter
+  table). Wiring a recommendation into the shared, persisted `useSettingsStore.aiMode` now, with
+  nothing yet rendering it, would be the same premature-plumbing this project has deferred before
+  (W3's pinning, W5's module-wiring). Answer: **probe + recommendation only, no store wiring** —
+  `isCapableDevice()`/`recommendedWorkbenchAIMode()` ship pure and tested; wiring them into
+  `aiMode`/`webllmConsent` and rendering the actual switches is named explicitly as **W7's first
+  job**, so it isn't silently dropped.
+  **Built:** `src/app/WorkbenchShell.tsx` — `Act0`/`Act1` now render a real `Welcome` component
+  (headline, the §13.3 passive reassurance line verbatim, a mounted, unchanged `IngestionPanel`)
+  instead of the one-line placeholders; both acts render **identical** content on purpose — read
+  literally, "unchanged machinery" means `IngestionPanel`'s own `TelemetryPanel` already supplies
+  honest phase labels regardless of the outer act, so Act 1 needed no second progress UI, only to
+  keep showing Act 0's content while the DuckDB worker finishes booting in the background. The
+  W4/W5-era `useSampleAutoLoad` stopgap (and its dedicated test) is deleted — a fresh Workbench
+  session now waits for a real user action (drop/URL/sample) instead of silently loading the
+  `ecommerce` sample, matching the old shell's own first-run behavior. New `src/app/
+  workbenchAIDefaults.ts` (+ test): `isCapableDevice()` reuses exactly the one signal
+  `WebLLMDock.tsx`'s own post-consent eligibility check already uses (WebGPU presence) —
+  `lib/memoryHeadroom.ts`'s device-memory signal was considered and rejected, since no GB
+  threshold for coexisting with the pinned WebLLM model is stated or verified anywhere in the spec;
+  `recommendedWorkbenchAIMode()` maps §5.1 directly (`'local-model'` when capable, `'local-only'`
+  otherwise), touches no store, and is asserted side-effect-free against `useSettingsStore` in its
+  own test. **No forced gate confirmed, not newly built:** grep-checked that `WorkbenchShell.tsx`
+  still does not import `AIModeChooser` (the old shell's blocking first-run modal) — the shells
+  were already separate composition roots (D71), so the invariant needed verifying, not new code.
+  **A real regression caught by the full suite, fixed in the same pass:** `App.test.tsx`'s own
+  Workbench-branch test asserted the now-deleted sample-auto-load call through the full `App`
+  composition root — not just `WorkbenchShell.test.tsx`'s copy of that assertion. Updated to assert
+  the real Act 0 ingestion entry point (`input[type="file"]`) instead, and dropped the now-unused
+  `loadDataset` mock override from that file's `services/ingestion` mock.
+  **Model column corrected Opus → Sonnet (Update rule 5):** the charter proposed Opus for the
+  AI-defaults/consent-surface judgment; by the time this phase started, the two real scope
+  questions were resolvable by reading the existing `WebLLMDock`/`AISettingsPanel`/`useSettingsStore`
+  code and the W3/W5 precedents for deferring premature wiring, then confirming with the human — the
+  same class of correction as W0/W4's.
+  Suite green (128 files / 1258 tests, up from 127/1253); `tsc -b` clean; `oxlint` clean on every
+  changed file; `graphify update .` run.
+  **Docs:** none beyond the new leaf doc — §13.3/§5.1/§19's W6 row already specced the scope; no
+  gap found during the build.
+  **Next concrete action:** `▶` moves to `12-workbench/W7` (Right AI pane — mode switches + audit
+  trail, bottom inspector, status bar consolidation) — its leaf doc does not exist yet; author it
+  from `build/12-workbench/README.md` + master §13.3 (AI pane / inspector / status-bar paragraphs)
+  + §19's W7 row before building. **W7 must wire `workbenchAIDefaults.ts`'s
+  `isCapableDevice`/`recommendedWorkbenchAIMode` into real state and the switch UI** — this leaf
+  deliberately left that undone, named here so it isn't missed. The module-wiring follow-up (W5's
+  deferral: `sql`/`pivot`/`charts`/`correlation`/`export` as real `TabType`s) still has no owning
+  phase — remains open scope for whoever picks it up next, not W7's either by default.
+  **Blocker:** none.
+
+- **2026-07-25** — **W7 — Right AI pane, bottom inspector, status bar: in progress, not shipped.
+  `▶` stays at `12-workbench/W7`; the box above is intentionally left unchecked.** Authored
+  `build/12-workbench/08-right-ai-pane.md` from the charter + master §13.3 (AI pane/inspector/
+  status-bar paragraphs) + §5.1 + D24 + §19's W7 row. **Two scope calls confirmed with the human
+  before building (AskUserQuestion):** (1) D72 "deeper cloud grounding" (the graduated cloud
+  sample-size control) is **deferred to its own follow-up leaf** — nothing builds it anywhere
+  today, and it is materially larger than "wire the switches + reuse the audit trail"; (2) the
+  status bar's spec'd kill-switch "paused" item is **reactive/last-known only, no polling** — a
+  small new store (`stores/pauseSignal.ts`) that request paths report into when they hit a
+  `'paused'` code, wired only at the vault path (the AI-router path already, deliberately,
+  collapses `'paused'` into `ProviderQuotaExhaustedError`, an existing design decision this leaf
+  does not reopen). Both calls are recorded in the leaf doc's own "Scope calls" section.
+  **Built and tested this session (roughly the first half of the leaf doc's file list):**
+  `stores/selection.ts` gains `selectedColumn`/`selectedEdgeId`/`lastSelectionKind` (additive,
+  independent slots — selecting a column never blanks the table slot `Erd`/`DatasetMap` already
+  depend on); `stores/inferredEdges.ts` (new) mirrors the raw pre-override `FkEdge[]`
+  `useDatasetBaseline`'s existing `loadRelationships` effect already fetches, so a second consumer
+  can apply `applyOverrides` itself without a second concurrent DuckDB inference query —
+  `useDatasetBaseline.ts` now writes into it alongside its own local state; `stores/
+  pauseSignal.ts` (new) + wired into `AISettingsPanel.tsx`'s existing `STORE_FAILURE` vault-error
+  branch; `AISettingsPanel.tsx` also gains the `hideModeSwitch` prop (skips only the `Mode`
+  fieldset; every old-shell call site is unaffected, its existing tests pass unmodified) —
+  `ModeSwitches`/`AIPane` themselves (the components that will pass this prop) are **not yet
+  built**. `Erd.tsx` field-rows and wire `<path>`s are now independently clickable
+  (`onSelectColumn`/`onSelectEdge`, optional/additive), `DatasetMap.tsx` wires them to the
+  selection store; `ColumnCard.tsx` gains an optional `onSelect`/`selected` pair (same additive
+  shape as W2's `TableList.onSelectTable`), wired in `ProfileDashboard.tsx`. **`src/features/
+  inspector/Inspector.tsx` (new) is fully built and tested**: table scent (name/rows/cols/
+  memory + a profile click-through), column scent (semantic + physical type + click-through), and
+  the map-edge scent reusing `EdgeEvidencePanel`/`AddRelationshipForm` unchanged, wired to the
+  already-shipped `useRelationshipsStore` — the same store `JoinGraphModule` (old shell) already
+  uses, so an override made from either surface is the same override (D24). **Not yet built:**
+  `ModeSwitches.tsx`, `AIPane.tsx`, `app/useApplyWorkbenchAIDefault.ts` (the actual wiring of
+  `workbenchAIDefaults.ts`'s recommendation into `useSettingsStore`), `features/status/
+  StatusBar.tsx`, and — the step that makes any of this reachable in the running app —
+  `WorkbenchShell.tsx` still has empty placeholder `<div>`s for all three regions;
+  `Inspector`/`ModeSwitches`/`AIPane`/`StatusBar` are not mounted anywhere yet.
+  Full existing suite green (131 files / 1282 tests, up from 128/1258, all of it from the work
+  landed this session); `tsc -b` clean; `oxlint` clean on every changed file; `graphify update .`
+  run.
+  **Docs:** none beyond the new leaf doc — the two scope calls are recorded there and here, not
+  as a master/Decision-Record edit.
+  **Next concrete action (cold-start safe):** build to `build/12-workbench/08-right-ai-pane.md`'s
+  remaining Spec sections — "Right AI pane" (`ModeSwitches.tsx`, `AIPane.tsx` composing the
+  already-unchanged `AIChatModule`, `useApplyWorkbenchAIDefault.ts`) and "Status bar"
+  (`StatusBar.tsx`), then wire all three plus the already-built `Inspector` into
+  `WorkbenchShell.tsx`'s `ai-pane`/`inspector`/`status-bar` regions (replacing the empty
+  placeholder `<div>`s), extending `WorkbenchShell.test.tsx` accordingly. Only once all of the
+  leaf doc's acceptance criteria are met: check the W7 box, move `▶` to `12-workbench/W8`, and log
+  the completion the same way W0–W6 above did.
+  **Blocker:** none — this is a clean stopping point (each landed piece is independently tested
+  and green), not a stuck state.
+
+- **2026-07-25** — **W7 — Right AI pane, bottom inspector, status bar: shipped.** Built the
+  remainder of `build/12-workbench/08-right-ai-pane.md`'s file list inline in the orchestrating
+  session (no docs pipeline), picking up exactly where the prior session's clean stopping point
+  left off. New: `src/features/ai/ModeSwitches.tsx` (+ test) — the flat Off/Cloudflare/WebLLM/
+  Your-own-key buttons, each writing the same `(aiMode, byokPreference)` pair the equivalent
+  `AISettingsPanel` radio choice would have; a disclosure line renders only in cloud mode;
+  "Configure workspace" stays visible in every mode ("no forced gate" holds for mode switching
+  too). `src/features/ai/AIPane.tsx` (+ test) — composes `ModeSwitches` above the existing
+  `AIChatModule`, reused completely unchanged as the pane's hero; a local collapse toggle renders
+  a thin re-expand strip and nothing else when collapsed. `src/app/useApplyWorkbenchAIDefault.ts`
+  (+ test) — the actual wiring of W6's pure `isCapableDevice`/`recommendedWorkbenchAIMode` probe
+  into `useSettingsStore`, ref-guarded like `useMapAutoOpen` (W4) so it fires at most once and
+  never overwrites an already-set `aiMode`. `src/features/status/StatusBar.tsx` (+ test) — the
+  same ambient facts `StatusConsole` (old shell) already surfaces (worker state, table/row
+  counts, last query timing), plus the posture dot (`aiMode === 'cloud'` → amber, else green) and
+  the reactive `usePauseSignalStore.lastPaused` notice; a gear opens the shared settings modal.
+  `WorkbenchShell.tsx`'s three placeholder `<div>`s (`ai-pane`/`inspector`/`status-bar`) now mount
+  `AIPane`/`Inspector`/`StatusBar` for real, `settingsOpen` state lifted into `ShellGrid` so both
+  the AI pane's "Configure workspace" and the status bar's gear open the same `AISettingsPanel
+  hideModeSwitch` modal instance — extended `WorkbenchShell.test.tsx` with a new describe block
+  proving all three regions render real content and both openers reach the same modal.
+  **A real test-coverage gap found and fixed, not assumed complete:** the prior session's `Erd.tsx`
+  already had `onSelectEdge`/`onSelectColumn` click handlers wired (built as part of the Inspector
+  work), but `Erd.test.tsx` — a pre-existing file from W4 — had never been extended to cover them,
+  so the leaf doc's own "clicking an ERD wire selects that edge…; clicking a field row selects both
+  the table and the column" acceptance criterion was unverified. Added five tests to `Erd.test.tsx`
+  covering wire click/keyboard selection, `data-selected` on the wire, field-row click selecting
+  both table and column (the click bubbles to the card's own `onSelectTable` — confirmed as intended
+  by re-reading the criterion, not assumed), and a no-regression case for call sites that omit the
+  new optional props. All nine of the leaf doc's acceptance criteria are now met and checked off
+  there; the ones this session didn't newly build (selection-slot independence, edge
+  override-controls wiring, the single-`loadRelationships`-fetch guarantee, the vault
+  paused/non-paused signal split) were already covered by tests the prior session landed —
+  verified by reading `Inspector.test.tsx`, `selection.test.ts`, and `AISettingsPanel.test.tsx`
+  directly rather than assumed from the log. Suite green (135 files / 1312 tests, up from 131/1282);
+  `tsc -b` clean; `oxlint` clean on every changed/added file; `graphify update .` run (topology
+  unchanged on the second run, after the `Erd.test.tsx` addition).
+  **Docs:** leaf doc's acceptance-criteria checkboxes all checked; no master/Decision-Record edit —
+  §13.3/§5.1/D24/§19's W7 row already specced the scope, and the two scope calls (D72 deferral,
+  reactive-only pause signal) were already recorded in the leaf doc and BUILD-ORDER by the prior
+  session.
+  **Next concrete action:** `▶` moves to `12-workbench/W8` (Viewer mode + cutover — §9.1
+  ship-timing, flag default flip already done ahead of schedule per the 2026-07-24 human
+  directive, soak, then old shell + master §13.0 deleted) — its leaf doc does not exist yet;
+  author it from `build/12-workbench/README.md` + master §13.3/§9.1/§19's W8 row before building.
+  W8 is Opus per the Model rule (the cutover/deletion judgment) — confirm that proposal holds once
+  the row is actually picked up, same as every prior phase's correction check. Separately, the
+  module-wiring follow-up (W5's deferral: `sql`/`pivot`/`charts`/`correlation`/`export` as real
+  `TabType`s) still has no owning phase and is not W8's either by default — flag for whoever picks
+  it up, since W8's "palette reaches every feature home" framing may force the question during
+  cutover even if it isn't W8's own scope to build.
+  **Blocker:** none. Still uncommitted — Justin commits.
+
+- **2026-07-25** — **New phase inserted: `12-workbench/W7.5` (Module wiring), between W7 and
+  W8 — `▶` moves there, not to W8.** Picking up W8 per the prior entry's "next concrete action"
+  surfaced that its own gate (§19: "every capability reachable in the Workbench, no orphaned
+  exports") cannot pass yet — `src/lib/paletteRegistry.ts`'s `NOT_YET_WIRED` list still carries
+  SQL, Pivot, Charts, Correlation, and Export, exactly the five W5 deliberately left disabled-
+  with-reason and every log since flagged as "no owning phase." Confirmed with the human
+  (AskUserQuestion) before doing anything else: **split the gap into its own phase, sequenced
+  strictly before W8**, rather than folding it into W8's leaf or building W8's cutover mechanics
+  against a failing gate. Docs updated master-first: `DATASCOPE.md` §19's W0–W8 table gains the
+  W7.5 row (+ a dated note explaining the insertion) and W8's "Depends on" cell now reads "all,
+  incl. W7.5"; mirrored into `build/12-workbench/README.md`'s phase table. This file's own
+  checklist gains the W7.5 row between W7 and W8; the `▶` sits there, W8 remains unchecked and
+  un-arrowed.
+  **Next concrete action:** author `build/12-workbench/09-module-wiring.md` from this entry +
+  master §19's new W7.5 row + the existing `TAB_TYPE_BY_MODULE`/`paletteRegistry.ts`/
+  `OptionsStrip.tsx` code (the seams W5 already built generically, just not yet populated), then
+  build to its DoD: `TabType` gains `'sql' | 'pivot' | 'charts' | 'correlation' | 'export'`
+  (`TAB_KIND` singleton, matching the old shell's own single-instance-per-module semantics — none
+  of these are per-table); `TAB_TYPE_BY_MODULE` gains the five identity mappings; `WorkbenchShell
+  .tsx`'s `TabContent` mounts the five existing modules; `paletteRegistry.ts` moves them out of
+  `NOT_YET_WIRED` into real entries. A real design gap found while reading the modules, not
+  assumed away: `useThreadPrefill()` unconditionally reads the old shell's global `useUIStore
+  .pendingPrefill`, which the Workbench's `openTab` path never writes to, and `ChartsModule`
+  separately reads `useUIStore.activeTabId` to select its initial chart sub-type — both already
+  exercised today by real `RankedAction`s (`lib/capabilities.ts` has live `module: 'charts', tab:
+  'time-series'`/`'categorical'` entries the W5 `OptionsStrip` already calls `openDestination`
+  with) — so mounting these modules unchanged would silently drop "opens on the answer" (D68e)
+  for every one of them, not a hypothetical gap. Resolution to build against: give
+  `useThreadPrefill` an optional override param (explicit value, including `null`, always wins;
+  `undefined` preserves today's global-store behavior byte-for-byte, so every old-shell call site
+  is unaffected) and thread `tab.initializer?.prefilledConfig` / `tab.subject` down from
+  `TabContent` the same way W3's `ProfileDashboard initialTableId={tab.subject}` already does —
+  no change to the generic `openDestination`/`ThreadConfig` facade itself, since `tab ?? module`
+  already produces the right per-module subject for all five without a new constant.
+  **Blocker:** none.
+
+- **2026-07-25** — **W7.5 — Module wiring shipped.** Built to `build/12-workbench/
+  09-module-wiring.md`'s definition of done inline in the orchestrating session (no docs
+  pipeline — implementation is reviewed as code). SQL, Pivot, Charts, Correlation, and Export are
+  now real, reachable, singleton Workbench tabs — the last five orphans on §19's W8 row-walk
+  gate. Built: `src/types/tabs.ts` (`TabType`/`TAB_KIND` gain the five members, all `'singleton'`);
+  `src/services/navigation.ts` (`TAB_TYPE_BY_MODULE` gains the five identity mappings —
+  `isDestinationReady`/`MODULE_LABELS`, already generic since W5, pick these up with no changes of
+  their own); `src/hooks/useThreadPrefill.ts` (gains an optional `override` param — an explicit
+  value, including `null`, always wins over the old shell's global `pendingPrefill`; `undefined`,
+  i.e. every existing call site, is byte-for-byte unchanged); `SqlModule`, `PivotModule`,
+  `PivotBuilder`, `CorrelationModule` (each gains an optional `prefill` prop threaded into
+  `useThreadPrefill`), `ChartsModule` (gains `prefill` and `requestedTab`, the latter overriding
+  the old shell's global `activeTabId` the same way); `src/app/WorkbenchShell.tsx` (`TabContent`
+  mounts all five, passing `tab.initializer?.prefilledConfig ?? null` and, for charts,
+  `tab.subject` — the same per-tab-instance prop-threading W3 established for `ProfileDashboard
+  initialTableId`, never a second global); `src/lib/paletteRegistry.ts` (the five move from
+  `NOT_YET_WIRED` into a new `WIRED_MODULES` list, `NOT_YET_WIRED` now holds only `ai`/
+  `ingestion`); `src/features/palette/CommandPalette.tsx` (`activate()` gains an `open-module`
+  branch). `src/features/map/OptionsStrip.tsx` needed **no changes** — it already called
+  `openDestination` generically; populating `TAB_TYPE_BY_MODULE` alone lit up its previously-
+  disabled `charts`/`correlation`/`sql` strip actions.
+  **A real design gap found while reading the modules, not assumed away (detailed in the leaf
+  doc's own Scope call section):** `useThreadPrefill` and `ChartsModule`'s `activeTabId` read both
+  unconditionally pointed at the old shell's global `useUIStore`, which the Workbench's `openTab`
+  path never writes to — mounting the five modules unchanged would have silently dropped D68e
+  "opens on the answer" for every one of them, even though `lib/capabilities.ts` already has live
+  `RankedAction`s (`module: 'charts', tab: 'time-series'`/`'categorical'`) that W5's `OptionsStrip`
+  was already calling `openDestination` with, just disabled. Fixed via the `override`/prop-
+  threading design above rather than a second global or a change to the `openDestination`/
+  `ThreadConfig` facade.
+  Four pre-existing tests asserted the old "not yet wired" state directly (`navigation.test.ts`'s
+  fallback-to-`'map'` case used `'sql'` as its example; `paletteRegistry.test.ts`'s seven-entry
+  count; `OptionsStrip.test.tsx`'s disabled-charts case; `CommandPalette.test.tsx`'s disabled-sql
+  case) — updated in place to exercise the new reality (an `'ai'`-based fallback example; the
+  five-wired/two-remaining split; charts now enabled and calling through; sql now enabled and
+  calling through), each also gaining a positive case proving the new behavior rather than just
+  losing the old assertion. New coverage: `useThreadPrefill.test.ts` (no test file existed before);
+  one override-proving case each in `SqlModule.test.tsx`, `PivotBuilder.test.tsx`,
+  `ChartsModule.test.tsx` (two cases — the override winning, and an unmatched override falling
+  back), `CorrelationModule.test.tsx`; a new `isDestinationReady` describe block in
+  `navigation.test.ts`; a new `WorkbenchShell.test.tsx` describe block mounting all five tab types
+  through the real shell. **A real test-isolation bug found while writing that last block, not
+  assumed away:** this file has no RTL auto-cleanup between tests (a repo-wide convention already
+  noted in `PivotBuilder.test.tsx`'s own comments), and the file's newer describe blocks query via
+  `getByText`/`screen`-equivalent bindings that search the whole `document.body` — fine for a
+  single-test block, but a five-test block sharing similar content (multiple "Run" buttons inside
+  one `SqlModule` render alone, for instance) needs each assertion scoped to that render's own
+  `container` via `within(container)`, matching the "tab host"/"keep-mounted" blocks' existing
+  convention earlier in the same file. Suite green (136 files / 1332 tests, up from 135/1312);
+  `tsc -b` clean; `oxlint` clean on every changed file; `graphify update .` run.
+  **Docs:** leaf doc's acceptance-criteria checkboxes all checked; master §19/D71 already carry
+  the W7.5 insertion from the prior log entry — no further master edit, this entry is the
+  completion record.
+  **Next concrete action:** `▶` moves to `12-workbench/W8` (Viewer mode + cutover) — its leaf doc
+  does not exist yet; author it from `build/12-workbench/README.md` + master §13.3/§9.1/§19's W8
+  row before building. The row-walk gate this phase existed to satisfy should now re-check clean
+  (every §13.0/§6-inventory capability reachable in the Workbench) before W8's own cutover work
+  begins — worth a fresh walk against the inventory table, not assumed from this entry alone. §9.1
+  ship-timing and the old-shell deletion itself remain explicitly the human's call, confirmed
+  2026-07-25: build W8's mechanics first, decide and execute cutover as a separate, explicit step
+  at the end.
+  **Blocker:** none. Still uncommitted — Justin commits.
+
+- **2026-07-25** — **W8 — Viewer mode built and tested; cutover explicitly not started. `▶`
+  stays at `12-workbench/W8`; the box above stays unchecked, by design.** Authored
+  `build/12-workbench/10-viewer-cutover.md` from the charter + master §13.3 (viewer-mode
+  paragraph, cross-cutting contracts), D62/D63/D45, and §19's W8 row, splitting the leaf's own
+  acceptance criteria into "viewer mode" (built this session) and "cutover" (explicitly deferred
+  — §9.1 ship-timing, the soak, and the old-shell + master §13.0 deletion remain the human's
+  call, confirmed 2026-07-25 on the prior W7.5 entry: "build W8's mechanics first, decide and
+  execute cutover as a separate, explicit step at the end").
+  **Scope call (confirmed with the human before building, AskUserQuestion):** the only renderer
+  that existed for a `.dsps` document (`SharedStructureReportView`) is a floating modal showing
+  table/column data only — no insights, no relationships, no D45 provenance/snapshot fields, no
+  D63 band, no named exits — so it couldn't satisfy the spec's literal requirements by reuse.
+  Asked directly: **map-forward** (thread a `StructureReport`-derived shape through
+  `DatasetMap`/`Erd`, which assume a live DuckDB-backed `useDatasetBaseline` — a real refactor of
+  shipped code) vs. **structure-forward** (new non-modal chrome over the `StructureReport`'s
+  existing shape, using the internal cut line D62 itself names — "degrades to the single-table
+  Blueprint face / static HTML report render"). **Answer: structure-forward** — consistent with
+  every prior phase's mechanism-first precedent (W5/W6/W7) and the D27 ship-date discipline; the
+  map-forward richness stays available as a named, explicit follow-up leaf, not foreclosed.
+  **Built:** `src/features/viewer/ViewerMode.tsx` (+ test) — the Workbench's read-only render of
+  `useDspsReceiverStore`'s `document`/`error`: explorer region (flat read-only table list),
+  canvas region (per-table cards extending `SharedStructureReportView`'s shape, plus every
+  insight's D45 provenance tag/snapshot label — never rendered by the old modal), inspector
+  region (`report.relationships` as a flat evidence list — deliberately **not** a reuse of
+  `EdgeEvidencePanel`, whose `onRemove`/`onRepoint` props are required, not optional, and which
+  expects a live `FkEdge` with an `id`; forcing a read-only mode onto an edit-only component would
+  have been scope creep the structure-forward call already ruled out), status bar (table count +
+  the two named exits — Export report re-downloading the identical document, Start my own session
+  calling the store's `close()`). `src/features/viewer/TrustChromeBand.tsx` (+ test) — the D63
+  slot: the D45 structure-only claim + `generatedAt`, and an honest **"Unsigned" / "Signing not
+  yet available"** state for the signer/signature fields rather than a fabricated one (D63.2,
+  signed `.dsps`, is its own unbuilt design round). `src/app/WorkbenchShell.tsx` — one new branch
+  at the top of `WorkbenchShell()`, checked before act selection, so a dropped `.dsps` presents
+  regardless of dataset state: `if (dspsDocument || dspsError) return <ViewerMode ... />`.
+  **A real, live gap found while reading the code, not assumed:** `IngestionPanel.tsx`'s
+  `.dsps`-drop branch (built at `08-persistence/03-dsps-spec`) already populates
+  `useDspsReceiverStore` from inside the Workbench today, since Act 0/1's `Welcome` (W6) mounts
+  that exact, unmodified component — but nothing in `WorkbenchShell.tsx` read the store before
+  this session, so a `.dsps` dropped into a fresh Workbench session (the default since the
+  2026-07-24 flag flip) silently vanished. This session's branch is the fix, not new drop-sniffing
+  logic — confirmed **no other real drop surface exists anywhere in this codebase**: no
+  whole-window listener in either shell, and the explorer's own Add-data affordance remains W2's
+  own open deferral, so "every drop surface sniffs `dsps_version`" reduces honestly to the one
+  surface that exists.
+  **Row-walk gate re-checked (§19: "every §13.0/§6-inventory capability reachable in the
+  Workbench, no orphaned exports"):** walked §13.0's sidebar table + §6's architecture diagram
+  against `paletteRegistry.ts`/`TAB_TYPE_BY_MODULE` — clean, nothing orphaned; the leaf doc's own
+  table records the walk. `NOT_YET_WIRED` still names only `ai` (by design, the always-on pane)
+  and `ingestion` (W2's own logged deferral).
+  Suite green (138 files / 1345 tests, up from 136/1332); `tsc -b` clean; `oxlint` clean on every
+  changed file; `graphify update .` run.
+  **Model:** built inline in the orchestrating (Sonnet) session, not escalated to Opus — the
+  charter's Opus proposal was for "the cutover/deletion judgment," but that judgment is
+  explicitly the human's, deferred whole rather than resolved by any model tier; the mechanical
+  work actually built this session (wiring an already-shipped store into new, scoped-down shell
+  chrome) is the same class of correction as W0/W4/W6's Opus→Sonnet corrections, so no column
+  change was needed — the charter's Opus tag was always about the deferred half.
+  **Docs:** the new leaf doc; no master/Decision-Record edit — D62/D63/§13.3/§19's W8 row already
+  specced viewer mode's scope, and the structure-forward scope call narrows *how* it's built, not
+  what it means.
+  **Next concrete action:** cutover itself — §9.1 ship-timing (Workbench-only, old-shell-only, or
+  both, for D27's Oct 6 date), the soak, and deleting the old shell (`AppContent`/`Sidebar`/the
+  module router in `App.tsx`) + master §13.0 (master-first) — is explicitly **not** started.
+  Whoever picks this up next should raise the ship-timing question with the human directly rather
+  than assuming a default; once decided, the deletion itself is master-first per this file's own
+  Update rules, and the leaf doc's cutover checkboxes are the acceptance criteria to build against.
+  Only once *both* halves of the leaf doc are checked does the W8 box above check and `▶` move to
+  `10-studio` (v1, gated on profiling proven in the wild — a different kind of gate entirely).
+  **Blocker:** none — this is a clean stopping point (viewer mode is independently tested and
+  green), not a stuck state. Still uncommitted — Justin commits.
+
+- **2026-07-25** — **W8 cutover: §9.1 decided Workbench-only, soak accepted, master doc updated
+  master-first. Code deletion explicitly not started — `▶` stays at `12-workbench/W8`, the box
+  above stays unchecked.** Verified the tree first rather than trusting the prior entry's numbers
+  cold: full suite green, 138 files / 1345 tests, matching the last log entry exactly. Raised
+  §9.1 ship-timing directly with the human (AskUserQuestion, per this leaf doc's own standing
+  instruction that this is never a model's call to default): **Workbench-only**, over keeping
+  both shells longer, reverting to old-shell-only, or deferring. Asked a second, narrower
+  question — whether the on-by-default period since 2026-07-24 plus the full W4–W8 build/test
+  cycle counts as the soak, or whether an explicit further wait was wanted — **confirmed it
+  counts; delete now** (not assumed).
+  **Investigation before any edit, not assumed from `AppContent`'s import list:** traced every
+  old-shell-only file against the rest of the codebase, since most of `AppContent`'s imports
+  (SqlModule, ChartsModule, AISettingsPanel, etc.) are Workbench-shared as of W7.5 and must not
+  be deleted. Confirmed genuinely old-shell-only: `Sidebar`/`SidebarCard`/`SidebarGroup`,
+  `EducationalPanel` (the component, not its Context/hook — those are Workbench-shared),
+  `StatusConsole`, `AIModeChooser`, `DossierModule`, `ProfileModule`, `JoinGraphModule` (not
+  `JoinGraph.tsx`, shared with `Erd.tsx`), `SharedStructureReportView`. **Two real functional
+  gaps found, not just a deletion list:** `WebLLMDock` (the D70 download-consent surface — it's
+  what actually calls `warmWebLLM()`) is only mounted by `App.tsx` today, `WorkbenchShell.tsx`
+  never mounts it; and the `?share=` URL-opening flow (§12.3) has zero handling anywhere in
+  `WorkbenchShell.tsx` — both would silently regress for 100% of users post-cutover if deleted
+  around rather than ported. Designed (not yet built) the port: `WebLLMDock` mounts in
+  `ShellGrid()` above the status bar; a new `useShareLinkOpener()` hook (colocated like the
+  existing `useMapAutoOpen`) routes a structure-report share through
+  `useDspsReceiverStore.getState().open(...)`, reusing `ViewerMode` as the renderer for free
+  (its own doc comment already frames the store as shared by two producers); a full-dataset
+  share needs no extra code since `loadSharedDataset` already registers it and the existing
+  `useMapAutoOpen` picks it up. Full findings, the exact file-by-file execution order, and the
+  three test files whose `VITE_WORKBENCH` stub ceremony becomes dead weight once the flag goes
+  (`App.test.tsx`, `navigation.test.ts`, `ExplorerPanel.test.tsx`) are written up at
+  `/HANDOFF-W8-CUTOVER.md` (repo root) — not repeated here.
+  **Mid-session redirect from the human:** first told to stop and hand off before any file was
+  touched; then clarified to finish the doc updates first, then hand off the code. Docs were
+  **not** pre-planned as a separate pass — this is that clarification being honored, not scope
+  creep.
+  **Docs, master-first, actually landed this session (not just planned):** `DATASCOPE.md` — new
+  **Revised (13)** entry; §13's intro rewritten (Workbench is the only shell, code deletion
+  named as a tracked gap); **§13.0 deleted**; §13.1's two flag-conditional sentences (Blueprint-
+  forward opening, the `.dsps` receiver parenthetical) simplified; **§13.2 retired to a stub**
+  (its surviving substance — D68a/c/e/f — pointed at §13.3/§9, not renumbered, so cross-refs and
+  the question-index stay valid); §13.3's heading/intro de-flagged; the palette paragraph's
+  `§13.0/§6-inventory` citation narrowed to `§6-inventory` (two more occurrences of the same
+  fix in §19); §5.1's heading and Workbench-consent paragraph de-shell-conditioned; D2, D71,
+  D68, D48, D70 Decision-Record entries amended in place with dated notes (append-only
+  convention, not rewritten); §19's heading/intro/W7.5-row/W8-row updated; TOC line 40 fixed.
+  Three `§16` file-structure lines (`featureFlags.ts`, `navigation.ts`, `WorkbenchShell.tsx`'s
+  comments) were **deliberately left untouched** — they mirror actual code comments, and the
+  code hasn't changed yet; updating them now would make the doc describe code that doesn't
+  exist, the same drift problem in the other direction. Mirrored into
+  `build/12-workbench/README.md` (header, phase table, palette citation). This leaf doc
+  (`10-viewer-cutover.md`)'s two decision-only cutover criteria (§9.1 decided, soak confirmed)
+  are checked with evidence; the two code-deletion criteria stay open.
+  **Docs done; code not started.** `HANDOFF-W8-CUTOVER.md` at the repo root carries the full
+  execution plan for the next session: the file-by-file list (delete/modify/add), the two ported-
+  behavior designs, the verification steps (suite, `tsc -b`, `oxlint`, `graphify update`, and a
+  live-browser check this session never reached), and the leaf-doc/BUILD-ORDER close-out that
+  follows once code lands. `▶` deliberately does **not** move to `10-studio` — W8's box stays
+  unchecked until the code half closes too.
+  **Blocker:** none — a clean, intentional stopping point per explicit human instruction, not a
+  stuck state. Still uncommitted — Justin commits.
+
+- **2026-07-25** — **W8 cutover: code landed. Both halves of the leaf doc now checked — W8 box
+  checked, `▶` moves to `10-studio`.** Picked up `/HANDOFF-W8-CUTOVER.md`'s execution plan cold,
+  per its own "safe to pick up cold" framing; verified Part 3a/3b (master doc + README mirror)
+  before touching code rather than trusting the handoff's claim — both confirmed already correct.
+  **Code, in the handoff's own dependency order:** `featureFlags.ts` (`WORKBENCH_RAW`/
+  `WORKBENCH_ENABLED` removed) → `navigation.ts` (flag-off branch removed from `openDestination`,
+  `useUIStore` import dropped, `SidebarModule` now type-only) → `navigation.test.ts` (collapsed
+  to one plain `describe('openDestination', …)`, static imports, `isDestinationReady`'s block
+  untouched) → `WorkbenchShell.tsx` (`WebLLMDock` mounted in `ShellGrid()` above the status bar;
+  new `useShareLinkOpener()` hook, same ref-guarded shape as `useMapAutoOpen`, routing both
+  share-link outcomes through `useDspsReceiverStore`) → `App.tsx` (`AppContent` deleted, `App()`
+  now just `return <WorkbenchShell />`) → `App.test.tsx` (rewritten to a smoke test; the share-
+  link/`.dsps` describe blocks were **not** separately ported — `WorkbenchShell.test.tsx`'s
+  existing viewer-mode block already covered the `.dsps` half functionally identically, only the
+  share-link half needed genuinely new tests) → `WorkbenchShell.test.tsx` (three new share-link
+  tests against a mocked `loadSharedDataset` + one WebLLM-dock-mounts test) →
+  `ExplorerPanel.test.tsx` (simplified to a plain `resetStores()` helper, static imports, the
+  `vi.resetModules()`/dynamic-import dance dropped) → `vitest.config.ts` (`VITE_WORKBENCH` env
+  pin removed) → `dspsReceiver.ts` (doc comment fixed — both producers now name `ViewerMode`) →
+  the 10 confirmed old-shell-only files + 7 test files deleted, each re-verified via a fresh
+  exact-import grep first (not trusted cold from the handoff).
+  **Verification:** `tsc -b` clean; full suite **131 files / 1289 tests green** (down from
+  138/1345 — file-count drop matches the 7 deleted test files exactly, sanity-checked per this
+  file's own "don't just check still-passes" rule); `oxlint` clean (one pre-existing, unrelated
+  warning in `_misc/spike-webllm/smoke.mjs`); `graphify update .` run, real topology change (4038
+  nodes/7384 edges). **Live-browser check — the step the prior session never reached:** Playwright
+  against a real `npm run dev` Chromium session (no project launch skill existed for this app;
+  none authored, since nothing beyond the standard Vite dev-server pattern was needed). Confirmed
+  all four §3d criteria: (a) fresh load boots straight to Act 0, no flag/env, no old header/
+  sidebar, zero console errors; (b) a dropped `.dsps` file renders `ViewerMode` with the right
+  content; (c) a `?share=` URL against a mocked structure-report endpoint (Playwright route
+  interception on the persistence endpoint) renders `ViewerMode` and strips the query param; (d)
+  loading a real sample dataset mounts the shell grid and the WebLLM consent dock appears with
+  its real copy, under real eligibility conditions (aiMode set, no BYOK key, WebGPU present).
+  Screenshots confirm all four visually.
+  **Docs, master-first:** `DATASCOPE.md` gains a new **Revised (14)** entry (append-only,
+  Revised(13) left as historical record); the D71 decision-record row, §13's intro paragraph,
+  §19's intro + W8 row + its flag-flip note, and §16's three deliberately-untouched file-structure
+  lines (`featureFlags.ts`/`navigation.ts`/`WorkbenchShell.tsx` comments, per Part 0's own
+  instruction to update these only once the code landed) are all updated from "code pending" to
+  "code landed 2026-07-25." Mirrored into `build/12-workbench/README.md` (header + cutover
+  paragraph) and this leaf doc (`10-viewer-cutover.md`'s header, Files section, both remaining
+  cutover checkboxes, and Definition of done).
+  **Next concrete action:** `▶` moves to `10-studio` (v1, gated on "profiling proven in the
+  wild" — flagged explicitly per the section's own standing gate, not started).
+  **Blocker:** none. Still uncommitted — Justin commits. `/HANDOFF-W8-CUTOVER.md` is now safe to
+  delete once this is committed, same convention as the earlier `/HANDOFF-WORKBENCH-FOLD.md`.
+
+- **2026-07-25** — **`10-studio/03 semantic-dbt-export` reassigned from `Opus` to
+  "unscheduled; assign a model when pulled forward," matching `11-ml`'s posture — Justin's
+  explicit call ("not a priority").** Build-order status only, same pattern as the earlier
+  `08-persistence/03-dsps-spec` deferral: no master edit, D11/D12 untouched — the row keeps its
+  place under `10-studio` (Phase 9 still exists, still depends on Phase 8), this only removes
+  the standing model commitment and any implication it's next in line once 01/02 land. `▶`
+  stays at `10-studio` (01 quality-report is still the first unstarted row); 03 simply carries
+  no schedule until someone picks it up.
+  **Docs:** none — this doesn't reopen D11's "not an optional extension" framing or §19's Phase
+  9 scope, only defers *when* anyone commits to building it, which BUILD-ORDER.md already owns
+  without touching the spec.
+  **Blocker:** none.
+
+- **2026-07-25** — **v0.69 chartered: the hallmark visual replication. The Workbench's deferred
+  visual layer becomes a named tier with six phases, and its token layer works.** W0–W8 built the
+  shell against the pre-existing generic tokens and deliberately deferred the mocks' visual
+  system; that deferral now has a home (§19's v0.69 subsection, new
+  `build/13-hallmark-replication/README.md`, V1–V6) instead of living only in a code comment.
+  **Charters no new decision** — D71 already names the five signed-off mocks as the visual
+  reference, so no Decision-Record row was created or edited; §19 gains a tier subsection and a
+  `Revised (15)` entry, nothing more.
+  **What now works:** the app renders on the mocks' dark HUD system rather than the generic
+  violet light/dark theme. `src/app/theme.css` (44 → ~250 lines) carries the seven-surface depth
+  ladder (`void` → `elev`) with translucent rules, the amber active register, the purple copilot
+  register, and the mono-first type scale; `design.md` at the repo root is the locked system every
+  later surface defers to, `tokens.css` the framework-free copy. Geist + JetBrains Mono are
+  **self-hosted** via `@fontsource-variable/*` rather than the mocks' Google Fonts CDN — a
+  third-party font request on every load contradicts this product's "nothing leaves your machine"
+  posture; roman only, since the system bans italic headers. The 76 existing components were not
+  rewritten: they reference only seven token names, which are kept as an alias layer onto the new
+  ladder, so the swap propagated through the whole app in one file.
+  **Three real defects found and fixed, not papered over.** (a) `color-scheme: dark light` is
+  silently normalised back to `light dark` by Lightning CSS, which would have handed light
+  scrollbars and form controls to any user with no OS preference against dark surfaces — now
+  declared per-register (`dark` in `:root`, `light` in the media query), verified in the built
+  bundle, not just the source. (b) The mocks' `--c-fg-3` measures **3.16:1** against canvas while
+  carrying real text (counts, role badges, column headers) — re-solved to clear 4.5:1 (4.57 dark /
+  4.79 light). (c) `--color-bg-subtle` was referenced by a component but never defined — a dead
+  `var()`, now real. Every colour was converted by round-tripped OKLCH math rather than eyeballed;
+  every ink/accent pair clears 4.5:1 against its own surface and every value sits inside sRGB
+  gamut. The light register is the invented part (no mock specifies one) and its two
+  non-mechanical inversions — accents darkened ~22 points of lightness, hover/selected flipped to
+  darker-than-canvas — are recorded in `design.md`, because a mechanical ladder inversion makes
+  hover states vanish in a light UI.
+  **Verification:** `tsc -b` clean; `vite build` clean (10 woff2 subsets emitted); suite **131
+  files / 1289 tests green** — exactly the W8 baseline, so the token swap regressed nothing;
+  `oxlint` clean apart from the one pre-existing unrelated warning in
+  `_misc/spike-webllm/smoke.mjs`. The emitted CSS was inspected rather than trusted: the new
+  tokens resolve because Tailwind's `@theme` output lands in `@layer theme` while the real `:root`
+  is unlayered, so unlayered always wins the cascade — the self-referential
+  `--color-x: var(--color-x)` pattern the file already used is sound, not order-luck. **No live
+  browser check was run** — the session stopped before one.
+  **Deviation, logged per Handoff rule 3:** V1's code landed **ahead of its own leaf doc**,
+  breaching §13.3's binding constraint (no `src/` code before the phase's leaf doc). The session
+  began as an unscoped design request, not a build-order pickup, and the charter was written after
+  the fact. V1's box stays **unchecked** per Update rule 1 — there is no definition of done to
+  check it against yet. Writing V1's leaf doc against what shipped is its remaining work.
+  **Open call, flagged not defaulted:** Act 0's signed-off mock is theme *Specimen* — light paper,
+  Fraunces serif, violet accent — handing off to a dark amber HUD. That seam is a real coherence
+  risk and wants a human decision (V6). Act 0 currently renders on the HUD tokens, which is what
+  the shipped code already did; its Specimen mock stays unported.
+  **Next concrete action:** write V1's leaf doc (`build/13-hallmark-replication/01-token-layer.md`)
+  documenting the landed token layer against a real DoD, then check its box. V2 (shell chrome —
+  the title bar is a sixth region W1 never scaffolded, so it is additive UI, not a re-skin) is the
+  first phase needing new code, and needs its own leaf doc first. Phase 2 was **stopped
+  deliberately** mid-session by human instruction to be picked up in a fresh chat — no component
+  files were edited, so the working tree holds only the token layer plus these docs.
+  **Blocker:** none. Still uncommitted — Justin commits.
+
+- **2026-07-25** — **V1 — Token layer + locked system: leaf doc landed, box checked. No code
+  changed this session.** Authored `build/13-hallmark-replication/01-token-layer.md` against what
+  the previous session shipped — the one piece of V1 that was outstanding, since the code half was
+  already in and the box was held open only by the missing definition of done (Update rule 1).
+  The doc records the objective (a one-file token swap propagating through the seven-name alias
+  layer, not 76 rewrites), the four scope calls (alias layer over rewrites; self-hosted fonts over
+  the mocks' Google Fonts CDN, since a third-party request per load contradicts D2/§2; a derived
+  light register rather than silently regressing the light face; Act 0's Specimen register flagged,
+  not defaulted), the file-by-file spec of `design.md`/`tokens.css`/`theme.css`/`package.json`, and
+  the three defects the build fixed rather than ported (the Lightning-CSS `color-scheme`
+  normalisation, the mocks' 3.16:1 `--c-fg-3`, the dead `--color-bg-subtle` `var()`).
+  **Every acceptance criterion was re-run against the current tree, not transcribed from the prior
+  session's log** — the point of writing a DoD after the fact is that it has to be checkable now:
+  `tsc -b` clean; suite **131 files / 1289 tests green**, exactly the W8 baseline, which is the
+  criterion that actually proves an alias-layer swap changed no behaviour (a *changed* count would
+  fail it, so "still green" alone is not the test); `vite build` clean; the built bundle inspected
+  for the two things source inspection can't settle — `color-scheme` emerges single-valued per
+  register (`dark` in `:root`, `light` in the media query), and there is no `fonts.googleapis`/
+  `fonts.gstatic` reference anywhere in `dist/`, only real `@font-face` blocks for the self-hosted
+  variable faces; `oxlint` clean apart from the one pre-existing unrelated warning in
+  `_misc/spike-webllm/smoke.mjs`. Live-browser verification is **not** a criterion on this leaf and
+  is not silently skipped — it is V6's, which owns the tier-wide contrast/slop-test gate; tokens
+  alone render no new chrome, so there is nothing visual to check until V2–V5 land. The deviation
+  (code before leaf doc) is recorded in the leaf doc itself and in the section README, not just
+  here.
+  **Docs:** the new leaf doc, plus `build/13-hallmark-replication/README.md`'s per-phase-leaves
+  list ("None exist yet" → V1's link). No master or Decision-Record edit — §19's v0.69 subsection
+  and D71 already spec V1 fully; this leaf only restates it as a checkable DoD, exactly as the
+  section's binding constraint intends.
+  **Next concrete action:** `▶` moves to `13-hallmark-replication/V2` (Shell chrome — the title
+  bar is a sixth region W1 never scaffolded, so it is **additive UI**, not a re-skin: wordmark,
+  active dataset, ⌘K affordance, settings; plus tab-strip voice and region surfaces). Its leaf doc
+  does not exist yet and must land before any `src/` code, per the binding constraint V1 breached
+  — author it from `build/13-hallmark-replication/README.md`, `design.md`, master §13.3 (the
+  region inventory) and the signed-off mocks in `_implementation/_misc/ideation/hallmark/`.
+  **Blocker:** none. Still uncommitted — Justin commits.
+
+- **2026-07-25** — **V2 — Shell chrome: leaf doc authored, box stays unchecked, `▶` stays at
+  `13-hallmark-replication/V2`. No code changed this session — the leaf doc lands correctly
+  *ahead of* its code this time, unlike V1's logged deviation.** Read `README.md`, `design.md`,
+  master §13.3, `WorkbenchShell.tsx`/`StatusBar.tsx`/`CommandPalette.tsx`/`types/tabs.ts` as
+  shipped, and the `workbench-shell.html` mock's title-bar/tab-strip/status-bar CSS and markup
+  before writing anything, rather than trusting the phase-table one-liner alone.
+  **A real master-doc gap found, not assumed from the charter's "sixth region" phrasing:** §13.3's
+  own macrostructure sentence names six things (explorer, canvas, ai-pane, inspector, palette,
+  status bar) and never mentions a title bar — confirms the gap is literal. §13.3's status-bar
+  paragraph also currently assigns it "gear → Settings tab"; the mock's status bar carries zero
+  gear (posture/engine/rows/theme-toggle only) and puts the only gear in the title bar instead.
+  Both need a master-first edit landed *with* V2's code — logged in the leaf doc's own Acceptance
+  criteria so the next session doesn't miss it.
+  **Five scope calls written into the leaf doc, same discipline as V1's four:** (1) `TitleBar` is
+  a new `src/app/` component, not folded inline into `ShellGrid`. (2) The settings gear moves from
+  `StatusBar` to `TitleBar` — one entry point, not two, resolving the mock/master disagreement by
+  reading the mock's actual status-bar markup rather than guessing. (3) Palette-open state lifts
+  out of `CommandPalette`'s local `useState` into a new `stores/paletteOpen.ts`, matching the
+  existing `pauseSignal.ts`/`selection.ts` pattern, so `TitleBar`'s button and the `⌘K` keyboard
+  listener share one source of truth instead of a synthetic-keydown hack. (4) Per-`TabType`
+  glyphs use `lucide-react` icons, not invented dingbats — `design.md`'s six-dingbat set is
+  closed and each glyph already carries a semantic role; the mock's artifact/purple glyph branch
+  is spec'd but stays inert since `types/tabs.ts`'s `TAB_KIND` has no `'artifact'` member yet, same
+  posture V1 took toward the dead `--color-bg-subtle` `var()`. (5) The title bar's "active
+  dataset" label degrades honestly for the real multi-dataset session model — `useDatasetsStore`
+  is an array with no "active" concept, unlike the mock's single-dataset illustrative data; shows
+  the one dataset's name when exactly one is loaded, a plain table count otherwise, reusing
+  `StatusBar`'s existing `tables.length` reduction rather than inventing state.
+  **Unlike V1, unit tests are in scope** — flagged explicitly in the leaf doc's Acceptance
+  criteria — because this phase adds real interactive surface (a shared open/close store, a
+  settings-gear callback move), not just a stylesheet swap.
+  **Docs:** the new leaf doc; `build/13-hallmark-replication/README.md`'s per-phase-leaves list
+  updated (V2 row added, noting the doc lands ahead of code this time). No master edit yet — the
+  §13.3 amendment is spec'd in the leaf doc as part of *V2's own future work*, to land master-first
+  together with the code, not in this doc-only session.
+  **Next concrete action:** build V2's code against `02-shell-chrome.md` — `TitleBar.tsx` +
+  `stores/paletteOpen.ts` (new), `WorkbenchShell.tsx`/`StatusBar.tsx`/`CommandPalette.tsx`/
+  `types/tabs.ts` (modified), the tab-strip/region-surface CSS, the five new/updated test files,
+  and the master §13.3 master-first edit — all in the same session, then check V2's box against
+  the leaf doc's own Acceptance criteria and move `▶` to `13-hallmark-replication/V3`.
+  **Blocker:** none. Still uncommitted — Justin commits.
+

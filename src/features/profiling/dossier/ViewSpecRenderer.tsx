@@ -81,7 +81,7 @@ export function ViewSpecRenderer({ spec, interactions }: { spec: ViewSpec; inter
   const { valid, errors } = validateViewSpec(spec);
   if (!valid) {
     return (
-      <div className="rounded-lg border border-red-400/50 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-400">
+      <div className="rounded-lg border border-(--color-error)/40 bg-(--color-error)/5 p-4 text-sm text-(--color-error)">
         Invalid view spec: {errors.join('; ')}
       </div>
     );

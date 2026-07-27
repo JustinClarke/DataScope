@@ -115,3 +115,36 @@ describe('buildDspsHtml', () => {
     expect(html).toContain('&lt;img');
   });
 });
+
+// V6c — the artifact carries the design system rather than a stylesheet of its
+// own. `exportTheme.test.ts` pins the values; these assert the document spends
+// them the way design.md says to.
+describe('buildDspsHtml — the ported visual layer', () => {
+  const html = buildDspsHtml(report(), 'https://app.example/?ref=dsps-report');
+  const style = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
+
+  it('spends no colour outside the token layer', () => {
+    expect(style).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(style).not.toMatch(/\b(?:white|black|red|green|blue|gray|grey|silver)\b/i);
+    for (const [, value] of style.matchAll(/(?:^|[\s;{])(?:color|background)\s*:\s*([^;}]+)/g)) {
+      expect(value).toContain('var(--');
+    }
+  });
+
+  it('follows the reader’s register — dark, a light query, and print last', () => {
+    // canvas is declared three times: :root, the light query, and print.
+    expect(html.match(/--color-canvas:/g)).toHaveLength(3);
+    const light = style.indexOf('@media (prefers-color-scheme: light)');
+    expect(light).toBeGreaterThan(style.indexOf(':root {'));
+    expect(style.indexOf('@media print')).toBeGreaterThan(light);
+  });
+
+  it('carries the shipped wordmark, amber on the second half', () => {
+    expect(html).toContain('Data<span class="mark">Scope</span>');
+    expect(style).toContain('.mark { color: var(--color-active); }');
+  });
+
+  it('spends the amber register exactly twice — the wordmark and the D26 link', () => {
+    expect(style.match(/var\(--color-active\)/g)).toHaveLength(2);
+  });
+});

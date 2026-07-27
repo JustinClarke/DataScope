@@ -6,7 +6,7 @@ import { runQuery } from '../../services/sql';
 import { runTransform, materializeInsteadOfMutation, forceMutation, isSourceMutation } from '../../services/transforms';
 import { classifyStatement, type StatementInfo } from '../../lib/statementClass';
 import { useThreadPrefill } from '../../hooks/useThreadPrefill';
-import { prefillString } from '../../lib/threadPrefill';
+import { prefillString, type ModulePrefill } from '../../lib/threadPrefill';
 import type { QueryResult } from '../../types';
 import { QuerySuggestions } from './QuerySuggestions';
 import { QueryResultsPanel } from './QueryResultsPanel';
@@ -18,7 +18,12 @@ import { downloadRecipe } from './resultsExport';
 // i.e. not before the SQL sidebar card is clicked for the first time.
 const MonacoWrapper = lazy(() => import('./MonacoWrapper'));
 
-export function SqlModule() {
+interface SqlModuleProps {
+  /** The Workbench tab's own initializer (W7.5) — see `useThreadPrefill`'s `override` doc. */
+  prefill?: ModulePrefill;
+}
+
+export function SqlModule({ prefill: prefillOverride }: SqlModuleProps = {}) {
   const sql = useQueryStore((state) => state.sql);
   const status = useQueryStore((state) => state.status);
   const hasDerivedTables = useDatasetsStore((state) => state.tables.some((t) => t.origin === 'derived'));
@@ -28,7 +33,7 @@ export function SqlModule() {
   // insight routes here, carrying the exact query that found the duplicate
   // rows (§ capabilities.ts's insightAction). Opens "on the answer": runs
   // immediately, same as pressing Run, rather than waiting on user input.
-  const prefill = useThreadPrefill();
+  const prefill = useThreadPrefill(prefillOverride);
   useEffect(() => {
     const prefillSql = prefillString(prefill, 'sql');
     if (prefillSql) runQuery(prefillSql).catch(() => {});

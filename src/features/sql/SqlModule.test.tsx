@@ -14,10 +14,10 @@ import type { Dataset, TableRegistryEntry } from '../../types';
 // (App.tsx) — QuerySuggestions, rendered inside SqlModule, calls
 // useEducationalPanel() unconditionally, so every render here needs the same
 // wrapper or that hook throws outside a provider.
-function renderSqlModule() {
+function renderSqlModule(prefill?: Record<string, unknown> | null) {
   return render(
     <EducationalPanelProvider>
-      <SqlModule />
+      <SqlModule prefill={prefill} />
     </EducationalPanelProvider>,
   );
 }
@@ -240,6 +240,18 @@ describe('SqlModule', () => {
 
     await waitFor(() => expect(useUIStore.getState().pendingPrefill).toBeNull());
     expect(sqlService.runQuery).not.toHaveBeenCalled();
+  });
+
+  it('W7.5: a `prefill` prop (the Workbench tab\'s own initializer) wins over whatever the old shell\'s global store holds', async () => {
+    // Deliberately different from the prop below — proves the prop is used,
+    // not just "no prop passed" falling through to the (empty) global.
+    useUIStore.getState().setActiveModule('sql', null, { tableName: 'customers', columns: [], sql: 'SELECT * FROM customers' });
+    renderSqlModule({ tableName: 'orders', columns: [], sql: 'SELECT * FROM orders' });
+
+    await waitFor(() => expect(sqlService.runQuery).toHaveBeenCalledWith('SELECT * FROM orders'));
+    expect(sqlService.runQuery).not.toHaveBeenCalledWith('SELECT * FROM customers');
+    // The global store's own prefill is untouched — the override path never reads or clears it.
+    expect(useUIStore.getState().pendingPrefill).toEqual({ tableName: 'customers', columns: [], sql: 'SELECT * FROM customers' });
   });
 
   it('disables "Export recipe" with no derived tables and enables it once one exists', async () => {

@@ -13,6 +13,21 @@ those builds deferred to it.
 **Referenced by:** `build/09-edge/01-ai-router.md`, `build/v0.25/03-webllm-handoff.md` (the D43
 verdict is that build's **hard gate**).
 
+> **Pending amendment request (raised 2026-07-26, not yet decided — no part of this ADR has
+> changed).** A **Settings model-rating pane** is wanted: several WebLLM models offered for
+> download, each with an estimated accuracy, so the user picks the trade-off. That runs into two
+> constraints below and cannot proceed without amending this ADR. **Constraint 1** pins exactly
+> one model precisely because it is the one measured to coexist with DuckDB-Wasm — the 3B options
+> are recorded here as *unverified on 8 GB* — so a chooser means probing each offered model
+> against the D43 coexistence criterion. **Constraint 4** forbids an unearned accuracy claim: the
+> existing 92% is a simple-schema floor on a seeded single-table set with no cloud head-to-head,
+> and **a per-model percentage rendered in Settings is exactly the kind of number D40 gates**, so
+> each model needs its own eval run and the figure must carry its scope, never appear bare. The
+> D70 download-confirm — currently *the* single WebLLM consent gate for one ~830 MB pull — also
+> needs re-reading against a repeatable, multi-size download choice. Recorded as item C in
+> [`../../build/14-workspace-streamline/00-synthesis-and-limits-probe.md`](../../build/14-workspace-streamline/00-synthesis-and-limits-probe.md);
+> it blocks nothing in v0.70.
+
 ## Context
 Resolves AI routing: the tool-use loop shape, the provider abstraction, and BYOK pass-through vs. vault. Must record the chosen NL→SQL model **with its neurons-per-turn cost**, since that sets the effective size of the shared free Workers-AI pool (§11.2). Deferred to Phase-4 AI-router work, when the model choice and its measured cost are known.
 

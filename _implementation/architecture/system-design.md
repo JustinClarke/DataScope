@@ -114,6 +114,22 @@ own seams. **(4) Shell-wide selection** (table/column/map edge) is one store —
 `stores/selection.ts` — feeding the options strip and inspector
 ([`../build/12-workbench/`](../build/12-workbench/)).
 
+**D73 amendment (2026-07-26 — the workspace streamline, master §13.3/§19 v0.70,
+[`../build/14-workspace-streamline/`](../build/14-workspace-streamline/README.md)).** Three of
+these structural rules gain a consumer or a constraint; none is overturned. **(4)**'s selection
+store now feeds the **drawer** (Info + SQL console) rather than a scent-only inspector, and the
+options strip it also fed is retired — whatever renders the subject-scoped ranked list on the map
+inherits the same one-ranker contract (D58). **(2)** keep-mounted extends to **query tabs**, the
+artifact kind's first live member (pin-from-console or a chosen suggestion; per-instance, never
+deduped). **(1)** the nav facade loses its `'sql'` destination — `TabType`, `TAB_TYPE_BY_MODULE`
+and the palette entry go or re-point, since the console replaces the standalone page. The
+envelope invariant is untouched: query tabs are app-authored envelopes carrying user-typed SQL.
+**One new structural rule rides with it — the shared guarded run path.** Every runner (the
+console and each query tab) executes through one path, and `TransformGuardModal` intercepts
+there rather than mounting per surface; N independent runners each guarding themselves is a
+data-loss path the single SQL page never had. Monaco's lazy boundary moves onto the console's
+first open, since the drawer mounts in every session.
+
 ## Core technology stack (§6)
 
 | Layer | Technology |
@@ -147,7 +163,8 @@ src/
 ├── features/
 │   ├── ingestion/              # Drop zone, sample picker, API URL ingest, telemetry
 │   ├── profiling/              # Auto-profile dashboard, column cards, schema table
-│   ├── sql/                    # Monaco wrapper, suggestions, results grid, auto-chart
+│   ├── sql/                    # Monaco wrapper, suggestions, results grid, auto-chart — (D73) the drawer console + query tabs; the standalone SQL tab is deleted, and the shared guarded run path both call lives here
+│   ├── inspector/              # (Workbench, D71) bottom region — (D73) the two-view drawer: Info + console, resize/expand, viewer-mode absence
 │   ├── charts/                 # Time series, correlation, distribution, categorical
 │   ├── explorer/               # (Workbench, D71) left explorer — grown from TableList; per-table actions, Add data, share-links entry
 │   ├── map/                    # (Workbench, D71) dataset map — ERD + Blueprint face; ABSORBS JoinGraphModule (from charts/) and DossierModule (from profiling/) — a move, not an addition (§13.3)

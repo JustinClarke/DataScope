@@ -1,5 +1,4 @@
 import { useRef, useState, type DragEvent, type KeyboardEvent, type MouseEvent } from 'react';
-import { UploadCloud } from 'lucide-react';
 import { collectFilesFromDataTransfer } from './folderTraversal';
 
 interface DropZoneProps {
@@ -53,23 +52,30 @@ export function DropZone({ onFiles, disabled = false }: DropZoneProps) {
       }}
       onDragLeave={() => setIsDragActive(false)}
       onDrop={handleDrop}
-      className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
+      // min-h steps down from V6d's 48 because the drop zone no longer owns the
+      // wider of two columns — Act 0's viewport-fit frame makes this panel one
+      // column, so 32 keeps the same optical weight against a narrower measure
+      // while leaving the URL form and all five samples inside one 800px-tall
+      // viewport, which is where a 13" laptop actually lands. Still a 128px
+      // target — the page's primary affordance is not in doubt at this size.
+      className={`flex min-h-32 flex-col justify-center gap-2 rounded-(--radius-xs) border border-dashed bg-(--color-card) px-6 py-6 transition-colors ${
         disabled
-          ? 'cursor-not-allowed opacity-50 border-(--color-border)'
+          ? 'cursor-not-allowed border-(--color-rule) opacity-50'
           : isDragActive
-            ? 'cursor-pointer border-(--color-accent) bg-(--color-border)'
-            : 'cursor-pointer border-(--color-border) hover:border-(--color-accent)'
+            ? 'cursor-pointer border-solid border-(--color-active) bg-(--color-elev)'
+            : 'cursor-pointer border-(--color-rule) hover:border-(--color-rule-hi)'
       }`}
     >
-      <UploadCloud size={32} className="text-(--color-fg-muted)" aria-hidden="true" />
-      <p className="text-(--color-fg)">Drop files, a folder, or a ZIP archive here</p>
-      <p className="text-sm text-(--color-fg-muted)">
+      <p className="text-[length:var(--text-lg)] text-(--color-ink)">
+        Drop files, a folder, or a ZIP archive here
+      </p>
+      <p className="text-[length:var(--text-base)] text-(--color-ink-3)">
         CSV, TSV, Parquet, or JSON/JSONL — or click to browse,{' '}
         <button
           type="button"
           disabled={disabled}
           onClick={openFolderPicker}
-          className="underline underline-offset-2 hover:text-(--color-fg) disabled:cursor-not-allowed"
+          className="underline underline-offset-2 hover:text-(--color-ink) disabled:cursor-not-allowed"
         >
           choose a folder
         </button>

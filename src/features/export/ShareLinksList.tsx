@@ -51,7 +51,7 @@ export function ShareLinksList() {
                   {expiresAt.toLocaleDateString()}
                 </span>
                 {failedToken === link.token && (
-                  <span className="ml-2 text-sm text-red-600 dark:text-red-400">couldn't delete — try again</span>
+                  <span className="ml-2 text-sm text-(--color-error)">couldn't delete — try again</span>
                 )}
               </div>
               <button

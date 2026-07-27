@@ -78,7 +78,11 @@ semantics; the renderers themselves are covered in
   read-only, not a modal: options strip fully absent (consumption-only), no right AI pane,
   read-only explorer (no Add-data, no per-table management), **read-only inspector — edge
   evidence renders, override controls do not** (the structure belongs to the sender's
-  session). The **D63 trust-chrome slot** is a full-width provenance band (structure-only
+  session). **D73 amendment (2026-07-26): the bottom region is a two-view drawer, and a viewer
+  gets Info only — no SQL console.** It must not mount one merely because it is a shell region;
+  a console over a structure report would offer query access to data the report does not carry.
+  A recipient sent the *dataset* instead (the escalated share) lands in an ordinary session and
+  gets a console there, which needs nothing built. The **D63 trust-chrome slot** is a full-width provenance band (structure-only
   claim · signer · signature-verified state), and the **D45 provenance chrome renders in
   full** (computed-as-of snapshot + hash, provenance tags, banned-permanence wording).
   Exactly two exits: **Export report** (where the payload allows) and **Start my own

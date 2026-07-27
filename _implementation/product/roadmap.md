@@ -108,6 +108,28 @@ mode + cutover (§9.1 decided, flag flip, soak, old shell + §13.0 deleted maste
 has); per-phase DoDs live in the `12-workbench/` leaves. No v0 scope, date, or cut-order
 change (D27).
 
+## v0.69 → v0.70 — the Workbench's visual layer, then its restreamlining *(D71 execution, then D73)* → [`../build/13-hallmark-replication/`](../build/13-hallmark-replication/) · [`../build/14-workspace-streamline/`](../build/14-workspace-streamline/)
+
+Two tiers after the W8 cutover, both sequenced before v1 by human instruction, neither touching
+scope, cutline, or the D27 date.
+
+**v0.69 (V1–V6e, complete 2026-07-25) charters no decision** — W0–W8 built the Workbench against
+generic tokens and deferred the visual layer; this tier ports the five signed-off hallmark mocks
+into the shipped shell, with the system locked in `.hallmark/design.md`, four departures recorded,
+and a conformance gate that measured rather than asserted.
+
+**v0.70 (S0–S7) charters D73**, because it changes what the shell *is* after a dataset is loaded
+rather than how it looks. **SQL is written in exactly one place:** the bottom inspector becomes a
+two-view drawer (Info + a **SQL console**), the standalone SQL tab is deleted, every surface that
+*displays* SQL gains a run action into that console **without navigating away from the chart or
+answer on screen**, and keepers promote into **query tabs** — the artifact tab kind's first live
+member. The options strip retires into the map's Suggested Explorations; the map gains
+Structural ‖ Behavioral finding columns; the explorer rail gains reflowed rows, universal column
+disclosure, a persistent quality panel, and Add-data. Three D71 positions are reversed on the
+record (the inspector charter, the singleton worked example, the Settings tab). The **AI Dataset
+Synthesis block is blocked, not scheduled** — its prose has no local producer, and it may not
+imply a model ran when none did. Act 0/Act 1 are explicitly out of scope.
+
 ## v0.25 — Blueprint-forward opening + edge synthesis → WebLLM + BYOK *(post-launch tier, D70)*
 
 A named tier shipped **after** the v0 Oct 6 launch and **before** v0.5 — a curation of already-decided

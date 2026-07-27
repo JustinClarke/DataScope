@@ -1,0 +1,169 @@
+{
+  "ranAt": "2026-07-26T13:39:49.112Z",
+  "source": "eval/synthesis/SYNTHESIS-VARIANT-RESULTS.json (recorded, no new model calls)",
+  "closureRules": [
+    "case-insensitive match for table names, column names, and semanticType values",
+    "numeric normalization — thousands separators and trailing %/σ stripped before comparing digit runs",
+    "year extraction — the 4-digit year prefix of any minDate/maxDate is allowed",
+    "date-span arithmetic — |maxYear - minYear| and |maxYear - minYear| + 1 are both allowed as span-length numbers",
+    "baseline-headline carryover — every numeric token and quoted substring already present in the given baseline headline is allowed verbatim (it crossed the wire in the request's `headline` field, and the system prompt requires the model preserve it)"
+  ],
+  "rows": [
+    {
+      "key": "production__titanic",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "production__ollama__titanic",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v1-domain-and-dates__ollama__titanic",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v2-suited-for__ollama__titanic",
+      "truth": "accurate",
+      "ok": false,
+      "offending": [
+        "Analyze"
+      ]
+    },
+    {
+      "key": "production__stock_prices",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "production__ollama__stock_prices",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v1-domain-and-dates__ollama__stock_prices",
+      "truth": "accurate",
+      "ok": false,
+      "offending": [
+        "Prices",
+        "Spanning",
+        "Show",
+        "Near",
+        "Perfect",
+        "Correlation"
+      ]
+    },
+    {
+      "key": "widened-v2-suited-for__ollama__stock_prices",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "production__weather",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "production__ollama__weather",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v1-domain-and-dates__ollama__weather",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v2-suited-for__ollama__weather",
+      "truth": "fabricated",
+      "ok": false,
+      "offending": [
+        "Manchester",
+        "5"
+      ]
+    },
+    {
+      "key": "production__product_reviews",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "production__ollama__product_reviews",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v1-domain-and-dates__ollama__product_reviews",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v2-suited-for__ollama__product_reviews",
+      "truth": "fabricated",
+      "ok": false,
+      "offending": [
+        "3"
+      ]
+    },
+    {
+      "key": "production__ecommerce",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "production__ollama__ecommerce",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v1-domain-and-dates__ollama__ecommerce",
+      "truth": "accurate",
+      "ok": true,
+      "offending": []
+    },
+    {
+      "key": "widened-v2-suited-for__ollama__ecommerce",
+      "truth": "accurate",
+      "ok": false,
+      "offending": [
+        "Jan",
+        "Dec",
+        "Explore"
+      ]
+    }
+  ],
+  "f1": {
+    "statement": "Fares for survivors average 1.6σ higher than non-survivors.",
+    "ok": true,
+    "offending": []
+  },
+  "f3": {
+    "statement": "The data covers the single voyage of the Titanic, which sank in April 1912.",
+    "ok": false,
+    "offending": [
+      "April",
+      "1912"
+    ]
+  },
+  "accurateTotal": 18,
+  "accurateRejected": 3,
+  "falseRejectRate": 0.16666666666666666,
+  "fabricatedTotal": 2,
+  "fabricatedCaught": 2
+}

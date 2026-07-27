@@ -2,6 +2,14 @@
 
 **Tier:** v0 · Phase 2 · **Master spec:** §10 Module 2
 
+> **Re-homed by D73 (2026-07-26) — v0.70 / S6.** The templates are unchanged; their surface
+> moves. With the SQL page deleted, suggestions live on the dataset map as **Suggested
+> Explorations** — three at a time with a **view-more** to the full runnable list — and picking
+> one **opens a query tab already running**, rather than seeding the console. This resolves what
+> would otherwise have been two competing suggestion surfaces, and it leaves the console's cold
+> state to a composed info pane with an explicit "open SQL editor" control instead of a query
+> list.
+
 ## Objective
 
 Contextual query templates generated from the classified columns, each with a short

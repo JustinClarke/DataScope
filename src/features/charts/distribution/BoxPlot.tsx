@@ -67,15 +67,15 @@ export function BoxPlot({ stats }: { stats: BoxPlotStats }) {
           y={BOX_TOP}
           width={Math.max(0.5, Math.abs(xQ3 - xQ1))}
           height={BOX_BOTTOM - BOX_TOP}
-          fill="var(--color-accent)"
+          fill="var(--chart-1)"
           fillOpacity={0.25}
-          stroke="var(--color-accent)"
+          stroke="var(--chart-1)"
           strokeWidth={0.4}
           vectorEffect="non-scaling-stroke"
         />
 
         {/* Median line */}
-        <line x1={xMedian} x2={xMedian} y1={BOX_TOP} y2={BOX_BOTTOM} stroke="var(--color-accent)" strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
+        <line x1={xMedian} x2={xMedian} y1={BOX_TOP} y2={BOX_BOTTOM} stroke="var(--chart-1)" strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
 
         {/* Outliers */}
         {outliers.map((value, i) => (

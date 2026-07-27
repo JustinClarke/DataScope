@@ -78,7 +78,7 @@ function InsightCard({ candidate, onShowSql }: { candidate: InsightCandidate; on
           {charting ? (
             <p className="text-sm text-(--color-fg-muted)">Building chart…</p>
           ) : chartError ? (
-            <p className="text-sm text-red-500">{chartError}</p>
+            <p className="text-sm text-(--color-error)">{chartError}</p>
           ) : chart ? (
             <AutoChartPanel result={chart} sql={candidate.sql} />
           ) : null}

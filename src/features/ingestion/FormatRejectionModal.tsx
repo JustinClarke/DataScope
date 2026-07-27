@@ -9,7 +9,7 @@ interface FormatRejectionModalProps {
 export function FormatRejectionModal({ message, onDismiss, ariaLabel = 'Unsupported file' }: FormatRejectionModalProps) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-(--color-scrim)"
       role="presentation"
       onClick={onDismiss}
     >

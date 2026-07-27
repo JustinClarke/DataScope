@@ -13,7 +13,7 @@ interface TransformGuardModalProps {
  */
 export function TransformGuardModal({ targetTable, onMaterialize, onModifyAnyway, onCancel }: TransformGuardModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="presentation" onClick={onCancel}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--color-scrim)" role="presentation" onClick={onCancel}>
       <div
         role="dialog"
         aria-modal="true"

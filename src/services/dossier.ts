@@ -34,7 +34,11 @@ export async function loadTimeCoverage(tables: TableRegistryEntry[]): Promise<Ti
   const jobs: Array<{ table: TableRegistryEntry; columnName: string }> = [];
   for (const table of tables) {
     for (const column of table.columns ?? []) {
-      if (column.semanticType === 'Temporal') jobs.push({ table, columnName: column.name });
+      // A bare TIME column has no calendar date to range over — buildDateRangeSql's
+      // CAST(... AS DATE) has no TIME source in DuckDB, so it would always error.
+      if (column.semanticType === 'Temporal' && column.physicalType.toUpperCase() !== 'TIME') {
+        jobs.push({ table, columnName: column.name });
+      }
     }
   }
   if (jobs.length === 0) return [];

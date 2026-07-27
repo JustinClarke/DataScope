@@ -34,7 +34,7 @@ Both paths produce a `design.md` Hallmark can read on subsequent runs; the file 
 
 - **Page-builds only.** Skip on component-scope — a single component is too small to be a system.
 - **Multi-page redesign keeps existing behaviour.** `hallmark redesign --multi-page` produces the heavyweight `design.md` per [`verbs/redesign.md`](verbs/redesign.md) § Multi-page flow. That flow already implies a locked system, so the rule there is unchanged.
-- **No-overwrite policy.** If `design.md` already exists at the project root, do NOT overwrite. Refresh its `## Exports` section instead and emit one line: *"design.md detected — refreshed Exports, system unchanged."*
+- **No-overwrite policy.** If `design.md` already exists at the project root or in `.hallmark/`, do NOT overwrite. Refresh its `## Exports` section in place instead and emit one line: *"design.md detected — refreshed Exports, system unchanged."*
 
 ## CTA — surface the offer in the Step 5 preview
 
