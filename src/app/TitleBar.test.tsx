@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render } from '@testing-library/react';
 import { TitleBar } from './TitleBar';
 import { useDatasetsStore } from '../stores/datasets';
 import { usePaletteOpenStore } from '../stores/paletteOpen';
+import { useTabsStore } from '../stores/tabs';
 import type { Dataset, TableRegistryEntry } from '../types';
 
 function dataset(overrides: Partial<Dataset> & Pick<Dataset, 'id' | 'name'>): Dataset {
@@ -30,6 +31,7 @@ function table(overrides: Partial<TableRegistryEntry> & Pick<TableRegistryEntry,
 beforeEach(() => {
   useDatasetsStore.setState({ datasets: [], tables: [], workerStatus: 'idle', workerError: null });
   usePaletteOpenStore.setState({ open: false });
+  useTabsStore.setState({ tabs: [], activeTabId: null });
 });
 afterEach(() => cleanup());
 
@@ -69,6 +71,16 @@ describe('TitleBar (V2, §13.3)', () => {
     const { getByLabelText } = render(<TitleBar onOpenSettings={onOpenSettings} />);
     fireEvent.click(getByLabelText('Settings'));
     expect(onOpenSettings).toHaveBeenCalled();
+  });
+
+  // S5 (D73): Export stays a tab, its entry point moves into this cluster.
+  it('clicking Export opens the Export tab', () => {
+    const { getByTestId } = render(<TitleBar onOpenSettings={vi.fn()} />);
+    fireEvent.click(getByTestId('title-bar-export-button'));
+
+    const tabs = useTabsStore.getState().tabs;
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0].type).toBe('export');
   });
 
   it('clicking the ⌘K button flips the shared palette-open state', () => {

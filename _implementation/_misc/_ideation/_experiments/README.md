@@ -187,12 +187,22 @@ One approach per session, cold. Paste:
 | [06](06-schema-constrained-slots.md) | **Constrained decoding into typed slots** — invalid output unrepresentable at decode time | F2, F3 | closed vocabulary | needs a platform check first |
 | [07](07-diagnostics.md) | **Instruments** (not candidates) — N-sampling variance + opaque-schema ablation | measures F3, F4 | n/a | run alongside any of the above |
 | [08](08-computed-facts-with-data.md) | **Computed facts + data access** — app computes real stats, model narrates with citations (**lifts Invariant 1**) | **F1, F2, F3** | model, citation-bound to app-computed facts | combines 03's citation check with richer, data-derived facts |
+| [09](09-llm-cognition-data-alignment.md) | **Cognition & data alignment** — measure which mode the model is in (narrate / reason / pattern-complete), then design the input for it | the root cause under F1–F3 | n/a — an instrument plus a prompt redesign | 08's post-verdict critique |
+| [10](10-grounding-ladder.md) | **The grounding ladder** — consolidation. Row ladder × opaque-schema ablation × fact corruption, scored **per panel slot and per claim class** against a pre-written answer key, across three surfaces (panel, NL→SQL, offer execution), under a local-tier-only Invariant 1 override | reading-vs-recall, plus which architecture each *slot* ships | n/a — decides what the input is, then what fills each slot | this README, then 08's verdict, then 09 |
 
 **If you only run three:** [05](05-offers-not-claims.md) (may dissolve the problem outright and
 reuses existing `RankedAction` infrastructure), then [03](03-clause-citation-binding.md) (the only
 one that catches F1), then [04](04-model-as-editor.md) (verification is a set-inclusion check, so it
 either works or it doesn't within an hour). Run [07](07-diagnostics.md)'s N-sampling alongside
 whichever you pick — R2 is not optional.
+
+**Superseded by 10 (2026-07-28).** With 03 and 08 both run and the privacy constraint lifted for
+the local tier, the open question is no longer which mechanism to pick — it is whether the model
+reads the data at all. [10](10-grounding-ladder.md) folds 01's `detectCapabilities`, 02's closure
+discipline, 03's citation check, 04's editor architecture, 06's decode-time constraint, 07's two
+instruments, 08's computed facts, and 09's corruption probe into one two-phase pass. Run it before
+starting any remaining single-candidate session. Note the run-one-session prompt above still names
+the folder's old path (`ai architecture experimentation`); it is now `_experiments/`.
 
 ## Already rejected — do not spend a session on these
 

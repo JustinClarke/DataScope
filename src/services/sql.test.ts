@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cancelQuery, getHistory, isSelectLike } from './sql';
-import { useQueryStore } from '../stores/query';
+import { useQueryStore, CONSOLE_SESSION } from '../stores/query';
 import type { QueryResult } from '../types';
 
 // These cover the pure, engine-free surface of the service. runQuery needs a
@@ -15,29 +15,23 @@ const result: QueryResult = {
 };
 
 beforeEach(() => {
-  useQueryStore.setState({
-    sql: '',
-    status: 'idle',
-    result: null,
-    error: null,
-    history: [],
-    charts: [],
-  });
+  useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
 });
 
 describe('sql service', () => {
   it('getHistory returns results from successful history entries only', () => {
-    useQueryStore.getState().queryStarted('SELECT 1');
-    useQueryStore.getState().querySucceeded(result);
-    useQueryStore.getState().queryStarted('SELECT bad');
-    useQueryStore.getState().queryFailed('boom');
+    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'SELECT 1');
+    useQueryStore.getState().querySucceeded(CONSOLE_SESSION, result);
+    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'SELECT bad');
+    useQueryStore.getState().queryFailed(CONSOLE_SESSION, 'boom');
 
     expect(getHistory()).toEqual([result]);
   });
 
   it('cancelQuery is a no-op when nothing is in flight', () => {
     expect(() => cancelQuery()).not.toThrow();
-    expect(() => cancelQuery('nonexistent-id')).not.toThrow();
+    expect(() => cancelQuery(CONSOLE_SESSION, 'nonexistent-id')).not.toThrow();
+    expect(() => cancelQuery('tab-1')).not.toThrow();
   });
 });
 

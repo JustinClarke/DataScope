@@ -1,30 +1,32 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
-import { useQueryStore } from '../../stores/query';
+import { useQuerySession, useQueryStore, type QuerySessionId } from '../../stores/query';
 import { useDatasetsStore } from '../../stores/datasets';
 import { classifyStatement } from '../../lib/statementClass';
 import { downloadTable } from '../../services/export';
 import { ResultsGrid } from './ResultsGrid';
+import { RunSqlButton } from './RunSqlButton';
 import { AutoChartPanel } from './AutoChartPanel';
 
 /**
- * Results / Chart / History — shared by the SQL playground and the Pivot
- * builder (D68d: Pivot is its own ANALYZE destination now, EXPLORE/SQL's
- * neighbor). Both feed the same query store (`runQuery`), so there is exactly
- * one rendering of "what a query produced" rather than a second execution
- * path (D49) — reads the store directly, no props.
+ * "What a query produced" — one rendering, shared by the console, Pivot and
+ * every query tab (D49: one execution path, one rendering of its outcome).
+ * S5 makes it session-scoped rather than store-global: the shared *rendering*
+ * was always right, the shared *state* was the thing query tabs couldn't have.
+ *
+ * This is also where two of the deleted SQL page's affordances (§13.3) live, so
+ * they reach the query tabs by construction rather than being copied onto them:
+ * auto-charting a result, and the Download-Parquet-on-CTAS shortcut.
  */
-export function QueryResultsPanel() {
-  const status = useQueryStore((state) => state.status);
-  const result = useQueryStore((state) => state.result);
-  const error = useQueryStore((state) => state.error);
-  const history = useQueryStore((state) => state.history);
-  const sql = useQueryStore((state) => state.sql);
+export function QueryOutput({ sessionId }: { sessionId: QuerySessionId }) {
+  const { status, result, error, sql, lastRunSql } = useQuerySession(sessionId);
   const tables = useDatasetsStore((state) => state.tables);
   const [exportingDerived, setExportingDerived] = useState(false);
 
-  const lastRunSql = history[0]?.sql ?? sql;
-  const lastRunInfo = classifyStatement(lastRunSql);
+  // What ran, not what is typed — the two diverge the moment the buffer is
+  // edited after a run, and every decision below is about the result.
+  const ranSql = lastRunSql || sql;
+  const lastRunInfo = classifyStatement(ranSql);
   const lastRunWasQuery = lastRunInfo.class === 'query';
   // A CTAS that just succeeded gets a Parquet shortcut right on the Results
   // header (§12.2 "wherever a table is") — found by name in the registry
@@ -62,36 +64,51 @@ export function QueryResultsPanel() {
             </button>
           )}
         </div>
-        <ResultsGrid status={status} result={result} error={error} sql={lastRunSql} />
+        <ResultsGrid status={status} result={result} error={error} sql={ranSql} />
       </div>
 
       {status === 'success' && result && result.rowCount > 0 && lastRunWasQuery && (
         <div>
           <h3 className="mb-2 text-sm font-medium text-(--color-fg)">Chart</h3>
-          <AutoChartPanel result={result} sql={lastRunSql} />
+          <AutoChartPanel result={result} sql={ranSql} />
         </div>
       )}
+    </div>
+  );
+}
 
-      <div>
-        <h3 className="mb-2 text-sm font-medium text-(--color-fg)">History</h3>
-        {history.length === 0 ? (
-          <p className="text-sm text-(--color-fg-muted)">No statements run yet this session.</p>
-        ) : (
-          <ul className="flex flex-col gap-1 font-mono text-xs">
-            {history.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex items-center justify-between gap-3 rounded border border-(--color-border) px-2 py-1"
-              >
-                <span className="truncate text-(--color-fg-muted)">{entry.sql}</span>
+/**
+ * The session-wide log of what ran. The console renders it — it is the
+ * scratchpad, where "what did I just run" is the question. A query tab is one
+ * query and its result and renders none (S5 scope call 2).
+ */
+export function QueryHistory() {
+  const history = useQueryStore((state) => state.history);
+
+  return (
+    <div>
+      <h3 className="mb-2 text-sm font-medium text-(--color-fg)">History</h3>
+      {history.length === 0 ? (
+        <p className="text-sm text-(--color-fg-muted)">No statements run yet this session.</p>
+      ) : (
+        <ul className="flex flex-col gap-1 font-mono text-xs">
+          {history.map((entry) => (
+            <li
+              key={entry.id}
+              className="flex items-center justify-between gap-3 rounded border border-(--color-border) px-2 py-1"
+            >
+              <span className="truncate text-(--color-fg-muted)">{entry.sql}</span>
+              <div className="flex shrink-0 items-center gap-3">
                 <span className={entry.error ? 'text-(--color-error)' : 'text-(--color-fg-muted)'}>
                   {entry.error ? 'error' : `${entry.result?.executionTimeMs.toFixed(0)} ms`}
                 </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                {/* Re-runs through the same path as every other surface — no history-specific execution (S4). */}
+                <RunSqlButton sql={entry.sql} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

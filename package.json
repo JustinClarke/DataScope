@@ -17,6 +17,10 @@
     "eval:generate-then-verify": "tsx eval/02-generate-then-verify/run.ts",
     "eval:clause-citation": "tsx eval/03-clause-citation-binding/run.ts",
     "eval:computed-facts": "tsx eval/08-computed-facts/run.ts",
+    "eval:grounding-ladder:key": "tsx eval/10-grounding-ladder/buildKey.ts",
+    "eval:grounding-ladder": "tsx eval/10-grounding-ladder/run.ts",
+    "eval:grounding-ladder:chat": "tsx eval/10-grounding-ladder/runChat.ts",
+    "eval:grounding-ladder:offers": "tsx eval/10-grounding-ladder/runOffers.ts",
     "edge:dev": "wrangler dev --env staging",
     "edge:deploy:staging": "bash scripts/deploy-edge-staging.sh"
   },
@@ -24,6 +28,7 @@
     "@duckdb/duckdb-wasm": "1.32.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "@mlc-ai/web-llm": "0.2.84",
     "@tanstack/react-virtual": "^3.14.6",
     "apache-arrow": "17.0.0",

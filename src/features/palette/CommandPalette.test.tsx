@@ -4,6 +4,7 @@ import { CommandPalette } from './CommandPalette';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useTabsStore } from '../../stores/tabs';
 import { usePaletteOpenStore } from '../../stores/paletteOpen';
+import { useDrawerStore } from '../../stores/drawer';
 import type { TableRegistryEntry } from '../../types';
 
 const { openDestinationMock } = vi.hoisted(() => ({ openDestinationMock: vi.fn() }));
@@ -94,19 +95,39 @@ describe('CommandPalette', () => {
     expect(useTabsStore.getState().tabs).toHaveLength(0);
   });
 
-  it('activating a W7.5 module entry (sql) routes through the nav facade with no tab argument, and closes the palette', () => {
+  it('activating a W7.5 module entry (pivot) routes through the nav facade with no tab argument, and closes the palette', () => {
     const { getByTestId, queryByTestId } = render(<CommandPalette />);
     openPalette();
-    fireEvent.click(getByTestId('command-palette-entry-sql'));
-    expect(openDestinationMock).toHaveBeenCalledWith('sql');
+    fireEvent.click(getByTestId('command-palette-entry-pivot'));
+    expect(openDestinationMock).toHaveBeenCalledWith('pivot');
     expect(queryByTestId('command-palette')).toBeNull();
   });
 
-  it('a wired-module row renders TAB_GLYPH\'s icon; the not-yet-wired ai/ingestion rows render their own literal glyphs (V5)', () => {
+  // S5 — the deleted SQL tab's one entry became two destinations.
+  it('the SQL console entry opens the drawer console and no tab', () => {
     const { getByTestId } = render(<CommandPalette />);
     openPalette();
-    expect(getByTestId('command-palette-entry-sql').querySelector('svg')).toBeTruthy();
+    fireEvent.click(getByTestId('command-palette-entry-console'));
+    expect(useDrawerStore.getState()).toMatchObject({ view: 'console', consoleActivated: true });
+    expect(useTabsStore.getState().tabs).toHaveLength(0);
+  });
+
+  it('the New query tab entry opens an artifact query tab', () => {
+    const { getByTestId } = render(<CommandPalette />);
+    openPalette();
+    fireEvent.click(getByTestId('command-palette-entry-query-tab'));
+    const tabs = useTabsStore.getState().tabs;
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0].type).toBe('query');
+  });
+
+  it('a wired-module row renders TAB_GLYPH\'s icon; the one remaining not-yet-wired (ai) row renders its own literal glyph (V5)', () => {
+    const { getByTestId } = render(<CommandPalette />);
+    openPalette();
+    expect(getByTestId('command-palette-entry-pivot').querySelector('svg')).toBeTruthy();
+    expect(getByTestId('command-palette-entry-console').querySelector('svg')).toBeTruthy();
     expect(getByTestId('command-palette-entry-ai').textContent).toContain('✦');
-    expect(getByTestId('command-palette-entry-ingestion').textContent).toContain('＋');
+    // ingestion is wired now (S1) — it renders TAB_GLYPH's Plus icon like any other module, not the old '＋' literal.
+    expect(getByTestId('command-palette-entry-ingestion').querySelector('svg')).toBeTruthy();
   });
 });

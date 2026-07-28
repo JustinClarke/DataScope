@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { StatusBar } from './StatusBar';
 import { useDatasetsStore } from '../../stores/datasets';
-import { useQueryStore } from '../../stores/query';
+import { useQueryStore, CONSOLE_SESSION } from '../../stores/query';
 import { useSettingsStore } from '../../stores/settings';
 import { usePauseSignalStore } from '../../stores/pauseSignal';
 import type { TableRegistryEntry } from '../../types';
@@ -22,7 +22,7 @@ function table(overrides: Partial<TableRegistryEntry> & Pick<TableRegistryEntry,
 
 beforeEach(() => {
   useDatasetsStore.setState({ tables: [], datasets: [], workerStatus: 'idle', workerError: null });
-  useQueryStore.setState({ sql: '', status: 'idle', result: null, error: null, history: [], charts: [] });
+  useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
   useSettingsStore.setState({ aiMode: null });
   usePauseSignalStore.setState({ lastPaused: null });
 });
@@ -72,10 +72,10 @@ describe('StatusBar — ambient items (W7, §13.3 density budget)', () => {
     const { getByText, rerender } = render(<StatusBar />);
     expect(getByText('query — ms')).toBeTruthy();
 
-    useQueryStore.setState({
-      status: 'success',
-      result: { columnNames: [], columnTypes: [], rows: [], rowCount: 0, executionTimeMs: 42 },
-    });
+    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'SELECT 1');
+    useQueryStore
+      .getState()
+      .querySucceeded(CONSOLE_SESSION, { columnNames: [], columnTypes: [], rows: [], rowCount: 0, executionTimeMs: 42 });
     rerender(<StatusBar />);
     expect(getByText('query 42 ms')).toBeTruthy();
   });

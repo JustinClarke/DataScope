@@ -6,6 +6,9 @@ import { useDatasetsStore } from '../../stores/datasets';
 import { useSelectionStore } from '../../stores/selection';
 import { useRelationshipsStore } from '../../stores/relationships';
 import { useInferredEdgesStore } from '../../stores/inferredEdges';
+import { useDrawerStore, DRAWER_DEFAULT_HEIGHT } from '../../stores/drawer';
+import { useQueryStore, getSession, CONSOLE_SESSION } from '../../stores/query';
+import { useTabsStore } from '../../stores/tabs';
 import { EducationalPanelProvider } from '../../app/EducationalPanelContext';
 import type { ClassifiedColumn, Dataset, TableRegistryEntry } from '../../types';
 import type { FkEdge } from '../../lib/relationshipInference';
@@ -102,6 +105,15 @@ describe('Inspector', () => {
     useSelectionStore.getState().clearSelection();
     useRelationshipsStore.getState().clearOverrides();
     useInferredEdgesStore.setState({ edges: [] });
+    useDrawerStore.setState({
+      open: true,
+      view: 'info',
+      consoleActivated: false,
+      expanded: false,
+      height: DRAWER_DEFAULT_HEIGHT,
+    });
+    useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
+    useTabsStore.setState({ tabs: [], activeTabId: null });
   });
 
   it('shows a placeholder when nothing is selected', () => {
@@ -109,14 +121,41 @@ describe('Inspector', () => {
     expect(getByText(/Select a table, column, or relationship/)).toBeTruthy();
   });
 
-  it('shows a table scent — name, rows, columns, memory — and a profile click-through', () => {
+  it('shows a table scent — name, rows, columns, memory — and an Open table hand-off (S3)', () => {
     useSelectionStore.getState().selectTable('o');
     const { getByText } = render(<Inspector />);
     expect(getByText('orders')).toBeTruthy();
     expect(getByText('100 rows')).toBeTruthy();
     expect(getByText('2 cols')).toBeTruthy();
-    fireEvent.click(getByText('Open profile →'));
+    fireEvent.click(getByText('Open table →'));
     expect(openDestinationMock).toHaveBeenCalledWith('profile', 'o');
+    // §13.3: opening a table also switches the drawer to the console.
+    expect(useDrawerStore.getState().view).toBe('console');
+    expect(useDrawerStore.getState().consoleActivated).toBe(true);
+  });
+
+  it('Open table seeds a SELECT only into a never-activated, empty console — and never runs it (S3 scope call 10)', () => {
+    useSelectionStore.getState().selectTable('o');
+    const { getByText } = render(<Inspector />);
+    fireEvent.click(getByText('Open table →'));
+    expect(getSession(CONSOLE_SESSION).sql).toBe('SELECT * FROM "orders" LIMIT 100');
+    expect(getSession(CONSOLE_SESSION).status).toBe('idle');
+  });
+
+  it('Open table never overwrites a console buffer that already has text', () => {
+    useQueryStore.getState().setSql(CONSOLE_SESSION, 'SELECT 1');
+    useSelectionStore.getState().selectTable('o');
+    const { getByText } = render(<Inspector />);
+    fireEvent.click(getByText('Open table →'));
+    expect(getSession(CONSOLE_SESSION).sql).toBe('SELECT 1');
+  });
+
+  it('Open table does not seed a console that has already been activated, even if its buffer is empty', () => {
+    useDrawerStore.getState().activateConsole();
+    useSelectionStore.getState().selectTable('o');
+    const { getByText } = render(<Inspector />);
+    fireEvent.click(getByText('Open table →'));
+    expect(getSession(CONSOLE_SESSION).sql).toBe('');
   });
 
   it('shows a column scent — semantic + physical type — and a profile click-through', () => {
@@ -157,6 +196,14 @@ describe('Inspector', () => {
     expect(getByText('Candidate')).toBeTruthy();
     expect(getByText('Name differs')).toBeTruthy();
     expect(getByText('Containment 60%')).toBeTruthy();
+  });
+
+  it('offers an Open map click-through from a selected edge — rung 2 never dead-ends (S3)', () => {
+    useInferredEdgesStore.setState({ edges: [EDGE] });
+    useSelectionStore.getState().selectEdge(EDGE.id);
+    const { getByText } = render(<Inspector />);
+    fireEvent.click(getByText('Open map →'));
+    expect(useTabsStore.getState().tabs.map((t) => t.type)).toContain('map');
   });
 
   it('removing an edge from the inspector updates the shared relationships store', () => {

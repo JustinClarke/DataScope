@@ -194,6 +194,31 @@ Canvas 2D cannot resolve custom properties and some scales need numeric colour m
 `src/lib/chartPalette.ts` carries the resolved literals for both registers. That file defers to
 this one, and a test pins its literals to `theme.css`'s declarations so the two cannot drift.
 
+### Sample accent ramp
+
+**Added July 28, 2026**, for Act 0's five bundled-sample cards. The cards had shipped with four
+off-palette hex hues; this is the § Drift policy route taken rather than leaving them as local
+overrides, and it is the only place in the system where colour carries *decorative identity*
+instead of meaning.
+
+| Slot | Sample | Dark | Light |
+| :--- | :--- | :--- | :--- |
+| `--sample-1` | e-commerce | `var(--color-active)` | follows `--color-active` |
+| `--sample-2` | titanic | `oklch(71.4% 0.1434 255)` | `oklch(52% 0.15 255)` |
+| `--sample-3` | stock prices | `var(--color-ok)` | follows `--color-ok` |
+| `--sample-4` | product reviews | `oklch(83.7% 0.1644 84)` | `oklch(62% 0.14 84)` |
+| `--sample-5` | weather | `oklch(68% 0.1583 277)` | `oklch(48% 0.19 277)` |
+
+Two slots alias tokens the system already has rather than restating their values — the original
+amber and green were within rounding of `--color-active` and `--color-ok`. Only three hues are
+genuinely new, and none of them collides with a reserved register.
+
+**Why this does not spend a reserved register.** The ramp tints an `aria-hidden` glyph and its own
+8% wash on a card the user picks by *name* — it is never the only carrier of meaning, never text,
+and never a data mark, so it answers to the 3:1 non-text tier rather than 4.5:1. Worst measured on
+`elev`, both registers' worst surface: 6.80 / 10.34 / 5.79 dark and 4.74 / 3.13 / 5.96 light. It
+must not be reused for data marks — that is what § Chart palette is for.
+
 ## Typography
 
 - **Display / body:** Geist, 400 / 500 / 600 / 700. Roman only — never italic headers.
@@ -321,6 +346,30 @@ metrics of any kind. It is static: § Motion's "Reveal pattern: none" is unchang
 plate does not animate, on load or otherwise. It is `aria-hidden` with a real caption beside
 it, since it is an illustration of the product rather than data the user can act on. And it
 carries no frame that imitates a browser, a window or an IDE.
+
+**Superseded by the Act 0 rebuild. Resolved July 28, 2026** (human call, taken against the
+shipped rebuild rather than in advance of it). Act 0 was rebuilt as a three-column composition —
+editorial masthead over an ingest card, with a feature-chip rail — and the two clauses above no
+longer describe it:
+
+1. **The numbered sections and the specimen plate are both gone.** The 01/02/03 eyebrows, the
+   two-column frame and the `SpecimenPlate` figure are not part of the rebuilt page. The
+   *standing limits* above are not relaxed — they still bind any specimen this system draws
+   later, and `SpecimenPlate.tsx` remains in the tree unrendered — but Act 0 no longer carries
+   one, and the tests that required it are removed rather than left asserting an absent element.
+   § Per-page allowances' "MAY carry one Tier-B specimen" is unchanged: it was always a
+   permission, never a requirement.
+2. **The explicit AI clause is no longer prose on the page.** The rebuild states the
+   off-by-default posture through the feature rail's "AI optional — On-demand intelligence"
+   rather than the "No model runs until you turn one on." section. The product behaviour is
+   untouched — §5.1 still ships no forced gate, and the switch model is unchanged; what moved is
+   only where the page says so.
+
+**Act 0 pins the dark register.** The welcome page is always the dark composition, whatever the
+OS preference. It declares `data-theme="dark"`, a selector `theme.css` carries alongside `:root`
+on the dark block, so the subtree re-declares the register's own values and inherits them. This
+is the § Drift policy route — amend the system so a local need has a supported mechanism — and
+replaces the inline hex palette the rebuild first shipped.
 
 ## Drift policy
 

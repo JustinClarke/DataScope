@@ -3,8 +3,9 @@
 // unchanged (D48 "home moves, content survives verbatim" — with exactly one
 // table, the Dossier's existing dataset-wide overview already *is* the
 // single-table summary). Two or more: the multi-table ERD is the hero, with
-// a persistent Verdict band and a selected-table side panel
-// (`ProfileDashboard`, not the Dossier — see the leaf doc's scope call 3).
+// a persistent Verdict band. Selecting a table/column/edge on the ERD routes
+// through `useSelectionStore` to the bottom drawer's Info tab
+// (`Inspector.tsx`), which links onward to the full Profile tab.
 // No manual ERD/Blueprint toggle: face selection is structural on table
 // count, matching the hallmark mock's two faces without duplicating the
 // mock's own standalone demo toggle.
@@ -14,10 +15,10 @@ import { useEducationalPanel } from '../../app/useEducationalPanel';
 import { openDestination } from '../../services/navigation';
 import { useDatasetBaseline } from '../profiling/dossier/useDatasetBaseline';
 import { DatasetDossier } from '../profiling/dossier/DatasetDossier';
-import { ProfileDashboard } from '../profiling/ProfileDashboard';
 import { Erd } from './Erd';
 import { VerdictBand } from './VerdictBand';
 import { OptionsStrip } from './OptionsStrip';
+import { SynthesisPanel } from './SynthesisPanel';
 import type { Dataset, TableRegistryEntry } from '../../types';
 
 function SingleTableBlueprint({ tableId }: { tableId: string }) {
@@ -53,17 +54,17 @@ function MultiTableMap({ tables, datasets }: { tables: TableRegistryEntry[]; dat
   const { tableInsights, edges, baseline, tailored, paused, headlineFact } = useDatasetBaseline(tables, datasets);
 
   return (
-    <div className="flex h-full" data-testid="dataset-map-multi">
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <OptionsStrip tables={tables} tableInsights={tableInsights} selectedTableId={selectedTableId} />
-        <VerdictBand
-          tables={tables}
-          datasets={datasets}
-          baseline={baseline}
-          tailored={tailored}
-          paused={paused}
-          headlineFact={headlineFact}
-        />
+    <div className="flex h-full flex-col overflow-y-auto" data-testid="dataset-map-multi">
+      <OptionsStrip tables={tables} tableInsights={tableInsights} selectedTableId={selectedTableId} />
+      <VerdictBand
+        tables={tables}
+        datasets={datasets}
+        baseline={baseline}
+        tailored={tailored}
+        paused={paused}
+        headlineFact={headlineFact}
+      />
+      <div className="min-h-[440px] flex-1">
         <Erd
           tables={tables}
           edges={edges}
@@ -74,14 +75,13 @@ function MultiTableMap({ tables, datasets }: { tables: TableRegistryEntry[]; dat
           onSelectColumn={selectColumn}
         />
       </div>
-      {selectedTableId && (
-        <div
-          data-testid="map-side-panel"
-          className="w-96 flex-none overflow-auto border-l border-(--color-border) p-4"
-        >
-          <ProfileDashboard initialTableId={selectedTableId} />
-        </div>
-      )}
+      <SynthesisPanel
+        tables={tables}
+        tableInsights={tableInsights}
+        baseline={baseline}
+        headlineFact={headlineFact}
+        paused={paused}
+      />
     </div>
   );
 }

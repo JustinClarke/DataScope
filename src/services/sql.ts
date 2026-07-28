@@ -1,5 +1,5 @@
 import type { QueryResult } from '../types';
-import { useQueryStore } from '../stores/query';
+import { useQueryStore, CONSOLE_SESSION, type QuerySessionId } from '../stores/query';
 
 // duckdb-wasm (and the multi-MB WASM it pulls) is only needed once a query
 // actually runs, so the engine module is imported lazily — this is what keeps
@@ -16,9 +16,11 @@ interface InFlightQuery {
   controller: AbortController;
 }
 
-// One query panel, one in-flight query. A new run supersedes the previous one.
-let inFlight: InFlightQuery | null = null;
-const isCurrent = (id: string): boolean => inFlight?.id === id;
+// One in-flight query *per session* (S5). Superseding is the rule inside a
+// session — a new run replaces the previous one — and would be a bug across
+// them: a run in a pinned query tab must not abort the console's slow query.
+const inFlight = new Map<QuerySessionId, InFlightQuery>();
+const isCurrent = (session: QuerySessionId, id: string): boolean => inFlight.get(session)?.id === id;
 
 // The results grid never holds a full multi-million-row result in JS state
 // (state tree, 01-foundation/02-state-management.md) — a SELECT with no
@@ -67,58 +69,61 @@ async function executeCapped(
   };
 }
 
-export async function runQuery(sql: string): Promise<QueryResult> {
-  // Supersede any running query — first-class control flow, not an error. The
-  // stale run's late result is discarded (see the isCurrent guards) so it can
-  // never overwrite the newer query's state.
-  inFlight?.controller.abort();
+export async function runQuery(sql: string, session: QuerySessionId = CONSOLE_SESSION): Promise<QueryResult> {
+  // Supersede this session's running query — first-class control flow, not an
+  // error. The stale run's late result is discarded (see the isCurrent guards)
+  // so it can never overwrite the newer query's state. Other sessions are left
+  // alone.
+  inFlight.get(session)?.controller.abort();
 
   const id = crypto.randomUUID();
   const controller = new AbortController();
-  inFlight = { id, controller };
-  useQueryStore.getState().queryStarted(sql);
+  inFlight.set(session, { id, controller });
+  useQueryStore.getState().queryStarted(session, sql);
 
   let engine: EngineModule;
   try {
     engine = await loadEngine();
   } catch (error) {
-    if (isCurrent(id)) {
+    if (isCurrent(session, id)) {
       useQueryStore.getState().queryFailed(
+        session,
         error instanceof Error ? error.message : 'Failed to load the query engine',
       );
-      inFlight = null;
+      inFlight.delete(session);
     }
     throw error;
   }
 
   try {
     const result = await executeCapped(engine, sql, controller.signal);
-    if (isCurrent(id)) useQueryStore.getState().querySucceeded(result);
+    if (isCurrent(session, id)) useQueryStore.getState().querySucceeded(session, result);
     return result;
   } catch (error) {
-    if (isCurrent(id)) {
+    if (isCurrent(session, id)) {
       if (engine.isAbortError(error)) {
         // Cancelled/superseded: return to idle without a failed history entry.
-        useQueryStore.getState().clearResult();
+        useQueryStore.getState().clearResult(session);
       } else {
-        useQueryStore.getState().queryFailed(engine.toErrorMessage(error));
+        useQueryStore.getState().queryFailed(session, engine.toErrorMessage(error));
       }
     }
     throw error;
   } finally {
-    if (isCurrent(id)) inFlight = null;
+    if (isCurrent(session, id)) inFlight.delete(session);
   }
 }
 
 /**
- * Cancel the in-flight query. With a single query panel there is at most one;
- * an optional id guards against a stale cancel aimed at a query that already
+ * Cancel a session's in-flight query. There is at most one per session; the
+ * optional id guards against a stale cancel aimed at a query that already
  * finished or was replaced.
  */
-export function cancelQuery(queryId?: string): void {
-  if (!inFlight) return;
-  if (queryId !== undefined && queryId !== inFlight.id) return;
-  inFlight.controller.abort();
+export function cancelQuery(session: QuerySessionId = CONSOLE_SESSION, queryId?: string): void {
+  const current = inFlight.get(session);
+  if (!current) return;
+  if (queryId !== undefined && queryId !== current.id) return;
+  current.controller.abort();
 }
 
 export function getHistory(): QueryResult[] {

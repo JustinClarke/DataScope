@@ -1,7 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, fireEvent, within } from '@testing-library/react';
 import { AITurnView } from './AITurnView';
 import type { AITurn } from '../../types';
+
+const { runInConsoleMock } = vi.hoisted(() => ({ runInConsoleMock: vi.fn() }));
+vi.mock('../../services/runPath', () => ({ runInConsole: runInConsoleMock }));
 
 describe('AITurnView — transcript audit trail (§11.1)', () => {
   it('renders a user question as a plain bubble with no accent wash', () => {
@@ -57,5 +60,22 @@ describe('AITurnView — transcript audit trail (§11.1)', () => {
     const turn: AITurn = { id: 'o1', role: 'assistant', content: 'Answer.', createdAt: '', servedByOllamaOverflow: true };
     const { getByText } = render(<AITurnView turn={turn} />);
     expect(getByText(/finished on your local Ollama endpoint/i)).toBeTruthy();
+  });
+
+  it('offers a run action on a failed attempt too (S4, J5) — the error is often the thing worth seeing', () => {
+    runInConsoleMock.mockReset();
+    const turn: AITurn = {
+      id: 'a1',
+      role: 'assistant',
+      content: '',
+      createdAt: '',
+      attempts: [
+        { attempt: 1, sql: 'SELECT avg(fair) FROM t', status: 'error', executionTimeMs: 0, error: 'Binder Error' },
+      ],
+    };
+    const { container } = render(<AITurnView turn={turn} />);
+
+    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
+    expect(runInConsoleMock).toHaveBeenCalledWith('SELECT avg(fair) FROM t');
   });
 });

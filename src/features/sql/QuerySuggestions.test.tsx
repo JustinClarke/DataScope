@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, waitFor, fireEvent, within } from '@testing-library/react';
 import { QuerySuggestions } from './QuerySuggestions';
 import { useDatasetsStore } from '../../stores/datasets';
-import { useQueryStore } from '../../stores/query';
+import { useQueryStore, getSession, CONSOLE_SESSION } from '../../stores/query';
 import { EducationalPanelProvider } from '../../app/EducationalPanelContext';
 import { useEducationalPanel } from '../../app/useEducationalPanel';
 import type { TableRegistryEntry } from '../../types';
@@ -68,7 +68,7 @@ const baseTable: TableRegistryEntry = {
 describe('QuerySuggestions', () => {
   beforeEach(() => {
     useDatasetsStore.setState({ datasets: [], tables: [], workerStatus: 'idle', workerError: null });
-    useQueryStore.setState({ sql: '', status: 'idle', result: null, error: null, history: [], charts: [] });
+    useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
     vi.mocked(sqlService.runQuery).mockReset().mockResolvedValue({
       columnNames: [],
       columnTypes: [],
@@ -112,7 +112,7 @@ describe('QuerySuggestions', () => {
     await waitFor(() => expect(within(container).getByText(/Average revenue by region/)).toBeTruthy());
     fireEvent.click(within(container).getAllByText('Insert')[0]);
 
-    expect(useQueryStore.getState().sql).toContain('"orders"');
+    expect(getSession(CONSOLE_SESSION).sql).toContain('"orders"');
     expect(sqlService.runQuery).not.toHaveBeenCalled();
   });
 
@@ -135,7 +135,7 @@ describe('QuerySuggestions', () => {
     await waitFor(() => expect(within(container).getByText('Top-N by segment')).toBeTruthy());
     fireEvent.click(within(container).getAllByText('Run')[0]);
 
-    expect(useQueryStore.getState().sql).toContain('"orders"');
+    expect(getSession(CONSOLE_SESSION).sql).toContain('"orders"');
     expect(sqlService.runQuery).toHaveBeenCalledTimes(1);
   });
 
@@ -146,7 +146,7 @@ describe('QuerySuggestions', () => {
     await waitFor(() => expect(within(container).getAllByText('Chart').length).toBeGreaterThan(0));
     fireEvent.click(within(container).getAllByText('Chart')[0]);
 
-    expect(useQueryStore.getState().sql).toContain('"orders"');
+    expect(getSession(CONSOLE_SESSION).sql).toContain('"orders"');
     expect(sqlService.runQuery).toHaveBeenCalledTimes(1);
   });
 

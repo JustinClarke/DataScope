@@ -5,12 +5,16 @@
 // which are actually wired vs. disabled-with-reason at this leaf).
 import type { TableRegistryEntry } from '../types';
 
-export type WiredModule = 'sql' | 'pivot' | 'charts' | 'correlation' | 'export';
+export type WiredModule = 'pivot' | 'charts' | 'correlation' | 'export' | 'ingestion';
 
 export type PaletteAction =
   | { kind: 'open-map' }
   | { kind: 'open-profile'; tableId: string }
   | { kind: 'open-module'; module: WiredModule }
+  // S5: the deleted SQL tab's entry becomes two, because there are now two SQL
+  // destinations — the one shared console, and a keeper of your own.
+  | { kind: 'open-console' }
+  | { kind: 'new-query-tab' }
   | { kind: 'unavailable' };
 
 export interface PaletteEntry {
@@ -22,33 +26,37 @@ export interface PaletteEntry {
 }
 
 /**
- * The five destinations W7.5 wires for real, each a singleton Workbench tab
- * mounting the same component the old shell already uses.
+ * The destinations wired for real, each a singleton Workbench tab mounting the
+ * same component the old shell already uses. Five arrived at W7.5; `ingestion`
+ * (Add-data) arrived at S1, closing W2's own deferral; `sql` left at S5 for the
+ * two entries below, since the playground tab it named no longer exists.
  */
 const WIRED_MODULES: { id: WiredModule; label: string }[] = [
-  { id: 'sql', label: 'SQL playground' },
   { id: 'pivot', label: 'Pivot builder' },
   { id: 'charts', label: 'Charts' },
   { id: 'correlation', label: 'Correlation matrix' },
   { id: 'export', label: 'Export / Share' },
+  { id: 'ingestion', label: 'Add data' },
 ];
 
 /**
- * Destinations with no Workbench tab type yet. `dossier` and `relationships`
- * are deliberately absent — both are superseded by the `open-map` entry
- * (D71): the map's single-table Blueprint face re-homes the Dossier, and its
- * ERD is the D24-fed re-skin of the Join Graph. `ai` is not a tab at all —
- * it's the always-on right pane (W7). `ingestion` (Add-data) remains W2's
- * own open deferral.
+ * Destinations with no Workbench tab type at all. `dossier` and
+ * `relationships` are deliberately absent — both are superseded by the
+ * `open-map` entry (D71): the map's single-table Blueprint face re-homes the
+ * Dossier, and its ERD is the D24-fed re-skin of the Join Graph. `ai` is the
+ * only remaining member — it's the always-on right pane (W7), never a tab.
  */
 const NOT_YET_WIRED: { id: string; label: string; reason: string }[] = [
   { id: 'ai', label: 'AI chat', reason: "Lives in the always-on right AI pane, not a tab" },
-  { id: 'ingestion', label: 'Add data', reason: "Arrives with the explorer's Add-data leaf" },
 ];
 
 export function buildPaletteEntries(tables: TableRegistryEntry[]): PaletteEntry[] {
   const entries: PaletteEntry[] = [
     { id: 'map', label: 'Dataset map', enabled: true, action: { kind: 'open-map' } },
+    // Both SQL destinations are nameable here: the palette is the app's only
+    // cross-tab launcher (§13.3), so neither may be reachable by gesture alone.
+    { id: 'console', label: 'SQL console', enabled: true, action: { kind: 'open-console' } },
+    { id: 'query-tab', label: 'New query tab', enabled: true, action: { kind: 'new-query-tab' } },
   ];
 
   for (const table of tables) {

@@ -3,7 +3,50 @@ import { render, fireEvent, act, within } from '@testing-library/react';
 import { TableList } from './TableList';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useSelectionStore } from '../../stores/selection';
-import type { Dataset, TableRegistryEntry } from '../../types';
+import { EducationalPanelProvider } from '../../app/EducationalPanelContext';
+import type { FkEdge } from '../../lib/relationshipInference';
+import type { ClassifiedColumn, Dataset, TableRegistryEntry } from '../../types';
+
+// The rail's column disclosure now loads each table's supplemental stats the
+// same way ProfileDashboard does (`services/profiling.ts`), which reaches a
+// real DuckDB-Wasm worker — not available under jsdom. Mocked to an empty
+// map: the `Identifier` card body renders its stats-free text regardless (no
+// query needed to classify a column as near-unique), which is all these
+// tests assert on.
+vi.mock('../../services/profiling', () => ({
+  loadTableCardStats: vi.fn(async () => ({})),
+}));
+
+function column(overrides: Partial<ClassifiedColumn> & Pick<ClassifiedColumn, 'name' | 'semanticType'>): ClassifiedColumn {
+  return {
+    physicalType: 'VARCHAR',
+    cardinality: 10,
+    nullPercentage: 0,
+    min: null,
+    max: null,
+    mean: null,
+    stdDev: null,
+    ...overrides,
+  };
+}
+
+function edge(childTable: string, childColumn: string, parentTable: string, parentColumn: string): FkEdge {
+  return {
+    id: `${childTable}.${childColumn}->${parentTable}.${parentColumn}`,
+    childTable,
+    childColumn,
+    parentTable,
+    parentColumn,
+    containment: 0.98,
+    coverage: 0.9,
+    parentKeyUniqueness: 1,
+    nameAgreement: true,
+    confidence: 'confident',
+    confidenceScore: 98,
+    evidence: '',
+    source: 'inferred',
+  };
+}
 
 const dataset: Dataset = {
   id: 'ds-1',
@@ -43,13 +86,15 @@ beforeEach(() => {
 
 function renderTableList(overrides: Partial<Parameters<typeof TableList>[0]> = {}) {
   return render(
-    <TableList
-      onRemove={vi.fn()}
-      onRefresh={vi.fn()}
-      refreshingTableId={null}
-      refreshDisabled={false}
-      {...overrides}
-    />,
+    <EducationalPanelProvider>
+      <TableList
+        onRemove={vi.fn()}
+        onRefresh={vi.fn()}
+        refreshingTableId={null}
+        refreshDisabled={false}
+        {...overrides}
+      />
+    </EducationalPanelProvider>,
   );
 }
 
@@ -269,6 +314,136 @@ describe('TableList', () => {
 
       expect(customersRow.className).not.toContain('shadow-[inset_2px_0_0_var(--color-active)]');
       expect(ordersRow.className).toContain('shadow-[inset_2px_0_0_var(--color-active)]');
+    });
+  });
+
+  describe('reflow (S1, 14-workspace-streamline/01-explorer-rail-reflow.md)', () => {
+    const classifiedCustomers: TableRegistryEntry = {
+      ...customers,
+      columns: [
+        column({ name: 'id', semanticType: 'Identifier' }),
+        column({ name: 'region', semanticType: 'Categorical' }),
+      ],
+    };
+    const classifiedOrders: TableRegistryEntry = {
+      ...orders,
+      columns: [
+        column({ name: 'order_id', semanticType: 'Identifier' }),
+        column({ name: 'customer_id', semanticType: 'Categorical' }),
+      ],
+    };
+
+    it('renders the original single-line row when reflow is omitted, unchanged', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const { container } = renderTableList();
+
+      expect(container.querySelector('[data-testid^="trow-chevron-"]')).toBeNull();
+      expect(container.textContent).toContain('1,234 rows × 6 cols');
+    });
+
+    it('renders a chevron and demotes the metadata to its own line when reflow is true', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const { container } = renderTableList({ reflow: true });
+
+      expect(within(container).getByTestId('trow-chevron-t-customers')).toBeTruthy();
+    });
+
+    it('toggling the chevron discloses columns with a key marker and physical-type badge, collapsed by default', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [classifiedCustomers]);
+      const { container } = renderTableList({ reflow: true });
+
+      expect(container.querySelector('[data-testid="trow-column-t-customers-id"]')).toBeNull();
+      fireEvent.click(within(container).getByTestId('trow-chevron-t-customers'));
+
+      const idRow = within(container).getByTestId('trow-column-t-customers-id');
+      expect(idRow.dataset.key).toBe('pk');
+      expect(idRow.textContent).toContain('id');
+      expect(idRow.textContent).toContain('VARCHAR');
+      // Each column starts collapsed — its own chevron (not the table's) reveals the
+      // semantic-type badge and the computed cardinality/null/distribution content.
+      expect(idRow.textContent).not.toMatch(/unique values|missing|distribution preview/i);
+    });
+
+    it("expanding a disclosed column's own chevron reveals its computed stats", () => {
+      useDatasetsStore.getState().registerDataset(dataset, [classifiedCustomers]);
+      const { container } = renderTableList({ reflow: true });
+
+      fireEvent.click(within(container).getByTestId('trow-chevron-t-customers'));
+      const idRow = within(container).getByTestId('trow-column-t-customers-id');
+      fireEvent.click(within(idRow).getByLabelText('Expand id'));
+
+      expect(idRow.textContent).toContain('Identifier');
+      expect(idRow.textContent).toContain('Unique Values');
+      expect(idRow.textContent).toContain('Distribution Preview');
+    });
+
+    it('marks a column FK when it appears as a child column in the override-applied edges prop', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [classifiedOrders]);
+      const fkEdges = [edge('orders', 'customer_id', 'customers', 'id')];
+      const { container } = renderTableList({ reflow: true, edges: fkEdges });
+
+      fireEvent.click(within(container).getByTestId('trow-chevron-t-orders'));
+      expect(within(container).getByTestId('trow-column-t-orders-customer_id').dataset.key).toBe('fk');
+    });
+
+    it('shows "Profiling…" when expanded before classification has produced any columns', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const { container } = renderTableList({ reflow: true });
+
+      fireEvent.click(within(container).getByTestId('trow-chevron-t-customers'));
+      expect(within(container).getByTestId('trow-columns-t-customers').textContent).toContain('Profiling…');
+    });
+
+    it('allows more than one table\'s disclosure open at once — multi-open, not accordion', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [classifiedCustomers, classifiedOrders]);
+      const { container } = renderTableList({ reflow: true });
+
+      fireEvent.click(within(container).getByTestId('trow-chevron-t-customers'));
+      fireEvent.click(within(container).getByTestId('trow-chevron-t-orders'));
+
+      expect(within(container).getByTestId('trow-columns-t-customers')).toBeTruthy();
+      expect(within(container).getByTestId('trow-columns-t-orders')).toBeTruthy();
+    });
+
+    it("clicking a disclosed column's row expands it inline first, then calls onSelectColumn on a second click", () => {
+      useDatasetsStore.getState().registerDataset(dataset, [classifiedCustomers]);
+      const onSelectColumn = vi.fn();
+      const { container } = renderTableList({ reflow: true, onSelectColumn, onSelectTable: vi.fn() });
+
+      fireEvent.click(within(container).getByTestId('trow-chevron-t-customers'));
+      const idRow = within(container).getByTestId('trow-column-t-customers-id');
+
+      fireEvent.click(within(idRow).getByText('id'));
+      expect(onSelectColumn).not.toHaveBeenCalled();
+      expect(idRow.textContent).toContain('Unique Values');
+
+      fireEvent.click(within(idRow).getByText('id'));
+      expect(onSelectColumn).toHaveBeenCalledWith('t-customers', 'id');
+    });
+
+    it("clicking anywhere on a collapsed table row expands it first, then opens the Profile tab on a second click", () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const onSelectTable = vi.fn();
+      const { container } = renderTableList({ reflow: true, onSelectTable });
+
+      const nameSpan = within(container).getByText('customers');
+      fireEvent.click(nameSpan);
+      expect(onSelectTable).not.toHaveBeenCalled();
+      expect(within(container).getByTestId('trow-columns-t-customers')).toBeTruthy();
+
+      fireEvent.click(nameSpan);
+      expect(onSelectTable).toHaveBeenCalledWith('t-customers');
+    });
+
+    it('the row click target excludes remove/refresh — clicking Remove does not also toggle the row', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      const onRemove = vi.fn();
+      const { container } = renderTableList({ reflow: true, onRemove });
+
+      fireEvent.click(container.querySelector('button[aria-label="Remove customers"]')!);
+
+      expect(onRemove).toHaveBeenCalledWith('t-customers');
+      expect(container.querySelector('[data-testid="trow-columns-t-customers"]')).toBeNull();
     });
   });
 });

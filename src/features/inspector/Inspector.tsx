@@ -5,15 +5,46 @@
 // + confidence + override controls. Never a pedagogical surface — the
 // EducationalPanel owns that; this only offers a click-through to the full
 // tab.
+//
+// S3 (D73) re-homes this as the drawer's **Info** view — rung 2 of the detail
+// ladder — and the charter above now scopes to this view rather than to the
+// whole bottom region. What changes here is that every selection kind links
+// onward, so rung 2 is never a dead end.
 import { useMemo } from 'react';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useSelectionStore } from '../../stores/selection';
 import { useRelationshipsStore } from '../../stores/relationships';
 import { useInferredEdgesStore } from '../../stores/inferredEdges';
+import { useDrawerStore } from '../../stores/drawer';
+import { useQueryStore, getSession, CONSOLE_SESSION } from '../../stores/query';
 import { applyOverrides, type RelationshipOverrides } from '../../lib/relationshipInference';
 import { formatBytes } from '../../lib/formatBytes';
 import { openDestination } from '../../services/navigation';
+import { useTabsStore } from '../../stores/tabs';
+import { MAP_TAB_SUBJECT } from '../../app/WorkbenchShell';
 import { EdgeEvidencePanel, AddRelationshipForm, type ColumnRef } from '../charts/relationships/EdgeEvidencePanel';
+
+/**
+ * §13.3's decided hand-off: Open table opens the table's tab *and* switches
+ * the drawer to the console, "on the assumption the next move is to query what
+ * was just opened."
+ *
+ * The seed (S3 scope call 10, closing the folder's open question 5) only ever
+ * lands in a console nobody has opened yet, with an empty buffer. The console
+ * is a single shared scratchpad holding user-typed text; replacing that text
+ * on what is a navigation click is the one behaviour that would make it
+ * untrustworthy. Into a cold console there is nothing to lose. It is never run
+ * — running is S4's run-from-anywhere, which is a different gesture.
+ */
+function openTableFromInfo(tableId: string, tableName: string): void {
+  openDestination('profile', tableId);
+  const { consoleActivated, activateConsole } = useDrawerStore.getState();
+  const isColdAndEmpty = !consoleActivated && getSession(CONSOLE_SESSION).sql.trim() === '';
+  if (isColdAndEmpty) {
+    useQueryStore.getState().setSql(CONSOLE_SESSION, `SELECT * FROM "${tableName}" LIMIT 100`);
+  }
+  activateConsole();
+}
 
 function TableScent({ tableId }: { tableId: string }) {
   const table = useDatasetsStore((state) => state.tables.find((t) => t.id === tableId));
@@ -28,9 +59,9 @@ function TableScent({ tableId }: { tableId: string }) {
       <button
         type="button"
         className="text-(--color-accent) hover:underline"
-        onClick={() => openDestination('profile', tableId)}
+        onClick={() => openTableFromInfo(tableId, table.tableName)}
       >
-        Open profile →
+        Open table →
       </button>
     </div>
   );
@@ -103,6 +134,14 @@ function EdgeScent({ edgeId }: { edgeId: string }) {
           useRelationshipsStore.getState().addEdge(child.table, child.column, parent.table, parent.column)
         }
       />
+      {/* Rung 2 never dead-ends (§13.3): an edge's full depth is the map. */}
+      <button
+        type="button"
+        className="self-start text-sm text-(--color-accent) hover:underline"
+        onClick={() => useTabsStore.getState().openTab('map', MAP_TAB_SUBJECT)}
+      >
+        Open map →
+      </button>
     </div>
   );
 }
@@ -114,7 +153,7 @@ export function Inspector() {
   const selectedEdgeId = useSelectionStore((state) => state.selectedEdgeId);
 
   return (
-    <div data-testid="inspector" className="flex h-full items-center overflow-x-auto px-4 py-2">
+    <div data-testid="inspector" className="flex flex-col gap-2 px-4 py-3">
       {lastSelectionKind === 'table' && selectedTableId && <TableScent tableId={selectedTableId} />}
       {lastSelectionKind === 'column' && selectedColumn && (
         <ColumnScent tableId={selectedColumn.tableId} column={selectedColumn.column} />

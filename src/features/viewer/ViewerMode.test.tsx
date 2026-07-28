@@ -99,4 +99,34 @@ describe('ViewerMode (W8, D62 Workbench amendment)', () => {
     const { container } = render(<ViewerMode document={schemaOnly} error={null} />);
     expect(container.textContent).toContain('No relationships in this report.');
   });
+
+  // Structural, not conditional (S4, same posture as S3): viewer mode renders
+  // no console, no chart module, no AI pane and no explorer, so no run
+  // affordance is reachable here and no `viewerMode` branch is needed to keep
+  // it that way.
+  it('exposes no run action and no transform guard', () => {
+    const { container } = render(<ViewerMode document={REPORT} error={null} />);
+    expect(within(container).queryByRole('button', { name: /^run$/i })).toBeNull();
+    expect(within(container).queryByRole('dialog')).toBeNull();
+  });
+
+  // S3 (D62 consumption-only): the drawer is a shell region viewer mode never
+  // assembles, so the console's absence is structural — there is no
+  // `viewerMode` branch inside the drawer to keep it that way.
+  it('renders no console, no editor and no view switcher', () => {
+    const { container } = render(<ViewerMode document={REPORT} error={null} />);
+    expect(container.querySelector('[data-testid="inspector-drawer"]')).toBeNull();
+    expect(container.querySelector('[data-testid="drawer-console"]')).toBeNull();
+    expect(container.querySelector('[data-testid="console-cold-state"]')).toBeNull();
+    expect(within(container).queryByRole('button', { name: 'SQL Console' })).toBeNull();
+    expect(within(container).queryByRole('button', { name: 'Info' })).toBeNull();
+  });
+
+  // S5, same structural posture: neither query-tab producer is reachable here,
+  // because there is no console to pin from and no tab strip to open into.
+  it('exposes neither query-tab producer', () => {
+    const { container } = render(<ViewerMode document={REPORT} error={null} />);
+    expect(within(container).queryByRole('button', { name: /pin to tab/i })).toBeNull();
+    expect(container.querySelector('[data-testid="tab-host"]')).toBeNull();
+  });
 });

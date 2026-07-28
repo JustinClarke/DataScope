@@ -7,6 +7,7 @@
  * These carry unicode-range per subset, so a browser downloads only the subsets it needs. */
 @import '@fontsource-variable/geist/wght.css';
 @import '@fontsource-variable/jetbrains-mono/wght.css';
+@import '@fontsource-variable/space-grotesk/wght.css';
 
 /* Hallmark · genre: atmospheric · macrostructure: Workbench · design-system: design.md · designed-as-app
  * theme: custom dark (SqlErd-ported HUD) · accent: amber oklch(76.9% 0.165 70) · copilot register: purple oklch(62.7% 0.233 304)
@@ -17,7 +18,13 @@
  * Dark is the primary register (the mocks' own); the light register is DERIVED — see design.md § Light register.
  */
 
-:root {
+/* `[data-theme='dark']` pins this register on a subtree regardless of the OS preference — Act 0 is
+ * always the dark composition. Because these are the same declarations `:root` carries, a pinning
+ * element re-declares them on itself and its subtree inherits them, overriding the light register
+ * the media query below hands to `:root`. Scoping it here is what keeps a locally-pinned surface
+ * inside the locked system instead of re-declaring the palette as literals at the call site. */
+:root,
+[data-theme='dark'] {
   /* Declared per-register rather than as `dark light`: Lightning CSS normalises a two-value
    * `color-scheme` back to `light dark`, which would hand light scrollbars and form controls to
    * any user with no OS preference — against these dark surfaces. A single value can't be
@@ -81,6 +88,19 @@
   --chart-pos: var(--chart-1);
   --chart-neg: var(--chart-2);
   --chart-mid: var(--color-elev);
+
+  /* ---- Sample accent ramp: the welcome page's five bundled-sample cards (design.md
+   *      § Sample accent ramp). Decorative identity only — it tints an aria-hidden glyph
+   *      and its own wash, never text and never a data mark, so it answers to the 3:1
+   *      non-text tier rather than 4.5:1. Two slots alias existing tokens rather than
+   *      restating them; the three additions are hues the ramp needs and no register
+   *      already spends. Worst measured: 6.80 / 10.34 / 5.79 dark, 4.74 / 3.13 / 5.96
+   *      light, all on `elev`. ---- */
+  --sample-1: var(--color-active); /* e-commerce */
+  --sample-2: oklch(71.4% 0.1434 255); /* titanic */
+  --sample-3: var(--color-ok); /* stock prices */
+  --sample-4: oklch(83.7% 0.1644 84); /* product reviews */
+  --sample-5: oklch(68% 0.1583 277); /* weather */
 
   --color-ai: oklch(62.7% 0.2325 304);
   --color-ai-2: oklch(72.2% 0.1767 306);
@@ -208,6 +228,12 @@
      * (5.7 under simulated protanopia), because V6b's gate measured only slots adjacent
      * in assignment order and 1-vs-4 is never adjacent — yet all four are on screen at
      * once in a four-series chart. Now 19.9 / 15.6. Dark already passed all pairs. */
+    /* The ramp's three own hues, re-solved for the light register; slots 1 and 3 follow
+     * `--color-active` / `--color-ok`, which this register already re-solves above. */
+    --sample-2: oklch(52% 0.15 255);
+    --sample-4: oklch(62% 0.14 84);
+    --sample-5: oklch(48% 0.19 277);
+
     --chart-1: oklch(62% 0.155 245);
     --chart-2: oklch(44% 0.19 342);
     --chart-3: oklch(61% 0.16 130);

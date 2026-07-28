@@ -1,19 +1,21 @@
 import { BarChart3 } from 'lucide-react';
 import { useDatasetsStore } from '../../stores/datasets';
-import { useQueryStore } from '../../stores/query';
+import { useQueryStore, CONSOLE_SESSION } from '../../stores/query';
 import { useEducationalPanel } from '../../app/useEducationalPanel';
 import { runQuery } from '../../services/sql';
 import { buildTaskSuggestions, buildTemplateSuggestions, type QuerySuggestion, type QueryTask } from '../../lib/querySuggester';
 
+// This list only ever renders inside the console (S5), so it writes the
+// console's session explicitly rather than relying on a default.
 function insertSql(sql: string): void {
-  useQueryStore.getState().setSql(sql);
+  useQueryStore.getState().setSql(CONSOLE_SESSION, sql);
 }
 
 function runTask(sql: string): void {
   insertSql(sql);
   // Fire-and-forget, same rationale as SqlModule's own Run button: runQuery
   // already records the failure into the query store before it rejects.
-  runQuery(sql).catch(() => {});
+  runQuery(sql, CONSOLE_SESSION).catch(() => {});
 }
 
 function TemplateCard({ suggestion, onShowTooltip }: { suggestion: QuerySuggestion; onShowTooltip: (label: string, text: string) => void }) {

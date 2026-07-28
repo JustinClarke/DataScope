@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { rankedActionValidator, narrationValidator, passesPhrasingGuard } from './producerValidators'
+import {
+  rankedActionValidator,
+  narrationValidator,
+  passesPhrasingGuard,
+  passesTrendGeneralisationGuard,
+} from './producerValidators'
 import type { CitableFact } from './citableFacts'
 import type { FactRef, RankedAction } from '../types'
 
@@ -51,6 +56,23 @@ describe('rankedActionValidator', () => {
   it('rejects a changed prefill or evidence', () => {
     expect(rankedActionValidator([action], [{ ...action, evidence: { ...fact, sql: 'DROP TABLE orders' } }])).toBe(false)
     expect(rankedActionValidator([action], [{ ...action, score: 0.99 }])).toBe(false)
+  })
+
+  it('rejects an over-claiming verb — the one free-text field on this path', () => {
+    expect(rankedActionValidator([action], [{ ...action, verb: 'Chart the revenue drop caused by price' }])).toBe(false)
+    expect(rankedActionValidator([action], [{ ...action, verb: 'Chart revenue, which always rises' }])).toBe(false)
+  })
+})
+
+describe('passesTrendGeneralisationGuard', () => {
+  it('rejects the unhedged generalisations the D45 guard lets through', () => {
+    expect(passesPhrasingGuard('Orders consistently peak on Tuesdays.')).toBe(true)
+    expect(passesTrendGeneralisationGuard('Orders consistently peak on Tuesdays.')).toBe(false)
+    expect(passesTrendGeneralisationGuard('Older cohorts exhibit steadily increasing order values.')).toBe(false)
+  })
+
+  it('accepts a stated trend that does not generalise', () => {
+    expect(passesTrendGeneralisationGuard('Order count is highest on Tuesdays in this sample.')).toBe(true)
   })
 })
 

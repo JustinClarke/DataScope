@@ -53,6 +53,16 @@ describe('tabs store', () => {
     expect(state.activeTabId).toBe(second);
   });
 
+  // S5: `'query'` is the first artifact-kind member, so this branch is live.
+  it('an artifact tab never dedupes, even on an identical subject', () => {
+    const first = useTabsStore.getState().openTab('query', 'Query 1');
+    const second = useTabsStore.getState().openTab('query', 'Query 1');
+
+    expect(second).not.toBe(first);
+    expect(useTabsStore.getState().tabs).toHaveLength(2);
+    expect(useTabsStore.getState().activeTabId).toBe(second);
+  });
+
   describe('singleton dedup (W3, §13.3)', () => {
     it('reuses an open singleton tab instead of duplicating it', () => {
       const first = useTabsStore.getState().openTab('profile', 'orders');

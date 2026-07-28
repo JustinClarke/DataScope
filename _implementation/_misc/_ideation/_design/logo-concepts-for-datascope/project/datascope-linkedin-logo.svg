@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Solid Black Background filling the full square canvas -->
+  <rect width="400" height="400" fill="#0B0A0C"/>
+  
+  <!-- Reticle Logo Mark Centered in safe zone -->
+  <g transform="translate(68, 68) scale(2.64)">
+    <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"/>
+    <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"/>
+    <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"/>
+    <circle cx="50" cy="50" r="10" fill="#8B5CF6"/>
+  </g>
+</svg>

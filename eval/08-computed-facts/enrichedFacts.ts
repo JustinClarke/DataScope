@@ -35,7 +35,7 @@ function latestSnapshot(tables: TableRegistryEntry[]): string {
   return tables.reduce((latest, t) => (t.createdAt > latest ? t.createdAt : latest), tables[0]?.createdAt ?? '');
 }
 
-function computedFactToCitable(fact: ComputedFact, vocabulary: string[], snapshot: string): CitableFact {
+export function computedFactToCitable(fact: ComputedFact, vocabulary: string[], snapshot: string): CitableFact {
   return {
     id: fact.id,
     entities: fact.entities,

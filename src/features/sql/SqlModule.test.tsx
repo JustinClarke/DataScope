@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor, fireEvent, within } from '@testing-library/react';
 import { SqlModule } from './SqlModule';
-import { useQueryStore } from '../../stores/query';
+import { useQueryStore, CONSOLE_SESSION } from '../../stores/query';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useUIStore } from '../../stores/ui';
+import { useTabsStore } from '../../stores/tabs';
+import { useRunGuardStore } from '../../stores/runGuard';
 import { EducationalPanelProvider } from '../../app/EducationalPanelContext';
 import * as sqlService from '../../services/sql';
 import * as transformsService from '../../services/transforms';
@@ -14,10 +16,10 @@ import type { Dataset, TableRegistryEntry } from '../../types';
 // (App.tsx) — QuerySuggestions, rendered inside SqlModule, calls
 // useEducationalPanel() unconditionally, so every render here needs the same
 // wrapper or that hook throws outside a provider.
-function renderSqlModule(prefill?: Record<string, unknown> | null) {
+function renderSqlModule() {
   return render(
     <EducationalPanelProvider>
-      <SqlModule prefill={prefill} />
+      <SqlModule />
     </EducationalPanelProvider>,
   );
 }
@@ -52,11 +54,13 @@ vi.mock('../../services/export', () => ({ downloadTable: vi.fn(async () => {}) }
 
 describe('SqlModule', () => {
   beforeEach(() => {
-    useQueryStore.setState({ sql: '', status: 'idle', result: null, error: null, history: [], charts: [] });
+    useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
     // No suggestions/tasks should render without a registered, classified
     // table — keeps QuerySuggestions a no-op for every assertion below.
     useDatasetsStore.setState({ datasets: [], tables: [], workerStatus: 'idle', workerError: null });
     useUIStore.getState().clearPendingPrefill();
+    useRunGuardStore.setState({ pending: null, pendingSession: CONSOLE_SESSION });
+    useTabsStore.setState({ tabs: [], activeTabId: null });
     // SqlModule chains `.catch()` off the real runQuery's promise, so the mock
     // must return one too (a bare vi.fn() default returns undefined).
     vi.mocked(sqlService.runQuery).mockReset().mockResolvedValue({
@@ -110,14 +114,36 @@ describe('SqlModule', () => {
   });
 
   it('enables Run once SQL is present and calls runQuery on click', async () => {
-    useQueryStore.setState({ sql: 'select 1' });
+    useQueryStore.getState().setSql(CONSOLE_SESSION, 'select 1');
     const { container } = renderSqlModule();
 
     await waitFor(() =>
       expect((within(container).getByRole('button', { name: /run/i }) as HTMLButtonElement).disabled).toBe(false),
     );
     fireEvent.click(within(container).getByRole('button', { name: /run/i }));
-    expect(sqlService.runQuery).toHaveBeenCalledWith('select 1');
+    expect(sqlService.runQuery).toHaveBeenCalledWith('select 1', CONSOLE_SESSION);
+  });
+
+  // S5 — the console is the scratchpad, so it is the surface that can promote.
+  it('disables Pin on an empty buffer and pins the query and its result once there is one', async () => {
+    const { container } = renderSqlModule();
+    await waitFor(() =>
+      expect((within(container).getByRole('button', { name: /pin to tab/i }) as HTMLButtonElement).disabled).toBe(true),
+    );
+
+    const result = { columnNames: ['n'], columnTypes: ['BIGINT'], rows: [[1]], rowCount: 1, executionTimeMs: 7 };
+    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'select 1');
+    useQueryStore.getState().querySucceeded(CONSOLE_SESSION, result);
+
+    const pin = await waitFor(() => within(container).getByRole('button', { name: /pin to tab/i }));
+    expect((pin as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(pin);
+
+    const tabs = useTabsStore.getState().tabs;
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0].type).toBe('query');
+    // One-way: the console keeps what it had.
+    expect(useQueryStore.getState().sessions[CONSOLE_SESSION].result).toBe(result);
   });
 
   it('shows an empty-history message before any statement has run', async () => {
@@ -126,8 +152,8 @@ describe('SqlModule', () => {
   });
 
   it('lists a history entry after a query completes', async () => {
-    useQueryStore.getState().queryStarted('select 1');
-    useQueryStore.getState().querySucceeded({
+    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'select 1');
+    useQueryStore.getState().querySucceeded(CONSOLE_SESSION, {
       columnNames: ['n'],
       columnTypes: ['BIGINT'],
       rows: [[1]],
@@ -140,9 +166,27 @@ describe('SqlModule', () => {
     expect(container.textContent).toContain('7 ms');
   });
 
+  it('re-runs a history row through the same path as every other surface (S4)', async () => {
+    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'select 1');
+    useQueryStore.getState().querySucceeded(CONSOLE_SESSION, {
+      columnNames: ['n'],
+      columnTypes: ['BIGINT'],
+      rows: [[1]],
+      rowCount: 1,
+      executionTimeMs: 7,
+    });
+    vi.mocked(sqlService.runQuery).mockClear();
+
+    const { container } = renderSqlModule();
+    const historyRun = await waitFor(() => within(container).getAllByRole('button', { name: /^run$/i })[0]);
+    fireEvent.click(historyRun);
+
+    expect(sqlService.runQuery).toHaveBeenCalledWith('select 1', CONSOLE_SESSION);
+  });
+
   it('surfaces a query error in the results area', async () => {
-    useQueryStore.getState().queryStarted('select * from missing');
-    useQueryStore.getState().queryFailed('Catalog Error: Table with name missing does not exist!');
+    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'select * from missing');
+    useQueryStore.getState().queryFailed(CONSOLE_SESSION, 'Catalog Error: Table with name missing does not exist!');
 
     const { container } = renderSqlModule();
     await waitFor(() => expect(within(container).getByRole('alert')).toBeTruthy());
@@ -150,7 +194,7 @@ describe('SqlModule', () => {
   });
 
   it('routes a CREATE TABLE AS statement through runTransform, not runQuery', async () => {
-    useQueryStore.setState({ sql: 'CREATE TABLE feats AS SELECT 1' });
+    useQueryStore.getState().setSql(CONSOLE_SESSION, 'CREATE TABLE feats AS SELECT 1');
     const { container } = renderSqlModule();
 
     fireEvent.click(within(container).getByRole('button', { name: /run/i }));
@@ -161,7 +205,7 @@ describe('SqlModule', () => {
 
   it('routes a mutation against a derived table straight through runTransform (no guard)', async () => {
     useDatasetsStore.getState().registerDataset(dataset, [{ ...sourceTable, origin: 'derived' }]);
-    useQueryStore.setState({ sql: 'DROP TABLE orders' });
+    useQueryStore.getState().setSql(CONSOLE_SESSION, 'DROP TABLE orders');
     const { container } = renderSqlModule();
 
     fireEvent.click(within(container).getByRole('button', { name: /run/i }));
@@ -170,88 +214,26 @@ describe('SqlModule', () => {
     expect(within(container).queryByRole('dialog')).toBeNull();
   });
 
-  it('shows the mutation guard for a statement targeting a source table, without running it', async () => {
+  it('hands a source mutation to the guard instead of running it — and renders no modal of its own (S4)', async () => {
     useDatasetsStore.getState().registerDataset(dataset, [sourceTable]);
-    useQueryStore.setState({ sql: 'DROP TABLE orders' });
+    useQueryStore.getState().setSql(CONSOLE_SESSION, 'DROP TABLE orders');
     const { container } = renderSqlModule();
 
     fireEvent.click(within(container).getByRole('button', { name: /run/i }));
 
-    const dialog = await waitFor(() => within(container).getByRole('dialog'));
-    expect(dialog.textContent).toContain('orders');
+    await waitFor(() => expect(useRunGuardStore.getState().pending?.mutationTarget).toBe('orders'));
     expect(transformsService.runTransform).not.toHaveBeenCalled();
-  });
-
-  it('guard "Materialize as a new table" calls materializeInsteadOfMutation and closes the modal', async () => {
-    useDatasetsStore.getState().registerDataset(dataset, [sourceTable]);
-    useQueryStore.setState({ sql: 'DROP TABLE orders' });
-    const { container } = renderSqlModule();
-
-    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
-    await waitFor(() => within(container).getByRole('dialog'));
-    fireEvent.click(within(container).getByRole('button', { name: 'Materialize as a new table' }));
-
-    await waitFor(() => expect(transformsService.materializeInsteadOfMutation).toHaveBeenCalledOnce());
-    expect(transformsService.forceMutation).not.toHaveBeenCalled();
+    // The modal is `TransformGuardHost`'s, mounted once in the shell.
     expect(within(container).queryByRole('dialog')).toBeNull();
   });
 
-  it('guard "Modify original anyway" calls forceMutation and closes the modal', async () => {
-    useDatasetsStore.getState().registerDataset(dataset, [sourceTable]);
-    useQueryStore.setState({ sql: 'DROP TABLE orders' });
-    const { container } = renderSqlModule();
-
-    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
-    await waitFor(() => within(container).getByRole('dialog'));
-    fireEvent.click(within(container).getByRole('button', { name: 'Modify original anyway' }));
-
-    await waitFor(() => expect(transformsService.forceMutation).toHaveBeenCalledOnce());
-    expect(transformsService.materializeInsteadOfMutation).not.toHaveBeenCalled();
-    expect(within(container).queryByRole('dialog')).toBeNull();
-  });
-
-  it('guard Cancel closes the modal without running anything', async () => {
-    useDatasetsStore.getState().registerDataset(dataset, [sourceTable]);
-    useQueryStore.setState({ sql: 'DROP TABLE orders' });
-    const { container } = renderSqlModule();
-
-    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
-    await waitFor(() => within(container).getByRole('dialog'));
-    fireEvent.click(within(container).getByRole('button', { name: 'Cancel' }));
-
-    expect(within(container).queryByRole('dialog')).toBeNull();
-    expect(transformsService.runTransform).not.toHaveBeenCalled();
-    expect(transformsService.materializeInsteadOfMutation).not.toHaveBeenCalled();
-    expect(transformsService.forceMutation).not.toHaveBeenCalled();
-  });
-
-  it('opens on the answer (D68e) — a duplicates prefill runs its SQL immediately, no click needed', async () => {
+  it('runs nothing on mount, whatever a pending prefill holds (S4 — the console is mounted in every session)', async () => {
     useUIStore.getState().setActiveModule('sql', null, { tableName: 'orders', columns: [], sql: 'SELECT * FROM orders' });
-    renderSqlModule();
+    const { container } = renderSqlModule();
 
-    await waitFor(() => expect(sqlService.runQuery).toHaveBeenCalledWith('SELECT * FROM orders'));
-    // Consumed exactly once — a later sidebar-reached open starts empty.
-    expect(useUIStore.getState().pendingPrefill).toBeNull();
-  });
-
-  it('a prefill with no sql (a route with nothing to run) leaves the editor untouched', async () => {
-    useUIStore.getState().setActiveModule('sql', null, { tableName: 'orders', columns: [] });
-    renderSqlModule();
-
-    await waitFor(() => expect(useUIStore.getState().pendingPrefill).toBeNull());
+    await waitFor(() => expect(within(container).getByTestId('fake-monaco')).toBeTruthy());
     expect(sqlService.runQuery).not.toHaveBeenCalled();
-  });
-
-  it('W7.5: a `prefill` prop (the Workbench tab\'s own initializer) wins over whatever the old shell\'s global store holds', async () => {
-    // Deliberately different from the prop below — proves the prop is used,
-    // not just "no prop passed" falling through to the (empty) global.
-    useUIStore.getState().setActiveModule('sql', null, { tableName: 'customers', columns: [], sql: 'SELECT * FROM customers' });
-    renderSqlModule({ tableName: 'orders', columns: [], sql: 'SELECT * FROM orders' });
-
-    await waitFor(() => expect(sqlService.runQuery).toHaveBeenCalledWith('SELECT * FROM orders'));
-    expect(sqlService.runQuery).not.toHaveBeenCalledWith('SELECT * FROM customers');
-    // The global store's own prefill is untouched — the override path never reads or clears it.
-    expect(useUIStore.getState().pendingPrefill).toEqual({ tableName: 'customers', columns: [], sql: 'SELECT * FROM customers' });
+    expect(transformsService.runTransform).not.toHaveBeenCalled();
   });
 
   it('disables "Export recipe" with no derived tables and enables it once one exists', async () => {
@@ -272,7 +254,7 @@ describe('SqlModule', () => {
   });
 
   it('shows a Download Parquet shortcut on the Results header once a CTAS registers its derived table, wired to the export service', async () => {
-    useQueryStore.setState({ sql: 'CREATE TABLE feats AS SELECT 1' });
+    useQueryStore.getState().setSql(CONSOLE_SESSION, 'CREATE TABLE feats AS SELECT 1');
     const derivedTable: TableRegistryEntry = {
       ...sourceTable,
       id: 'tbl-2',

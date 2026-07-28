@@ -6,10 +6,13 @@
 // for a mode whose backend is still unwired (BYOK in 02-modes-byok, WebLLM in
 // v0.25), it degrades to a clear message rather than a dead input. The transcript
 // is never persisted — it is content-bearing (D41) and must not reach localStorage.
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { SendHorizontal, ShieldCheck, Cloud } from 'lucide-react';
 import { useAISessionStore } from '../../stores/aiSession';
 import { useDatasetsStore } from '../../stores/datasets';
+import { useInferredEdgesStore } from '../../stores/inferredEdges';
+import { useRelationshipsStore } from '../../stores/relationships';
+import { applyOverrides, type RelationshipOverrides } from '../../lib/relationshipInference';
 import { useSettingsStore } from '../../stores/settings';
 import { useByokKeyStore } from '../../stores/byokKey';
 import { useVaultStore } from '../../stores/vault';
@@ -18,7 +21,7 @@ import { askAI } from '../../services/ai';
 import { resolveProvider } from '../../services/aiProvider';
 import { runChartQuery } from '../../services/charts';
 import { isOllamaEndpoint } from '../../services/ollamaProvider';
-import type { AITurn } from '../../types';
+import type { AITurn, TableRegistryEntry } from '../../types';
 import type { CloudProviderConfig } from '../../services/cloudProvider';
 import { AITurnView } from './AITurnView';
 import { describeAIStatus, aiStatusLabel } from './aiStatusUtils';
@@ -33,11 +36,31 @@ function assistantError(content: string): AITurn {
   return { id: crypto.randomUUID(), role: 'assistant', content: '', createdAt: new Date().toISOString(), error: content };
 }
 
+/**
+ * Dataset-wide FK edges, override-applied — the same pattern `ExplorerPanel`
+ * and `Inspector`'s `EdgeScent` use: read the raw inferred result
+ * `useDatasetBaseline` mirrors into `useInferredEdgesStore` rather than
+ * re-running `loadRelationships`, and apply the user's own overrides locally.
+ * `askAI` needs them or `schemaPrune`'s FK-neighbour pull is dead code on this
+ * path and a join question never sees the relationship it has to write.
+ */
+function useChatEdges(tables: TableRegistryEntry[]) {
+  const inferredEdges = useInferredEdgesStore((state) => state.edges);
+  const removed = useRelationshipsStore((state) => state.removed);
+  const repointed = useRelationshipsStore((state) => state.repointed);
+  const added = useRelationshipsStore((state) => state.added);
+
+  const overrides = useMemo<RelationshipOverrides>(() => ({ removed, repointed, added }), [removed, repointed, added]);
+  const liveTableNames = useMemo(() => tables.map((t) => t.tableName), [tables]);
+  return useMemo(() => applyOverrides(inferredEdges, overrides, liveTableNames), [inferredEdges, overrides, liveTableNames]);
+}
+
 export function AIChatModule() {
   const transcript = useAISessionStore((s) => s.transcript);
   const addTurn = useAISessionStore((s) => s.addTurn);
   const appendTurn = useAISessionStore((s) => s.appendTurn);
   const tables = useDatasetsStore((s) => s.tables);
+  const edges = useChatEdges(tables);
   const aiMode = useSettingsStore((s) => s.aiMode);
   // The D3 toggle the settings panel writes — not the aiSession stub's field.
   const byokPreference = useSettingsStore((s) => s.byokPreference);
@@ -118,6 +141,7 @@ export function AIChatModule() {
         overflowProvider,
         overflowBaseUrl: overflowProvider !== undefined ? (byokKey ?? undefined) : undefined,
         tables,
+        edges,
         runSql: (sql) => runChartQuery(sql),
         metadataOnlyRepair,
         signal: controller.signal,

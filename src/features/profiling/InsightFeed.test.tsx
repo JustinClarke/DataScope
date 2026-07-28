@@ -10,6 +10,9 @@ vi.mock('../../services/insights', () => ({ loadInsights: loadInsightsMock }));
 const { runChartQueryMock } = vi.hoisted(() => ({ runChartQueryMock: vi.fn() }));
 vi.mock('../../services/charts', () => ({ runChartQuery: runChartQueryMock }));
 
+const { runInConsoleMock } = vi.hoisted(() => ({ runInConsoleMock: vi.fn() }));
+vi.mock('../../services/runPath', () => ({ runInConsole: runInConsoleMock }));
+
 const baseTable: TableRegistryEntry = {
   id: 't-1',
   tableName: 'orders',
@@ -102,5 +105,25 @@ describe('InsightFeed', () => {
     await waitFor(() => expect(within(container).getByText('620')).toBeTruthy());
     expect(runChartQueryMock).toHaveBeenCalledWith('SELECT region, COUNT(*) FROM orders GROUP BY 1');
     expect(within(container).getByText('Hide chart')).toBeTruthy();
+  });
+
+  it('runs an insight\'s query in the console (S4), alongside Show SQL rather than instead of it', async () => {
+    loadInsightsMock.mockResolvedValue([
+      {
+        id: 'concentration:region',
+        rule: 'concentration',
+        description: 'Top region holds 62% of rows.',
+        sql: 'SELECT region, COUNT(*) FROM orders GROUP BY 1',
+        effectSize: 1,
+        coverage: 0.6,
+      },
+    ]);
+
+    const { container } = render(<InsightFeed table={baseTable} onShowSql={vi.fn()} />);
+    const run = await waitFor(() => within(container).getByRole('button', { name: /^run$/i }));
+    fireEvent.click(run);
+
+    expect(runInConsoleMock).toHaveBeenCalledWith('SELECT region, COUNT(*) FROM orders GROUP BY 1');
+    expect(within(container).getByText('Show SQL')).toBeTruthy();
   });
 });

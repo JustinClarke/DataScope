@@ -6,7 +6,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useTabsStore } from '../../stores/tabs';
 import { usePaletteOpenStore } from '../../stores/paletteOpen';
+import { useDrawerStore } from '../../stores/drawer';
 import { openDestination } from '../../services/navigation';
+import { openQueryTab } from '../../services/queryTabs';
 import { buildPaletteEntries, type PaletteEntry } from '../../lib/paletteRegistry';
 import { Tooltip } from '../../components/Tooltip';
 import { MAP_TAB_SUBJECT } from '../../app/WorkbenchShell';
@@ -19,18 +21,27 @@ function activate(entry: PaletteEntry): void {
     openDestination('profile', entry.action.tableId);
   } else if (entry.action.kind === 'open-module') {
     openDestination(entry.action.module);
+  } else if (entry.action.kind === 'open-console') {
+    useDrawerStore.getState().activateConsole();
+  } else if (entry.action.kind === 'new-query-tab') {
+    openQueryTab();
   }
 }
 
-// Not-yet-wired entries have no `TabType` to look up in `TAB_GLYPH` — these
-// two are the mock's own literal glyphs for these exact commands (✦ Ask AI,
-// ＋ Add data), not an invented placeholder (V5 scope call 5).
-const UNAVAILABLE_GLYPH: Record<string, string> = { ai: '✦', ingestion: '＋' };
+// The one remaining not-yet-wired entry has no `TabType` to look up in
+// `TAB_GLYPH` — this is the mock's own literal glyph for this exact command
+// (✦ Ask AI), not an invented placeholder (V5 scope call 5). `ingestion`
+// (＋ Add data) used to share this fallback; S1 wired it for real, so it now
+// resolves through `TAB_GLYPH['ingestion']` like every other module below.
+const UNAVAILABLE_GLYPH: Record<string, string> = { ai: '✦' };
 
 function entryTabType(entry: PaletteEntry): TabType | null {
   if (entry.action.kind === 'open-map') return 'map';
   if (entry.action.kind === 'open-profile') return 'profile';
   if (entry.action.kind === 'open-module') return entry.action.module;
+  // Both SQL entries reuse the query tab's glyph (S5): the console and a query
+  // tab are the same kind of surface, one shared and one kept.
+  if (entry.action.kind === 'open-console' || entry.action.kind === 'new-query-tab') return 'query';
   return null;
 }
 

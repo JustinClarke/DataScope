@@ -9,6 +9,7 @@ import { useSettingsStore } from '../../stores/settings';
 import { useByokKeyStore } from '../../stores/byokKey';
 import { useWebLLMStore } from '../../stores/webllm';
 import { WEBLLM_DOWNLOAD_SIZE } from '../../services/webllm';
+import { RunSqlButton } from '../sql/RunSqlButton';
 
 function hasWebGPU(): boolean {
   return typeof navigator !== 'undefined' && 'gpu' in navigator;
@@ -77,17 +78,25 @@ function OllamaOverflowNote() {
   );
 }
 
+// The run action is offered on failed attempts too (S4): J5 is "the AI answers,
+// the user verifies by running the model's SQL," and a failed attempt is often
+// the one worth running by hand to see the error first-hand. The D55 seam is
+// untouched — a person reads the SQL and clicks; nothing here lets a model
+// cause execution.
 function AttemptView({ attempt }: { attempt: SqlAttempt }) {
   const ok = attempt.status === 'ok';
   return (
     <div className="flex flex-col gap-1 rounded border border-(--color-ai)/20 bg-(--color-ai-soft) p-2">
       <div className="flex items-center justify-between text-xs text-(--color-fg-muted)">
         <span>Suggested SQL{attempt.attempt > 1 ? ` · retry ${attempt.attempt - 1}` : ''}</span>
-        <span className={ok ? 'text-(--color-ai-2)' : 'text-(--color-error)'}>
-          {ok
-            ? `✓ ${attempt.rowCount?.toLocaleString()} rows · ${Math.round(attempt.executionTimeMs)} ms`
-            : '✗ failed'}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className={ok ? 'text-(--color-ai-2)' : 'text-(--color-error)'}>
+            {ok
+              ? `✓ ${attempt.rowCount?.toLocaleString()} rows · ${Math.round(attempt.executionTimeMs)} ms`
+              : '✗ failed'}
+          </span>
+          <RunSqlButton sql={attempt.sql} />
+        </div>
       </div>
       <pre className="overflow-x-auto rounded bg-(--color-border)/40 p-2 font-mono text-xs text-(--color-fg)">{attempt.sql}</pre>
       {!ok && attempt.error && <p className="font-mono text-xs text-(--color-error)">{attempt.error}</p>}

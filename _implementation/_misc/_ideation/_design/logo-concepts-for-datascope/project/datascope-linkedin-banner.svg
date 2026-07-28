@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1584 396" width="1584" height="396">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap');
+      
+      .title-data { font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 68px; fill: #EDEAE6; letter-spacing: -0.035em; }
+      .title-scope { font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 68px; fill: #F2A33C; letter-spacing: -0.035em; }
+      .tagline { font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 500; font-size: 22px; fill: #918B97; letter-spacing: -0.01em; }
+      .badge-text { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 13px; letter-spacing: 0.03em; }
+      .code-text { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: #918B97; }
+      .kw { fill: #8B5CF6; font-weight: 700; }
+      .fn { fill: #F2A33C; }
+      .str { fill: #17B3BE; }
+    </style>
+
+    <!-- Radial Glows -->
+    <radialGradient id="glow-amber" cx="85%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#F2A33C" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#F2A33C" stop-opacity="0"/>
+    </radialGradient>
+    
+    <radialGradient id="glow-violet" cx="30%" cy="70%" r="50%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Linear Accents -->
+    <linearGradient id="line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#F2A33C" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#EDEAE6" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Dot Pattern -->
+    <pattern id="dot-grid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="1" fill="#EDEAE6" fill-opacity="0.07"/>
+    </pattern>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1584" height="396" fill="#0B0A0C"/>
+
+  <!-- Dot Grid & Ambient Lighting -->
+  <rect width="1584" height="396" fill="url(#dot-grid)"/>
+  <rect width="1584" height="396" fill="url(#glow-amber)"/>
+  <rect width="1584" height="396" fill="url(#glow-violet)"/>
+
+  <!-- Left Side: Interactive IDE & Data Profile Wireframe Graphics -->
+  
+  <!-- Mini IDE Code Window (x: 90, y: 44) -->
+  <g transform="translate(90, 44)">
+    <!-- Glass Box -->
+    <rect width="320" height="175" rx="12" fill="#141216" fill-opacity="0.8" stroke="#262229" stroke-width="1.5"/>
+    <!-- Window Header -->
+    <path d="M 0 12 Q 0 0 12 0 L 308 0 Q 320 0 320 12 L 320 34 L 0 34 Z" fill="#1A181E"/>
+    <circle cx="20" cy="17" r="4.5" fill="#ED6A5E"/>
+    <circle cx="34" cy="17" r="4.5" fill="#F5BF4F"/>
+    <circle cx="48" cy="17" r="4.5" fill="#61C554"/>
+    <text x="66" y="21" class="code-text" font-size="10" fill="#6C6670">duckdb-worker.ts — client-side</text>
+
+    <!-- Code Snippet -->
+    <text x="20" y="60" class="code-text"><tspan class="kw">import</tspan> { DuckDB } <tspan class="kw">from</tspan> <tspan class="str">'@duckdb/wasm'</tspan>;</text>
+    <text x="20" y="82" class="code-text"><tspan class="kw">const</tspan> db = <tspan class="kw">await</tspan> DuckDB.<tspan class="fn">connect</tspan>();</text>
+    <text x="20" y="104" class="code-text"><tspan class="kw">const</tspan> res = <tspan class="kw">await</tspan> db.<tspan class="fn">query</tspan>(<tspan class="str">'SELECT * FROM data'</tspan>);</text>
+    <text x="20" y="126" class="code-text"><tspan class="kw">return</tspan> <tspan class="fn">profileSchema</tspan>(res); <tspan fill="#6C6670">// zero upload</tspan></text>
+
+    <!-- Status pill -->
+    <rect x="20" y="142" width="135" height="20" rx="10" fill="#8B5CF6" fill-opacity="0.15" stroke="#8B5CF6" stroke-opacity="0.3"/>
+    <circle cx="30" cy="152" r="3" fill="#8B5CF6"/>
+    <text x="40" y="156" class="code-text" font-size="10" fill="#EDEAE6">DuckDB WASM Active</text>
+  </g>
+
+  <!-- Mini Data Profile & Schema Map Card (x: 250, y: 185) -->
+  <g transform="translate(250, 185)">
+    <rect width="360" height="165" rx="12" fill="#141216" fill-opacity="0.85" stroke="#262229" stroke-width="1.5"/>
+    <!-- Card Header -->
+    <text x="18" y="30" class="code-text" font-weight="700" fill="#EDEAE6" font-size="12">AUTOMATED SCHEMA BLUEPRINT</text>
+    <rect x="270" y="16" width="72" height="18" rx="4" fill="#F2A33C" fill-opacity="0.15"/>
+    <text x="276" y="29" class="code-text" font-size="10" fill="#F2A33C">4 TABLES</text>
+
+    <!-- Table Rows Mockup -->
+    <rect x="18" y="44" width="324" height="26" rx="6" fill="#1E1B22"/>
+    <circle cx="32" cy="57" r="4" fill="#F2A33C"/>
+    <text x="44" y="61" class="code-text" fill="#EDEAE6">orders.parquet</text>
+    <text x="180" y="61" class="code-text" fill="#918B97">1.2M rows · 42MB</text>
+    <text x="305" y="61" class="code-text" font-size="10" fill="#8B5CF6">FK -></text>
+
+    <rect x="18" y="76" width="324" height="26" rx="6" fill="#1E1B22"/>
+    <circle cx="32" cy="89" r="4" fill="#8B5CF6"/>
+    <text x="44" y="93" class="code-text" fill="#EDEAE6">customers.csv</text>
+    <text x="180" y="93" class="code-text" fill="#918B97">85K rows · 8MB</text>
+
+    <rect x="18" y="108" width="324" height="26" rx="6" fill="#1E1B22"/>
+    <circle cx="32" cy="121" r="4" fill="#17B3BE"/>
+    <text x="44" y="125" class="code-text" fill="#EDEAE6">transactions.json</text>
+    <text x="180" y="125" class="code-text" fill="#918B97">450K rows · 18MB</text>
+  </g>
+
+  <!-- Reticle Radar Graphic Background Element (Center Left) -->
+  <g transform="translate(680, 198)" opacity="0.35">
+    <circle cx="0" cy="0" r="110" fill="none" stroke="#262229" stroke-width="1" stroke-dasharray="4 4"/>
+    <circle cx="0" cy="0" r="70" fill="none" stroke="#EDEAE6" stroke-opacity="0.15" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="35" fill="none" stroke="#F2A33C" stroke-opacity="0.25" stroke-width="1.5"/>
+    <line x1="-120" y1="0" x2="120" y2="0" stroke="#EDEAE6" stroke-opacity="0.1" stroke-width="1"/>
+    <line x1="0" y1="-120" x2="0" y2="120" stroke="#EDEAE6" stroke-opacity="0.1" stroke-width="1"/>
+    <!-- Sector wedge -->
+    <path d="M 0 0 L 0 -70 A 70 70 0 0 1 60 35 Z" fill="#F2A33C" fill-opacity="0.12"/>
+    <circle cx="0" cy="0" r="8" fill="#8B5CF6"/>
+  </g>
+
+  <!-- Trajectory Arc Line linking code to title -->
+  <path d="M 610 268 Q 720 268 820 190" stroke="url(#line-grad)" stroke-width="2.5" fill="none" stroke-dasharray="6 6"/>
+
+  <!-- Right Side: Main Brand Lockup & Tagline (x: 820 to 1500) -->
+  <g transform="translate(840, 100)">
+    
+    <!-- Reticle-for-O Wordmark Lockup: DataSc[Reticle]pe -->
+    <g transform="translate(0, 0)">
+      <!-- Data -->
+      <text x="0" y="68" class="title-data">Data</text>
+      <!-- Sc -->
+      <text x="154" y="68" class="title-scope">Sc</text>
+      
+      <!-- Inline Reticle 'o' Icon -->
+      <g transform="translate(234, 18) scale(0.52)">
+        <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"/>
+        <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"/>
+        <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"/>
+        <circle cx="50" cy="50" r="10" fill="#8B5CF6"/>
+      </g>
+
+      <!-- pe -->
+      <text x="290" y="68" class="title-scope">pe</text>
+    </g>
+
+    <!-- Subtitle / Tagline -->
+    <text x="2" y="114" class="tagline">Browser-Native Data Profiling &amp; Analytics Workspace</text>
+
+    <!-- Tech Stack Pill Badges with Correct Padding/Widths -->
+    <g transform="translate(2, 144)">
+      <!-- Badge 1: DuckDB-Wasm -->
+      <g transform="translate(0, 0)">
+        <rect width="154" height="32" rx="16" fill="#F2A33C" fill-opacity="0.12" stroke="#F2A33C" stroke-opacity="0.4"/>
+        <circle cx="18" cy="16" r="4" fill="#F2A33C"/>
+        <text x="30" y="21" class="badge-text" fill="#EDEAE6">DuckDB-Wasm</text>
+      </g>
+
+      <!-- Badge 2: 100% Client-Side -->
+      <g transform="translate(168, 0)">
+        <rect width="176" height="32" rx="16" fill="#8B5CF6" fill-opacity="0.14" stroke="#8B5CF6" stroke-opacity="0.4"/>
+        <circle cx="18" cy="16" r="4" fill="#8B5CF6"/>
+        <text x="30" y="21" class="badge-text" fill="#EDEAE6">100% Client-Side</text>
+      </g>
+
+      <!-- Badge 3: Zero-Upload Privacy -->
+      <g transform="translate(358, 0)">
+        <rect width="198" height="32" rx="16" fill="#17B3BE" fill-opacity="0.12" stroke="#17B3BE" stroke-opacity="0.4"/>
+        <circle cx="18" cy="16" r="4" fill="#17B3BE"/>
+        <text x="30" y="21" class="badge-text" fill="#EDEAE6">Zero-Upload Privacy</text>
+      </g>
+    </g>
+
+    <!-- Second Line Highlights -->
+    <g transform="translate(2, 192)">
+      <text x="0" y="16" class="code-text" font-size="11">
+        <tspan fill="#F2A33C" font-weight="700">INSTANT PROFILING</tspan> &#160;·&#160; 
+        <tspan fill="#8B5CF6" font-weight="700">SCHEMA DISCOVERY</tspan> &#160;·&#160; 
+        <tspan fill="#17B3BE" font-weight="700">ON-DEVICE PRIVACY</tspan>
+      </text>
+    </g>
+
+  </g>
+
+  <!-- Bottom Accent Gradient Border Line -->
+  <rect x="0" y="392" width="1584" height="4" fill="url(#line-grad)"/>
+</svg>

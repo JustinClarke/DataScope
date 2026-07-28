@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, waitFor, fireEvent, within, cleanup } from '@testing-library/react';
 import { PivotBuilder } from './PivotBuilder';
 import { useDatasetsStore } from '../../stores/datasets';
-import { useQueryStore } from '../../stores/query';
+import { useQueryStore, getSession, CONSOLE_SESSION, PIVOT_SESSION } from '../../stores/query';
 import { useUIStore } from '../../stores/ui';
 import type { TableRegistryEntry } from '../../types';
 import * as sqlService from '../../services/sql';
@@ -74,7 +74,7 @@ describe('PivotBuilder', () => {
 
   beforeEach(() => {
     useDatasetsStore.setState({ datasets: [], tables: [], workerStatus: 'idle', workerError: null });
-    useQueryStore.setState({ sql: '', status: 'idle', result: null, error: null, history: [], charts: [] });
+    useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
     useUIStore.getState().clearPendingPrefill();
     vi.mocked(sqlService.runQuery).mockReset().mockResolvedValue({
       columnNames: [],
@@ -177,7 +177,7 @@ describe('PivotBuilder', () => {
     await waitFor(() => expect(sqlService.runQuery).toHaveBeenCalledTimes(1), { timeout: 1000 });
     const [sql] = vi.mocked(sqlService.runQuery).mock.calls[0];
     expect(sql).toContain('SUM("revenue")');
-    expect(useQueryStore.getState().sql).toBe(sql);
+    expect(getSession(PIVOT_SESSION).sql).toBe(sql);
   });
 
   it('opens on the answer (D68e) — a prefill classifies fields into Rows/Values the same way addToWell does', async () => {
@@ -218,7 +218,7 @@ describe('PivotBuilder', () => {
     const builderSql = getSqlPreview(container);
     unmount();
 
-    useQueryStore.setState({ sql: '', status: 'idle', result: null, error: null, history: [], charts: [] });
+    useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
     vi.mocked(sqlService.runQuery).mockClear();
 
     const { container: guidedContainer } = render(<PivotBuilder />);

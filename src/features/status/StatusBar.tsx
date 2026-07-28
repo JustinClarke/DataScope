@@ -9,7 +9,7 @@
 // Settings tab itself as candidate scope, not a W7 commitment. The settings
 // gear itself moved to `TitleBar` (V2, scope call 2).
 import { useDatasetsStore, type WorkerStatus } from '../../stores/datasets';
-import { useQueryStore, type QueryStatus } from '../../stores/query';
+import { useQueryStore, useQuerySession, type QueryStatus } from '../../stores/query';
 import { useSettingsStore } from '../../stores/settings';
 import { usePauseSignalStore } from '../../stores/pauseSignal';
 import { formatBytes } from '../../lib/formatBytes';
@@ -41,8 +41,11 @@ export function StatusBar() {
   const tables = useDatasetsStore((state) => state.tables);
   const workerStatus = useDatasetsStore((state) => state.workerStatus);
   const aiMode = useSettingsStore((state) => state.aiMode);
-  const queryStatus = useQueryStore((state) => state.status);
-  const queryResult = useQueryStore((state) => state.result);
+  // Whichever session ran most recently (S5) — with the console, Pivot and N
+  // query tabs all able to run, "the console's" would be the wrong answer the
+  // moment a tab runs.
+  const lastRunSession = useQueryStore((state) => state.lastRunSession);
+  const { status: queryStatus, result: queryResult } = useQuerySession(lastRunSession);
   const lastPaused = usePauseSignalStore((state) => state.lastPaused);
 
   const totalRows = tables.reduce((sum, t) => sum + t.rowCount, 0);

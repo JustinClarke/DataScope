@@ -6,6 +6,10 @@ import { useTabsStore } from '../stores/tabs';
 import { useDspsReceiverStore } from '../stores/dspsReceiver';
 import { useSettingsStore } from '../stores/settings';
 import { useByokKeyStore } from '../stores/byokKey';
+import { useRunGuardStore } from '../stores/runGuard';
+import { useQueryStore, CONSOLE_SESSION } from '../stores/query';
+import { openQueryTab } from '../services/queryTabs';
+import { classifyStatement } from '../lib/statementClass';
 import * as ingestionService from '../services/ingestion';
 import type { TableRegistryEntry } from '../types';
 import type { StructureReport } from '../lib/structureReport';
@@ -93,6 +97,7 @@ beforeEach(() => {
   loadRelationshipsMock.mockReset().mockResolvedValue([]);
   useDatasetsStore.setState({ tables: [], datasets: [], workerStatus: 'idle', workerError: null });
   useTabsStore.setState({ tabs: [], activeTabId: null });
+  useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
   useDspsReceiverStore.setState({ document: null, error: null });
 });
 
@@ -122,27 +127,30 @@ describe('WorkbenchShell — act assembly (§13.3, W1/W6)', () => {
   // V6d — the editorial composition ported from `welcome-act0.html` onto the
   // HUD register (the Specimen palette is deliberately unported; see
   // build/13-hallmark-replication/06d-act0.md).
-  it('renders the masthead wordmark with the shipped Data/Scope amber split', () => {
+  // The lockup sets the "o" as the brand reticle, so the word is three runs —
+  // bone "Data", amber "Sc", the mark, amber "pe" — not a two-span split.
+  it('renders the masthead wordmark with the shipped Data/Sc-reticle-pe amber split', () => {
     const { container } = render(<WorkbenchShell />);
-    const scope = within(container).getByText('Scope');
-    expect(scope.className).toContain('text-(--color-active)');
-    expect(within(container).getByText('Data').className).toContain('text-(--color-ink)');
+    expect(within(container).getAllByText('Data')[0].className).toContain('text-(--color-ink)');
+    expect(within(container).getAllByText('Sc')[0].className).toContain('text-(--color-active)');
+    expect(within(container).getAllByText('pe')[0].className).toContain('text-(--color-active)');
   });
 
-  it('renders the three numbered section eyebrows and the footer identity line', () => {
+  // The rebuilt page states the local-first promise in the footer band rather
+  // than in numbered section eyebrows (design.md § Variants, resolved 07-28).
+  it('carries the local-first promises in the footer band', () => {
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByText('01 — Local-first.')).toBeTruthy();
-    expect(within(container).getByText('02 — Bring data.')).toBeTruthy();
-    expect(within(container).getByText("03 — Then it's yours.")).toBeTruthy();
-    expect(within(container).getByText(/a local-first data workbench/)).toBeTruthy();
+    expect(within(container).getByText(/No uploads · No accounts · No tracking/)).toBeTruthy();
+    expect(within(container).getByText(/Nothing leaves your machine/)).toBeTruthy();
+    expect(within(container).getByText('In-browser')).toBeTruthy();
   });
 
-  // Scope call 2: the mock promises "we'll ask exactly one thing," but §13.3
-  // and §5.1 ship no forced gate at all — so the slot keeps its composition
-  // and its copy describes what W6 actually built.
-  it('closes on the shipped no-forced-gate copy, not the mock one-question promise', () => {
+  // §5.1 ships no forced gate; the rebuilt page carries that posture in the
+  // feature rail rather than as a prose section (design.md § Variants, 07-28).
+  // The mock's "we'll ask exactly one thing" promise stays absent either way.
+  it('presents AI as optional and never promises a forced question', () => {
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByText(/No model runs until you turn one on/)).toBeTruthy();
+    expect(within(container).getByText('AI optional')).toBeTruthy();
     expect(within(container).queryByText(/ask exactly one thing/)).toBeNull();
   });
 
@@ -150,47 +158,32 @@ describe('WorkbenchShell — act assembly (§13.3, W1/W6)', () => {
     useDatasetsStore.setState({ workerStatus: 'compiling' });
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-act="act1"]')).not.toBeNull();
-    expect(within(container).getByText('01 — Local-first.')).toBeTruthy();
-    expect(within(container).getByText('Scope')).toBeTruthy();
-    expect(container.querySelector('[data-testid="specimen-plate"]')).not.toBeNull();
+    expect(within(container).getByText('AI optional')).toBeTruthy();
+    expect(within(container).getAllByText('Sc').length).toBeGreaterThan(0);
   });
 
-  // The two 2026-07-25 amendments in `design.md` § Variants: Act 0 fits one
-  // viewport at `lg` and up, and carries the Entry page's one Tier-B specimen.
-  it('frames Act 0 as one viewport with the columns, not the page, taking any overflow', () => {
+  // `design.md` § Variants: no page scroll at `lg` and up — Act 0 is a decision
+  // surface, so everything needed to say yes is reachable without moving. Below
+  // `lg` the page deliberately still flows and scrolls: a phone can't hold a
+  // drop target, a URL field and five samples at once. The rebuilt composition
+  // gives the ingest column the one overflow (resolved 07-28).
+  it('frames Act 0 as one viewport with a column, not the page, taking any overflow', () => {
     const { container } = render(<WorkbenchShell />);
     const frame = container.querySelector('[data-act="act0"] > div');
-    // Below `lg` the page deliberately still flows and scrolls — a phone can't
-    // hold a drop target, a URL field and five samples at once.
     expect(frame?.className).toContain('min-h-svh');
     expect(frame?.className).toContain('lg:h-svh');
     expect(frame?.className).toContain('lg:overflow-hidden');
-    expect(container.querySelectorAll('main .lg\\:overflow-y-auto')).toHaveLength(2);
+    expect(container.querySelectorAll('main .lg\\:overflow-y-auto')).toHaveLength(1);
   });
 
-  it('renders the specimen as an illustration, not as content the reader must parse', () => {
+  // Act 0 is always the dark composition, whatever the OS preference — pinned
+  // through the register `theme.css` carries, never a local palette override
+  // (design.md § Variants / § Drift policy).
+  it('pins the dark register rather than redeclaring the palette', () => {
     const { container } = render(<WorkbenchShell />);
-    const plate = container.querySelector('[data-testid="specimen-plate"]');
-    expect(plate?.getAttribute('aria-hidden')).toBe('true');
-    // The caption does the real work, and teaches the amber PK / purple FK
-    // legend the user meets again on the map ten seconds later.
-    expect(within(container).getByText('primary key').className).toContain('text-(--color-pk)');
-    expect(within(container).getByText('joins').className).toContain('text-(--color-fk)');
-  });
-
-  // § Variants' standing limit on the specimen: real sample tables and columns,
-  // and no fabricated row counts, percentages or metrics of any kind. The bar
-  // strip is proportions only — it carries no axis, no ticks and no labels.
-  it('draws the specimen from real sample schema and fabricates no numbers', () => {
-    const { container } = render(<WorkbenchShell />);
-    const labels = Array.from(
-      container.querySelectorAll('[data-testid="specimen-plate"] text'),
-      (node) => node.textContent ?? '',
-    );
-    expect(labels).toContain('customers');
-    expect(labels).toContain('orders');
-    expect(labels).toContain('customer_id');
-    expect(labels.every((label) => !/\d/.test(label))).toBe(true);
+    const frame = container.querySelector('[data-act="act0"] > div');
+    expect(frame?.getAttribute('data-theme')).toBe('dark');
+    expect(frame?.getAttribute('style') ?? '').not.toMatch(/--color-/);
   });
 
   it('mounts the shell grid once a dataset is registered', () => {
@@ -201,6 +194,18 @@ describe('WorkbenchShell — act assembly (§13.3, W1/W6)', () => {
     for (const region of ['explorer', 'canvas', 'ai-pane', 'inspector', 'status-bar']) {
       expect(container.querySelector(`[data-region="${region}"]`)).not.toBeNull();
     }
+  });
+
+  it('mounts the transform guard exactly once, at the shell level (S4)', () => {
+    useDatasetsStore.setState({ datasets: [DATASET] });
+    useRunGuardStore.getState().hold(classifyStatement('DROP TABLE orders'), CONSOLE_SESSION);
+
+    const { container } = render(<WorkbenchShell />);
+
+    // One dialog for a held statement — not one per surface that could have
+    // raised it. The guard belongs to the run path, not to any component.
+    expect(within(container).getAllByRole('dialog')).toHaveLength(1);
+    useRunGuardStore.getState().release();
   });
 
   it('stays on the shell even if the worker later errors, once data exists', () => {
@@ -253,6 +258,35 @@ describe('WorkbenchShell — tab host (canvas region, W3)', () => {
 
     expect(useTabsStore.getState().tabs).toHaveLength(0);
     expect(container.querySelector('[data-testid="tab-host-empty"]')).not.toBeNull();
+  });
+
+  // S5 — the strip after the registry amendment.
+  it('labels a query tab by its own name, and a singleton by type · subject', () => {
+    const singleton = useTabsStore.getState().openTab('map', 'orders');
+    const queryTab = openQueryTab({ sql: 'SELECT 1', name: 'Orders by month' });
+    const { container } = render(<WorkbenchShell />);
+
+    expect(container.querySelector(`[data-testid="tab-header-${queryTab}"]`)?.textContent).toContain('Orders by month');
+    expect(container.querySelector(`[data-testid="tab-header-${queryTab}"]`)?.textContent).not.toContain('query ·');
+    expect(container.querySelector(`[data-testid="tab-header-${singleton}"]`)?.textContent).toContain('map · orders');
+  });
+
+  it('scrolls the strip rather than compressing headers (§13.3, decided)', () => {
+    const id = useTabsStore.getState().openTab('map', 'orders');
+    const { container } = render(<WorkbenchShell />);
+
+    expect(container.querySelector('[data-testid="tab-host"]')?.className).toContain('overflow-x-auto');
+    expect(container.querySelector(`[data-testid="tab-header-${id}"]`)?.className).toContain('shrink-0');
+  });
+
+  it('closing a query tab drops its query session with it', () => {
+    const tabId = openQueryTab({ sql: 'SELECT 1', name: 'Query 9' });
+    const { container } = render(<WorkbenchShell />);
+
+    fireEvent.click(container.querySelector<HTMLButtonElement>('[aria-label="Close Query 9"]')!);
+
+    expect(useTabsStore.getState().tabs).toHaveLength(0);
+    expect(useQueryStore.getState().sessions[tabId]).toBeUndefined();
   });
 });
 
@@ -307,11 +341,12 @@ describe('WorkbenchShell — module-wiring tab content (W7.5)', () => {
   // tree, so assertions here scope to each render's own `container` (matching
   // the "tab host"/"keep-mounted" blocks above in this file) rather than the
   // document-bound `getByText`/`screen`.
-  it('a sql tab renders real SqlModule content', () => {
+  it('a query tab renders its own editor and Run, on its own session (S5)', () => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
-    useTabsStore.getState().openTab('sql', 'sql');
+    const tabId = openQueryTab({ sql: 'SELECT 1', name: 'Query 1' });
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByRole('heading', { name: 'SQL' })).toBeTruthy();
+    expect(within(container).getByRole('heading', { name: 'Query 1' })).toBeTruthy();
+    expect(container.querySelector(`[data-testid="query-tab-${tabId}"]`)).not.toBeNull();
   });
 
   it('a pivot tab renders real PivotModule content', () => {
@@ -344,6 +379,13 @@ describe('WorkbenchShell — module-wiring tab content (W7.5)', () => {
     const { container } = render(<WorkbenchShell />);
     expect(within(container).getByText('Drop a dataset to export tables.')).toBeTruthy();
   });
+
+  it('an ingestion tab renders real IngestionPanel content (S1, closes W2\'s Add-data deferral)', () => {
+    useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
+    useTabsStore.getState().openTab('ingestion', 'ingestion');
+    const { container } = render(<WorkbenchShell />);
+    expect(within(container).getByText('Drop files, a folder, or a ZIP')).toBeTruthy();
+  });
 });
 
 describe('WorkbenchShell — right AI pane, inspector, status bar (W7)', () => {
@@ -358,6 +400,28 @@ describe('WorkbenchShell — right AI pane, inspector, status bar (W7)', () => {
       within(container.querySelector('[data-region="inspector"]')!).getByText(/Select a table, column, or relationship/),
     ).toBeTruthy();
     expect(within(container.querySelector('[data-region="status-bar"]')!).getByText(/Engine:/)).toBeTruthy();
+  });
+
+  // S3: the bottom region is the drawer, not a bare Inspector — and §13.3's
+  // stacking is load-bearing, because an expanded drawer must push against the
+  // canvas and never over the dock or the status bar.
+  it('hosts the inspector drawer in the inspector region, stacked canvas → drawer → dock → status bar (S3)', () => {
+    const { container } = render(<WorkbenchShell />);
+    const region = container.querySelector('[data-region="inspector"]')!;
+    expect(within(region as HTMLElement).getByTestId('inspector-drawer')).toBeTruthy();
+    expect(within(region as HTMLElement).getByRole('button', { name: 'SQL Console' })).toBeTruthy();
+
+    // The dock sits between the drawer and the status bar in the JSX, but it
+    // renders nothing unless WebLLM is eligible, so it carries no marker to
+    // assert against here — these three are the stacking that always holds.
+    const order = ['canvas', 'inspector', 'status-bar'].map((name) => {
+      const node = container.querySelector(`[data-region="${name}"]`);
+      expect(node, `no [data-region="${name}"]`).toBeTruthy();
+      return node!;
+    });
+    for (let i = 0; i < order.length - 1; i += 1) {
+      expect(order[i].compareDocumentPosition(order[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
   });
 
   it('"Configure workspace" (AI pane) opens the shared settings modal with the Mode fieldset hidden', () => {

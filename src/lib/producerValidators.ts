@@ -30,6 +30,11 @@ function actionIdentity(action: RankedAction): string {
  */
 export function rankedActionValidator(baseline: RankedAction[], candidate: RankedAction[]): boolean {
   if (candidate.length !== baseline.length) return false
+  // `verb` is the one free-text field the model may write on this path, so it
+  // clears the same D45 guard a re-phrased `statement` does — without this the
+  // offers slot is the hole an over-claim gets pushed through
+  // (10-grounding-ladder.md, "RankedAction.verb is unguarded").
+  if (!candidate.every((action) => passesPhrasingGuard(action.verb))) return false
   const counts = new Map<string, number>()
   for (const action of baseline) {
     const key = actionIdentity(action)
@@ -52,6 +57,40 @@ const FORBIDDEN_PHRASING =
 /** True when the re-phrased statement stays within the D45 honesty guard. */
 export function passesPhrasingGuard(statement: string): boolean {
   return !FORBIDDEN_PHRASING.test(statement)
+}
+
+/**
+ * Unhedged generalisation over time — the second guard
+ * (10-grounding-ladder.md, "Extend the phrasing guard to trend generalisation,
+ * and measure the cost"). `FORBIDDEN_PHRASING` bans causal *vocabulary*, so the
+ * two sentences a synthesis panel most wants to over-claim with ("Orders
+ * consistently peak on Tuesdays", "Older cohorts exhibit steadily increasing
+ * order values") clear it clean. These terms catch that shape.
+ *
+ * Deliberately NOT folded into `passesPhrasingGuard`: it is applied and
+ * counted as a measurement first (its false-reject rate against the app's own
+ * deterministic statements is a reported result, `eval/10-grounding-ladder/
+ * runOffers.ts`), so it earns the shipped path with a number rather than a
+ * judgement. Exported as a list, not just a regex, because its length is
+ * reported alongside `CLOSURE_RULES`' — and, like that list, it may not grow to
+ * flatter the numbers.
+ */
+export const TREND_GENERALISATION_TERMS = [
+  'consistently',
+  'steadily',
+  'typically',
+  'tend to',
+  'tends to',
+  'continues to',
+  'increasingly',
+  'ongoing',
+] as const
+
+const TREND_GENERALISATION_PHRASING = new RegExp(`\\b(${TREND_GENERALISATION_TERMS.join('|')})\\b`, 'i')
+
+/** True when the statement states a trend without generalising it. */
+export function passesTrendGeneralisationGuard(statement: string): boolean {
+  return !TREND_GENERALISATION_PHRASING.test(statement)
 }
 
 /**

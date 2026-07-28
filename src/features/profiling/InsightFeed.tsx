@@ -1,20 +1,12 @@
 import { useEffect, useState } from 'react';
 import { BarChart3 } from 'lucide-react';
 import type { QueryResult, TableRegistryEntry } from '../../types';
-import type { InsightCandidate, InsightRuleId } from '../../lib/insights';
+import type { InsightCandidate } from '../../lib/insights';
+import { RULE_LABEL } from '../../lib/insights';
 import { loadInsights } from '../../services/insights';
 import { runChartQuery } from '../../services/charts';
 import { AutoChartPanel } from '../sql/AutoChartPanel';
-
-const RULE_LABEL: Record<InsightRuleId, string> = {
-  concentration: 'Concentration',
-  'change-point': 'Change point',
-  'outlier-group': 'Outlier group',
-  'null-pattern': 'Null pattern',
-  duplicates: 'Duplicates',
-  leakage: 'Leakage flag',
-  'id-exclusion': 'ID exclusion',
-};
+import { RunSqlButton } from '../sql/RunSqlButton';
 
 function InsightCard({ candidate, onShowSql }: { candidate: InsightCandidate; onShowSql: (label: string, sql: string) => void }) {
   // Charting an insight runs its own query and renders the result through the
@@ -59,6 +51,7 @@ function InsightCard({ candidate, onShowSql }: { candidate: InsightCandidate; on
               >
                 Show SQL
               </button>
+              <RunSqlButton sql={candidate.sql} />
               <button
                 type="button"
                 onClick={toggleChart}

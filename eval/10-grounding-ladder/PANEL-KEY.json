@@ -1,0 +1,256 @@
+{
+  "titanic": {
+    "header": [
+      {
+        "class": "C1",
+        "assertion": "titanic.rowCount",
+        "truth": 891,
+        "author": "app"
+      }
+    ],
+    "structural": [],
+    "quality": [
+      {
+        "class": "C3",
+        "assertion": "titanic: no duplicate rows",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "titanic: no zero-variance columns",
+        "truth": true,
+        "author": "app"
+      }
+    ],
+    "behavioral": [],
+    "offers": [],
+    "pendingHumanAuthoring": [
+      "C4 header assertions (domain guess, \"well-suited for X/Y/Z\") — no per-fixture mock-up exists to author these from; 05 territory (offer, or dropped).",
+      "C2 curated assertions for structural/behavioral slots — which computed facts are notable enough to surface is a product choice, not derivable from computeStats.ts alone."
+    ]
+  },
+  "stock_prices": {
+    "header": [
+      {
+        "class": "C1",
+        "assertion": "stock_prices.rowCount",
+        "truth": 2500,
+        "author": "app"
+      },
+      {
+        "class": "C1",
+        "assertion": "stock_prices.Date.temporal-span",
+        "truth": [
+          "2016-01-04",
+          "2025-08-01"
+        ],
+        "author": "app"
+      }
+    ],
+    "structural": [],
+    "quality": [
+      {
+        "class": "C3",
+        "assertion": "stock_prices: no duplicate rows",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "stock_prices: no zero-variance columns",
+        "truth": true,
+        "author": "app"
+      }
+    ],
+    "behavioral": [],
+    "offers": [],
+    "pendingHumanAuthoring": [
+      "C4 header assertions (domain guess, \"well-suited for X/Y/Z\") — no per-fixture mock-up exists to author these from; 05 territory (offer, or dropped).",
+      "C2 curated assertions for structural/behavioral slots — which computed facts are notable enough to surface is a product choice, not derivable from computeStats.ts alone."
+    ]
+  },
+  "weather": {
+    "header": [
+      {
+        "class": "C1",
+        "assertion": "weather.rowCount",
+        "truth": 3650,
+        "author": "app"
+      },
+      {
+        "class": "C1",
+        "assertion": "weather.Date.temporal-span",
+        "truth": [
+          "2015-01-01",
+          "2024-12-28"
+        ],
+        "author": "app"
+      }
+    ],
+    "structural": [],
+    "quality": [
+      {
+        "class": "C3",
+        "assertion": "weather: no duplicate rows",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "weather: no zero-variance columns",
+        "truth": false,
+        "author": "app"
+      }
+    ],
+    "behavioral": [],
+    "offers": [],
+    "pendingHumanAuthoring": [
+      "C4 header assertions (domain guess, \"well-suited for X/Y/Z\") — no per-fixture mock-up exists to author these from; 05 territory (offer, or dropped).",
+      "C2 curated assertions for structural/behavioral slots — which computed facts are notable enough to surface is a product choice, not derivable from computeStats.ts alone."
+    ]
+  },
+  "product_reviews": {
+    "header": [
+      {
+        "class": "C1",
+        "assertion": "product_reviews.rowCount",
+        "truth": 520,
+        "author": "app"
+      },
+      {
+        "class": "C1",
+        "assertion": "product_reviews.ReviewDate.temporal-span",
+        "truth": [
+          "2023-01-01",
+          "2024-11-29"
+        ],
+        "author": "app"
+      }
+    ],
+    "structural": [],
+    "quality": [
+      {
+        "class": "C3",
+        "assertion": "product_reviews: no duplicate rows",
+        "truth": false,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "product_reviews: no zero-variance columns",
+        "truth": true,
+        "author": "app"
+      }
+    ],
+    "behavioral": [],
+    "offers": [],
+    "pendingHumanAuthoring": [
+      "C4 header assertions (domain guess, \"well-suited for X/Y/Z\") — no per-fixture mock-up exists to author these from; 05 territory (offer, or dropped).",
+      "C2 curated assertions for structural/behavioral slots — which computed facts are notable enough to surface is a product choice, not derivable from computeStats.ts alone."
+    ]
+  },
+  "ecommerce": {
+    "header": [
+      {
+        "class": "C1",
+        "assertion": "customers.rowCount",
+        "truth": 400,
+        "author": "app"
+      },
+      {
+        "class": "C1",
+        "assertion": "products.rowCount",
+        "truth": 150,
+        "author": "app"
+      },
+      {
+        "class": "C1",
+        "assertion": "orders.rowCount",
+        "truth": 1400,
+        "author": "app"
+      },
+      {
+        "class": "C1",
+        "assertion": "order_items.rowCount",
+        "truth": 3487,
+        "author": "app"
+      },
+      {
+        "class": "C1",
+        "assertion": "customers.signup_date.temporal-span",
+        "truth": [
+          "2019-01-07",
+          "2024-09-27"
+        ],
+        "author": "app"
+      },
+      {
+        "class": "C1",
+        "assertion": "orders.order_date.temporal-span",
+        "truth": [
+          "2021-12-31",
+          "2024-12-15"
+        ],
+        "author": "app"
+      }
+    ],
+    "structural": [],
+    "quality": [
+      {
+        "class": "C3",
+        "assertion": "customers: no duplicate rows",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "customers: no zero-variance columns",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "products: no duplicate rows",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "products: no zero-variance columns",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "orders: no duplicate rows",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "orders: no zero-variance columns",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "order_items: no duplicate rows",
+        "truth": true,
+        "author": "app"
+      },
+      {
+        "class": "C3",
+        "assertion": "order_items: no zero-variance columns",
+        "truth": true,
+        "author": "app"
+      }
+    ],
+    "behavioral": [],
+    "offers": [],
+    "pendingHumanAuthoring": [
+      "C4 header assertions (domain guess, \"well-suited for X/Y/Z\") — no per-fixture mock-up exists to author these from; 05 territory (offer, or dropped).",
+      "C2 curated assertions for structural/behavioral slots — which computed facts are notable enough to surface is a product choice, not derivable from computeStats.ts alone."
+    ]
+  }
+}

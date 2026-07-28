@@ -53,7 +53,7 @@ describe('IngestionPanel', () => {
 
   it('renders the drop zone and every bundled sample', () => {
     const { container } = render(<IngestionPanel />);
-    expect(container.textContent).toContain('Drop files, a folder, or a ZIP archive here');
+    expect(container.textContent).toContain('Drop files, a folder, or a ZIP');
     expect(container.textContent).toContain('E-commerce mini-warehouse');
     expect(container.textContent).toContain('Titanic Passengers');
   });

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { useDatasetsStore } from '../../stores/datasets';
-import { useQueryStore } from '../../stores/query';
+import { useQueryStore, PIVOT_SESSION } from '../../stores/query';
 import { runQuery } from '../../services/sql';
 import { copySql } from './resultsExport';
 import {
@@ -247,8 +247,10 @@ export function PivotBuilder({ prefill: prefillOverride }: PivotBuilderProps = {
   useEffect(() => {
     if (!sql) return;
     const timer = setTimeout(() => {
-      useQueryStore.getState().setSql(sql);
-      runQuery(sql).catch(() => {});
+      // Pivot's own session (S5): a pivot re-run no longer clobbers the
+      // console's results or pushes the console's buffer around.
+      useQueryStore.getState().setSql(PIVOT_SESSION, sql);
+      runQuery(sql, PIVOT_SESSION).catch(() => {});
     }, RUN_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [sql]);

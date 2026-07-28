@@ -22,7 +22,8 @@ export type InsightRuleId =
   | 'null-pattern'
   | 'duplicates'
   | 'leakage'
-  | 'id-exclusion';
+  | 'id-exclusion'
+  | 'zero-variance';
 
 export interface InsightCandidate {
   id: string;
@@ -38,6 +39,18 @@ export interface InsightProbe {
   sql: string;
   describe: (result: QueryResult) => InsightCandidate[];
 }
+
+/** Human label per rule — shared by every surface that renders an `InsightCandidate` (§10). */
+export const RULE_LABEL: Record<InsightRuleId, string> = {
+  concentration: 'Concentration',
+  'change-point': 'Change point',
+  'outlier-group': 'Outlier group',
+  'null-pattern': 'Null pattern',
+  duplicates: 'Duplicates',
+  leakage: 'Leakage flag',
+  'id-exclusion': 'ID exclusion',
+  'zero-variance': 'Zero variance',
+};
 
 /**
  * One table paired with its insight candidates — the per-table shape the
@@ -104,6 +117,35 @@ export function idExclusionCandidates(columns: ClassifiedColumn[], tableName: st
       sql: `SELECT COUNT(DISTINCT ${quoteIdentifier(c.name)}) AS distinct_count, COUNT(*) AS total FROM ${quoteIdentifier(tableName)}`,
       effectSize: 1,
       coverage: 0.1,
+    }));
+}
+
+// ---- Zero variance (syntactic — any, S2 Data Quality & Health) ----
+
+/**
+ * `cardinality === 1` means exactly one non-null value repeated (excludes
+ * all-null, which is `cardinality === 0` and already covered by
+ * `nullPatternCandidates`'s 100%-null case). Guarded on `rowCount > 1` — a
+ * one-row table makes every column trivially cardinality 1, which is not a
+ * finding.
+ */
+export function zeroVarianceCandidates(
+  columns: ClassifiedColumn[],
+  tableName: string,
+  rowCount: number,
+): InsightCandidate[] {
+  if (rowCount <= 1) return [];
+  return columns
+    .filter((c) => c.cardinality === 1)
+    .map((c) => ({
+      id: `zero-variance:${c.name}`,
+      rule: 'zero-variance' as const,
+      description: `"${c.name}" holds a single repeated value across all ${rowCount.toLocaleString()} rows — zero variance.`,
+      // Illustrative, same posture `idExclusionCandidates` already takes —
+      // the finding itself needs no live query, since cardinality is already known.
+      sql: `SELECT COUNT(DISTINCT ${quoteIdentifier(c.name)}) AS distinct_count, COUNT(*) AS total FROM ${quoteIdentifier(tableName)}`,
+      effectSize: 1,
+      coverage: 1,
     }));
 }
 

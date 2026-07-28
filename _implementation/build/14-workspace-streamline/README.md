@@ -56,6 +56,7 @@ goes to its own tab.
 | S4 | **Run from anywhere + the shared guarded run path:** a run action on every surface that displays SQL, and `TransformGuardModal` moved into the one run path every runner calls | S3 |
 | S5 | **Query tabs + the registry amendment:** the artifact kind's first live member with both producers; `'sql'` removed from the union, `TAB_TYPE_BY_MODULE` and the palette; Pivot's own results home; Export's entry point to the title bar; settings confirmed as the overlay | S3, S4 |
 | S6 | **Map composition:** options strip removed, Suggested Explorations (top 3 + view-more → a pre-run query tab), Structural ‖ Behavioral finding columns at independent heights | S5 |
+| S6.9 | **Workspace persistence across refresh:** durable dataset bytes (OPFS-backed DuckDB or byte-staging + re-register) plus registry/UI-state rehydration (`datasets`/`tabs`/`selection`/`relationships`), reconciled against whatever DuckDB actually recovers on load. Four sub-steps: spike → durable row storage → registry persist → rehydration bootstrap. Sequenced before S7 by human instruction, not gated by S0 | none (parallel-safe with S1–S6) |
 | S7 | **AI Dataset Synthesis — gated, not scheduled.** Blocked on S0's verdict | S6, **S0** |
 
 **S0 sits ahead of all of them** — [`00-synthesis-and-limits-probe.md`](00-synthesis-and-limits-probe.md),
@@ -68,6 +69,21 @@ and what a query tab actually costs in memory on real hardware. It gates **S7 en
 until that phase's own leaf doc lands, carrying its own definition of done. Each phase becomes
 one leaf in this folder **as it is picked up** — same convention as `../12-workbench/` and
 `../13-hallmark-replication/`.
+
+## Reference Design Mocks
+
+The reference UI mocks for this tier live directly in [`reference-images/`](reference-images/) and map to the build phases as follows:
+
+* **S1 (Explorer Rail Reflow):**
+  ![Explorer Rail Reflow A](reference-images/01-explorer-reflowed-table-rows-a.png)
+  ![Explorer Rail Reflow B](reference-images/01-explorer-reflowed-table-rows-b.png)
+* **S2 (Data Quality & Health panel):**
+  ![Data Quality & Health](reference-images/02-options-strip-prompts.png)
+* **S6 / S7 (AI Dataset Synthesis & Suggested Explorations Block):**
+  ![AI Dataset Synthesis and Suggested Explorations](reference-images/03-ai-synthesis-and-suggested-explorations.png)
+* **S6 (Structural Patterns & Behavioral Trends Columns):**
+  ![Structural Patterns Cards](reference-images/04-structural-patterns-cards.png)
+  ![Behavioral Trends Cards](reference-images/05-behavioral-trends-cards.png)
 
 ## Cross-cutting contracts every S-leaf inherits
 

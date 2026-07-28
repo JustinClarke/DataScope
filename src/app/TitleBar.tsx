@@ -2,9 +2,10 @@
 // scaffolded. Wordmark, the loaded dataset's identity, the ⌘K palette
 // launcher, and the sole settings entry point (moved off StatusBar, scope
 // call 2 of build/13-hallmark-replication/02-shell-chrome.md).
-import { Settings } from 'lucide-react';
+import { Settings, Download } from 'lucide-react';
 import { useDatasetsStore } from '../stores/datasets';
 import { usePaletteOpenStore } from '../stores/paletteOpen';
+import { openDestination } from '../services/navigation';
 
 interface TitleBarProps {
   onOpenSettings: () => void;
@@ -48,6 +49,18 @@ export function TitleBar({ onOpenSettings }: TitleBarProps) {
         >
           Search &amp; actions
           <span className="rounded-(--radius-xs) border border-(--color-rule) px-1 text-(--color-ink-3)">⌘K</span>
+        </button>
+        {/* S5 (D73): Export stays a tab; only its entry point moves here. The
+            cluster is deliberately mixed — export is work you return to,
+            settings is an errand you dismiss (§13.3). */}
+        <button
+          type="button"
+          data-testid="title-bar-export-button"
+          onClick={() => openDestination('export')}
+          className="flex items-center gap-1.5 rounded-(--radius-sm) border border-(--color-rule) bg-(--color-panel) px-2 py-1 font-mono text-[length:var(--text-md)] text-(--color-ink-2) hover:border-(--color-rule-hi) hover:text-(--color-ink)"
+        >
+          <Download size={13} aria-hidden="true" />
+          Export
         </button>
         <button
           type="button"

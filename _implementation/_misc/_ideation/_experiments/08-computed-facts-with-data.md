@@ -636,6 +636,11 @@ compute-level detector becomes a `computeStats.ts` pre-step (still deterministic
 it decides which SQL queries to run, not what the model sees beyond that) and gets its own R4/R7
 measurement pass, not folded into the core verdict.
 
+**Elevated to the primary next step, not a deferred tuning layer (2026-07-27).** The v0 run's own
+R2 and (i) results (see [Post-verdict critique](#post-verdict-critique--the-document-over-answers-and-its-own-results-argue-for-a-different-architecture-added-2026-07-27)
+below) argue the fact-*selection* idea recorded in this paragraph should be the next thing built,
+ahead of the exhaustive-vs-curated and custody-tiering branches above.
+
 ---
 
 ## Relationship to other candidates
@@ -823,3 +828,59 @@ per the row-ladder test already specified under "Custody tiering" above, before 
 about whether row-sending earns its Invariant-1 override). None of these block reporting a verdict;
 none are new mechanism failures — all three are the natural next layer once the core citation +
 computed-fact mechanism itself is shown to hold, which this pass shows it does.
+
+---
+
+## Post-verdict critique — the document over-answers, and its own results argue for a different architecture (added 2026-07-27)
+
+**The verdict above is accurate; the document around it is not disciplined enough to make that
+legible.** The N=5 runs actually performed (9 build items, kill criteria (a)-(i)) stayed scoped to
+the Thesis line: deterministic computation + citation binding beats schema-only grounding. Custody
+tiering, exhaustive-vs-curated breadth, and adaptive compute depth are each correctly labeled
+untested / not-run-this-pass — but interleaved with the tested mechanism, they mean a reader has to
+do real triage to find what was actually validated. The sprawl is an editorial problem in this
+document, not evidence the experiment itself lost focus — with one exception: (f)'s row-ladder
+question is not scope creep, since 08 only exists via a policy override (Invariant 1 / D72), so
+whether row-sending is actually safe is load-bearing to the hypothesis, not an add-on to it.
+
+**Fact-kind proliferation was never ablated.** ~20 fact kinds (Gini, Pareto share, Cramér's V, η²,
+functional dependency, arithmetic consistency, etc.) were computed and reported as a coverage
+positive (R7: 17–64 facts/dataset, mean value-set size 2.7–6.6) with no test isolating which kinds
+actually prevented which fabrication. The F1/F2/F3-to-mechanism table under "What it attacks" is a
+design argument, not a post-hoc result. Before this scales further, check whether a 5-kind fact set
+(aggregate, group-breakdown, variance-explained, correlation, top-values — the kinds that actually
+got cited across the 50 runs recorded above) scores identically to the full ~20-kind set.
+
+**"Core mechanism validated" outruns the evidence, even though the itemized findings underneath it
+don't.** A more calibrated one-line summary: the grounding mechanism is validated (zero
+fabrications, clean citation rejection); the composition mechanism is not (identical-headline rate
+≈0.2, (i)'s fact-dump problem). Both halves are already stated in this document — but leading with
+"validated" and listing the composition failure third in "Next step" invites a skim-reader to
+under-weight it.
+
+**The determinism finding (R2) and the fact-dump finding (i) are the same finding, not two open
+items.** Both trace to one cause: the model is doing *selection* — what's important, what order,
+what to emphasize — not just narration, despite the mechanism's premise that "the model narrates
+only what the app already proved." Selection is exactly the kind of decision LLMs vary on run to
+run, and handing the model a bigger, richer, all-true fact table — 08's whole value proposition over
+03 — gives it strictly more freedom to vary that selection. The mechanism's own richness is working
+against its own R2 score.
+
+**This document already contains the fix, filed under the wrong heading.** "Adaptive compute depth"
+above already concludes that what survives of it is "a fact-*selection* step... which of the
+computed facts are worth spending prompt tokens on" — but files that as a POST-V0 OPTIMIZATION, a
+tuning layer for later. Given R2 and (i), it is not a later-stage optimization; it is the direct
+next experiment. Move fact selection out of the model and into deterministic code — rank computed
+facts (the "eventfulness" signals already listed there: outlier count, concentration, group
+separation), select top-N, and shrink the model's job to wording only — closer to **04 (model as
+editor)** than to 08's current free-narration-from-a-large-table design. That is a different
+architecture from what "What to build" specifies, not a parameter tweak to it.
+
+**Revised priority, superseding the order in "Next step" above:** before the exhaustive-vs-curated
+variant or the custody-tiering row ladder — both currently queued and both expansions of scope this
+critique argues against — rerun R2/determinism on a fact-selection architecture (deterministic
+ranking + top-N selection, model rewrites only) against the same five fixtures. If that closes the
+identical-headline gap without giving up R3 reach, it — not the current free-narration design — is
+the mechanism worth formalizing into "What to build." The exhaustive and custody branches remain
+open questions, but are lower priority than isolating the one architectural change the data already
+argues for.

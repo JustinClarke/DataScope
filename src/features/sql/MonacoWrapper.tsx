@@ -12,7 +12,7 @@ import { useEffect, useRef } from 'react';
 import * as monaco from 'monaco-editor';
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import { useDatasetsStore } from '../../stores/datasets';
-import { useQueryStore } from '../../stores/query';
+import { useQueryStore, getSession, type QuerySessionId } from '../../stores/query';
 import { buildCompletionItems } from './completionProvider';
 
 // Self-hosted (same-origin) worker, matching the rest of the app's ADR-001
@@ -64,16 +64,18 @@ function ensureCompletionProvider(): void {
 }
 
 interface MonacoWrapperProps {
+  /** Which query session this editor's buffer belongs to (S5) — the console, or one query tab. */
+  sessionId: QuerySessionId;
   /** Invoked by the Ctrl/Cmd+Enter editor action; the run button lives outside this component. */
   onRunQuery: () => void;
 }
 
 /**
  * The Monaco mount itself — this module (and the `monaco-editor` it statically
- * imports) only ever loads behind `React.lazy` (see `SqlModule.tsx`), so it
+ * imports) only ever loads behind `React.lazy` (see `LazySqlEditor.tsx`), so it
  * must not be imported from anything reachable at startup.
  */
-export default function MonacoWrapper({ onRunQuery }: MonacoWrapperProps) {
+export default function MonacoWrapper({ sessionId, onRunQuery }: MonacoWrapperProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Ref indirection so the Ctrl/Cmd+Enter action (bound once, at editor
   // creation) always calls the latest `onRunQuery` without recreating the
@@ -88,7 +90,7 @@ export default function MonacoWrapper({ onRunQuery }: MonacoWrapperProps) {
     ensureCompletionProvider();
 
     const editor = monaco.editor.create(containerRef.current, {
-      value: useQueryStore.getState().sql,
+      value: getSession(sessionId).sql,
       language: 'sql',
       automaticLayout: true,
       minimap: { enabled: false },
@@ -97,7 +99,7 @@ export default function MonacoWrapper({ onRunQuery }: MonacoWrapperProps) {
     });
 
     const changeSub = editor.onDidChangeModelContent(() => {
-      useQueryStore.getState().setSql(editor.getValue());
+      useQueryStore.getState().setSql(sessionId, editor.getValue());
     });
 
     const runAction = editor.addAction({
@@ -112,8 +114,10 @@ export default function MonacoWrapper({ onRunQuery }: MonacoWrapperProps) {
     // sets `sql` from outside this component (e.g. a future "reuse this
     // history entry" affordance) must be reflected back into the editor.
     const unsubscribe = useQueryStore.subscribe((state, prevState) => {
-      if (state.sql !== prevState.sql && state.sql !== editor.getValue()) {
-        editor.setValue(state.sql);
+      const next = state.sessions[sessionId]?.sql;
+      const previous = prevState.sessions[sessionId]?.sql;
+      if (next !== undefined && next !== previous && next !== editor.getValue()) {
+        editor.setValue(next);
       }
     });
 
@@ -123,7 +127,7 @@ export default function MonacoWrapper({ onRunQuery }: MonacoWrapperProps) {
       runAction.dispose();
       editor.dispose();
     };
-  }, []);
+  }, [sessionId]);
 
   return (
     <div

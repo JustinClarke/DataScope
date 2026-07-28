@@ -70,6 +70,7 @@ export function IngestionPanel() {
   const [redoOffer, setRedoOffer] = useState<RedoOffer | null>(null);
   const [redoing, setRedoing] = useState(false);
   const [refreshingTableId, setRefreshingTableId] = useState<string | null>(null);
+  const [activeSampleId, setActiveSampleId] = useState<string | null>(null);
 
   const busy = BUSY_PHASES.includes(phase);
 
@@ -111,6 +112,7 @@ export function IngestionPanel() {
     } else {
       const sample = SAMPLE_MANIFEST.find((s) => s.id === source);
       setStats({ label: sample?.label ?? source, sizeBytes: 0, format: 'sample' });
+      setActiveSampleId(source);
     }
 
     setPhase('loading-engine');
@@ -142,6 +144,8 @@ export function IngestionPanel() {
         message: err instanceof IngestionError ? err.message : 'Something went wrong while loading this file.',
         isModal: false,
       });
+    } finally {
+      setActiveSampleId(null);
     }
   }, []);
 
@@ -382,7 +386,7 @@ export function IngestionPanel() {
   }, [redoOffer]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* V6d built the mock's `.ingest` grid here — the drop zone spanning both
           rows of a 1.3fr/1fr split with the URL form over the samples beside
           it. That split is superseded, not abandoned: Act 0's own viewport-fit
@@ -393,21 +397,30 @@ export function IngestionPanel() {
           Everything below — the telemetry, the status blocks V6a voiced, the
           toast and the table list — is re-slotted, never re-styled. */}
       <div>
-        <h2 className="micro mb-2 text-(--color-ink-3)">File, folder, or .zip</h2>
         <DropZone onFiles={handleFiles} disabled={busy} />
       </div>
 
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-(--color-rule)" />
+        <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-(--color-ink-3)">or paste a link</span>
+        <div className="h-px flex-1 bg-(--color-rule)" />
+      </div>
+
       <div>
-        <h2 className="micro mb-2 text-(--color-ink-3)">From a URL</h2>
         <UrlInputForm onSubmit={runIngestUrl} disabled={busy} />
       </div>
 
-      <div>
-        <h2 className="micro mb-2 text-(--color-ink-3)">Or try a sample</h2>
-        <SamplePicker onSelect={runIngest} disabled={busy} />
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-(--color-rule)" />
+        <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-(--color-ink-3)">or try a sample</span>
+        <div className="h-px flex-1 bg-(--color-rule)" />
       </div>
 
-      <TelemetryPanel phase={phase} stats={stats} />
+      <div>
+        <SamplePicker onSelect={runIngest} disabled={busy} activeId={activeSampleId} />
+      </div>
+
+      {!activeSampleId && <TelemetryPanel phase={phase} stats={stats} />}
 
       {error && !error.isModal && (
         <div className="rounded-lg border border-(--color-error)/40 bg-(--color-error)/5 p-4 text-sm text-(--color-error)">

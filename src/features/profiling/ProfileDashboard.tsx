@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Table2 } from 'lucide-react';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useSelectionStore } from '../../stores/selection';
 import { useEducationalPanel } from '../../app/useEducationalPanel';
@@ -115,29 +116,35 @@ export function ProfileDashboard({ initialTableId = null, onBack }: ProfileDashb
       )}
       <TablePicker tables={tables} activeId={activeTable.id} onSelect={setActiveTableId} />
 
-      <div className="flex items-baseline gap-3">
-        <h2 className="text-lg font-semibold text-(--color-fg)">{activeTable.tableName}</h2>
-        <span className="font-mono text-sm text-(--color-fg-muted)">
-          {activeTable.rowCount.toLocaleString()} rows × {activeTable.columnCount} cols
-        </span>
-      </div>
-
-      {!activeTable.columns ? (
-        <p className="text-sm text-(--color-fg-muted)">Classifying columns…</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {activeTable.columns.map((column) => (
-            <ColumnCard
-              key={column.name}
-              column={column}
-              stats={cardStats?.[column.name]}
-              onShowSql={handleShowSql}
-              onSelect={() => selectColumn(activeTable.id, column.name)}
-              selected={selectedColumn?.tableId === activeTable.id && selectedColumn?.column === column.name}
-            />
-          ))}
+      <div className="flex flex-col rounded-(--radius-md) border border-(--color-border)">
+        <div className="flex items-center justify-between gap-2 border-b border-(--color-border) px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Table2 size={16} aria-hidden="true" className="shrink-0 text-(--color-fg-muted)" />
+            <h2 className="font-semibold text-(--color-fg)">{activeTable.tableName}</h2>
+          </div>
+          <span className="rounded-(--radius-xs) bg-(--color-elev) px-2.5 py-1 font-mono text-xs text-(--color-fg-muted)">
+            {activeTable.rowCount.toLocaleString()} rows
+          </span>
         </div>
-      )}
+
+        {!activeTable.columns ? (
+          <p className="p-4 text-sm text-(--color-fg-muted)">Classifying columns…</p>
+        ) : (
+          <div className="flex flex-col gap-1 p-2">
+            {activeTable.columns.map((column) => (
+              <ColumnCard
+                key={column.name}
+                column={column}
+                stats={cardStats?.[column.name]}
+                rowCount={activeTable.rowCount}
+                onShowSql={handleShowSql}
+                onSelect={() => selectColumn(activeTable.id, column.name)}
+                selected={selectedColumn?.tableId === activeTable.id && selectedColumn?.column === column.name}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <InsightFeed table={activeTable} onShowSql={handleShowSql} />
     </div>

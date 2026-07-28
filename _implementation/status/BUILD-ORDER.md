@@ -309,29 +309,57 @@ column is a proposal, corrected when each phase is picked up.
   actually costs in memory, on the **M1 Air base (8 GB)** and **M4 Air** reference machines, with
   WebLLM warm and absent. Gates **S7 entirely** and **S5's ceiling number only** — **Opus**
   → [`00-synthesis-and-limits-probe.md`](build/14-workspace-streamline/00-synthesis-and-limits-probe.md)
-- [ ] **S1 — Explorer rail reflow** — two-line rows (name unclamped, metadata demoted — also
+- [x] **S1 — Explorer rail reflow** — two-line rows (name unclamped, metadata demoted — also
   where V6e's deferred 255px row-composition finding lands), chevron column disclosure working
   for **every** table (**structure only** — rung 1 of the detail ladder, links out, no stats
   panels), Add-data `+` (closes W2's deferral, un-`NOT_YET_WIRED`s the palette's `ingestion`
   entry) — **Sonnet**
-  → leaf doc not yet written
-- [ ] **S2 — Data Quality & Health panel** — dataset-scoped warnings + passed checks in the
+  → [`01-explorer-rail-reflow.md`](build/14-workspace-streamline/01-explorer-rail-reflow.md)
+- [x] **S2 — Data Quality & Health panel** — dataset-scoped warnings + passed checks in the
   rail's bottom region, empty-state-capable; every finding names a deterministic producer —
   **Sonnet**
-- [ ] **S3 — The item-inspector drawer** — Info + console as two user-controlled views of the
+  → [`02-data-quality-health.md`](build/14-workspace-streamline/02-data-quality-health.md)
+  *(shipped 2026-07-28)*
+- [x] **S3 — The item-inspector drawer** — Info + console as two user-controlled views of the
   bottom region, resize/expand-to-viewport, no auto-expand on results, composed cold state,
   Monaco's lazy boundary moved to the console's first open, viewer-mode absence — **Opus**
-- [ ] **S4 — Run from anywhere + the shared guarded run path** — a run action on every surface
+  → [`03-item-inspector-drawer.md`](build/14-workspace-streamline/03-item-inspector-drawer.md)
+  *(shipped 2026-07-28)*
+- [x] **S4 — Run from anywhere + the shared guarded run path** — a run action on every surface
   that displays SQL; `TransformGuardModal` moved into the one run path every runner calls
   (**data-safety, not chrome**) — **Opus**
-- [ ] **S5 — Query tabs + the registry amendment** — the artifact kind's first live member with
+  → [`04-run-from-anywhere.md`](build/14-workspace-streamline/04-run-from-anywhere.md)
+  *(shipped 2026-07-28)*
+- [x] **S5 — Query tabs + the registry amendment** — the artifact kind's first live member with
   both producers; `'sql'` removed from the union / `TAB_TYPE_BY_MODULE` / the palette; Pivot's
   own results home; Export's entry point to the title bar; settings confirmed as the overlay;
   **tab-strip horizontal scrolling** (decided). **The ceiling number and refuse-vs-evict come
   from S0** — no leaf doc invents one — **Opus**
+  → [`05-query-tabs.md`](build/14-workspace-streamline/05-query-tabs.md)
+  *(shipped 2026-07-28; no ceiling ships, per scope call 16 — that clause stays S0's)*
 - [ ] **S6 — Map composition** — strip removed, Suggested Explorations (top 3 + view-more → a
   pre-run query tab), Structural ‖ Behavioral finding columns at independent heights; ranked
   actions land per the §13.3 routing table (four scopes, four existing homes) — **Sonnet**
+  → [`06-map-composition.md`](build/14-workspace-streamline/06-map-composition.md)
+  *(partial: Suggested Explorations + view-more + finding columns + synthesis card shipped
+  2026-07-28/2026-07-28; strip removal still open, blocked on a palette addition — box stays
+  unchecked per Update rule 1)*
+- [ ] **S6.9 — Workspace persistence across refresh** — survives a hard reload: durable
+  dataset bytes plus registry/UI-state rehydration. Currently neither exists by design —
+  `datasets`/`tabs`/`selection`/`relationships` are all plain in-memory stores, and DuckDB-Wasm
+  opens in-memory with no OPFS-backed path, so a refresh tears down the worker and the JS heap
+  together. **Not gated by S0**; sequenced before S7 by human instruction (2026-07-28).
+  → [`07-workspace-persistence.md`](build/14-workspace-streamline/07-workspace-persistence.md)
+  - [ ] 07a persistence-spike — OPFS + DuckDB-Wasm viability: quota limits, multi-tab
+    contention, Safari/OPFS support matrix; D18-style throwaway, kill criteria before the rest
+    commits to an approach — **Opus**
+  - [ ] 07b durable-row-storage — DuckDB opened against OPFS, or dropped files staged into
+    OPFS/IndexedDB and re-registered into a fresh worker on load — **Opus**
+  - [ ] 07c registry-state-persist — `persist` middleware on `datasets`/`tabs`/`selection`/
+    `relationships` (the easy half: straightforward localStorage serialization) — **Sonnet**
+  - [ ] 07d rehydration-bootstrap — on load, reconcile persisted registry metadata against
+    whatever DuckDB tables actually survived (partial recovery, races, a registry entry whose
+    backing table didn't make it) — **Opus**
 - [ ] **S7 — AI Dataset Synthesis** — **blocked on S0's verdict.** The gate is narrower than
   first recorded: a producer *exists* (v0.25's edge + WebLLM rungs, already structure-only and
   eval-gated); what is unproven is whether a widened prompt reaches §4's purpose narrative
@@ -370,6 +398,306 @@ S0's two measurements gate S7 and S5's ceiling.
 ## Log
 
 *The historical execution log has been archived to [BUILD-ORDER-HISTORY.md](BUILD-ORDER-HISTORY.md).*
+
+- **2026-07-28** — **S6.9 — Workspace persistence across refresh added to the checklist, sequenced
+  before S7.** No code, no leaf doc yet — this is scheduling only, prompted by a direct human
+  report ("it goes back to welcome page every refresh"). Investigated first rather than assumed:
+  `stores/datasets.ts`/`tabs.ts`/`selection.ts`/`relationships.ts` are all plain in-memory Zustand
+  stores (only `settings.ts`/`vault.ts` persist today), and `lib/queryEngine.ts`'s DuckDB-Wasm
+  instance opens in-memory with no OPFS-backed path — a hard refresh tears down the worker and the
+  JS heap together, by design, not oversight (D71 already named "full tab-list serialization" as
+  deferred to a hosted-tier round). Broken into four sub-steps in the checklist row above
+  (07a persistence-spike, 07b durable-row-storage, 07c registry-state-persist,
+  07d rehydration-bootstrap) because the two halves have very different risk: registry/UI-state
+  persistence is a small, mechanical `persist`-middleware addition, but durable row storage
+  (OPFS quota, multi-tab contention, Safari support) is genuinely uncertain, hence a spike first,
+  same precedent the v0/v0.25 spikes set. **Not gated by S0** — orthogonal question (memory
+  ceiling vs. reload survival). README's Phases table amended to match.
+  **Next concrete action:** author `07-workspace-persistence.md` (or split into per-sub-step leaf
+  docs if the spike's findings warrant it) before any `src/` work starts, per the binding
+  constraint. **Blocker:** none. Still uncommitted — Justin commits.
+
+- **2026-07-28** — **S3 and S5 close, and the Act 0 rebuild is brought inside the design system.**
+  Both phases' code was already standing in the tree from earlier sessions with no log entry and
+  no checked box; this session verified them criterion by criterion rather than taking the code's
+  presence as evidence, and closed the gaps it found. **S3 had a real defect, not just a stale
+  test:** `InspectorDrawer` wrapped its whole body in `{open && …}`, so collapsing the drawer
+  **unmounted the console**, destroying the buffer, results and history that scope call 6 requires
+  survive "view switches *and collapse*" — the keep-mounted comment sat directly beneath the
+  conditional that defeated it. The body is now hidden rather than unmounted, with `Inspector`
+  still unmounting so the collapse-to-header-strip contract keeps its meaning. The test that
+  should have caught it was calling `selectTable` outside `act()`, so it had been failing for the
+  selection hand-off rather than for the mount count. Three S3 criteria had no assertion at all
+  and now do: `DrawerConsole.test.tsx` did not exist (the expand prompt, and the load-bearing
+  negative that **a result never changes the drawer's height or expansion by itself**), viewer
+  mode had S4 and S5 absence assertions but not S3's, and nothing asserted the drawer was hosted
+  in the inspector region or the bottom-edge stacking. S5's own criteria were met on arrival
+  except `closeQueryTab`'s cancel clause, which was implemented but unasserted.
+  **Suite 157 files / 1580 tests, fully green** — the first clean run in several sessions.
+  **The 10 failures S4's entry recorded as "not ours" were the uncommitted Act 0 rebuild**, and
+  they were not stale copy: the rebuild had deleted the specimen plate and §5.1's "No model runs
+  until you turn one on" section, and had **redeclared the entire token palette inline as hex** on
+  the Act 0 wrapper plus ~40 literals across `WorkbenchShell.tsx` and `SamplePicker.tsx` — the one
+  thing § Drift policy forbids outright. Rewriting the tests to match would have silently deleted
+  three signed-off criteria, so the calls were taken explicitly (human, this session): **keep the
+  rebuild**, and amend the system to fit it. Act 0's always-dark intent is legitimate and now has a
+  supported mechanism — `theme.css` carries `[data-theme='dark']` alongside `:root`, so a subtree
+  pins the register and inherits its real values; Act 0 sets one attribute instead of sixteen hex
+  overrides, and renders identically. Every remaining literal became a token, the particle canvas
+  reading its register through `getComputedStyle` the way `CanvasScatter` already does. The five
+  sample cards' off-palette hues became a **named `--sample-*` ramp** in `design.md`/`tokens.css`/
+  `theme.css` — two slots alias `--color-active`/`--color-ok`, which they were within rounding of,
+  and the three genuinely new hues are measured against the 3:1 non-text tier in both registers —
+  and their pictographic emoji became monochrome lucide glyphs. **The specimen and the explicit AI
+  copy stay deleted by decision**, recorded in `design.md` § Variants with the specimen's standing
+  honesty limits left binding on any future one; the guarding tests are removed rather than left
+  asserting absent elements. `conformance.test.ts` passes 48/48 with its allowlist unchanged.
+  Live-verified in a real browser at 1440×900 against Act 0, zero console errors.
+  **`▶` stays at S0.** **Next concrete action:** S6's two open gaps (the options strip's removal
+  and view-more → a pre-run query tab) are now unblocked — S5 exists — so S6 can close; S0's Probe
+  A/B still gate S7 and S5's ceiling.
+  **Blocker:** none. Still uncommitted — Justin commits.
+
+- **2026-07-28** — **S5 leaf doc lands (docs only, no code).**
+  [`05-query-tabs.md`](../build/14-workspace-streamline/05-query-tabs.md), authored against §13.3's
+  "the tab registry after D73" / "the tab strip scrolls horizontally" and D73 calls (2) and (4), per
+  the binding constraint. Eighteen scope calls. **The load-bearing one is not the tab — it is calls
+  1–3:** `stores/query.ts` holds one `sql`/`result`/`status` for the whole app and `services/sql.ts`
+  one module-level `inFlight`, so "independent, editable, re-runnable, per-instance" is impossible
+  until the query store is **keyed by session** (console / pivot / one per query tab, the tab id
+  *being* the session id) and in-flight tracking is per-session. Superseding stays the rule inside a
+  session and becomes a bug across them — a pinned tab's run must not abort the console's. Every
+  action and `runQuery`/`requestRun` take the session with the console as default, so S4's call
+  sites and `runInConsole` need no edit and D49's one-execution-path discipline is untouched: one
+  path, N destinations for the state it writes. **Pivot's results home falls out of that** —
+  `PIVOT_SESSION` plus the extracted `QueryOutput`, which also fixes a defect standing today (a
+  pivot re-run currently overwrites the console's results and pushes onto its history); the shared
+  *rendering* was never the problem, the shared *state* was. Two of §13.3's three orphaned
+  affordances (auto-chart, Download-Parquet-on-CTAS) reach query tabs by construction through that
+  same split; **the third, the export recipe, deliberately does not** — it is a §12.2 action over
+  the session's derived tables, not over the result in hand, and S3 already re-homed it into the
+  drawer, so scope call 6 records it as staying put rather than being copied onto N per-query
+  surfaces. Pin copies the console's buffer **and its result by reference** (no re-run, no copy);
+  `openQueryTab` is the one creation path both producers use, shipped with two real callers (Pin,
+  the palette's new entry) so S6's producer has an API and nothing ships unreachable. Naming stops
+  at `Query N` with **no rename UI** — §13.3's "its own … name" is the tab carrying a name instead
+  of a `type · subject` label, and rename is flagged, not built.
+  **The ceiling is a recorded absence, not an oversight (scope call 16):** Probe B has not run, and
+  §13.3 says no leaf writes a number until it does — so `openQueryTab` refuses nothing and evicts
+  nothing, an acceptance criterion asserts that, and the consequence is stated plainly (until S0
+  reports, a user can open query tabs without limit). S0's own interim "20 + refuse-with-reason" is
+  **not** adopted here; taking an unmeasured number into a leaf is the thing the constraint forbids.
+  Horizontal scrolling ships regardless, as decided — in practice one test plus the `shrink-0` the
+  strip is missing.
+  **`▶` stays at S0.** S5 was picked up out of strict dependency order, the same precedent S1, S4
+  and S6 set. **Next concrete action:** either build S5 against this doc, or run S0's Probe B first
+  so the ceiling lands with the phase instead of after it.
+  **Blocker:** none for the doc. The tier's only outstanding gate is still S0 (Probe B for S5's
+  ceiling, Probe A's WebLLM leg for S7).
+
+- **2026-07-28** — **S4 lands: there is one run path in the app, and the transform guard lives
+  inside it.** Built against the leaf doc that landed earlier the same day (entry below), every
+  scope call honoured. **The guard is now structurally independent of how many runners exist** —
+  `services/runPath.ts` holds `SqlModule.handleRun`'s body verbatim (classify → `runQuery` /
+  hold-the-guard / `runAndTrack(runTransform)`), `stores/runGuard.ts` holds the intercepted
+  statement and nothing else, and `app/TransformGuardHost.tsx` is the modal's only mount in the
+  app, hoisted into `WorkbenchShell`. `SqlModule` keeps its editor, its Run button and its results
+  and owns no execution logic at all. That ordering is the point: the guard was correct today only
+  because there was exactly one runner, and S5's query tabs make that false.
+  **Above that path, every surface that shows SQL can run it where it stands** — the four chart
+  `GeneratedSql` blocks, every AI attempt including failed ones (J5: the error is often the thing
+  worth seeing), history rows, and the four Show-SQL sites (quality panel, `InsightFeed`,
+  `ColumnCard`, `TopInsights`) — through one shared `features/sql/RunSqlButton.tsx`, a deliberate
+  break from `GeneratedSql`'s four-copies convention because a run action is the entry to a
+  data-safety mechanism, not a panel's layout. Every Copy SQL affordance survives untouched.
+  **D68e's `duplicates` insight has its destination back:** `openDestination` now re-routes a
+  `module === 'sql'` action carrying a `sql` prefill into `runInConsole` instead of opening a tab,
+  covering both dispatch sites (`OptionsStrip`, `SynthesisPanel`) without editing either — **and
+  `SqlModule`'s `useThreadPrefill` auto-run effect is deleted**, which S3 had left as a mount-time
+  auto-run in a shell region present in every session. "Opens on the answer" is preserved exactly;
+  the answer now opens in the console.
+  **One orphan removed that this change created:** with the auto-run gone, `SqlModule`'s `prefill`
+  prop had no consumer, so it and `WorkbenchShell`'s `<SqlModule prefill={…} />` argument went with
+  it (S5 deletes the tab type itself).
+  Suite **152 files / 1525 tests**, up 71 from the S2 build baseline; every S4 test passes
+  (`runPath.test.ts` is the central one — the interception assertion is stated as "execution did
+  not happen"). `tsc -b` clean; `oxlint` clean over `src/`.
+  **Not green overall, and not from this phase — recorded, not absorbed:** 11 tests in four files
+  fail on surfaces S4 never touches. Eight are `WorkbenchShell.test.tsx`'s Act-0 composition
+  assertions (eyebrows, specimen, footer identity) against the uncommitted Welcome redesign that
+  replaced them; one is `IngestionPanel.test.tsx`'s drop-zone copy; one is `conformance.test.ts`'s
+  literal allowlist, whose two unexpected offenders are `WorkbenchShell.tsx` (the Welcome hex
+  block) and `SamplePicker.tsx`; one is `InspectorDrawer.test.tsx`'s "a selection opens a collapsed
+  drawer on Info," which stubs `SqlModule` outright, so no S4 file is in its import graph. This is
+  reasoned from the import graphs and the assertion targets, **not measured against a clean
+  baseline** — the tree carries several sessions of uncommitted work and was not stashed to get
+  one. None of the four belongs to S4 and none was fixed here.
+  **`▶` stays at S0** — S4 was picked up out of strict dependency order, the same precedent S1 and
+  S6 set, and S0's Probe A/B remain the only work gating S7 and S5's ceiling.
+  **Next concrete action:** S5 (query tabs + the registry amendment) is now unblocked by the shared
+  run path, but its ceiling number comes from S0 — so either run S0's Probe A/B, or start S5's leaf
+  doc against everything in it that S0 does not gate.
+  **Blocker:** none for S4. Still uncommitted — Justin commits.
+
+- **2026-07-28** — **S4 leaf doc lands (docs only, no code).**
+  [`04-run-from-anywhere.md`](../build/14-workspace-streamline/04-run-from-anywhere.md), authored
+  against the folder's cross-cutting contract ("the transform guard is an interception, not an
+  affordance") and master's §13.3 / D73 calls (3) and (5), per the binding constraint. Thirteen
+  scope calls. The load-bearing one is **#6**: SQL-bearing ranked actions re-route inside
+  `openDestination` — `module === 'sql'` with a `sql` prefill calls `runInConsole` rather than
+  opening a tab, covering both existing dispatch sites (`OptionsStrip`, `SynthesisPanel`) without
+  editing either — **and `SqlModule`'s `useThreadPrefill` auto-run effect is deleted**. That effect
+  was safe while `SqlModule` was mounted only by the standalone tab; S3 re-homed the same component
+  into a drawer present in every session, making it a mount-time auto-run in a shell region — a
+  hazard S3 left standing and S4 closes rather than carries into S5. D68e's "opens on the answer"
+  is preserved exactly; it now opens on the answer in the console. Structurally the phase is one
+  service (`services/runPath.ts`, holding `SqlModule.handleRun`'s body verbatim plus
+  `runInConsole`), one dumb store (`stores/runGuard.ts` — it holds a statement and knows nothing
+  about running one), one hoisted `TransformGuardHost` mounted once in `WorkbenchShell`, and one
+  shared `RunSqlButton` used by all six run-action sites. The shared button is a deliberate break
+  from `GeneratedSql`'s four-deliberate-copies convention (scope call 5): the copies are about a
+  panel's layout, whereas the run action is the entry to a data-safety mechanism. Two contrasts
+  recorded rather than left implicit — a run action **does** replace the console buffer, which is
+  the opposite of S3's refusal to overwrite it on a navigation click (buffer follows stated intent,
+  never a navigation side effect), and remote run actions **supersede** an in-flight query per
+  `services/sql.ts`'s existing semantics while the console's own Run keeps its running-state
+  disable. `ResultsGrid` and `PivotBuilder` are named as explicitly out of scope so neither is
+  discovered later as a miss (Pivot's SQL belongs to S5's results home). The phase ships **before**
+  S5 by necessity, not convention: the guard is correct today only because there is exactly one
+  runner, and S5 makes that false.
+
+- **2026-07-28** — **S2 leaf doc lands (docs only, no code).**
+  [`02-data-quality-health.md`](../build/14-workspace-streamline/02-data-quality-health.md) is
+  authored against the folder's `README.md` cross-cutting contract and master's §19/§20.8, per
+  the binding constraint, before any `src/` work on S2. Twelve scope calls; the load-bearing one
+  splits §20.8's fuller quality-score model from what actually ships — nulls, uniqueness
+  (duplicates), and zero-variance are S2's per the folder's own cross-cutting split; skew/format-
+  match/correlation stay S6's, so the reference mock's "High value outliers" line is not
+  reproduced (same posture S1 took toward its own fuller mock, and S6 toward its unbacked mock
+  detail). Two producers are reused as-is (`nullPatternCandidates`, `buildDuplicatesProbe`, both
+  already in `lib/insights.ts`) and exactly one is new — `zeroVarianceCandidates`
+  (`cardinality === 1`, guarded on `rowCount > 1` so a one-row table can't trip it, landed in the
+  same registry rather than a parallel detection system) — and none of the three reach the
+  general insight feed or the Action Broker's ranking. The doc also resolves the folder's open
+  question on independent scroll ("leaning yes," taken as the answer — the same precedent S1 set
+  for a recorded lean): the rail splits into two regions, the table list keeping its own scroll
+  and the new panel becoming a second, independently-scrolling region beneath it — noting that
+  the single-`overflow-y-auto`-rail state this splits *from* was built ad hoc in session
+  (2026-07-28, a direct "scrollable and resizable like VS Code" request, not a leaf doc) ahead of
+  this one. No per-column warning icon in `TableList`'s rung-1 disclosure and no drag handle
+  between the two rail regions ship here — both named as later passes, not silently grown scope.
+  **`▶` stays at S0** — docs only, no code, no box checked, same precedent S1's and V3's own
+  leaf-doc-landing entries set.
+  **Next concrete action:** build `02-data-quality-health.md`'s spec — `lib/insights.ts`'s new
+  rule, `services/dataQuality.ts`, `DataQualityPanel.tsx`, and the `ExplorerPanel.tsx`/
+  `WorkbenchShell.tsx` scroll-region split — then re-run this leaf's acceptance criteria against
+  the tree.
+  **Blocker:** none. Still uncommitted — Justin commits.
+
+- **2026-07-28** — **S1 — Explorer rail reflow lands, leaf doc first per the binding constraint.**
+  [`01-explorer-rail-reflow.md`](../build/14-workspace-streamline/01-explorer-rail-reflow.md)
+  landed immediately before its own implementation, in the same session, then the code landed
+  against it. **Rail rows now reflow to two lines** (name unclamped, `rows × cols · origin` +
+  existing sampled/stale badges demoted beneath) via two new additive props on
+  `TableList` — `reflow`/`edges`, both default off/`[]` so `IngestionPanel`'s Act-0/1 call site is
+  unchanged — the same precedent `hideHeading` already set in this file, and where V6e's deferred
+  255px row-composition finding gets its fix (the rail gets its own composition instead of one row
+  shape serving both contexts). **A chevron discloses each table's columns at rung 1 of the detail
+  ladder only** — column name, a PK (`Key`, amber) or FK (`Link`, purple) marker, and a
+  `SemanticType` chip (`ColumnCard.tsx`'s `TypeBadge`, now exported and reused, not a second
+  physical-type vocabulary) — deliberately short of what the reference mocks draw (unique-value
+  counts, missing %, distribution preview, range are rung-2/3 content the 2026-07-26 detail-ladder
+  gate already ruled out of the rail). PK markers come from `keyColumnsFor` (`lib/dossier.ts`,
+  already used by `Erd.tsx`); FK markers read `useInferredEdgesStore` (the mirrored raw result
+  `useDatasetBaseline` already fetches once) with `applyOverrides` run locally — the identical
+  pattern `Inspector.tsx`'s `EdgeScent` uses — so the rail's markers agree with the user's own
+  add/remove/repoint edits without a second `loadRelationships` query. Every table can be expanded
+  independently (multi-open, the recorded lean, taken as the answer to that open question); an
+  unclassified table shows "Profiling…" rather than an empty list; clicking a disclosed column
+  selects it in `useSelectionStore` and opens its Profile tab, same two-call shape the table-name
+  click already used. **`ingestion` is now a real `TabType`** — closing W2's own recorded
+  deferral: `TAB_TYPE_BY_MODULE.ingestion`, `TAB_KIND`/`TAB_GLYPH` (lucide `Plus`, since
+  `design.md`'s six-dingbat set was already fully assigned by V2), a `WorkbenchShell.tsx`
+  `TabContent` branch mounting `IngestionPanel` unchanged, and the palette's `ingestion` entry
+  moved from `NOT_YET_WIRED` (now one entry: `ai`) to `WIRED_MODULES` — the rail's new `+` button
+  and the palette's "Add data" row open the same tab. `CommandPalette.tsx`'s temporary `＋`
+  unavailable-glyph fallback for `ingestion` is now dead code, removed rather than left stranded.
+  No `src/` file outside this scope touched; S2–S7 untouched. Suite grew from the S6-doc-session
+  baseline **142 files / 1444 tests → 142 files / 1454 tests** (10 new, covering the reflow
+  render/unchanged-fallback split, chevron toggle, PK/FK marking including the override-application
+  case, the rung-1-only content assertion, the "Profiling…" empty state, multi-open, column-click
+  navigation, and the Add-data tab + palette wiring); `tsc -b` clean; `oxlint` clean apart from the
+  pre-existing unrelated `_misc/spike-webllm/smoke.mjs` warning and two warnings in untracked
+  `_implementation/_misc/_ideation/_design/` files (not part of this session's `src/` changes).
+  **Not done, honestly:** a live-browser spot-check — this environment has no Playwright install
+  and adding one (a new dependency + browser-binary download) wasn't done unilaterally for a
+  non-gating check; the leaf doc itself records live-browser verification as not owed by every
+  S-leaf, unlike v0.69's V6e conformance gate. `▶` **stays at S0** — S1 was picked up out of strict
+  dependency order (same precedent the prior S6 entry set), and S0's Probe A/B remain the only
+  work gating S7 and S5's ceiling.
+  **Next concrete action:** S2 (Data Quality & Health panel) is next in this tier's own listed
+  order and, like S1, isn't gated by S0.
+  **Blocker:** none. Still uncommitted — Justin commits.
+
+- **2026-07-28** — **S6 leaf doc lands (docs only, no code) — closes the loop on the prior entry's
+  deviation, same-day pattern V1 used.**
+  [`06-map-composition.md`](../build/14-workspace-streamline/06-map-composition.md) is written
+  *against what shipped*, not a transcription of the build session's claims: `tsc -b` and the
+  suite were re-run this session (142 files / 1444 tests, matching what was logged) rather than
+  copied forward. Two of README's three S6 deliverables are real (Suggested Explorations, the
+  Structural ‖ Behavioral finding columns); the third (options-strip removal) and part of the
+  second ("view-more" → a pre-run query tab) are recorded as **not done**, both traced to the same
+  root cause: S6 depends on S5 (per the Phases table) and S5 is unbuilt, so the query-tab
+  destination those two pieces need doesn't exist yet. That dependency-order violation — not just
+  the leaf-doc-before-code one already logged — is now recorded in the doc itself. Also fixed in
+  passing: `README.md`'s reference-images table mislabeled image `02-options-strip-prompts.png` as
+  S6 content; it is the S2 Data Quality & Health panel mock (confirmed by viewing the image), now
+  relabeled.
+  **Per Update rule 1 (no partial checks), S6's box stays unchecked** — this is formalization, not
+  new scope, and moves neither the checklist state nor `▶`, which stays at **S0**.
+  **Next concrete action:** pick up S1 (explorer rail reflow) — ungated by S0 or S5 — starting with
+  its own leaf doc per the binding constraint. **Blocker:** none. Still uncommitted — Justin
+  commits.
+
+- **2026-07-28** — **S6 map-composition UI built ahead of its leaf doc — a deliberate audit, not
+  a landed phase.** The AI-architecture ideation round
+  (`_implementation/_misc/_ideation/_experiments/`, nine candidate composition mechanisms as of
+  writing) hit a real stall — no verdict, and folding in any of them half-decided was explicitly
+  ruled out. Human call: build S6's map-composition UI now, on a seam the eventual architecture
+  plugs into, and defer both the leaf doc and the architecture decision rather than block on
+  either. New `src/features/map/SynthesisPanel.tsx` — the AI Dataset Synthesis card, Suggested
+  Explorations (dataset-wide top-3 `rankNextActions`, same nav-facade readiness gating
+  `OptionsStrip` (W5) already uses), and Structural ‖ Behavioral finding columns (existing
+  `InsightCandidate`s split by rule — null-pattern/id-exclusion/concentration vs.
+  change-point/outlier-group/leakage/duplicates; no new insight rule invented, so a mock detail
+  with no backing computation — the reference image's "Format Match" regex card and
+  hour/day-of-week "Seasonal Seasonality" — is not reproduced, same posture V3 took toward
+  fabricated table-role data) — mounted below `Erd` in `DatasetMap.tsx`'s multi-table face, which
+  moved from `overflow-hidden` to a scrolling column so the ERD keeps its size and the new panel
+  follows in flow. No new AI logic: the synthesis card's content is `useDatasetBaseline`'s existing
+  `headlineFact`/`baseline`/`paused` triple — the same D56/ADR-010 seam `VerdictBand` already
+  renders — so with AI off, or while the composition question stays open, the card shows the
+  honest deterministic Verdict headline (live-verified against the `ecommerce` sample: "4 tables ·
+  5,437 rows · no single dominant finding"), never a fabricated §4 narrative; `paused` is always
+  surfaced rather than hidden (invariant 5 in the ideation README). `RULE_LABEL` moved from
+  `InsightFeed.tsx` to `lib/insights.ts` (a component-only-file fast-refresh lint rule forced the
+  move) so both surfaces share one label set. `OptionsStrip` was left in place, not removed — S6's
+  "strip removed" clause is not done; this lands the UI and the seam, nothing else. 142 files /
+  1444 tests green (8 new); `tsc -b` and `oxlint` clean; live-verified in a real browser
+  (Playwright) against the multi-table `ecommerce` sample, zero console errors.
+  **This is a logged deviation from the binding constraint** (no `src/` code for a phase before
+  its own leaf doc lands) — same category as V1's token layer and W4's map. S6's leaf doc is still
+  owed, written against what actually shipped, same pattern V1 used; also noted in passing, the
+  `14-workspace-streamline/README.md` reference-images table mislabels image 02 as "S6 (Suggested
+  Explorations & Options Strip Prompts)" when its content is the S2 Data Quality & Health panel —
+  left uncorrected, out of scope for this session. `▶` **stays at S0** — this work doesn't
+  supersede it, and S6's box stays unchecked (no partial checks, Update rule 1).
+  **Next concrete action:** either author `build/14-workspace-streamline/06-map-composition.md`
+  against what shipped, or keep treating this as ideation-adjacent scaffolding until the
+  architecture round lands a verdict. Either way, S0's Probe A/B are still the open blocking work
+  for S7 and S5's ceiling.
+  **Blocker:** none — a deliberate scope choice, not a stuck state. Still uncommitted — Justin
+  commits.
 
 - **2026-07-26** — **S0 Probe A's row-upload sub-question tested and closed; the formal probe
   itself still open.** New throwaway script `eval/synthesis/probe-narrative.ts` (`npm run

@@ -5,50 +5,52 @@
 ## Component diagram (§6)
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          React Application                          │
-│                                                                     │
-│  ┌───────────┐   ┌──────────────┐   ┌───────────────────────────┐   │
-│  │ File Drop │──▶│ DuckDB-Wasm  │──▶│ Schema Classifier         │   │
-│  │ / API URL │   │ (Web Worker) │   │ & Capabilities Broker     │   │
-│  └───────────┘   └──────┬───────┘   └────────────┬──────────────┘   │
-│                         │                        │                  │
-│            ┌────────────┼────────────────────────┼───────────┐      │
-│            ▼            ▼                        ▼           ▼      │
-│  ┌──────────────┐ ┌─────────────┐  ┌──────────────┐ ┌────────────┐  │
-│  │ SQL Playgrnd │ │ AI Chat     │  │ Chart Modules│ │ Export /   │  │
-│  │ (Monaco)     │ │ (NL→SQL     │  │ (Recharts /  │ │ Save/Share │  │
-│  │              │ │  pipeline)  │  │  D3 / Canvas)│ │            │  │
-│  └──────────────┘ └──────┬──────┘  └──────────────┘ └─────┬──────┘  │
-└──────────────────────────┼────────────────────────────────┼─────────┘
-                           │ (cloud mode only)              │ (explicit
-                           ▼                                ▼  action)
-              ┌────────────────────────┐        ┌────────────────────┐
-              │ Cloudflare Worker edge │        │ R2 persistence     │
-              │ · AI routing (Workers  │        │ · Saved datasets   │
-              │   AI / BYOK pass-thru  │        │ · Share links      │
-              │   or opt-in vault)     │        │   (opt-in, TTL)    │
-              │ · Tier-2 CORS relay    │        └────────────────────┘
-              │ · DSPS MCP endpoint    │
-              │   (read-only, v0.5)    │
-              └────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                BROWSER TAB (Zero-Egress Default)                                  │
+│                                                                                                   │
+│  ┌────────────────────┐      ┌────────────────────────┐       ┌────────────────────────────────┐  │
+│  │ Ingestion & Drop   │────▶ │  DuckDB-Wasm Engine    │ ────▶ │  Table Registry Substrate      │  │
+│  │ (Files, API, .dsps)│      │  (Web Worker, D49)     │       │  (stores/datasets.ts, D58)     │  │
+│  └────────────────────┘      └────────────────────────┘       └───────────────┬────────────────┘  │
+│                                                                               │                   │
+│                                                       ┌───────────────────────┴─────────────────┐ │
+│                                                       ▼                                         ▼ │
+│                                         ┌───────────────────────────┐             ┌─────────────┐ │
+│                                         │ Schema Classifier &       │             │ ViewSpec    │ │
+│                                         │ Action Broker (D68)       │             │ Renderer    │ │
+│                                         └─────────────┬─────────────┘             │ (D55)       │ │
+│                                                       │                           └──────┬──────┘ │
+│           ┌───────────────────────────────────────────┼──────────────────────────────────┘        │
+│           │ Workbench Shell (D71 Envelope Invariant; W8 Cutover Default)                          │
+│           ▼                                           ▼                                           ▼
+│  ┌────────────────────────┐               ┌───────────────────────┐               ┌────────────┐  │
+│  │ Dataset Map Canvas     │               │ Inspector Drawer &    │               │ AI Pane &  │  │
+│  │ · ERD & Blueprint Face │               │ SQL Console (D73)     │               │ WebLLM     │  │
+│  │ · Suggested Exploratns │               │ · Monaco & Query Tabs │               │ (WebGPU    │  │
+│  │ · Persistent Verdict   │               │ · Guarded Run Path    │               │  Worker)   │  │
+│  └────────────────────────┘               └───────────────────────┘               └─────┬──────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────│─────────┘
+                                                                                          │ (cloud AI /
+                                                                                          │  explicit share)
+                                                                                          ▼
+                                                                            ┌───────────────────────┐
+                                                                            │ Cloudflare & R2 Edge  │
+                                                                            │ · AI Router & BYOK    │
+                                                                            │ · Tier-2 CORS Relay   │
+                                                                            │ · DSPS Read-Only MCP  │
+                                                                            │ · R2 Persistence      │
+                                                                            └───────────────────────┘
 ```
 
-The three server-touching paths above are the *entire* server surface (§1, §4). Everything
-else — query execution, schema processing, profiling, charting, transforms, export — runs in
-the browser tab. **DSPS** (the open, versioned DataScope Profile Spec; D31/D37) is the
-first-class machine-readable interface the Save/Share/export box emits and the D38 read-only
-MCP endpoint serves (stage A, over explicitly shared artifacts only). **Format-first (D64):
-DSPS is the platform and the web app is its flagship client** — a published JSON Schema + a
-small npm validator/parser library let third-party tools consume DSPS without our source, the
-DSPS document (not the app's internal types) is the contract, and the **D62 universal `.dsps`
-receiver** is the named reference consumer (any `.dsps` renders read-only, no data/login/install
-— zero new server surface). Stage-B MCP tools and any server-side execution run only over
-explicitly staged datasets — the **D39 hosted tier, chartered as the second platform rung on the
-D61 ladder** (browser → hosted tier → desktop → rest on request) — and stay behind that
-decision's design round; the tier is opt-in, never the default, bound by the D61
-privacy-and-deletion promise (§5.2). The "no server-side query execution" surface is unchanged
-until then.
+The server-touching paths above (Cloudflare Worker AI/BYOK routing, Tier-2 CORS relay, read-only DSPS MCP endpoint, and opt-in R2 persistence) constitute the **entire server surface** (§1, §4). Everything else — query execution, schema processing, profiling, charting, transforms, local WebLLM inference, and export — runs entirely inside the browser tab.
+
+Key architectural flows in the evolved substrate:
+1. **Substrate & Catalog (D49, D58):** Ingested tables land in DuckDB-Wasm (managed off main thread via `QueryEngine`) and register into the `TableRegistry` session catalog (`stores/datasets.ts`). No module maintains its own table list.
+2. **Composition & View Specs (D55, D68):** The `Schema Classifier` and `Action Broker` compute typed, rows-free view contracts (`FactRef`, `RankedAction`, `DatasetVerdict`, `ThreadConfig`). The `ViewSpec` renderer transforms these declarative specs into UI panels.
+3. **Workbench Shell & Envelope Invariant (D71, W8):** The shell (`WorkbenchShell.tsx`) acts as the single composition root. The tab envelope is authored strictly by the app, with untrusted model output validated by `producerValidators` before tabs open.
+4. **Workspace Streamline & Shared Run Path (D73):** Standalone SQL playground pages are retired. SQL execution is re-homed into the **Inspector Drawer console** and pinned **Query Tabs**, executing through one shared guarded run path (`TransformGuardModal`).
+5. **Local vs. Cloud AI (D2, D43, ADR-007, v0.25):** AI operates in three modes — Local-Only (AI Off), Local Model (in-browser WebLLM on WebGPU Worker with zero network egress), or Cloud/BYOK via the Cloudflare Worker edge relay.
+6. **Format-First & Universal Receiver (D37, D62, D64):** **DSPS is the platform and the web app is its flagship client.** Any dropped `.dsps` file instantly boots the universal receiver in viewer mode (zero data upload, zero login, zero server calls).
 
 ## Three stable interfaces and the coherence principle (D58)
 
@@ -159,17 +161,20 @@ Feature-based layout (avoids refactoring imports at 20,000 lines):
 
 ```
 src/
-├── app/                        # Shell, routing, providers — incl. WorkbenchShell.tsx (D71 second composition root; App.tsx branches on WORKBENCH_ENABLED)
+├── app/                        # Shell, routing, providers — WorkbenchShell.tsx (primary composition root post-W8 cutover)
 ├── features/
 │   ├── ingestion/              # Drop zone, sample picker, API URL ingest, telemetry
 │   ├── profiling/              # Auto-profile dashboard, column cards, schema table
-│   ├── sql/                    # Monaco wrapper, suggestions, results grid, auto-chart — (D73) the drawer console + query tabs; the standalone SQL tab is deleted, and the shared guarded run path both call lives here
-│   ├── inspector/              # (Workbench, D71) bottom region — (D73) the two-view drawer: Info + console, resize/expand, viewer-mode absence
+│   ├── sql/                    # Monaco wrapper, suggestions, results grid, auto-chart — (D73) drawer console + query tabs; shared guarded run path
+│   ├── inspector/              # (Workbench, D71) bottom region — (D73) two-view drawer: Info + console, resize/expand, viewer-mode absence
 │   ├── charts/                 # Time series, correlation, distribution, categorical
-│   ├── explorer/               # (Workbench, D71) left explorer — grown from TableList; per-table actions, Add data, share-links entry
-│   ├── map/                    # (Workbench, D71) dataset map — ERD + Blueprint face; ABSORBS JoinGraphModule (from charts/) and DossierModule (from profiling/) — a move, not an addition (§13.3)
-│   ├── ai/                     # Chat UI, NL→SQL pipeline, mode/BYOK settings — Workbench: mode switches + Configure-workspace (§5.1)
+│   ├── explorer/               # (Workbench, D71) left explorer — per-table actions, column disclosure, Add data, quality panel
+│   ├── map/                    # (Workbench, D71) dataset map — ERD + Blueprint face; Suggested Explorations + persistent Verdict band
+│   ├── ai/                     # Chat UI, NL→SQL pipeline, mode/BYOK settings — mode switches + Configure-workspace (§5.1)
 │   ├── export/                 # Parquet download, R2 save/share, DSPS renderers (HTML/JSON/Copy-for-AI, D31/D37)
+│   ├── palette/                # Command palette overlay (⌘K) reaching every feature home
+│   ├── status/                 # Density budget status bar (system posture & memory indicator)
+│   ├── viewer/                 # Read-only viewer mode for universal .dsps receiver (D62)
 │   ├── studio/                 # (Studio arc) quality report, relationship inference, schema graph, dbt/semantic export
 │   └── ml/                     # (post-v1) K-Means, regression, tree, NLP modules
 ├── components/                 # Shared presentational components
@@ -180,7 +185,7 @@ src/
 ├── workers/
 │   ├── duckdb.worker.ts        # DuckDB Web Worker
 │   └── ml.worker.ts            # (post-v1) ML training worker
-├── services/                   # Module API contracts (ingestion.ts, sql.ts, ai.ts, charts.ts, export.ts) + navigation.ts — the D71 nav facade (openDestination; flag-off drives ui store, flag-on drives tabs store)
+├── services/                   # Module API contracts (ingestion.ts, sql.ts, ai.ts, charts.ts, export.ts) + navigation.ts — nav facade
 ├── lib/
 │   ├── classifier.ts           # Semantic type rules
 │   ├── capabilities.ts         # Broker evaluation + rankNextActions (Action Broker, §9/D68)
@@ -192,9 +197,9 @@ src/
 │   ├── inputNormalizer.ts      # Fuzzy pre-match (AI stage 1)
 │   ├── sqlLint.ts              # Dialect lint via pgsql-ast-parser (AI stage 4)
 │   ├── dsps.ts                 # DSPS schema, dsps_version + forward/backward-compat rules (D31/D37)
-│   └── featureFlags.ts         # WORKBENCH_ENABLED (D71; precedent JOIN_GRAPH_ENABLED)
+│   └── featureFlags.ts         # JOIN_GRAPH_ENABLED (WORKBENCH_ENABLED retired post-W8 cutover)
 ├── stores/                     # App state — incl. the table registry (datasets.ts; session catalog, §7.5/D13, build/02-ingestion/03-table-registry.md), schema, query, AI session, settings;
-│                                #   tabs.ts (Workbench tab instances — openTab validates model-origin payloads, §13.3/D55) + selection.ts (shell-wide selection: table/column/map edge) — the pre-existing "tabs" state here is this store made explicit, not a second one (D71)
+│                                #   tabs.ts (Workbench tab instances — openTab validates model-origin payloads, §13.3/D55) + selection.ts (shell-wide selection: table/column/map edge)
 ├── types/                      # ClassifiedColumn, DataCapabilities, ChartSpec, ViewSpec, TableRegistryEntry, WorkerMessage,
 │                                #   FactRef, RankedAction, DatasetVerdict, ThreadConfig (composition-layer contracts, D68),
 │                                #   tabs.ts — TabSpec envelope: fixed tab-type registry, app-authored only (D71/§13.3), ...

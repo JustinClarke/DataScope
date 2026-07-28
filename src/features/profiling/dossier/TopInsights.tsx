@@ -1,3 +1,4 @@
+import { RunSqlButton } from '../../sql/RunSqlButton';
 import type { InsightRuleId } from '../../../lib/insights';
 
 const RULE_LABEL: Record<InsightRuleId, string> = {
@@ -8,6 +9,7 @@ const RULE_LABEL: Record<InsightRuleId, string> = {
   duplicates: 'Duplicates',
   leakage: 'Leakage flag',
   'id-exclusion': 'ID exclusion',
+  'zero-variance': 'Zero variance',
 };
 
 export interface TopInsightRowProps {
@@ -39,13 +41,16 @@ export function TopInsights({ insights, onShowSql }: TopInsightsProps & { onShow
                 <span className="font-mono text-xs text-(--color-fg-muted)">{insight.tableName}</span>
               </div>
               {insight.sql && (
-                <button
-                  type="button"
-                  onClick={() => onShowSql(RULE_LABEL[insight.rule], insight.sql)}
-                  className="text-xs text-(--color-accent) hover:underline"
-                >
-                  Show SQL
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onShowSql(RULE_LABEL[insight.rule], insight.sql)}
+                    className="text-xs text-(--color-accent) hover:underline"
+                  >
+                    Show SQL
+                  </button>
+                  <RunSqlButton sql={insight.sql} />
+                </div>
               )}
             </div>
             <p className="text-sm text-(--color-fg)">{insight.description}</p>

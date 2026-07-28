@@ -68,6 +68,16 @@
   --chart-neg: var(--chart-2);
   --chart-mid: var(--color-elev);
 
+  /* Sample accent ramp: the welcome page's five bundled-sample cards. Decorative
+   * identity only — tints an aria-hidden glyph and its own wash, never text and never
+   * a data mark, so it answers to the 3:1 non-text tier. Slots 1 and 3 alias existing
+   * tokens rather than restating them. */
+  --sample-1: var(--color-active);
+  --sample-2: oklch(71.4% 0.1434 255);
+  --sample-3: var(--color-ok);
+  --sample-4: oklch(83.7% 0.1644 84);
+  --sample-5: oklch(68% 0.1583 277);
+
   /* Copilot register */
   --color-ai: oklch(62.7% 0.2325 304);
   --color-ai-2: oklch(72.2% 0.1767 306);
@@ -161,6 +171,11 @@
     /* `--color-warn` needs no light entry — it aliases `--color-active`, which
      * re-solves itself above. */
     --color-error: oklch(49% 0.2 25);
+
+    /* The ramp's three own hues, re-solved; slots 1 and 3 follow the tokens they alias. */
+    --sample-2: oklch(52% 0.15 255);
+    --sample-4: oklch(62% 0.14 84);
+    --sample-5: oklch(48% 0.19 277);
 
     /* Re-solved per register, not flipped: the light steps trade lightness for
      * contrast on white while staying clear of the darker light-register accents. */

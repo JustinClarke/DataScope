@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { ClassifiedColumn, QueryResult } from '../types';
-import { buildInsightProbes, idExclusionCandidates, nullPatternCandidates, rankInsights, scoreOf } from './insights';
+import {
+  buildInsightProbes,
+  idExclusionCandidates,
+  nullPatternCandidates,
+  rankInsights,
+  scoreOf,
+  zeroVarianceCandidates,
+  RULE_LABEL,
+} from './insights';
 
 function resultOf(columnNames: string[], rows: unknown[][]): QueryResult {
   return { columnNames, columnTypes: columnNames.map(() => 'Utf8'), rows, rowCount: rows.length, executionTimeMs: 0 };
@@ -61,6 +69,51 @@ describe('idExclusionCandidates', () => {
     expect(candidates).toHaveLength(1);
     expect(candidates[0].description).toContain('row_uuid');
     expect(candidates[0].sql).toContain('COUNT(DISTINCT "row_uuid")');
+  });
+});
+
+describe('zeroVarianceCandidates', () => {
+  it('fires on cardinality === 1 when rowCount > 1', () => {
+    const candidates = zeroVarianceCandidates(
+      [column({ name: 'region', semanticType: 'Categorical', cardinality: 1 })],
+      't',
+      100,
+    );
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].rule).toBe('zero-variance');
+    expect(candidates[0].description).toContain('region');
+    expect(candidates[0].sql).toContain('COUNT(DISTINCT "region")');
+  });
+
+  it('does not fire on cardinality === 0 (all-null — nullPatternCandidates territory)', () => {
+    const candidates = zeroVarianceCandidates(
+      [column({ name: 'region', semanticType: 'Categorical', cardinality: 0 })],
+      't',
+      100,
+    );
+    expect(candidates).toHaveLength(0);
+  });
+
+  it('does not fire when rowCount <= 1, regardless of cardinality', () => {
+    const candidates = zeroVarianceCandidates(
+      [column({ name: 'region', semanticType: 'Categorical', cardinality: 1 })],
+      't',
+      1,
+    );
+    expect(candidates).toHaveLength(0);
+  });
+
+  it('ignores columns with cardinality > 1', () => {
+    const candidates = zeroVarianceCandidates(
+      [column({ name: 'region', semanticType: 'Categorical', cardinality: 2 })],
+      't',
+      100,
+    );
+    expect(candidates).toHaveLength(0);
+  });
+
+  it('RULE_LABEL covers the new member', () => {
+    expect(RULE_LABEL['zero-variance']).toBe('Zero variance');
   });
 });
 

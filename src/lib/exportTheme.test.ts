@@ -12,8 +12,12 @@ import { EXPORT_THEME_CSS, EXPORT_TOKENS_DARK, EXPORT_TOKENS_LIGHT, EXPORT_TOKEN
 const theme = readFileSync(join(__dirname, '../app/theme.css'), 'utf8');
 
 const lightStart = theme.indexOf('@media (prefers-color-scheme: light)');
+// The dark register opens the file. Its selector list carries `[data-theme='dark']`
+// alongside `:root` so a subtree can pin the register (Act 0), so the block is
+// located by `:root` rather than by an exact `:root {`.
+const darkStart = theme.search(/^:root[^{]*\{/m);
 const themeSource = {
-  dark: theme.slice(theme.indexOf(':root {'), lightStart),
+  dark: theme.slice(darkStart, lightStart),
   light: theme.slice(lightStart, theme.indexOf('@theme {')),
 };
 

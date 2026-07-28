@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #F4F5F3; font-family: 'Space Grotesk', system-ui, sans-serif; }
+  a { color: #17B3BE; text-decoration: none; }
+  a:hover { color: #101B2D; }
+</style>
+</helmet>
+
+<section style="padding: 56px 56px 72px; display: flex; flex-direction: column; gap: 28px; background: #0B0A0C">
+  <div style="display: flex; flex-direction: column; gap: 8px; max-width: 760px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #F2A33C">Turn 4 · the lockup</div>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; color: #EDEAE6">Reticle-for-O</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #918B97; text-wrap: pretty">Data in bone, Scope in amber, and the “o” swapped for the white reticle. The crosshair ticks break the wordmark's baseline just enough to make it a mark rather than set type.</p>
+  </div>
+
+  <div id="4a" style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+    <div style="width: 740px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">4a</span>
+        <span style="font-size: 16px; font-weight: 600; color: #EDEAE6">Primary lockup</span>
+      </div>
+      <div style="padding: 46px 24px 44px; display: flex; align-items: center; justify-content: center">
+        <div style="display: flex; align-items: center; gap: 0">
+          <div style="font-size: 72px; font-weight: 700; letter-spacing: -0.035em; color: #EDEAE6; line-height: 1">Data</div>
+          <div style="font-size: 72px; font-weight: 700; letter-spacing: -0.035em; color: #F2A33C; line-height: 1">Sc</div>
+          <svg viewBox="0 0 100 100" width="54" height="54" style="margin: 4px -3px 0 0">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"></circle>
+            <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+          </svg>
+          <div style="font-size: 72px; font-weight: 700; letter-spacing: -0.035em; color: #F2A33C; line-height: 1">pe</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 40px; padding: 22px 24px; border-top: 1px solid #262229">
+        <div style="display: flex; align-items: center">
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.035em; color: #EDEAE6; line-height: 1">Data</div>
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.035em; color: #F2A33C; line-height: 1">Sc</div>
+          <svg viewBox="0 0 100 100" width="26" height="26" style="margin: 2px -2px 0 0">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"></circle>
+            <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+          </svg>
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.035em; color: #F2A33C; line-height: 1">pe</div>
+        </div>
+        <div style="display: flex; align-items: center">
+          <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6; line-height: 1">Data</div>
+          <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.03em; color: #F2A33C; line-height: 1">Sc</div>
+          <svg viewBox="0 0 100 100" width="16" height="16" style="margin: 1px -1px 0 0">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"></circle>
+            <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+          </svg>
+          <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.03em; color: #F2A33C; line-height: 1">pe</div>
+        </div>
+        <div style="display: flex; align-items: center">
+          <div style="font-size: 14px; font-weight: 700; letter-spacing: -0.02em; color: #EDEAE6; line-height: 1">Data</div>
+          <div style="font-size: 14px; font-weight: 700; letter-spacing: -0.02em; color: #F2A33C; line-height: 1">Sc</div>
+          <svg viewBox="0 0 100 100" width="11" height="11" style="margin: 1px -1px 0 0">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"></circle>
+            <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+          </svg>
+          <div style="font-size: 14px; font-weight: 700; letter-spacing: -0.02em; color: #F2A33C; line-height: 1">pe</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 40px; padding: 22px 24px; background: #EDEAE6">
+        <div style="display: flex; align-items: center">
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.035em; color: #0B0A0C; line-height: 1">Data</div>
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.035em; color: #C77A12; line-height: 1">Sc</div>
+          <svg viewBox="0 0 100 100" width="26" height="26" style="margin: 2px -2px 0 0">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#0B0A0C" stroke-width="9"></circle>
+            <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#0B0A0C" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#C77A12"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+          </svg>
+          <div style="font-size: 34px; font-weight: 700; letter-spacing: -0.035em; color: #C77A12; line-height: 1">pe</div>
+        </div>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6C6670">light background: ink + #C77A12</div>
+      </div>
+    </div>
+
+    <div style="width: 360px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 20px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">4b</span>
+        <span style="font-size: 16px; font-weight: 600; color: #EDEAE6">Standalone tile</span>
+      </div>
+      <div style="padding: 28px 20px 24px; display: flex; align-items: center; justify-content: center; gap: 20px">
+        <div style="width: 108px; height: 108px; border-radius: 24px; background: #0B0A0C; border: 1px solid #262229; display: flex; align-items: center; justify-content: center">
+          <svg viewBox="0 0 100 100" width="72" height="72">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"></circle>
+            <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+          </svg>
+        </div>
+        <div style="width: 108px; height: 108px; border-radius: 24px; background: #F2A33C; display: flex; align-items: center; justify-content: center">
+          <svg viewBox="0 0 100 100" width="72" height="72">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#0B0A0C" stroke-width="9"></circle>
+            <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#0B0A0C" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#0B0A0C"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+          </svg>
+        </div>
+      </div>
+      <div style="padding: 0 20px 20px; font-size: 13.5px; line-height: 1.55; color: #918B97; text-wrap: pretty">The reticle alone carries the brand once the wordmark has been seen once — favicon, PWA icon, loading state.</div>
+    </div>
+
+    <div style="width: 360px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 20px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">4c</span>
+        <span style="font-size: 16px; font-weight: 600; color: #EDEAE6">In the header</span>
+      </div>
+      <div style="padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 14px; background: #0B0A0C; border: 1px solid #262229; border-radius: 10px; padding: 14px 16px">
+          <div style="display: flex; align-items: center">
+            <div style="font-size: 19px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6; line-height: 1">Data</div>
+            <div style="font-size: 19px; font-weight: 700; letter-spacing: -0.03em; color: #F2A33C; line-height: 1">Sc</div>
+            <svg viewBox="0 0 100 100" width="15" height="15" style="margin: 1px -1px 0 0">
+              <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"></circle>
+              <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+              <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+            </svg>
+            <div style="font-size: 19px; font-weight: 700; letter-spacing: -0.03em; color: #F2A33C; line-height: 1">pe</div>
+          </div>
+          <div style="width: 1px; height: 18px; background: #2E2A33"></div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #918B97">4 TABLES</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; background: #0B0A0C; border: 1px solid #262229; border-radius: 10px; padding: 10px 12px">
+          <svg viewBox="0 0 100 100" width="14" height="14">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="9"></circle>
+            <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#F2A33C"></path><circle cx="50" cy="50" r="10" fill="#8B5CF6"></circle>
+          </svg>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6C6670">datascope.app — browser tab</div>
+        </div>
+      </div>
+      <div style="padding: 0 20px 20px; font-size: 13.5px; line-height: 1.55; color: #918B97; text-wrap: pretty">Ticks stay at full stroke down to 14px; below that, drop them and keep the ring + dot.</div>
+    </div>
+
+  </div>
+</section>
+
+<section style="padding: 56px 56px 72px; display: flex; flex-direction: column; gap: 32px; background: #0B0A0C">
+  <div style="display: flex; flex-direction: column; gap: 8px; max-width: 760px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #F2A33C">Turn 3 · the lens family</div>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; color: #EDEAE6">Crossing <a href="#2d" style="color: #F2A33C">2d</a> with <a href="#1a" style="color: #F2A33C">1a</a></h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #918B97; text-wrap: pretty">One circle, one handle, and the data lives inside it. Six ways to fill the lens — from most abstract to most literal.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+    <div id="3a" style="width: 360px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 20px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">3a</span>
+        <span style="font-size: 16px; font-weight: 600; color: #EDEAE6">Ring Donut</span>
+      </div>
+      <div style="padding: 30px 20px 24px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="150" height="150">
+          <path d="M46.4 16.1 A28 28 0 0 1 66.9 60.1" fill="none" stroke="#EDEAE6" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M60.1 66.9 A28 28 0 0 1 16.1 46.4" fill="none" stroke="#F2A33C" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M16.1 41.6 A28 28 0 0 1 41.6 16.1" fill="none" stroke="#8B5CF6" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M63.8 63.8 L86 86" stroke="#EDEAE6" stroke-width="11" stroke-linecap="round"></path>
+          <circle cx="44" cy="44" r="8" fill="#F2A33C"></circle>
+        </svg>
+      </div>
+      <div style="padding: 0 20px 18px; font-size: 13.5px; line-height: 1.55; color: #918B97; text-wrap: pretty">The rim itself is the chart. The most designed of the set — no icon inside an icon.</div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-top: 1px solid #262229">
+        <svg viewBox="0 0 100 100" width="34" height="34">
+          <path d="M46.4 16.1 A28 28 0 0 1 66.9 60.1" fill="none" stroke="#EDEAE6" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M60.1 66.9 A28 28 0 0 1 16.1 46.4" fill="none" stroke="#F2A33C" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M16.1 41.6 A28 28 0 0 1 41.6 16.1" fill="none" stroke="#8B5CF6" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M63.8 63.8 L86 86" stroke="#EDEAE6" stroke-width="11" stroke-linecap="round"></path>
+          <circle cx="44" cy="44" r="8" fill="#F2A33C"></circle>
+        </svg>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <svg viewBox="0 0 100 100" width="16" height="16" style="margin-left: auto">
+          <path d="M46.4 16.1 A28 28 0 0 1 66.9 60.1" fill="none" stroke="#EDEAE6" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M60.1 66.9 A28 28 0 0 1 16.1 46.4" fill="none" stroke="#F2A33C" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M16.1 41.6 A28 28 0 0 1 41.6 16.1" fill="none" stroke="#8B5CF6" stroke-width="8" stroke-linecap="round"></path>
+          <path d="M63.8 63.8 L86 86" stroke="#EDEAE6" stroke-width="11" stroke-linecap="round"></path>
+        </svg>
+      </div>
+    </div>
+
+    <div id="3b" style="width: 360px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 20px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">3b</span>
+        <span style="font-size: 16px; font-weight: 600; color: #EDEAE6">Join Lens</span>
+      </div>
+      <div style="padding: 30px 20px 24px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="150" height="150">
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+          <path d="M34 36 L56 32 M34 36 L44 56 M56 32 L44 56" stroke="#6C6670" stroke-width="3.5" stroke-linejoin="round" fill="none"></path>
+          <circle cx="34" cy="36" r="7" fill="#F2A33C"></circle>
+          <circle cx="56" cy="32" r="7" fill="#8B5CF6"></circle>
+          <circle cx="44" cy="56" r="7" fill="#EDEAE6"></circle>
+        </svg>
+      </div>
+      <div style="padding: 0 20px 18px; font-size: 13.5px; line-height: 1.55; color: #918B97; text-wrap: pretty">Your schema map, shrunk. Matches the relationship graph that is already the hero of the app.</div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-top: 1px solid #262229">
+        <svg viewBox="0 0 100 100" width="34" height="34">
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+          <path d="M34 36 L56 32 M34 36 L44 56 M56 32 L44 56" stroke="#6C6670" stroke-width="3.5" stroke-linejoin="round" fill="none"></path>
+          <circle cx="34" cy="36" r="7" fill="#F2A33C"></circle>
+          <circle cx="56" cy="32" r="7" fill="#8B5CF6"></circle>
+          <circle cx="44" cy="56" r="7" fill="#EDEAE6"></circle>
+        </svg>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <svg viewBox="0 0 100 100" width="16" height="16" style="margin-left: auto">
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+          <circle cx="34" cy="36" r="8" fill="#F2A33C"></circle>
+          <circle cx="56" cy="32" r="8" fill="#8B5CF6"></circle>
+          <circle cx="44" cy="56" r="8" fill="#EDEAE6"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <div id="3c" style="width: 360px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 20px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">3c</span>
+        <span style="font-size: 16px; font-weight: 600; color: #EDEAE6">Column Lens</span>
+      </div>
+      <div style="padding: 30px 20px 24px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="150" height="150">
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+          <rect x="29" y="46" width="7" height="12" rx="3.5" fill="#8B5CF6"></rect>
+          <rect x="39" y="38" width="7" height="20" rx="3.5" fill="#F2A33C"></rect>
+          <rect x="49" y="30" width="7" height="28" rx="3.5" fill="#F2A33C"></rect>
+          <rect x="59" y="42" width="7" height="16" rx="3.5" fill="#8B5CF6"></rect>
+        </svg>
+      </div>
+      <div style="padding: 0 20px 18px; font-size: 13.5px; line-height: 1.55; color: #918B97; text-wrap: pretty">Columnar engine, columnar mark. Reads as “chart” to absolutely everyone, including your mum.</div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-top: 1px solid #262229">
+        <svg viewBox="0 0 100 100" width="34" height="34">
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+          <rect x="29" y="46" width="7" height="12" rx="3.5" fill="#8B5CF6"></rect>
+          <rect x="39" y="38" width="7" height="20" rx="3.5" fill="#F2A33C"></rect>
+          <rect x="49" y="30" width="7" height="28" rx="3.5" fill="#F2A33C"></rect>
+          <rect x="59" y="42" width="7" height="16" rx="3.5" fill="#8B5CF6"></rect>
+        </svg>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <svg viewBox="0 0 100 100" width="16" height="16" style="margin-left: auto">
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+          <rect x="31" y="42" width="9" height="16" rx="4.5" fill="#8B5CF6"></rect>
+          <rect x="44" y="30" width="9" height="28" rx="4.5" fill="#F2A33C"></rect>
+        </svg>
+      </div>
+    </div>
+
+    <div id="3d" style="width: 360px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 20px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">3d</span>
+        <span style="font-size: 16px; font-weight: 600; color: #EDEAE6">Reticle</span>
+      </div>
+      <div style="padding: 30px 20px 24px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="150" height="150">
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="7"></circle>
+          <path d="M50 6 V16 M50 84 V94 M6 50 H16 M84 50 H94" stroke="#EDEAE6" stroke-width="6" stroke-linecap="round"></path>
+          <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#8B5CF6"></path>
+          <circle cx="50" cy="50" r="9" fill="#F2A33C"></circle>
+        </svg>
+      </div>
+      <div style="padding: 0 20px 18px; font-size: 13.5px; line-height: 1.55; color: #918B97; text-wrap: pretty">No handle — perfectly symmetrical, so it centres in any tile. “Point it at your data” taken literally.</div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-top: 1px solid #262229">
+        <svg viewBox="0 0 100 100" width="34" height="34">
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="7"></circle>
+          <path d="M50 6 V16 M50 84 V94 M6 50 H16 M84 50 H94" stroke="#EDEAE6" stroke-width="6" stroke-linecap="round"></path>
+          <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#8B5CF6"></path>
+          <circle cx="50" cy="50" r="9" fill="#F2A33C"></circle>
+        </svg>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <svg viewBox="0 0 100 100" width="16" height="16" style="margin-left: auto">
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="7"></circle>
+          <path d="M50 6 V16 M50 84 V94 M6 50 H16 M84 50 H94" stroke="#EDEAE6" stroke-width="6" stroke-linecap="round"></path>
+          <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#8B5CF6"></path>
+          <circle cx="50" cy="50" r="9" fill="#F2A33C"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <div id="3e" style="width: 740px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 10px; padding: 18px 20px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">3e</span>
+        <span style="font-size: 16px; font-weight: 600; color: #EDEAE6">Lens-for-O</span>
+        <span style="font-size: 13px; color: #918B97">the mark hides inside the word</span>
+      </div>
+      <div style="padding: 34px 24px 26px; display: flex; align-items: center; justify-content: center; gap: 2px">
+        <div style="font-size: 62px; font-weight: 700; letter-spacing: -0.035em; color: #EDEAE6; line-height: 1">DataSc</div>
+        <svg viewBox="0 0 100 100" width="52" height="52" style="margin: 0 2px 4px">
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#F2A33C" stroke-width="14"></circle>
+          <path d="M50 50 L50 27 A23 23 0 0 1 69.9 61.5 Z" fill="#8B5CF6"></path>
+        </svg>
+        <div style="font-size: 62px; font-weight: 700; letter-spacing: -0.035em; color: #EDEAE6; line-height: 1">pe</div>
+      </div>
+      <div style="padding: 0 24px 20px; font-size: 13.5px; line-height: 1.55; color: #918B97; text-wrap: pretty">No separate icon to place — the wordmark <em>is</em> the logo, and the sliced lens sits where the eye already stops. Pair it with <a href="#3d" style="color: #F2A33C">3d</a> as the standalone app tile.</div>
+      <div style="display: flex; align-items: center; gap: 28px; padding: 18px 24px; background: #EDEAE6">
+        <div style="display: flex; align-items: center; gap: 1px">
+          <div style="font-size: 30px; font-weight: 700; letter-spacing: -0.035em; color: #0B0A0C; line-height: 1">DataSc</div>
+          <svg viewBox="0 0 100 100" width="26" height="26" style="margin: 0 1px 2px">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#C77A12" stroke-width="14"></circle>
+            <path d="M50 50 L50 27 A23 23 0 0 1 69.9 61.5 Z" fill="#8B5CF6"></path>
+          </svg>
+          <div style="font-size: 30px; font-weight: 700; letter-spacing: -0.035em; color: #0B0A0C; line-height: 1">pe</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1px">
+          <div style="font-size: 17px; font-weight: 700; letter-spacing: -0.03em; color: #0B0A0C; line-height: 1">DataSc</div>
+          <svg viewBox="0 0 100 100" width="15" height="15" style="margin: 0 1px 1px">
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#C77A12" stroke-width="14"></circle>
+            <path d="M50 50 L50 27 A23 23 0 0 1 69.9 61.5 Z" fill="#8B5CF6"></path>
+          </svg>
+          <div style="font-size: 17px; font-weight: 700; letter-spacing: -0.03em; color: #0B0A0C; line-height: 1">pe</div>
+        </div>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6C6670">wordmark lockup</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="background: #141216; border: 1px solid #262229; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px">
+    <div style="font-size: 15px; font-weight: 600; color: #EDEAE6">All six at tab-strip size</div>
+    <div style="display: flex; align-items: center; gap: 34px; background: #0B0A0C; border: 1px solid #262229; border-radius: 10px; padding: 16px 20px">
+      <svg viewBox="0 0 100 100" width="18" height="18">
+        <circle cx="44" cy="44" r="20" fill="#F2A33C"></circle>
+        <path d="M44 44 L44 24 A20 20 0 0 1 61.3 54 Z" fill="#8B5CF6"></path>
+        <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+        <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+      </svg>
+      <svg viewBox="0 0 100 100" width="18" height="18">
+        <path d="M46.4 16.1 A28 28 0 0 1 66.9 60.1" fill="none" stroke="#EDEAE6" stroke-width="8" stroke-linecap="round"></path>
+        <path d="M60.1 66.9 A28 28 0 0 1 16.1 46.4" fill="none" stroke="#F2A33C" stroke-width="8" stroke-linecap="round"></path>
+        <path d="M16.1 41.6 A28 28 0 0 1 41.6 16.1" fill="none" stroke="#8B5CF6" stroke-width="8" stroke-linecap="round"></path>
+        <path d="M63.8 63.8 L86 86" stroke="#EDEAE6" stroke-width="11" stroke-linecap="round"></path>
+      </svg>
+      <svg viewBox="0 0 100 100" width="18" height="18">
+        <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+        <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+        <circle cx="34" cy="36" r="8" fill="#F2A33C"></circle>
+        <circle cx="56" cy="32" r="8" fill="#8B5CF6"></circle>
+        <circle cx="44" cy="56" r="8" fill="#EDEAE6"></circle>
+      </svg>
+      <svg viewBox="0 0 100 100" width="18" height="18">
+        <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+        <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+        <rect x="31" y="42" width="9" height="16" rx="4.5" fill="#8B5CF6"></rect>
+        <rect x="44" y="30" width="9" height="28" rx="4.5" fill="#F2A33C"></rect>
+      </svg>
+      <svg viewBox="0 0 100 100" width="18" height="18">
+        <circle cx="50" cy="50" r="30" fill="none" stroke="#EDEAE6" stroke-width="7"></circle>
+        <path d="M50 6 V16 M50 84 V94 M6 50 H16 M84 50 H94" stroke="#EDEAE6" stroke-width="6" stroke-linecap="round"></path>
+        <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="#8B5CF6"></path>
+        <circle cx="50" cy="50" r="9" fill="#F2A33C"></circle>
+      </svg>
+      <svg viewBox="0 0 100 100" width="18" height="18">
+        <circle cx="50" cy="50" r="30" fill="none" stroke="#F2A33C" stroke-width="14"></circle>
+        <path d="M50 50 L50 27 A23 23 0 0 1 69.9 61.5 Z" fill="#8B5CF6"></path>
+      </svg>
+      <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6C6670">2d · 3a · 3b · 3c · 3d · 3e</div>
+    </div>
+    <div style="font-size: 14px; line-height: 1.6; color: #918B97; text-wrap: pretty">At 18px, <a href="#3a" style="color: #F2A33C">3a</a> and <a href="#3d" style="color: #F2A33C">3d</a> hold; <a href="#3b" style="color: #F2A33C">3b</a> turns into three dots (which is fine, and memorable); <a href="#3c" style="color: #F2A33C">3c</a> needs the bar count dropped to two.</div>
+  </div>
+</section>
+
+<section style="padding: 56px 56px 72px; display: flex; flex-direction: column; gap: 32px; background: #0B0A0C">
+  <div style="display: flex; flex-direction: column; gap: 8px; max-width: 760px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #F2A33C">Turn 2 · the pun is the point</div>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; color: #EDEAE6">Every mark is a literal “-scope”</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #918B97; text-wrap: pretty">A stranger should get the joke in half a second and want to point it at their own CSV. Product palette only: ink <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #EDEAE6">#0B0A0C</span>, amber <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #F2A33C">#F2A33C</span>, violet <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #8B5CF6">#8B5CF6</span>, bone <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #EDEAE6">#EDEAE6</span>.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+
+    <div id="2a" style="width: 560px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 12px; padding: 20px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">2a</span>
+        <span style="font-size: 17px; font-weight: 600; color: #EDEAE6">Periscope</span>
+        <span style="font-size: 13px; color: #918B97">“your data never surfaces”</span>
+      </div>
+      <div style="padding: 34px 24px 30px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="168" height="168">
+          <rect x="8" y="60" width="84" height="4" rx="2" fill="#8B5CF6"></rect>
+          <rect x="20" y="74" width="30" height="5" rx="2.5" fill="#8B5CF6"></rect>
+          <rect x="56" y="74" width="24" height="5" rx="2.5" fill="#8B5CF6"></rect>
+          <rect x="40" y="22" width="22" height="60" rx="8" fill="#EDEAE6"></rect>
+          <rect x="40" y="22" width="42" height="20" rx="10" fill="#EDEAE6"></rect>
+          <circle cx="76" cy="32" r="5.5" fill="#F2A33C"></circle>
+        </svg>
+      </div>
+      <div style="padding: 0 24px 18px; font-size: 14px; line-height: 1.55; color: #918B97; text-wrap: pretty">The scope pokes up; the rows stay below the waterline. Privacy told as a picture, not a promise.</div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 24px; border-top: 1px solid #262229">
+        <svg viewBox="0 0 100 100" width="44" height="44">
+          <rect x="8" y="60" width="84" height="4" rx="2" fill="#8B5CF6"></rect>
+          <rect x="20" y="74" width="30" height="5" rx="2.5" fill="#8B5CF6"></rect>
+          <rect x="56" y="74" width="24" height="5" rx="2.5" fill="#8B5CF6"></rect>
+          <rect x="40" y="22" width="22" height="60" rx="8" fill="#EDEAE6"></rect>
+          <rect x="40" y="22" width="42" height="20" rx="10" fill="#EDEAE6"></rect>
+          <circle cx="76" cy="32" r="5.5" fill="#F2A33C"></circle>
+        </svg>
+        <div style="font-size: 29px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 16px">
+          <svg viewBox="0 0 100 100" width="22" height="22">
+            <rect x="8" y="60" width="84" height="4" rx="2" fill="#8B5CF6"></rect>
+            <rect x="40" y="22" width="22" height="60" rx="8" fill="#EDEAE6"></rect>
+            <rect x="40" y="22" width="42" height="20" rx="10" fill="#EDEAE6"></rect>
+            <circle cx="76" cy="32" r="5.5" fill="#F2A33C"></circle>
+          </svg>
+          <svg viewBox="0 0 100 100" width="15" height="15">
+            <rect x="8" y="60" width="84" height="4" rx="2" fill="#8B5CF6"></rect>
+            <rect x="40" y="22" width="22" height="60" rx="8" fill="#EDEAE6"></rect>
+            <rect x="40" y="22" width="42" height="20" rx="10" fill="#EDEAE6"></rect>
+            <circle cx="76" cy="32" r="5.5" fill="#F2A33C"></circle>
+          </svg>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 24px; background: #EDEAE6">
+        <svg viewBox="0 0 100 100" width="30" height="30">
+          <rect x="8" y="60" width="84" height="4" rx="2" fill="#8B5CF6"></rect>
+          <rect x="20" y="74" width="30" height="5" rx="2.5" fill="#8B5CF6"></rect>
+          <rect x="56" y="74" width="24" height="5" rx="2.5" fill="#8B5CF6"></rect>
+          <rect x="40" y="22" width="22" height="60" rx="8" fill="#0B0A0C"></rect>
+          <rect x="40" y="22" width="42" height="20" rx="10" fill="#0B0A0C"></rect>
+          <circle cx="76" cy="32" r="5.5" fill="#F2A33C"></circle>
+        </svg>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #0B0A0C">Data<span style="color: #C77A12">Scope</span></div>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6C6670">datascope-periscope.svg</div>
+      </div>
+    </div>
+
+    <div id="2b" style="width: 560px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 12px; padding: 20px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">2b</span>
+        <span style="font-size: 17px; font-weight: 600; color: #EDEAE6">Stethoscope</span>
+        <span style="font-size: 13px; color: #918B97">“give your data a check-up”</span>
+      </div>
+      <div style="padding: 34px 24px 30px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="168" height="168">
+          <circle cx="26" cy="15" r="6" fill="#F2A33C"></circle>
+          <circle cx="62" cy="15" r="6" fill="#F2A33C"></circle>
+          <path d="M26 20 V42 A18 18 0 0 0 62 42 V20" fill="none" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+          <circle cx="44" cy="72" r="16" fill="#F2A33C"></circle>
+          <rect x="36" y="66" width="16" height="4" rx="2" fill="#141216"></rect>
+          <rect x="36" y="74" width="10" height="4" rx="2" fill="#141216"></rect>
+        </svg>
+      </div>
+      <div style="padding: 0 24px 18px; font-size: 14px; line-height: 1.55; color: #918B97; text-wrap: pretty">Drop a file, get a diagnosis. The friendliest framing — it promises an answer rather than a query editor.</div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 24px; border-top: 1px solid #262229">
+        <svg viewBox="0 0 100 100" width="44" height="44">
+          <circle cx="26" cy="15" r="6" fill="#F2A33C"></circle>
+          <circle cx="62" cy="15" r="6" fill="#F2A33C"></circle>
+          <path d="M26 20 V42 A18 18 0 0 0 62 42 V20" fill="none" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+          <circle cx="44" cy="72" r="16" fill="#F2A33C"></circle>
+          <rect x="36" y="66" width="16" height="4" rx="2" fill="#141216"></rect>
+          <rect x="36" y="74" width="10" height="4" rx="2" fill="#141216"></rect>
+        </svg>
+        <div style="font-size: 29px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 16px">
+          <svg viewBox="0 0 100 100" width="22" height="22">
+            <circle cx="26" cy="15" r="6" fill="#F2A33C"></circle>
+            <circle cx="62" cy="15" r="6" fill="#F2A33C"></circle>
+            <path d="M26 20 V42 A18 18 0 0 0 62 42 V20" fill="none" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+            <circle cx="44" cy="72" r="16" fill="#F2A33C"></circle>
+          </svg>
+          <svg viewBox="0 0 100 100" width="15" height="15">
+            <circle cx="26" cy="15" r="6" fill="#F2A33C"></circle>
+            <circle cx="62" cy="15" r="6" fill="#F2A33C"></circle>
+            <path d="M26 20 V42 A18 18 0 0 0 62 42 V20" fill="none" stroke="#EDEAE6" stroke-width="7" stroke-linecap="round"></path>
+            <circle cx="44" cy="72" r="16" fill="#F2A33C"></circle>
+          </svg>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 24px; background: #EDEAE6">
+        <svg viewBox="0 0 100 100" width="30" height="30">
+          <circle cx="26" cy="15" r="6" fill="#F2A33C"></circle>
+          <circle cx="62" cy="15" r="6" fill="#F2A33C"></circle>
+          <path d="M26 20 V42 A18 18 0 0 0 62 42 V20" fill="none" stroke="#0B0A0C" stroke-width="7" stroke-linecap="round"></path>
+          <circle cx="44" cy="72" r="16" fill="#F2A33C"></circle>
+          <rect x="36" y="66" width="16" height="4" rx="2" fill="#EDEAE6"></rect>
+          <rect x="36" y="74" width="10" height="4" rx="2" fill="#EDEAE6"></rect>
+        </svg>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #0B0A0C">Data<span style="color: #C77A12">Scope</span></div>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6C6670">datascope-stethoscope.svg</div>
+      </div>
+    </div>
+
+    <div id="2c" style="width: 560px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 12px; padding: 20px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">2c</span>
+        <span style="font-size: 17px; font-weight: 600; color: #EDEAE6">Kaleidoscope</span>
+        <span style="font-size: 13px; color: #918B97">“turn it, see it differently”</span>
+      </div>
+      <div style="padding: 34px 24px 30px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="168" height="168">
+          <polygon points="50,50 50,16 79.4,33" fill="#F2A33C"></polygon>
+          <polygon points="50,50 79.4,33 79.4,67" fill="#8B5CF6"></polygon>
+          <polygon points="50,50 79.4,67 50,84" fill="#EDEAE6"></polygon>
+          <polygon points="50,50 50,84 20.6,67" fill="#F2A33C"></polygon>
+          <polygon points="50,50 20.6,67 20.6,33" fill="#8B5CF6"></polygon>
+          <polygon points="50,50 20.6,33 50,16" fill="#EDEAE6"></polygon>
+          <circle cx="50" cy="50" r="9" fill="#141216"></circle>
+          <circle cx="50" cy="50" r="4.5" fill="#EDEAE6"></circle>
+        </svg>
+      </div>
+      <div style="padding: 0 24px 18px; font-size: 14px; line-height: 1.55; color: #918B97; text-wrap: pretty">Same rows, one turn, a new chart. Also the most ownable as an app icon — it survives being 16px in a tab strip.</div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 24px; border-top: 1px solid #262229">
+        <svg viewBox="0 0 100 100" width="44" height="44">
+          <polygon points="50,50 50,16 79.4,33" fill="#F2A33C"></polygon>
+          <polygon points="50,50 79.4,33 79.4,67" fill="#8B5CF6"></polygon>
+          <polygon points="50,50 79.4,67 50,84" fill="#EDEAE6"></polygon>
+          <polygon points="50,50 50,84 20.6,67" fill="#F2A33C"></polygon>
+          <polygon points="50,50 20.6,67 20.6,33" fill="#8B5CF6"></polygon>
+          <polygon points="50,50 20.6,33 50,16" fill="#EDEAE6"></polygon>
+          <circle cx="50" cy="50" r="9" fill="#141216"></circle>
+          <circle cx="50" cy="50" r="4.5" fill="#EDEAE6"></circle>
+        </svg>
+        <div style="font-size: 29px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 16px">
+          <svg viewBox="0 0 100 100" width="22" height="22">
+            <polygon points="50,50 50,16 79.4,33" fill="#F2A33C"></polygon>
+            <polygon points="50,50 79.4,33 79.4,67" fill="#8B5CF6"></polygon>
+            <polygon points="50,50 79.4,67 50,84" fill="#EDEAE6"></polygon>
+            <polygon points="50,50 50,84 20.6,67" fill="#F2A33C"></polygon>
+            <polygon points="50,50 20.6,67 20.6,33" fill="#8B5CF6"></polygon>
+            <polygon points="50,50 20.6,33 50,16" fill="#EDEAE6"></polygon>
+            <circle cx="50" cy="50" r="9" fill="#141216"></circle>
+          </svg>
+          <svg viewBox="0 0 100 100" width="15" height="15">
+            <polygon points="50,50 50,16 79.4,33" fill="#F2A33C"></polygon>
+            <polygon points="50,50 79.4,33 79.4,67" fill="#8B5CF6"></polygon>
+            <polygon points="50,50 79.4,67 50,84" fill="#EDEAE6"></polygon>
+            <polygon points="50,50 50,84 20.6,67" fill="#F2A33C"></polygon>
+            <polygon points="50,50 20.6,67 20.6,33" fill="#8B5CF6"></polygon>
+            <polygon points="50,50 20.6,33 50,16" fill="#EDEAE6"></polygon>
+          </svg>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 24px; background: #EDEAE6">
+        <svg viewBox="0 0 100 100" width="30" height="30">
+          <polygon points="50,50 50,16 79.4,33" fill="#F2A33C"></polygon>
+          <polygon points="50,50 79.4,33 79.4,67" fill="#8B5CF6"></polygon>
+          <polygon points="50,50 79.4,67 50,84" fill="#0B0A0C"></polygon>
+          <polygon points="50,50 50,84 20.6,67" fill="#F2A33C"></polygon>
+          <polygon points="50,50 20.6,67 20.6,33" fill="#8B5CF6"></polygon>
+          <polygon points="50,50 20.6,33 50,16" fill="#0B0A0C"></polygon>
+          <circle cx="50" cy="50" r="9" fill="#EDEAE6"></circle>
+          <circle cx="50" cy="50" r="4.5" fill="#0B0A0C"></circle>
+        </svg>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #0B0A0C">Data<span style="color: #C77A12">Scope</span></div>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6C6670">datascope-kaleidoscope.svg</div>
+      </div>
+    </div>
+
+    <div id="2d" style="width: 560px; background: #141216; border: 1px solid #262229; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 12px; padding: 20px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #0B0A0C; background: #F2A33C; border-radius: 5px; padding: 3px 8px">2d</span>
+        <span style="font-size: 17px; font-weight: 600; color: #EDEAE6">Sliced Lens</span>
+        <span style="font-size: 13px; color: #918B97">“the magnifier is the pie chart”</span>
+      </div>
+      <div style="padding: 34px 24px 30px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="168" height="168">
+          <circle cx="44" cy="44" r="20" fill="#F2A33C"></circle>
+          <path d="M44 44 L44 24 A20 20 0 0 1 61.3 54 Z" fill="#8B5CF6"></path>
+          <path d="M44 44 L61.3 54 A20 20 0 0 1 44 64 Z" fill="#EDEAE6"></path>
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <div style="padding: 0 24px 18px; font-size: 14px; line-height: 1.55; color: #918B97; text-wrap: pretty">Two universal symbols fused into one: search and chart. Zero explanation needed, but the least distinctive of the four.</div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 24px; border-top: 1px solid #262229">
+        <svg viewBox="0 0 100 100" width="44" height="44">
+          <circle cx="44" cy="44" r="20" fill="#F2A33C"></circle>
+          <path d="M44 44 L44 24 A20 20 0 0 1 61.3 54 Z" fill="#8B5CF6"></path>
+          <path d="M44 44 L61.3 54 A20 20 0 0 1 44 64 Z" fill="#EDEAE6"></path>
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+        </svg>
+        <div style="font-size: 29px; font-weight: 700; letter-spacing: -0.03em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 16px">
+          <svg viewBox="0 0 100 100" width="22" height="22">
+            <circle cx="44" cy="44" r="20" fill="#F2A33C"></circle>
+            <path d="M44 44 L44 24 A20 20 0 0 1 61.3 54 Z" fill="#8B5CF6"></path>
+            <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+            <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+          </svg>
+          <svg viewBox="0 0 100 100" width="15" height="15">
+            <circle cx="44" cy="44" r="20" fill="#F2A33C"></circle>
+            <path d="M44 44 L44 24 A20 20 0 0 1 61.3 54 Z" fill="#8B5CF6"></path>
+            <circle cx="44" cy="44" r="28" fill="none" stroke="#EDEAE6" stroke-width="8"></circle>
+            <path d="M64 64 L86 86" stroke="#EDEAE6" stroke-width="12" stroke-linecap="round"></path>
+          </svg>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 24px; background: #EDEAE6">
+        <svg viewBox="0 0 100 100" width="30" height="30">
+          <circle cx="44" cy="44" r="20" fill="#F2A33C"></circle>
+          <path d="M44 44 L44 24 A20 20 0 0 1 61.3 54 Z" fill="#8B5CF6"></path>
+          <path d="M44 44 L61.3 54 A20 20 0 0 1 44 64 Z" fill="#0B0A0C"></path>
+          <circle cx="44" cy="44" r="28" fill="none" stroke="#0B0A0C" stroke-width="8"></circle>
+          <path d="M64 64 L86 86" stroke="#0B0A0C" stroke-width="12" stroke-linecap="round"></path>
+        </svg>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: #0B0A0C">Data<span style="color: #C77A12">Scope</span></div>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6C6670">datascope-pielens.svg</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px">
+    <div style="flex: 1 1 420px; background: #141216; border: 1px solid #262229; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+      <div style="font-size: 15px; font-weight: 600; color: #EDEAE6">In the product chrome</div>
+      <div style="display: flex; align-items: center; gap: 16px; background: #0B0A0C; border: 1px solid #262229; border-radius: 10px; padding: 12px 16px">
+        <svg viewBox="0 0 100 100" width="24" height="24">
+          <polygon points="50,50 50,16 79.4,33" fill="#F2A33C"></polygon>
+          <polygon points="50,50 79.4,33 79.4,67" fill="#8B5CF6"></polygon>
+          <polygon points="50,50 79.4,67 50,84" fill="#EDEAE6"></polygon>
+          <polygon points="50,50 50,84 20.6,67" fill="#F2A33C"></polygon>
+          <polygon points="50,50 20.6,67 20.6,33" fill="#8B5CF6"></polygon>
+          <polygon points="50,50 20.6,33 50,16" fill="#EDEAE6"></polygon>
+          <circle cx="50" cy="50" r="9" fill="#0B0A0C"></circle>
+        </svg>
+        <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <div style="width: 1px; height: 20px; background: #2E2A33"></div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: #918B97">E-COMMERCE MINI-WAREHOUSE · 4 TABLES</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; background: #0B0A0C; border: 1px solid #262229; border-radius: 10px; padding: 12px 16px">
+        <svg viewBox="0 0 100 100" width="24" height="24">
+          <rect x="8" y="60" width="84" height="4" rx="2" fill="#8B5CF6"></rect>
+          <rect x="40" y="22" width="22" height="60" rx="8" fill="#EDEAE6"></rect>
+          <rect x="40" y="22" width="42" height="20" rx="10" fill="#EDEAE6"></rect>
+          <circle cx="76" cy="32" r="5.5" fill="#F2A33C"></circle>
+        </svg>
+        <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #EDEAE6">Data<span style="color: #F2A33C">Scope</span></div>
+        <div style="width: 1px; height: 20px; background: #2E2A33"></div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em; color: #918B97">E-COMMERCE MINI-WAREHOUSE · 4 TABLES</div>
+      </div>
+    </div>
+    <div style="flex: 1 1 300px; background: #141216; border: 1px solid #262229; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 15px; font-weight: 600; color: #EDEAE6">Taglines that carry the joke</div>
+      <div style="font-size: 14px; line-height: 1.7; color: #918B97; text-wrap: pretty">Point it at your data. — <span style="color: #EDEAE6">2a</span><br>Drop a file. Get a diagnosis. — <span style="color: #EDEAE6">2b</span><br>Same data, every angle. — <span style="color: #EDEAE6">2c</span><br>Ask in English. Nothing leaves your browser. — any</div>
+      <div style="margin-top: 4px; font-size: 13px; line-height: 1.6; color: #6C6670">My pick: <a href="#2a" style="color: #F2A33C">2a</a> for the story, <a href="#2c" style="color: #F2A33C">2c</a> for the icon — they can coexist as mark and app tile.</div>
+    </div>
+  </div>
+</section>
+
+<section style="padding: 56px 56px 96px; display: flex; flex-direction: column; gap: 32px">
+  <div style="display: flex; flex-direction: column; gap: 8px; max-width: 720px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #17B3BE">Turn 1 · four marks (superseded palette)</div>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; color: #101B2D">Datascope identity</h1>
+    <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #55606E; text-wrap: pretty">Flat geometry, no gradients — local-first tools should look solid, not cloudy. Ink <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">#101B2D</span>, signal <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #17B3BE">#17B3BE</span>, slate <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">#2C4159</span>. Type is Space Grotesk. Every mark works at 16px and in one colour.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+
+    <div id="1a" style="width: 560px; background: #FFFFFF; border: 1px solid #E3E5E1; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 12px; padding: 20px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #FFFFFF; background: #101B2D; border-radius: 5px; padding: 3px 8px">1a</span>
+        <span style="font-size: 17px; font-weight: 600; color: #101B2D">Query Scope</span>
+        <span style="font-size: 13px; color: #7A8592">lens + relational graph</span>
+      </div>
+      <div style="padding: 36px 24px 32px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="168" height="168">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#101B2D" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#101B2D" stroke-width="12" stroke-linecap="round"></path>
+          <path d="M44 31 L59 53 M44 31 L29 53 M29 53 L59 53" stroke="#17B3BE" stroke-width="4.5" stroke-linejoin="round" fill="none"></path>
+          <circle cx="44" cy="31" r="7" fill="#17B3BE"></circle>
+          <circle cx="29" cy="53" r="7" fill="#17B3BE"></circle>
+          <circle cx="59" cy="53" r="7" fill="#17B3BE"></circle>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-top: 1px solid #EEF0EC">
+        <svg viewBox="0 0 100 100" width="46" height="46">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#101B2D" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#101B2D" stroke-width="12" stroke-linecap="round"></path>
+          <path d="M44 31 L59 53 M44 31 L29 53 M29 53 L59 53" stroke="#17B3BE" stroke-width="4.5" stroke-linejoin="round" fill="none"></path>
+          <circle cx="44" cy="31" r="7" fill="#17B3BE"></circle>
+          <circle cx="29" cy="53" r="7" fill="#17B3BE"></circle>
+          <circle cx="59" cy="53" r="7" fill="#17B3BE"></circle>
+        </svg>
+        <div style="font-size: 30px; font-weight: 600; letter-spacing: -0.035em; color: #101B2D">data<span style="color: #17B3BE">scope</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 22px; padding: 20px 24px; background: #101B2D">
+        <svg viewBox="0 0 100 100" width="34" height="34">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#FFFFFF" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"></path>
+          <path d="M44 31 L59 53 M44 31 L29 53 M29 53 L59 53" stroke="#17B3BE" stroke-width="4.5" stroke-linejoin="round" fill="none"></path>
+          <circle cx="44" cy="31" r="7" fill="#17B3BE"></circle>
+          <circle cx="29" cy="53" r="7" fill="#17B3BE"></circle>
+          <circle cx="59" cy="53" r="7" fill="#17B3BE"></circle>
+        </svg>
+        <svg viewBox="0 0 100 100" width="20" height="20">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#FFFFFF" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"></path>
+          <path d="M44 31 L59 53 M44 31 L29 53 M29 53 L59 53" stroke="#17B3BE" stroke-width="4.5" stroke-linejoin="round" fill="none"></path>
+          <circle cx="44" cy="31" r="7" fill="#17B3BE"></circle>
+          <circle cx="29" cy="53" r="7" fill="#17B3BE"></circle>
+          <circle cx="59" cy="53" r="7" fill="#17B3BE"></circle>
+        </svg>
+        <svg viewBox="0 0 100 100" width="14" height="14">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#FFFFFF" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"></path>
+          <circle cx="44" cy="31" r="7" fill="#17B3BE"></circle>
+          <circle cx="29" cy="53" r="7" fill="#17B3BE"></circle>
+          <circle cx="59" cy="53" r="7" fill="#17B3BE"></circle>
+        </svg>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6F8090">svg/datascope-scope.svg</div>
+      </div>
+    </div>
+
+    <div id="1b" style="width: 560px; background: #FFFFFF; border: 1px solid #E3E5E1; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 12px; padding: 20px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #FFFFFF; background: #101B2D; border-radius: 5px; padding: 3px 8px">1b</span>
+        <span style="font-size: 17px; font-weight: 600; color: #101B2D">Aperture D</span>
+        <span style="font-size: 13px; color: #7A8592">monogram, reads as a shutter</span>
+      </div>
+      <div style="padding: 36px 24px 32px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="168" height="168">
+          <rect x="18" y="16" width="13" height="68" rx="6.5" fill="#101B2D"></rect>
+          <path d="M31 22 H47 A28 28 0 0 1 47 78 H31" fill="none" stroke="#101B2D" stroke-width="13" stroke-linejoin="round"></path>
+          <circle cx="46" cy="50" r="9" fill="#17B3BE"></circle>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-top: 1px solid #EEF0EC">
+        <svg viewBox="0 0 100 100" width="46" height="46">
+          <rect x="18" y="16" width="13" height="68" rx="6.5" fill="#101B2D"></rect>
+          <path d="M31 22 H47 A28 28 0 0 1 47 78 H31" fill="none" stroke="#101B2D" stroke-width="13" stroke-linejoin="round"></path>
+          <circle cx="46" cy="50" r="9" fill="#17B3BE"></circle>
+        </svg>
+        <div style="font-size: 30px; font-weight: 600; letter-spacing: -0.035em; color: #101B2D">data<span style="color: #17B3BE">scope</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 22px; padding: 20px 24px; background: #101B2D">
+        <svg viewBox="0 0 100 100" width="34" height="34">
+          <rect x="18" y="16" width="13" height="68" rx="6.5" fill="#FFFFFF"></rect>
+          <path d="M31 22 H47 A28 28 0 0 1 47 78 H31" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linejoin="round"></path>
+          <circle cx="46" cy="50" r="9" fill="#17B3BE"></circle>
+        </svg>
+        <svg viewBox="0 0 100 100" width="20" height="20">
+          <rect x="18" y="16" width="13" height="68" rx="6.5" fill="#FFFFFF"></rect>
+          <path d="M31 22 H47 A28 28 0 0 1 47 78 H31" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linejoin="round"></path>
+          <circle cx="46" cy="50" r="9" fill="#17B3BE"></circle>
+        </svg>
+        <svg viewBox="0 0 100 100" width="14" height="14">
+          <rect x="18" y="16" width="13" height="68" rx="6.5" fill="#FFFFFF"></rect>
+          <path d="M31 22 H47 A28 28 0 0 1 47 78 H31" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linejoin="round"></path>
+          <circle cx="46" cy="50" r="9" fill="#17B3BE"></circle>
+        </svg>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6F8090">svg/datascope-aperture.svg</div>
+      </div>
+    </div>
+
+    <div id="1c" style="width: 560px; background: #FFFFFF; border: 1px solid #E3E5E1; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 12px; padding: 20px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #FFFFFF; background: #101B2D; border-radius: 5px; padding: 3px 8px">1c</span>
+        <span style="font-size: 17px; font-weight: 600; color: #101B2D">Local Cube</span>
+        <span style="font-size: 13px; color: #7A8592">columnar store, sealed on-device</span>
+      </div>
+      <div style="padding: 36px 24px 32px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="168" height="168">
+          <polygon points="50,17 78,33 50,49 22,33" fill="#17B3BE"></polygon>
+          <polygon points="22,33 50,49 50,83 22,67" fill="#101B2D"></polygon>
+          <polygon points="78,33 50,49 50,83 78,67" fill="#2C4159"></polygon>
+          <circle cx="11" cy="45" r="3" fill="#17B3BE"></circle>
+          <circle cx="11" cy="59" r="2" fill="#17B3BE"></circle>
+          <circle cx="89" cy="45" r="3" fill="#17B3BE"></circle>
+          <circle cx="89" cy="59" r="2" fill="#17B3BE"></circle>
+          <circle cx="50" cy="93" r="2.5" fill="#17B3BE"></circle>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-top: 1px solid #EEF0EC">
+        <svg viewBox="0 0 100 100" width="46" height="46">
+          <polygon points="50,17 78,33 50,49 22,33" fill="#17B3BE"></polygon>
+          <polygon points="22,33 50,49 50,83 22,67" fill="#101B2D"></polygon>
+          <polygon points="78,33 50,49 50,83 78,67" fill="#2C4159"></polygon>
+        </svg>
+        <div style="font-size: 30px; font-weight: 600; letter-spacing: -0.035em; color: #101B2D">data<span style="color: #17B3BE">scope</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 22px; padding: 20px 24px; background: #101B2D">
+        <svg viewBox="0 0 100 100" width="34" height="34">
+          <polygon points="50,17 78,33 50,49 22,33" fill="#17B3BE"></polygon>
+          <polygon points="22,33 50,49 50,83 22,67" fill="#FFFFFF"></polygon>
+          <polygon points="78,33 50,49 50,83 78,67" fill="#8B9AAA"></polygon>
+        </svg>
+        <svg viewBox="0 0 100 100" width="20" height="20">
+          <polygon points="50,17 78,33 50,49 22,33" fill="#17B3BE"></polygon>
+          <polygon points="22,33 50,49 50,83 22,67" fill="#FFFFFF"></polygon>
+          <polygon points="78,33 50,49 50,83 78,67" fill="#8B9AAA"></polygon>
+        </svg>
+        <svg viewBox="0 0 100 100" width="14" height="14">
+          <polygon points="50,17 78,33 50,49 22,33" fill="#17B3BE"></polygon>
+          <polygon points="22,33 50,49 50,83 22,67" fill="#FFFFFF"></polygon>
+          <polygon points="78,33 50,49 50,83 78,67" fill="#8B9AAA"></polygon>
+        </svg>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6F8090">svg/datascope-cube.svg</div>
+      </div>
+    </div>
+
+    <div id="1d" style="width: 560px; background: #FFFFFF; border: 1px solid #E3E5E1; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: baseline; gap: 12px; padding: 20px 24px 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: #FFFFFF; background: #101B2D; border-radius: 5px; padding: 3px 8px">1d</span>
+        <span style="font-size: 17px; font-weight: 600; color: #101B2D">Result Set</span>
+        <span style="font-size: 13px; color: #7A8592">lens over rows of a table</span>
+      </div>
+      <div style="padding: 36px 24px 32px; display: flex; justify-content: center">
+        <svg viewBox="0 0 100 100" width="168" height="168">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#101B2D" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#101B2D" stroke-width="12" stroke-linecap="round"></path>
+          <rect x="30" y="31" width="28" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="42" width="20" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="53" width="12" height="7" rx="3.5" fill="#2C4159"></rect>
+        </svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-top: 1px solid #EEF0EC">
+        <svg viewBox="0 0 100 100" width="46" height="46">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#101B2D" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#101B2D" stroke-width="12" stroke-linecap="round"></path>
+          <rect x="30" y="31" width="28" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="42" width="20" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="53" width="12" height="7" rx="3.5" fill="#2C4159"></rect>
+        </svg>
+        <div style="font-size: 30px; font-weight: 600; letter-spacing: -0.035em; color: #101B2D">data<span style="color: #17B3BE">scope</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 22px; padding: 20px 24px; background: #101B2D">
+        <svg viewBox="0 0 100 100" width="34" height="34">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#FFFFFF" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"></path>
+          <rect x="30" y="31" width="28" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="42" width="20" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="53" width="12" height="7" rx="3.5" fill="#8B9AAA"></rect>
+        </svg>
+        <svg viewBox="0 0 100 100" width="20" height="20">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#FFFFFF" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"></path>
+          <rect x="30" y="31" width="28" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="42" width="20" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="53" width="12" height="7" rx="3.5" fill="#8B9AAA"></rect>
+        </svg>
+        <svg viewBox="0 0 100 100" width="14" height="14">
+          <circle cx="44" cy="44" r="30" fill="none" stroke="#FFFFFF" stroke-width="9"></circle>
+          <path d="M66 66 L86 86" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"></path>
+          <rect x="30" y="31" width="28" height="7" rx="3.5" fill="#17B3BE"></rect>
+          <rect x="30" y="42" width="20" height="7" rx="3.5" fill="#17B3BE"></rect>
+        </svg>
+        <div style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6F8090">svg/datascope-rows.svg</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+    <div style="flex: 1 1 340px; background: #FFFFFF; border: 1px solid #E3E5E1; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+      <div style="font-size: 15px; font-weight: 600; color: #101B2D">Palette</div>
+      <div style="display: flex; gap: 10px">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+          <div style="height: 56px; border-radius: 10px; background: #101B2D"></div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55606E">#101B2D ink</div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+          <div style="height: 56px; border-radius: 10px; background: #2C4159"></div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55606E">#2C4159 slate</div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+          <div style="height: 56px; border-radius: 10px; background: #17B3BE"></div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55606E">#17B3BE signal</div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+          <div style="height: 56px; border-radius: 10px; background: #F4F5F3; border: 1px solid #E3E5E1"></div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #55606E">#F4F5F3 paper</div>
+        </div>
+      </div>
+    </div>
+    <div style="flex: 1 1 340px; background: #FFFFFF; border: 1px solid #E3E5E1; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 15px; font-weight: 600; color: #101B2D">Where each one wins</div>
+      <div style="font-size: 14px; line-height: 1.6; color: #55606E; text-wrap: pretty"><a href="#1a">1a</a> is the most literal "datascope" — a scope framing a join graph. <a href="#1b">1b</a> is the strongest app icon: one letter, holds up at 16px, feels like a shutter that opens only for you. <a href="#1c">1c</a> says columnar/DuckDB-Wasm loudest but is the most generic category-wise. <a href="#1d">1d</a> is the safest product-marketing mark — instantly "query results".</div>
+    </div>
+  </div>
+</section>
+
+</x-dc>
+</body>
+</html>

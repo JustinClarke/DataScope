@@ -5118,4 +5118,3 @@
   and the master §13.3 master-first edit — all in the same session, then check V2's box against
   the leaf doc's own Acceptance criteria and move `▶` to `13-hallmark-replication/V3`.
   **Blocker:** none. Still uncommitted — Justin commits.
-
