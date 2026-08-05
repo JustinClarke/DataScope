@@ -4,6 +4,12 @@
 *architectures* for AI dataset synthesis, written so each can be prototyped in its own isolated
 session and compared on one rubric.
 
+**Current line (2026-08-01):** experiment 10's grounding ladder has reported partial results;
+experiment 11's typed evidence loop was rejected after failing its semantic audit; experiment 12's
+verifier held but its `qwen2.5-coder:7b` N=5 pass failed factual yield; and experiment 13 is the
+active successor. Lucky 13 combines bounded model-requested computation with verified Claim IR and
+will try Qwen3 first. It begins with a deterministic, no-model-call core.
+
 **Where this sits in the pipeline.** This folder is **upstream of master** — it is not part of the
 `_implementation/` split tree, so the master-first mirroring rule does not apply and **no session
 working here edits `DATASCOPE.md`, the Decision Record, or any leaf doc.** A candidate that wins
@@ -140,7 +146,7 @@ can start building immediately.
 Each approach gets an **isolated eval-scoped folder**, named by approach number:
 
 ```
-eval/01-phrase-library/          ← approach-specific harness, prompts, assets
+eval/claude/01-phrase-library/   ← approach-specific harness, prompts, assets
 ├── run.ts                       ← harness runner (imports from existing code)
 ├── selection.ts                 ← prompt builder, parser, validator (NEW)
 ├── capabilityPhrases.ts         ← hand-authored phrases (NEW)
@@ -189,6 +195,9 @@ One approach per session, cold. Paste:
 | [08](08-computed-facts-with-data.md) | **Computed facts + data access** — app computes real stats, model narrates with citations (**lifts Invariant 1**) | **F1, F2, F3** | model, citation-bound to app-computed facts | combines 03's citation check with richer, data-derived facts |
 | [09](09-llm-cognition-data-alignment.md) | **Cognition & data alignment** — measure which mode the model is in (narrate / reason / pattern-complete), then design the input for it | the root cause under F1–F3 | n/a — an instrument plus a prompt redesign | 08's post-verdict critique |
 | [10](10-grounding-ladder.md) | **The grounding ladder** — consolidation. Row ladder × opaque-schema ablation × fact corruption, scored **per panel slot and per claim class** against a pre-written answer key, across three surfaces (panel, NL→SQL, offer execution), under a local-tier-only Invariant 1 override | reading-vs-recall, plus which architecture each *slot* ships | n/a — decides what the input is, then what fills each slot | this README, then 08's verdict, then 09 |
+| [11](../../../../eval/chat/11-evidence-loop/README.md) | **Typed evidence loop** — model selects typed probes and narrates deterministic evidence | SQL/metric fabrication, but not semantic entailment | model, citation-bound | **run and rejected**; see its run notes |
+| [12](12-verified-claim-ir.md) | **Verified Claim IR** — model proposes explicit operands and operators; code evaluates the relation before rendering | unsupported comparisons despite valid citations | deterministic renderer over verified facts | **run; verifier passed, 7B factual yield failed** |
+| [13](13-active-analysis-loop.md) | **Lucky 13 active analysis loop** — Qwen3 requests bounded typed computations; DataScope executes and caches compact evidence; Claim IR proves facts | fixed-evidence refusal collapse, context dilution, semantic entailment | deterministic renderer over verified facts; deterministic wording for executable offers | active successor; Checkpoints 0-4 complete, safety boundary held, loop ROI in doubt, Checkpoint 5 unrun |
 
 **If you only run three:** [05](05-offers-not-claims.md) (may dissolve the problem outright and
 reuses existing `RankedAction` infrastructure), then [03](03-clause-citation-binding.md) (the only

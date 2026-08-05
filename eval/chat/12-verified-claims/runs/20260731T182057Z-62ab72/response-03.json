@@ -1,0 +1,39 @@
+{
+  "repeat": 3,
+  "startedAt": "2026-07-31T18:21:09.810Z",
+  "endedAt": "2026-07-31T18:21:14.529Z",
+  "httpStatus": 200,
+  "rawResponseBody": "{\"model\":\"qwen2.5-coder:7b\",\"created_at\":\"2026-07-31T18:21:14.512141Z\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n  \\\"kind\\\": \\\"change\\\",\\n  \\\"from\\\": {\\n    \\\"evidenceId\\\": \\\"monthly-revenue\\\",\\n    \\\"rowId\\\": \\\"dec-2021\\\",\\n    \\\"field\\\": \\\"value\\\"\\n  },\\n  \\\"to\\\": {\\n    \\\"evidenceId\\\": \\\"monthly-revenue\\\",\\n    \\\"rowId\\\": \\\"jan-2022\\\",\\n    \\\"field\\\": \\\"value\\\"\\n  },\\n  \\\"operator\\\": \\\"increase\\\"\\n}\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":4647427542,\"load_duration\":93782042,\"prompt_eval_count\":266,\"prompt_eval_duration\":48167000,\"eval_count\":93,\"eval_duration\":4503818000}",
+  "modelContent": "{\n  \"kind\": \"change\",\n  \"from\": {\n    \"evidenceId\": \"monthly-revenue\",\n    \"rowId\": \"dec-2021\",\n    \"field\": \"value\"\n  },\n  \"to\": {\n    \"evidenceId\": \"monthly-revenue\",\n    \"rowId\": \"jan-2022\",\n    \"field\": \"value\"\n  },\n  \"operator\": \"increase\"\n}",
+  "parsedClaim": {
+    "kind": "change",
+    "from": {
+      "evidenceId": "monthly-revenue",
+      "rowId": "dec-2021",
+      "field": "value"
+    },
+    "to": {
+      "evidenceId": "monthly-revenue",
+      "rowId": "jan-2022",
+      "field": "value"
+    },
+    "operator": "increase"
+  },
+  "disposition": {
+    "accepted": true,
+    "fact": {
+      "kind": "change",
+      "operator": "increase",
+      "subject": "January 2022 revenue",
+      "object": "December 2021 revenue",
+      "leftValue": 13750,
+      "rightValue": 12500,
+      "unit": "USD"
+    }
+  },
+  "sentence": "January 2022 revenue was a verified increase from December 2021 revenue: 12,500 USD to 13,750 USD.",
+  "tokenCounts": {
+    "prompt": 266,
+    "response": 93
+  }
+}

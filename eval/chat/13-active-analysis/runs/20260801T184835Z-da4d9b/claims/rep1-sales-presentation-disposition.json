@@ -1,0 +1,91 @@
+{
+  "questionId": "sales-presentation",
+  "questionKind": "answerable",
+  "repeat": 1,
+  "transportFailure": null,
+  "disposition": {
+    "kind": "final_claim",
+    "claim": {
+      "kind": "extremum",
+      "subject": {
+        "evidenceId": "evidence:category-revenue",
+        "rowId": "r2",
+        "field": "value"
+      },
+      "operator": "maximum",
+      "scope": {
+        "evidenceId": "evidence:category-revenue",
+        "rowIds": [
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5",
+          "r6"
+        ]
+      }
+    },
+    "fact": {
+      "kind": "extremum",
+      "operator": "maximum",
+      "subject": "Books",
+      "object": "maximum in evidence:category-revenue",
+      "leftValue": 507332.51,
+      "rightValue": 507332.51,
+      "unit": "USD"
+    },
+    "rendered": "Books (507,332.51 USD) was the maximum across products.category for the complete evidence scope."
+  },
+  "rendered": "Books (507,332.51 USD) was the maximum across products.category for the complete evidence scope.",
+  "turns": [
+    {
+      "turn": 1,
+      "action": "request_probes",
+      "candidateIds": [
+        "monthly-revenue",
+        "average-order-value"
+      ],
+      "responseHash": "d669795f05b3f6d1d25cdf93995dd780d430101bc0099cc548463f318fb7ff3b",
+      "repaired": false,
+      "parseError": null,
+      "doneReason": "stop",
+      "promptTokens": 1961,
+      "responseTokens": 19,
+      "estimatedResponseTokens": 385
+    },
+    {
+      "turn": 2,
+      "action": "request_probes",
+      "candidateIds": [
+        "category-revenue",
+        "status-revenue"
+      ],
+      "responseHash": "21e7d6e3942e9e2dd28c31eaed33a1b80fb6b2a50963c831cbb8eaaf334b35c0",
+      "repaired": false,
+      "parseError": null,
+      "doneReason": "stop",
+      "promptTokens": 1935,
+      "responseTokens": 19,
+      "estimatedResponseTokens": 611
+    },
+    {
+      "turn": 3,
+      "action": "final_claim",
+      "candidateIds": null,
+      "responseHash": "35c3fc42a3fdde7c476ef4daddfe95ea53080b1b274b42b300f7a6766dad5ec7",
+      "repaired": false,
+      "parseError": null,
+      "doneReason": "stop",
+      "promptTokens": 2298,
+      "responseTokens": 84,
+      "estimatedResponseTokens": 743
+    }
+  ],
+  "executedCandidateIds": [
+    "monthly-revenue",
+    "average-order-value",
+    "category-revenue",
+    "status-revenue"
+  ],
+  "probeRejections": []
+}

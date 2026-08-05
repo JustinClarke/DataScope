@@ -28,6 +28,29 @@ describe('classifyStatement', () => {
     expect(info.ctasTable).toBe('totals');
   });
 
+  it('classifies CREATE VIEW ... AS as cview and extracts the view name (A3)', () => {
+    const info = classifyStatement('CREATE VIEW priority_orders AS SELECT * FROM orders WHERE is_priority');
+    expect(info.class).toBe('cview');
+    expect(info.viewName).toBe('priority_orders');
+    expect(classifyStatement('create or replace view v as select 1').viewName).toBe('v');
+    expect(classifyStatement('CREATE VIEW "my view" AS SELECT 1').viewName).toBe('my view');
+  });
+
+  it('does not mistake a CREATE VIEW for a CTAS, or the reverse', () => {
+    expect(classifyStatement('CREATE TABLE t AS SELECT 1').viewName).toBeUndefined();
+    expect(classifyStatement('CREATE VIEW v AS SELECT 1').ctasTable).toBeUndefined();
+  });
+
+  it('classifies DROP VIEW as a drop mutation and marks it as targeting a view (A3)', () => {
+    const info = classifyStatement('DROP VIEW IF EXISTS priority_orders');
+    expect(info.class).toBe('mutation');
+    expect(info.mutationKind).toBe('drop');
+    expect(info.mutationTarget).toBe('priority_orders');
+    expect(info.mutationTargetIsView).toBe(true);
+    // A DROP TABLE is unchanged — the flag is absent, not false-y by accident.
+    expect(classifyStatement('DROP TABLE orders').mutationTargetIsView).toBeUndefined();
+  });
+
   it('classifies UPDATE as a mutation and extracts the target', () => {
     const info = classifyStatement("UPDATE orders SET status = 'shipped' WHERE id = 1");
     expect(info.class).toBe('mutation');

@@ -24,4 +24,13 @@ export interface QueryResult {
   rows: unknown[][];
   rowCount: number;
   executionTimeMs: number;
+  /**
+   * Set once `loadMoreRows` (A2, `services/sql.ts`) has materialized this
+   * result through the analyst core's `run_sql` — the handle `read_result`
+   * pages from. Absent for every result that has not paged past its initial
+   * preview, which is most of them.
+   */
+  resultId?: string;
+  /** Where the next `read_result` page starts; `null` once every row is loaded. */
+  nextOffset?: number | null;
 }

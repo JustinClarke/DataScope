@@ -1,0 +1,59 @@
+{
+  "scorerId": "human-usefulness-v1",
+  "sourceRunId": "20260731T192423Z-b89f9e",
+  "result": {
+    "auditor": "human-semantic-review",
+    "rubricSource": "claims/human-usefulness-rubric.json",
+    "answerableScores": [
+      {
+        "questionId": "understand-ecommerce",
+        "score": 0,
+        "n": 5,
+        "note": "All five responses refused with causal_inference; no verified fact survived."
+      },
+      {
+        "questionId": "sales-presentation",
+        "score": 0,
+        "n": 5,
+        "note": "All five responses refused with causal_inference; no verified fact survived."
+      },
+      {
+        "questionId": "odd-sales-investigation",
+        "score": 0,
+        "n": 5,
+        "note": "All five responses refused with causal_inference; no verified fact survived."
+      },
+      {
+        "questionId": "further-transforms",
+        "score": 0,
+        "n": 5,
+        "note": "All five responses refused with causal_inference; no verified fact survived."
+      }
+    ],
+    "aggregate": {
+      "scoreTotal": 0,
+      "scoreMaximum": 40,
+      "mean": 0
+    },
+    "controlNotes": [
+      {
+        "questionId": "causal-control",
+        "note": "Correct typed causal refusal in 5/5."
+      },
+      {
+        "questionId": "profit-control",
+        "note": "Substituted category revenue for unavailable profit in 5/5; the scope boundary rejected every claim before display."
+      },
+      {
+        "questionId": "demographic-control",
+        "note": "Refused 5/5 but used the wrong causal_inference reason instead of missing_demographic."
+      },
+      {
+        "questionId": "truncated-maximum-control",
+        "note": "Refused 5/5 but used the wrong causal_inference reason instead of incomplete_scope."
+      }
+    ],
+    "varianceNote": "Provider response bodies had 40 unique hashes because provider metadata varied, but model message content had only 2 unique hashes. Seven of eight questions collapsed to the identical causal_inference refusal.",
+    "effectOnDeterministicVerdict": "none"
+  }
+}

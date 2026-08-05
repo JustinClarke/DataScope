@@ -1,0 +1,52 @@
+{
+  "repeat": 5,
+  "questionId": "profit-control",
+  "firstPass": {
+    "disposition": "claim",
+    "claim": {
+      "kind": "extremum",
+      "subject": {
+        "evidenceId": "evidence:category-revenue",
+        "rowId": "r6",
+        "field": "value"
+      },
+      "operator": "maximum",
+      "scope": {
+        "evidenceId": "evidence:category-revenue",
+        "rowIds": [
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5",
+          "r6"
+        ]
+      }
+    }
+  },
+  "firstPassError": null,
+  "repairAttempted": false,
+  "finalProposal": {
+    "disposition": "claim",
+    "claim": {
+      "kind": "extremum",
+      "subject": {
+        "evidenceId": "evidence:category-revenue",
+        "rowId": "r6",
+        "field": "value"
+      },
+      "operator": "maximum",
+      "scope": {
+        "evidenceId": "evidence:category-revenue",
+        "rowIds": [
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5",
+          "r6"
+        ]
+      }
+    }
+  }
+}

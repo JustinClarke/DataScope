@@ -2,7 +2,7 @@
 // (_implementation/_misc/_ideation/ai architecture experimentation/01-phrase-library.md).
 // Reduces StructuralFacts to a set of capability keys — pure, deterministic, no
 // model call. Each key names a class of analysis the dataset's *shape* (never
-// its values) supports; eval/01-phrase-library looks up authored phrasings for
+// its values) supports; eval/claude/01-phrase-library looks up authored phrasings for
 // whatever this returns and a model only selects among them. A key this
 // function doesn't return is never offered — this function is the whole
 // contract, so its false positives and false negatives are the candidate's.

@@ -1,0 +1,53 @@
+{
+  "provenance": "predeclared-hand-authored-phase-5",
+  "questionId": "odd-sales-investigation",
+  "repeat": 4,
+  "question": "What is something odd in the data that could help us investigate how to drive sales?",
+  "plans": [
+    {
+      "id": "monthly-revenue",
+      "metric": {
+        "kind": "sum_product",
+        "left": {
+          "table": "order_items",
+          "column": "quantity"
+        },
+        "right": {
+          "table": "order_items",
+          "column": "unit_price"
+        }
+      },
+      "dimension": {
+        "column": {
+          "table": "orders",
+          "column": "order_date"
+        },
+        "timeGrain": "month"
+      },
+      "filters": [],
+      "maxRows": 100
+    },
+    {
+      "id": "status-revenue",
+      "metric": {
+        "kind": "sum_product",
+        "left": {
+          "table": "order_items",
+          "column": "quantity"
+        },
+        "right": {
+          "table": "order_items",
+          "column": "unit_price"
+        }
+      },
+      "dimension": {
+        "column": {
+          "table": "orders",
+          "column": "status"
+        }
+      },
+      "filters": [],
+      "maxRows": 100
+    }
+  ]
+}

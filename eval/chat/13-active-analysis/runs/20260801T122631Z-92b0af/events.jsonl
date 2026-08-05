@@ -1,0 +1,13 @@
+{"timestamp":"2026-08-01T12:26:32.054Z","sequence":1,"type":"run_started","runId":"20260801T122631Z-92b0af"}
+{"timestamp":"2026-08-01T12:26:32.058Z","sequence":2,"type":"model_resolved","runId":"20260801T122631Z-92b0af","tag":"qwen3:8b","digest":"500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41"}
+{"timestamp":"2026-08-01T12:26:32.062Z","sequence":3,"type":"prompt_surface_checked","runId":"20260801T122631Z-92b0af","questionIdsLeaked":0,"sampleValuesLeaked":0}
+{"timestamp":"2026-08-01T12:26:32.067Z","sequence":4,"type":"fixture_loaded","runId":"20260801T122631Z-92b0af","fixtureIds":["customers","products","orders","order_items"],"candidateCount":9,"offerCount":9}
+{"timestamp":"2026-08-01T12:27:01.334Z","sequence":5,"type":"turn_parsed","runId":"20260801T122631Z-92b0af","questionId":"understand-ecommerce","turn":1,"attempt":1,"action":"request_probes","parseError":null}
+{"timestamp":"2026-08-01T12:27:50.239Z","sequence":6,"type":"turn_parsed","runId":"20260801T122631Z-92b0af","questionId":"sales-presentation","turn":1,"attempt":1,"action":"request_probes","parseError":null}
+{"timestamp":"2026-08-01T12:28:25.862Z","sequence":7,"type":"turn_parsed","runId":"20260801T122631Z-92b0af","questionId":"odd-sales-investigation","turn":1,"attempt":1,"action":"request_probes","parseError":null}
+{"timestamp":"2026-08-01T12:28:52.777Z","sequence":8,"type":"turn_parsed","runId":"20260801T122631Z-92b0af","questionId":"further-transforms","turn":1,"attempt":1,"action":"request_probes","parseError":null}
+{"timestamp":"2026-08-01T12:30:02.881Z","sequence":9,"type":"turn_parsed","runId":"20260801T122631Z-92b0af","questionId":"causal-control","turn":1,"attempt":1,"action":"request_probes","parseError":null}
+{"timestamp":"2026-08-01T12:30:36.944Z","sequence":10,"type":"turn_parsed","runId":"20260801T122631Z-92b0af","questionId":"profit-control","turn":1,"attempt":1,"action":"request_probes","parseError":null}
+{"timestamp":"2026-08-01T12:31:04.549Z","sequence":11,"type":"turn_parsed","runId":"20260801T122631Z-92b0af","questionId":"demographic-control","turn":1,"attempt":1,"action":"unsupported","parseError":null}
+{"timestamp":"2026-08-01T12:32:28.274Z","sequence":12,"type":"turn_parsed","runId":"20260801T122631Z-92b0af","questionId":"truncated-maximum-control","turn":1,"attempt":1,"action":"unsupported","parseError":null}
+{"timestamp":"2026-08-01T12:32:28.295Z","sequence":13,"type":"run_completed","runId":"20260801T122631Z-92b0af","verdict":"recorded"}

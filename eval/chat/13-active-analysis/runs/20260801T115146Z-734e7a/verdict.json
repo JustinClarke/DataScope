@@ -1,0 +1,57 @@
+{
+  "checkpoint": 2,
+  "model": {
+    "tag": "qwen3:8b",
+    "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+    "quantizationLevel": "Q4_K_M",
+    "parameterSize": "8.2B",
+    "contextLength": 40960,
+    "capabilities": [
+      "completion",
+      "tools",
+      "thinking"
+    ]
+  },
+  "selectedMode": "thinking",
+  "blocked": false,
+  "modes": [
+    {
+      "mode": {
+        "id": "thinking",
+        "think": true,
+        "temperature": 0.6,
+        "topP": 0.95,
+        "topK": 20
+      },
+      "schemaValid": true,
+      "thinkingSeparated": true,
+      "correctCandidateSelected": true,
+      "withinTokenCap": true,
+      "passed": true,
+      "promptTokens": 403,
+      "responseTokens": 16,
+      "estimatedResponseTokens": 202,
+      "doneReason": "stop",
+      "parseError": null
+    },
+    {
+      "mode": {
+        "id": "non-thinking",
+        "think": false,
+        "temperature": 0.7,
+        "topP": 0.8,
+        "topK": 20
+      },
+      "schemaValid": true,
+      "thinkingSeparated": true,
+      "correctCandidateSelected": true,
+      "withinTokenCap": true,
+      "passed": true,
+      "promptTokens": 261,
+      "responseTokens": 16,
+      "estimatedResponseTokens": 18,
+      "doneReason": "stop",
+      "parseError": null
+    }
+  ]
+}

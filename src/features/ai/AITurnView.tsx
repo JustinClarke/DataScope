@@ -10,6 +10,8 @@ import { useByokKeyStore } from '../../stores/byokKey';
 import { useWebLLMStore } from '../../stores/webllm';
 import { WEBLLM_DOWNLOAD_SIZE } from '../../services/webllm';
 import { RunSqlButton } from '../sql/RunSqlButton';
+import { AutoChartPanel } from '../sql/AutoChartPanel';
+import { KpiCard } from '../../components/charts/KpiCard';
 
 function hasWebGPU(): boolean {
   return typeof navigator !== 'undefined' && 'gpu' in navigator;
@@ -85,10 +87,14 @@ function OllamaOverflowNote() {
 // cause execution.
 function AttemptView({ attempt }: { attempt: SqlAttempt }) {
   const ok = attempt.status === 'ok';
+  // A4: an analyst turn's second call is not necessarily a retry — it may be a
+  // follow-up query, or a page read whose `sql` is the query that produced the
+  // result rather than a new one. The label says which rather than guessing.
+  const label = attempt.op === 'read_result' ? 'Read more rows of' : 'Suggested SQL';
   return (
     <div className="flex flex-col gap-1 rounded border border-(--color-ai)/20 bg-(--color-ai-soft) p-2">
       <div className="flex items-center justify-between text-xs text-(--color-fg-muted)">
-        <span>Suggested SQL{attempt.attempt > 1 ? ` · retry ${attempt.attempt - 1}` : ''}</span>
+        <span>{label}{attempt.attempt > 1 ? ` · call ${attempt.attempt}` : ''}</span>
         <div className="flex items-center gap-3">
           <span className={ok ? 'text-(--color-ai-2)' : 'text-(--color-error)'}>
             {ok
@@ -120,6 +126,25 @@ function chartLabel(chart: ChartRecommendation): string | null {
   return null;
 }
 
+/**
+ * The turn's chart, drawn (A6) rather than described. The renderer is the same
+ * deterministic one the console and every query tab use — it is handed rows and
+ * a spec whose every field name came from those rows' own schema, and it
+ * executes nothing. With no rows on the turn it stays the one-line label it has
+ * always been, which is what a stage-6 recommendation on a released result is.
+ */
+function TurnChart({ turn }: { turn: AITurn }) {
+  const { chart, chartResult } = turn;
+  if (!chart) return null;
+  if (chart.kind === 'kpi') return <KpiCard label={chart.label} value={chart.value} />;
+
+  const label = chartLabel(chart);
+  if (chart.kind !== 'chart' || !chartResult || chartResult.rows.length === 0) {
+    return label ? <p className="text-xs font-medium text-(--color-ai-2)">{label}</p> : null;
+  }
+  return <AutoChartPanel result={chartResult} spec={chart.spec} />;
+}
+
 export function AITurnView({ turn }: { turn: AITurn }) {
   if (turn.role === 'user') {
     return (
@@ -129,7 +154,6 @@ export function AITurnView({ turn }: { turn: AITurn }) {
     );
   }
 
-  const chart = turn.chart ? chartLabel(turn.chart) : null;
   return (
     <div className="flex flex-col gap-2">
       <div className="font-mono text-[length:var(--text-2xs)] uppercase tracking-[0.1em] text-(--color-ai-2)">
@@ -138,7 +162,7 @@ export function AITurnView({ turn }: { turn: AITurn }) {
       {turn.corrections && <CorrectionNote corrections={turn.corrections} />}
       {turn.attempts?.map((a) => <AttemptView key={a.attempt} attempt={a} />)}
       {turn.content && <p className="text-sm text-(--color-fg)">{turn.content}</p>}
-      {chart && <p className="text-xs font-medium text-(--color-ai-2)">{chart}</p>}
+      <TurnChart turn={turn} />
       {turn.servedByOllamaOverflow && <OllamaOverflowNote />}
       {turn.error && (
         <p className="rounded border border-(--color-error)/40 bg-(--color-error)/10 px-3 py-2 text-sm text-(--color-error)">{turn.error}</p>

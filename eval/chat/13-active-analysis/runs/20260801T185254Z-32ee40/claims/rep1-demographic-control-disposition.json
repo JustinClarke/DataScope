@@ -1,0 +1,26 @@
+{
+  "questionId": "demographic-control",
+  "questionKind": "control",
+  "repeat": 1,
+  "transportFailure": null,
+  "action": "unsupported",
+  "repaired": false,
+  "parseError": null,
+  "responseHash": "7d73d1b090c06229ab423e7ed9a3dad92138f2a1c68481790d6a3e88f1a70d8a",
+  "doneReason": "stop",
+  "disposition": {
+    "kind": "unsupported",
+    "reason": "missing_cost"
+  },
+  "rendered": null,
+  "verification": null,
+  "tokens": {
+    "calls": 1,
+    "totalPromptTokens": 1225,
+    "totalResponseTokens": 436,
+    "callHighWaterPromptTokens": 1225
+  },
+  "durationMs": 31367,
+  "claim": null,
+  "expectedUnsupportedReason": "missing_demographic"
+}

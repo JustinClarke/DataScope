@@ -1,5 +1,6 @@
 // Three user-selectable AI modes (D2, §5.1) — all ship; first-run chooser, no silent default.
 import type { ChartRecommendation } from './chart';
+import type { QueryResult } from './query';
 import type { LintFinding } from '../lib/sqlLint';
 import type { NormalizationCorrection } from '../lib/inputNormalizer';
 
@@ -11,8 +12,16 @@ export type AIMode = 'local-only' | 'local-model' | 'cloud';
  * reconstruct exactly what ran, how long it took, and why it was retried.
  */
 export interface SqlAttempt {
-  /** 1-based attempt number within the turn (hard-capped at 3). */
+  /** 1-based attempt number within the turn. */
   attempt: number;
+  /**
+   * The analyst-core operation this attempt ran (A4). `run_sql` is the model
+   * writing a query; `read_result` is it paging a materialization it already
+   * has, whose `sql` is the *originating* query, not a new one — the transcript
+   * says which, because "suggested SQL · retry 2" over a page read would be a
+   * lie about what happened.
+   */
+  op?: string;
   /** The exact SQL sent to the engine — the "suggested SQL" surfaced in the transcript. */
   sql: string;
   status: 'ok' | 'error';
@@ -39,8 +48,14 @@ export interface AITurn {
   createdAt: string;
   /** Assistant turns: the per-attempt SQL execution log (§11.1 transcript auditability). */
   attempts?: SqlAttempt[];
-  /** Assistant turns: stage-6 auto-chart recommendation for the final result set. */
+  /** Assistant turns: the chart to show — an explicit `create_chart` call when the model made one (A6), otherwise the stage-6 auto-chart of the final result set. */
   chart?: ChartRecommendation;
+  /**
+   * Assistant turns: the rows `chart` is drawn from, so the transcript renders
+   * the chart itself rather than a label describing one. Held in memory with the
+   * rest of the transcript and never persisted — it is dataset content (D41).
+   */
+  chartResult?: QueryResult;
   /** Assistant turns: stage-1 typo corrections applied to the user's question. */
   corrections?: NormalizationCorrection[];
   /** Assistant turns: a clean user-facing failure (timeout, retry cap, no provider). */
@@ -81,17 +96,37 @@ export interface ProviderToolCall {
   input: unknown;
 }
 
-/** Conversation messages exchanged with a provider across the loop. */
+/**
+ * Conversation messages exchanged with a provider across the loop.
+ *
+ * The assistant variant carries **every** call the model emitted, in emitted
+ * order, and the loop appends it verbatim before executing any of them — so the
+ * conversation the model sees on the next round-trip contains exactly what it
+ * said, followed by one correlated `tool` message per call.
+ */
 export type ProviderMessage =
   | { role: 'system'; content: string }
   | { role: 'user'; content: string }
-  | { role: 'assistant'; content: string; toolCall?: ProviderToolCall }
+  | { role: 'assistant'; content: string; toolCalls?: ProviderToolCall[] }
   | { role: 'tool'; toolCallId: string; content: string };
 
-/** One provider turn: either a final text answer, or a request to call a tool. */
-export type ProviderTurn =
-  | { kind: 'text'; text: string }
-  | { kind: 'tool_call'; call: ProviderToolCall };
+/**
+ * One provider round-trip.
+ *
+ * `calls` is an array because providers emit arrays — Ollama's `tool_calls`,
+ * OpenAI's `tool_calls`, Gemini's `functionCall` parts. A singular field is what
+ * silently discarded every call after the first (A4 defect iii), so the shape
+ * makes that impossible rather than forbidding it by discipline.
+ *
+ * `text` is prose the model emitted **alongside** its calls; it is preserved and
+ * execution continues. An **empty `calls` is what makes a turn terminal** — then
+ * `text` is the answer. That is the only terminal condition, so a provider can
+ * never end a turn by withholding tools.
+ */
+export interface ProviderTurn {
+  text: string;
+  calls: ProviderToolCall[];
+}
 
 export interface AIProvider {
   /** Stable id for the operator metrics / transcript ('mock', 'cloud-edge', 'byok-*', 'webllm'). */

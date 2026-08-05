@@ -1,0 +1,46 @@
+{
+  "questionId": "causal-control",
+  "questionKind": "control",
+  "repeat": 4,
+  "transportFailure": null,
+  "action": "final_claim",
+  "repaired": false,
+  "parseError": null,
+  "responseHash": "5bd99b7bb6c10065755bbfbb04497e80f96c377ac0c3186ea51a72018dac3390",
+  "doneReason": "stop",
+  "disposition": {
+    "kind": "rejected_claim",
+    "reason": "SCOPE_MISMATCH",
+    "detail": "The declared scope does not include every evidence row."
+  },
+  "rendered": null,
+  "verification": {
+    "accepted": false,
+    "reason": "SCOPE_MISMATCH",
+    "detail": "The declared scope does not include every evidence row."
+  },
+  "tokens": {
+    "calls": 1,
+    "totalPromptTokens": 2815,
+    "totalResponseTokens": 840,
+    "callHighWaterPromptTokens": 2815
+  },
+  "durationMs": 66085,
+  "claim": {
+    "kind": "extremum",
+    "subject": {
+      "evidenceId": "evidence:monthly-revenue",
+      "rowId": "r2",
+      "field": "value"
+    },
+    "operator": "maximum",
+    "scope": {
+      "evidenceId": "evidence:monthly-revenue",
+      "rowIds": [
+        "r1",
+        "r2"
+      ]
+    }
+  },
+  "expectedUnsupportedReason": "causal_inference"
+}

@@ -1,30 +1,31 @@
-# 10 — The Studio Arc (v1)
+# 10 — The Studio Arc (backlog)
 
-**Tier:** v1 · **Phases:** 7–9 (§19, D12) · **Depends on:** the complete v0 + v0.5 stack,
-**gated on the §18 acceptance criteria holding** — foundation profiling must be proven in
-the wild before structural inference is built on it.
+**Tier:** backlog · **Phase:** 9 only (§19, D11) · Phases 7–8 cut to backlog 2026-08-02
+(D11/D14 amendments — see `DATASCOPE.md` Revised (19)).
 
-This is the identity release (D12): drop a folder of Parquet files → profiling →
-relationship inference → schema graph → quality report → generated dbt project → exportable
-semantic model. **Everything is deterministic and SQL-derived unless explicitly marked
-AI-assisted — the whole arc works in local-only mode.**
+**Phases 7 and 8 are cut, not paused.** `01-quality-report/` (Phase 7, D14) and
+`02-relationship-graph/` (Phase 8, D11) are deleted — the shipped v0 Join Graph (beta) and
+the v0.70 explorer Data Quality & Health panel already deliver the lightweight version each
+targeted, and the deeper capabilities weren't judged worth building. Phase 8's entity
+inference + fact/dimension classification are preserved as a candidate future ERD
+enhancement: [`../../backlog/relationship-graph-erd-ideas.md`](../../backlog/relationship-graph-erd-ideas.md).
+Quality-report has no backlog entry.
 
-**This folder is deliberately three sub-folders, not one file.** Each is a full phase-sized
-effort, gated on the layer below being trustworthy first. **Do not build it as one drop.**
+Only Phase 9 remains, itself already unscheduled beforehand (BUILD-ORDER.md's Backlog
+section) and untouched by this cut:
 
 | Sub-folder | Phase | Covers |
 | :--- | :--- | :--- |
-| [01-quality-report/](01-quality-report/) | 7 (D14) | "Lighthouse for data" — diagnostics report (§20.8) |
-| [02-relationship-graph/](02-relationship-graph/) | 8 (D11) | Relationship inference + ER schema graph (§20.6) |
 | [03-semantic-dbt-export/](03-semantic-dbt-export/) | 9 (D11) | Star schema, dbt project, semantic model, KPIs (§20.6) |
 
-Cross-cutting rules for the arc:
+Cross-cutting rules that still apply to Phase 9:
 - **Confidence everywhere (§20.6, §17):** every inference carries a confidence label and its
   evidence ("87% of `order.customer_id` values appear in `customer.id`"), and is manually
   overridable — the same override philosophy as the column classifier.
 - **Exports are generated only from the *user-accepted* graph, never raw inference** (§17).
-- The D17 spike findings (recorded in
-  [`../../architecture/decisions.md`](../../architecture/decisions.md) and §20.6) are the
-  empirical starting point for Phase 8 — read them before designing the inference engine.
+  Note this now implies a dependency the cut leaves unresolved: Phase 9's star-schema
+  proposal needs Phase 8's entity inference + fact/dimension classification as input, and
+  that's backlog, not built — reviving Phase 9 means reviving (or re-scoping around) that
+  output first.
 - Sidebar: Studio entries stay "Coming in Studio" until this arc; graph/model entries
   additionally need ≥ 2 tables (§13).

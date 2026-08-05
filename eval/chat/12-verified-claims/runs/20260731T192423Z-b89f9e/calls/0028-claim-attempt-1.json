@@ -1,0 +1,607 @@
+{
+  "callId": "0028",
+  "questionId": "further-transforms",
+  "role": "claim",
+  "attempt": 1,
+  "messages": [
+    {
+      "role": "system",
+      "content": "Return exactly one JSON proposal and no prose. A proposal is either a claim grounded in the supplied deterministic evidence or a typed unsupported response. Answer only the question asked. Do not substitute an adjacent available metric for a missing requested metric. Use unsupported reason causal_inference when descriptive evidence cannot establish causation. Use missing_cost for profit questions when cost is absent, missing_demographic when the requested demographic is absent, and incomplete_scope when a global extremum is requested from truncated evidence. For a claim, use only evidenceId, rowId, field, and scope rowIds present in the evidence. For an extremum, the scope must list every row in one complete packet. For a time change, from must be earlier and to later. Do not add explanations, labels, magnitude words, or unsupported fields."
+    },
+    {
+      "role": "user",
+      "content": "Question: What transforms should I apply to take the analysis further?\n\nQuestion classification: answerable\n\nAvailable source fields: {\"customers\":[\"customer_id\",\"name\",\"email\",\"country\",\"signup_date\"],\"products\":[\"product_id\",\"name\",\"category\",\"unit_price\"],\"orders\":[\"order_id\",\"customer_id\",\"order_date\",\"status\"],\"order_items\":[\"order_item_id\",\"order_id\",\"product_id\",\"quantity\",\"unit_price\"]}\n\nDeterministic evidence: [\n  {\n    \"id\": \"evidence:monthly-revenue\",\n    \"metric\": \"sum_product(order_items.quantity,order_items.unit_price)\",\n    \"unit\": \"USD\",\n    \"dimension\": \"orders.order_date/month\",\n    \"completeness\": \"complete\",\n    \"rows\": [\n      {\n        \"rowId\": \"r1\",\n        \"label\": \"2021-12-01\",\n        \"value\": 3745.01,\n        \"order\": 0\n      },\n      {\n        \"rowId\": \"r2\",\n        \"label\": \"2022-01-01\",\n        \"value\": 68970.39,\n        \"order\": 1\n      },\n      {\n        \"rowId\": \"r3\",\n        \"label\": \"2022-02-01\",\n        \"value\": 45638.76,\n        \"order\": 2\n      },\n      {\n        \"rowId\": \"r4\",\n        \"label\": \"2022-03-01\",\n        \"value\": 54908.59,\n        \"order\": 3\n      },\n      {\n        \"rowId\": \"r5\",\n        \"label\": \"2022-04-01\",\n        \"value\": 70401.8,\n        \"order\": 4\n      },\n      {\n        \"rowId\": \"r6\",\n        \"label\": \"2022-05-01\",\n        \"value\": 40913.93,\n        \"order\": 5\n      },\n      {\n        \"rowId\": \"r7\",\n        \"label\": \"2022-06-01\",\n        \"value\": 51558.55,\n        \"order\": 6\n      },\n      {\n        \"rowId\": \"r8\",\n        \"label\": \"2022-07-01\",\n        \"value\": 38680.17,\n        \"order\": 7\n      },\n      {\n        \"rowId\": \"r9\",\n        \"label\": \"2022-08-01\",\n        \"value\": 61207.42,\n        \"order\": 8\n      },\n      {\n        \"rowId\": \"r10\",\n        \"label\": \"2022-09-01\",\n        \"value\": 43568.29,\n        \"order\": 9\n      },\n      {\n        \"rowId\": \"r11\",\n        \"label\": \"2022-10-01\",\n        \"value\": 51674.86,\n        \"order\": 10\n      },\n      {\n        \"rowId\": \"r12\",\n        \"label\": \"2022-11-01\",\n        \"value\": 50892.97,\n        \"order\": 11\n      },\n      {\n        \"rowId\": \"r13\",\n        \"label\": \"2022-12-01\",\n        \"value\": 42879.22,\n        \"order\": 12\n      },\n      {\n        \"rowId\": \"r14\",\n        \"label\": \"2023-01-01\",\n        \"value\": 53837.72,\n        \"order\": 13\n      },\n      {\n        \"rowId\": \"r15\",\n        \"label\": \"2023-02-01\",\n        \"value\": 60101.99,\n        \"order\": 14\n      },\n      {\n        \"rowId\": \"r16\",\n        \"label\": \"2023-03-01\",\n        \"value\": 36680.08,\n        \"order\": 15\n      },\n      {\n        \"rowId\": \"r17\",\n        \"label\": \"2023-04-01\",\n        \"value\": 64234.64,\n        \"order\": 16\n      },\n      {\n        \"rowId\": \"r18\",\n        \"label\": \"2023-05-01\",\n        \"value\": 37592.43,\n        \"order\": 17\n      },\n      {\n        \"rowId\": \"r19\",\n        \"label\": \"2023-06-01\",\n        \"value\": 48013.62,\n        \"order\": 18\n      },\n      {\n        \"rowId\": \"r20\",\n        \"label\": \"2023-07-01\",\n        \"value\": 62826.99,\n        \"order\": 19\n      },\n      {\n        \"rowId\": \"r21\",\n        \"label\": \"2023-08-01\",\n        \"value\": 55341.38,\n        \"order\": 20\n      },\n      {\n        \"rowId\": \"r22\",\n        \"label\": \"2023-09-01\",\n        \"value\": 63484.62,\n        \"order\": 21\n      },\n      {\n        \"rowId\": \"r23\",\n        \"label\": \"2023-10-01\",\n        \"value\": 60835.65,\n        \"order\": 22\n      },\n      {\n        \"rowId\": \"r24\",\n        \"label\": \"2023-11-01\",\n        \"value\": 65019.75,\n        \"order\": 23\n      },\n      {\n        \"rowId\": \"r25\",\n        \"label\": \"2023-12-01\",\n        \"value\": 35565.32,\n        \"order\": 24\n      },\n      {\n        \"rowId\": \"r26\",\n        \"label\": \"2024-01-01\",\n        \"value\": 55112.86,\n        \"order\": 25\n      },\n      {\n        \"rowId\": \"r27\",\n        \"label\": \"2024-02-01\",\n        \"value\": 56620.89,\n        \"order\": 26\n      },\n      {\n        \"rowId\": \"r28\",\n        \"label\": \"2024-03-01\",\n        \"value\": 67196.51,\n        \"order\": 27\n      },\n      {\n        \"rowId\": \"r29\",\n        \"label\": \"2024-04-01\",\n        \"value\": 55723.09,\n        \"order\": 28\n      },\n      {\n        \"rowId\": \"r30\",\n        \"label\": \"2024-05-01\",\n        \"value\": 46623.78,\n        \"order\": 29\n      },\n      {\n        \"rowId\": \"r31\",\n        \"label\": \"2024-06-01\",\n        \"value\": 63532.96,\n        \"order\": 30\n      },\n      {\n        \"rowId\": \"r32\",\n        \"label\": \"2024-07-01\",\n        \"value\": 67196.21,\n        \"order\": 31\n      },\n      {\n        \"rowId\": \"r33\",\n        \"label\": \"2024-08-01\",\n        \"value\": 67225.94,\n        \"order\": 32\n      },\n      {\n        \"rowId\": \"r34\",\n        \"label\": \"2024-09-01\",\n        \"value\": 50324.42,\n        \"order\": 33\n      },\n      {\n        \"rowId\": \"r35\",\n        \"label\": \"2024-10-01\",\n        \"value\": 47926.73,\n        \"order\": 34\n      },\n      {\n        \"rowId\": \"r36\",\n        \"label\": \"2024-11-01\",\n        \"value\": 56515.34,\n        \"order\": 35\n      },\n      {\n        \"rowId\": \"r37\",\n        \"label\": \"2024-12-01\",\n        \"value\": 25007.87,\n        \"order\": 36\n      }\n    ]\n  },\n  {\n    \"id\": \"evidence:country-orders\",\n    \"metric\": \"count_distinct(orders.order_id)\",\n    \"unit\": \"order\",\n    \"dimension\": \"customers.country\",\n    \"completeness\": \"complete\",\n    \"rows\": [\n      {\n        \"rowId\": \"r1\",\n        \"label\": \"AU\",\n        \"value\": 237,\n        \"order\": 0\n      },\n      {\n        \"rowId\": \"r2\",\n        \"label\": \"BR\",\n        \"value\": 196,\n        \"order\": 1\n      },\n      {\n        \"rowId\": \"r3\",\n        \"label\": \"CA\",\n        \"value\": 205,\n        \"order\": 2\n      },\n      {\n        \"rowId\": \"r4\",\n        \"label\": \"DE\",\n        \"value\": 158,\n        \"order\": 3\n      },\n      {\n        \"rowId\": \"r5\",\n        \"label\": \"FR\",\n        \"value\": 180,\n        \"order\": 4\n      },\n      {\n        \"rowId\": \"r6\",\n        \"label\": \"GB\",\n        \"value\": 145,\n        \"order\": 5\n      },\n      {\n        \"rowId\": \"r7\",\n        \"label\": \"IN\",\n        \"value\": 115,\n        \"order\": 6\n      },\n      {\n        \"rowId\": \"r8\",\n        \"label\": \"US\",\n        \"value\": 164,\n        \"order\": 7\n      }\n    ]\n  }\n]"
+    }
+  ],
+  "schema": {
+    "oneOf": [
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "disposition": {
+            "const": "claim"
+          },
+          "claim": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "comparison"
+                  },
+                  "left": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "operator": {
+                    "enum": [
+                      "greater_than",
+                      "less_than",
+                      "equal"
+                    ]
+                  },
+                  "right": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "left",
+                  "operator",
+                  "right"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "extremum"
+                  },
+                  "subject": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "operator": {
+                    "enum": [
+                      "maximum",
+                      "minimum"
+                    ]
+                  },
+                  "scope": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowIds": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowIds"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "subject",
+                  "operator",
+                  "scope"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "change"
+                  },
+                  "from": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "to": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "operator": {
+                    "enum": [
+                      "increase",
+                      "decrease",
+                      "no_change"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "from",
+                  "to",
+                  "operator"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "threshold"
+                  },
+                  "subject": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "operator": {
+                    "enum": [
+                      "above",
+                      "below",
+                      "at"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "subject",
+                  "operator",
+                  "threshold"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "disposition",
+          "claim"
+        ]
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "disposition": {
+            "const": "unsupported"
+          },
+          "reason": {
+            "enum": [
+              "causal_inference",
+              "missing_cost",
+              "missing_demographic",
+              "incomplete_scope"
+            ]
+          }
+        },
+        "required": [
+          "disposition",
+          "reason"
+        ]
+      }
+    ]
+  },
+  "requestOptions": {
+    "endpoint": "http://100.126.157.97:11434/api/chat",
+    "body": {
+      "model": "qwen2.5-coder:7b",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Return exactly one JSON proposal and no prose. A proposal is either a claim grounded in the supplied deterministic evidence or a typed unsupported response. Answer only the question asked. Do not substitute an adjacent available metric for a missing requested metric. Use unsupported reason causal_inference when descriptive evidence cannot establish causation. Use missing_cost for profit questions when cost is absent, missing_demographic when the requested demographic is absent, and incomplete_scope when a global extremum is requested from truncated evidence. For a claim, use only evidenceId, rowId, field, and scope rowIds present in the evidence. For an extremum, the scope must list every row in one complete packet. For a time change, from must be earlier and to later. Do not add explanations, labels, magnitude words, or unsupported fields."
+        },
+        {
+          "role": "user",
+          "content": "Question: What transforms should I apply to take the analysis further?\n\nQuestion classification: answerable\n\nAvailable source fields: {\"customers\":[\"customer_id\",\"name\",\"email\",\"country\",\"signup_date\"],\"products\":[\"product_id\",\"name\",\"category\",\"unit_price\"],\"orders\":[\"order_id\",\"customer_id\",\"order_date\",\"status\"],\"order_items\":[\"order_item_id\",\"order_id\",\"product_id\",\"quantity\",\"unit_price\"]}\n\nDeterministic evidence: [\n  {\n    \"id\": \"evidence:monthly-revenue\",\n    \"metric\": \"sum_product(order_items.quantity,order_items.unit_price)\",\n    \"unit\": \"USD\",\n    \"dimension\": \"orders.order_date/month\",\n    \"completeness\": \"complete\",\n    \"rows\": [\n      {\n        \"rowId\": \"r1\",\n        \"label\": \"2021-12-01\",\n        \"value\": 3745.01,\n        \"order\": 0\n      },\n      {\n        \"rowId\": \"r2\",\n        \"label\": \"2022-01-01\",\n        \"value\": 68970.39,\n        \"order\": 1\n      },\n      {\n        \"rowId\": \"r3\",\n        \"label\": \"2022-02-01\",\n        \"value\": 45638.76,\n        \"order\": 2\n      },\n      {\n        \"rowId\": \"r4\",\n        \"label\": \"2022-03-01\",\n        \"value\": 54908.59,\n        \"order\": 3\n      },\n      {\n        \"rowId\": \"r5\",\n        \"label\": \"2022-04-01\",\n        \"value\": 70401.8,\n        \"order\": 4\n      },\n      {\n        \"rowId\": \"r6\",\n        \"label\": \"2022-05-01\",\n        \"value\": 40913.93,\n        \"order\": 5\n      },\n      {\n        \"rowId\": \"r7\",\n        \"label\": \"2022-06-01\",\n        \"value\": 51558.55,\n        \"order\": 6\n      },\n      {\n        \"rowId\": \"r8\",\n        \"label\": \"2022-07-01\",\n        \"value\": 38680.17,\n        \"order\": 7\n      },\n      {\n        \"rowId\": \"r9\",\n        \"label\": \"2022-08-01\",\n        \"value\": 61207.42,\n        \"order\": 8\n      },\n      {\n        \"rowId\": \"r10\",\n        \"label\": \"2022-09-01\",\n        \"value\": 43568.29,\n        \"order\": 9\n      },\n      {\n        \"rowId\": \"r11\",\n        \"label\": \"2022-10-01\",\n        \"value\": 51674.86,\n        \"order\": 10\n      },\n      {\n        \"rowId\": \"r12\",\n        \"label\": \"2022-11-01\",\n        \"value\": 50892.97,\n        \"order\": 11\n      },\n      {\n        \"rowId\": \"r13\",\n        \"label\": \"2022-12-01\",\n        \"value\": 42879.22,\n        \"order\": 12\n      },\n      {\n        \"rowId\": \"r14\",\n        \"label\": \"2023-01-01\",\n        \"value\": 53837.72,\n        \"order\": 13\n      },\n      {\n        \"rowId\": \"r15\",\n        \"label\": \"2023-02-01\",\n        \"value\": 60101.99,\n        \"order\": 14\n      },\n      {\n        \"rowId\": \"r16\",\n        \"label\": \"2023-03-01\",\n        \"value\": 36680.08,\n        \"order\": 15\n      },\n      {\n        \"rowId\": \"r17\",\n        \"label\": \"2023-04-01\",\n        \"value\": 64234.64,\n        \"order\": 16\n      },\n      {\n        \"rowId\": \"r18\",\n        \"label\": \"2023-05-01\",\n        \"value\": 37592.43,\n        \"order\": 17\n      },\n      {\n        \"rowId\": \"r19\",\n        \"label\": \"2023-06-01\",\n        \"value\": 48013.62,\n        \"order\": 18\n      },\n      {\n        \"rowId\": \"r20\",\n        \"label\": \"2023-07-01\",\n        \"value\": 62826.99,\n        \"order\": 19\n      },\n      {\n        \"rowId\": \"r21\",\n        \"label\": \"2023-08-01\",\n        \"value\": 55341.38,\n        \"order\": 20\n      },\n      {\n        \"rowId\": \"r22\",\n        \"label\": \"2023-09-01\",\n        \"value\": 63484.62,\n        \"order\": 21\n      },\n      {\n        \"rowId\": \"r23\",\n        \"label\": \"2023-10-01\",\n        \"value\": 60835.65,\n        \"order\": 22\n      },\n      {\n        \"rowId\": \"r24\",\n        \"label\": \"2023-11-01\",\n        \"value\": 65019.75,\n        \"order\": 23\n      },\n      {\n        \"rowId\": \"r25\",\n        \"label\": \"2023-12-01\",\n        \"value\": 35565.32,\n        \"order\": 24\n      },\n      {\n        \"rowId\": \"r26\",\n        \"label\": \"2024-01-01\",\n        \"value\": 55112.86,\n        \"order\": 25\n      },\n      {\n        \"rowId\": \"r27\",\n        \"label\": \"2024-02-01\",\n        \"value\": 56620.89,\n        \"order\": 26\n      },\n      {\n        \"rowId\": \"r28\",\n        \"label\": \"2024-03-01\",\n        \"value\": 67196.51,\n        \"order\": 27\n      },\n      {\n        \"rowId\": \"r29\",\n        \"label\": \"2024-04-01\",\n        \"value\": 55723.09,\n        \"order\": 28\n      },\n      {\n        \"rowId\": \"r30\",\n        \"label\": \"2024-05-01\",\n        \"value\": 46623.78,\n        \"order\": 29\n      },\n      {\n        \"rowId\": \"r31\",\n        \"label\": \"2024-06-01\",\n        \"value\": 63532.96,\n        \"order\": 30\n      },\n      {\n        \"rowId\": \"r32\",\n        \"label\": \"2024-07-01\",\n        \"value\": 67196.21,\n        \"order\": 31\n      },\n      {\n        \"rowId\": \"r33\",\n        \"label\": \"2024-08-01\",\n        \"value\": 67225.94,\n        \"order\": 32\n      },\n      {\n        \"rowId\": \"r34\",\n        \"label\": \"2024-09-01\",\n        \"value\": 50324.42,\n        \"order\": 33\n      },\n      {\n        \"rowId\": \"r35\",\n        \"label\": \"2024-10-01\",\n        \"value\": 47926.73,\n        \"order\": 34\n      },\n      {\n        \"rowId\": \"r36\",\n        \"label\": \"2024-11-01\",\n        \"value\": 56515.34,\n        \"order\": 35\n      },\n      {\n        \"rowId\": \"r37\",\n        \"label\": \"2024-12-01\",\n        \"value\": 25007.87,\n        \"order\": 36\n      }\n    ]\n  },\n  {\n    \"id\": \"evidence:country-orders\",\n    \"metric\": \"count_distinct(orders.order_id)\",\n    \"unit\": \"order\",\n    \"dimension\": \"customers.country\",\n    \"completeness\": \"complete\",\n    \"rows\": [\n      {\n        \"rowId\": \"r1\",\n        \"label\": \"AU\",\n        \"value\": 237,\n        \"order\": 0\n      },\n      {\n        \"rowId\": \"r2\",\n        \"label\": \"BR\",\n        \"value\": 196,\n        \"order\": 1\n      },\n      {\n        \"rowId\": \"r3\",\n        \"label\": \"CA\",\n        \"value\": 205,\n        \"order\": 2\n      },\n      {\n        \"rowId\": \"r4\",\n        \"label\": \"DE\",\n        \"value\": 158,\n        \"order\": 3\n      },\n      {\n        \"rowId\": \"r5\",\n        \"label\": \"FR\",\n        \"value\": 180,\n        \"order\": 4\n      },\n      {\n        \"rowId\": \"r6\",\n        \"label\": \"GB\",\n        \"value\": 145,\n        \"order\": 5\n      },\n      {\n        \"rowId\": \"r7\",\n        \"label\": \"IN\",\n        \"value\": 115,\n        \"order\": 6\n      },\n      {\n        \"rowId\": \"r8\",\n        \"label\": \"US\",\n        \"value\": 164,\n        \"order\": 7\n      }\n    ]\n  }\n]"
+        }
+      ],
+      "stream": false,
+      "keep_alive": "30m",
+      "format": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "disposition": {
+                "const": "claim"
+              },
+              "claim": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "comparison"
+                      },
+                      "left": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "evidenceId": {
+                            "type": "string"
+                          },
+                          "rowId": {
+                            "type": "string"
+                          },
+                          "field": {
+                            "const": "value"
+                          }
+                        },
+                        "required": [
+                          "evidenceId",
+                          "rowId",
+                          "field"
+                        ]
+                      },
+                      "operator": {
+                        "enum": [
+                          "greater_than",
+                          "less_than",
+                          "equal"
+                        ]
+                      },
+                      "right": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "evidenceId": {
+                            "type": "string"
+                          },
+                          "rowId": {
+                            "type": "string"
+                          },
+                          "field": {
+                            "const": "value"
+                          }
+                        },
+                        "required": [
+                          "evidenceId",
+                          "rowId",
+                          "field"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "left",
+                      "operator",
+                      "right"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "extremum"
+                      },
+                      "subject": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "evidenceId": {
+                            "type": "string"
+                          },
+                          "rowId": {
+                            "type": "string"
+                          },
+                          "field": {
+                            "const": "value"
+                          }
+                        },
+                        "required": [
+                          "evidenceId",
+                          "rowId",
+                          "field"
+                        ]
+                      },
+                      "operator": {
+                        "enum": [
+                          "maximum",
+                          "minimum"
+                        ]
+                      },
+                      "scope": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "evidenceId": {
+                            "type": "string"
+                          },
+                          "rowIds": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "evidenceId",
+                          "rowIds"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "subject",
+                      "operator",
+                      "scope"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "change"
+                      },
+                      "from": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "evidenceId": {
+                            "type": "string"
+                          },
+                          "rowId": {
+                            "type": "string"
+                          },
+                          "field": {
+                            "const": "value"
+                          }
+                        },
+                        "required": [
+                          "evidenceId",
+                          "rowId",
+                          "field"
+                        ]
+                      },
+                      "to": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "evidenceId": {
+                            "type": "string"
+                          },
+                          "rowId": {
+                            "type": "string"
+                          },
+                          "field": {
+                            "const": "value"
+                          }
+                        },
+                        "required": [
+                          "evidenceId",
+                          "rowId",
+                          "field"
+                        ]
+                      },
+                      "operator": {
+                        "enum": [
+                          "increase",
+                          "decrease",
+                          "no_change"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "from",
+                      "to",
+                      "operator"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "threshold"
+                      },
+                      "subject": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "evidenceId": {
+                            "type": "string"
+                          },
+                          "rowId": {
+                            "type": "string"
+                          },
+                          "field": {
+                            "const": "value"
+                          }
+                        },
+                        "required": [
+                          "evidenceId",
+                          "rowId",
+                          "field"
+                        ]
+                      },
+                      "operator": {
+                        "enum": [
+                          "above",
+                          "below",
+                          "at"
+                        ]
+                      },
+                      "threshold": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "subject",
+                      "operator",
+                      "threshold"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "disposition",
+              "claim"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "disposition": {
+                "const": "unsupported"
+              },
+              "reason": {
+                "enum": [
+                  "causal_inference",
+                  "missing_cost",
+                  "missing_demographic",
+                  "incomplete_scope"
+                ]
+              }
+            },
+            "required": [
+              "disposition",
+              "reason"
+            ]
+          }
+        ]
+      },
+      "options": {
+        "num_ctx": 8192,
+        "temperature": 0
+      }
+    },
+    "timeoutMs": 600000
+  },
+  "http": {
+    "status": 200,
+    "headers": {
+      "content-length": "379",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 31 Jul 2026 19:26:10 GMT"
+    },
+    "rawResponseBody": "{\"model\":\"qwen2.5-coder:7b\",\"created_at\":\"2026-07-31T19:26:10.907839Z\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n  \\\"disposition\\\": \\\"unsupported\\\",\\n  \\\"reason\\\": \\\"causal_inference\\\"\\n}\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":1197310458,\"load_duration\":118121292,\"prompt_eval_count\":2577,\"prompt_eval_duration\":55147000,\"eval_count\":22,\"eval_duration\":1010792000}"
+  },
+  "parsedValue": {
+    "disposition": "unsupported",
+    "reason": "causal_inference"
+  },
+  "tokenCounts": {
+    "prompt": 2577,
+    "response": 22,
+    "load": 118121292,
+    "eval": 1010792000
+  },
+  "startedAt": "2026-07-31T19:26:09.501Z",
+  "endedAt": "2026-07-31T19:26:10.757Z",
+  "durationMs": 1256,
+  "responseHash": "540bd21b2d08c8a8d8b25814ae29c2444d942f364b6f05f4c8203ba64b70cb7d",
+  "contentHash": "e0aedd195c10983031cf0f012213c59f28636d3dae8d591de8bb9851009cebc3"
+}

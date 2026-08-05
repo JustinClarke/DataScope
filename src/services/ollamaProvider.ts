@@ -11,14 +11,15 @@
 //
 // The pinned small coder replies in text — probed live, it never emits Ollama's
 // structured tool_calls (it writes the call as prose, a JSON blob, or fenced
-// SQL instead). So, like the WebLLM provider, control flow stays deterministic:
-// when the conversation needs SQL the request appends the SQL instruction and
-// the reply's SQL is extracted and wrapped as an execute_local_sql call; when
-// the last tool result carries rows the request appends the answer instruction
-// and omits tools entirely, so the turn can only end as text. A structured
-// tool_call is still honored when a larger, tool-tuned model does emit one.
-import type { AIProvider, AITool, ProviderMessage, ProviderTurn } from '../types';
-import { ANSWER_INSTRUCTION, SQL_INSTRUCTION, extractSql, lastToolResultIsRows } from './webllmProvider';
+// SQL instead). A larger, tool-tuned model on the same endpoint does emit them,
+// and the two need opposite treatment, so which one is talking is **measured
+// per instance rather than assumed** (A4 defect ii): the capability probe
+// latches the first structured call, after which tools stay attached, nothing
+// is appended, and the model drives itself. Until then the request walks the
+// shared ladder in `toolLadder.ts`, which — unlike the rule this replaced —
+// leaves a rung for a second query.
+import type { AIProvider, AITool, ProviderMessage, ProviderToolCall, ProviderTurn } from '../types';
+import { RUNG_INSTRUCTION, SQL_TOOL, createCapabilityProbe, extractSql, ladderRung } from './toolLadder';
 
 /** Default localhost Ollama endpoint (the daemon's standard port). */
 export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
@@ -44,6 +45,7 @@ export function isOllamaEndpoint(value: string): boolean {
 interface OllamaToolCall {
   function: { name: string; arguments: Record<string, unknown> };
 }
+
 interface OllamaMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
@@ -57,11 +59,15 @@ function toOllamaMessages(messages: ProviderMessage[]): OllamaMessage[] {
   return messages.map((m): OllamaMessage => {
     switch (m.role) {
       case 'assistant':
-        return m.toolCall
+        // Every call, in emitted order — the history the model gets back has to
+        // match what it actually asked for (A4 defect iii).
+        return m.toolCalls !== undefined && m.toolCalls.length > 0
           ? {
               role: 'assistant',
               content: m.content,
-              tool_calls: [{ function: { name: m.toolCall.name, arguments: (m.toolCall.input ?? {}) as Record<string, unknown> } }],
+              tool_calls: m.toolCalls.map((call) => ({
+                function: { name: call.name, arguments: (call.input ?? {}) as Record<string, unknown> },
+              })),
             }
           : { role: 'assistant', content: m.content };
       case 'tool':
@@ -92,13 +98,20 @@ export function createOllamaProvider(
   const model = options.model ?? DEFAULT_OLLAMA_MODEL;
   const doFetch = options.fetchImpl ?? fetch;
 
+  // Per instance, and an instance is per turn — so a tool-tuned model reveals
+  // itself on the first round-trip and a small one is never wrongly latched.
+  const probe = createCapabilityProbe();
+
   return {
     id: 'ollama',
     async complete(messages, tools, opts): Promise<ProviderTurn> {
-      const sqlTool = tools.find((t) => t.name === 'execute_local_sql');
-      // Rows are in (or there is no SQL tool): the only valid next turn is a
-      // plain-language answer — omit tools so the model cannot be offered a call.
-      const answerMode = sqlTool === undefined || lastToolResultIsRows(messages);
+      const sqlTool = tools.find((t) => t.name === SQL_TOOL);
+      // A model that drives itself gets the tools and no coaching. One that does
+      // not gets the ladder's rung — and tools alongside it on every rung that
+      // could carry a call, which is how it gets the chance to prove otherwise.
+      const rung = probe.structured ? null : ladderRung(messages, sqlTool !== undefined);
+      const offerTools = tools.length > 0 && rung !== 'answer';
+
       const res = await doFetch(`${baseUrl}/api/chat`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -106,9 +119,9 @@ export function createOllamaProvider(
           model,
           messages: [
             ...toOllamaMessages(messages),
-            { role: 'user', content: answerMode ? ANSWER_INSTRUCTION : SQL_INSTRUCTION },
+            ...(rung === null ? [] : [{ role: 'user', content: RUNG_INSTRUCTION[rung] }]),
           ],
-          ...(answerMode ? {} : { tools: toOllamaTools(tools) }),
+          ...(offerTools ? { tools: toOllamaTools(tools) } : {}),
           stream: false,
         }),
         signal: opts?.signal,
@@ -117,19 +130,22 @@ export function createOllamaProvider(
         throw new Error(`Ollama request failed (${res.status}). Is the model "${model}" pulled and the daemon running?`);
       }
       const data = (await res.json()) as OllamaChatResponse;
-      const call = data.message?.tool_calls?.[0];
-      if (!answerMode && call) {
-        return { kind: 'tool_call', call: { id: crypto.randomUUID(), name: call.function.name, input: call.function.arguments } };
-      }
       const content = data.message?.content ?? '';
-      if (!answerMode && sqlTool !== undefined) {
-        const sql = extractSql(content);
-        if (sql !== null) {
-          return { kind: 'tool_call', call: { id: crypto.randomUUID(), name: sqlTool.name, input: { sql } } };
-        }
+
+      const structured = (data.message?.tool_calls ?? []).map(
+        (call): ProviderToolCall => ({ id: crypto.randomUUID(), name: call.function.name, input: call.function.arguments }),
+      );
+      probe.observe(structured.length);
+      if (structured.length > 0) return { text: content.trim(), calls: structured };
+
+      // No structured calls: on a rung that asked for SQL, extracted SQL is the
+      // call. Prose without SQL means the model answered (or declined) — that is
+      // the turn's terminal state, and the only one.
+      const sql = rung === null || rung === 'answer' || sqlTool === undefined ? null : extractSql(content);
+      if (sql !== null) {
+        return { text: content.trim(), calls: [{ id: crypto.randomUUID(), name: sqlTool!.name, input: { sql } }] };
       }
-      // Prose without SQL: the model answered (or declined) — surface it as text.
-      return { kind: 'text', text: content.trim() };
+      return { text: content.trim(), calls: [] };
     },
   };
 }

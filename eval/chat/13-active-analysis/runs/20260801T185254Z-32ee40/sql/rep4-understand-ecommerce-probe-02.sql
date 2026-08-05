@@ -1,0 +1,1 @@
+SELECT ROUND(((SUM(t0."quantity" * t0."unit_price")) / NULLIF((COUNT(DISTINCT t0."order_id")), 0)) * 1, 2) AS value FROM "order_items" t0 LEFT JOIN "orders" t1 ON t0."order_id" = t1."order_id" WHERE t1."status" = 'completed'

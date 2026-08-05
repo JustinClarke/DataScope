@@ -3,19 +3,20 @@ import { useDatasetsStore } from '../../../stores/datasets';
 import type { ClassifiedColumn, TableRegistryEntry } from '../../../types';
 import { prefillColumns, prefillTableName, type ModulePrefill } from '../../../lib/threadPrefill';
 import { runChartQuery } from '../../../services/charts';
+import { analystCore } from '../../../services/analyst';
+import { isOpError, type OpOutcome } from '../../../lib/analyst/types';
 import { buildHistogramSql, parseHistogram, type HistogramBucket } from '../../../lib/columnStats';
 import {
   buildMomentsSql,
   buildOutliersSql,
-  buildQuartilesSql,
   buildWhiskersSql,
   computeIqrBounds,
   parseMoments,
   parseOutliers,
-  parseQuartiles,
   parseWhiskers,
   type BoxPlotStats,
   type DistributionMoments,
+  type Quartiles,
 } from '../../../lib/distributionSql';
 import { Histogram } from './Histogram';
 import { BoxPlot } from './BoxPlot';
@@ -41,6 +42,32 @@ const RUN_DEBOUNCE_MS = 300;
 interface SqlBlock {
   label: string;
   sql: string;
+}
+
+/**
+ * A0's proof that the seam works: this panel's quartiles now come from the
+ * analyst core's `column_stats`, the same operation a model calls, instead of
+ * from a builder only this module used. The box plot is unchanged — the
+ * numbers are the same `quantile_cont` quartiles — but the SQL shown under
+ * "Quartiles" is now the core's own `sql` field, so what the panel displays
+ * and what a model would see cannot drift apart (D58, master §11.5).
+ *
+ * `null` for a column with no non-null values, exactly as `parseQuartiles`
+ * behaved: `quantile_cont` has nothing to interpolate over.
+ */
+function quartilesFromColumnStats(outcome: OpOutcome): Quartiles | null {
+  if (isOpError(outcome)) return null;
+  const row = outcome.rows[0];
+  if (!row) return null;
+  const read = (name: string): number | null => {
+    const index = outcome.schema.findIndex((field) => field.name === name);
+    const value = index === -1 ? null : row[index];
+    return value == null ? null : Number(value);
+  };
+  const q1 = read('q1');
+  const median = read('median');
+  const q3 = read('q3');
+  return q1 === null || median === null || q3 === null ? null : { q1, median, q3 };
 }
 
 /**
@@ -87,22 +114,23 @@ export function DistributionModule({ prefill = null }: { prefill?: ModulePrefill
         const min = Number(activeColumn.min);
         const max = Number(activeColumn.max);
         const histogramSql = buildHistogramSql(table.tableName, activeColumn.name, min, max, binCount);
-        const quartilesSql = buildQuartilesSql(table.tableName, activeColumn.name);
         const momentsSql = buildMomentsSql(table.tableName, activeColumn.name);
 
-        const [histogramResult, quartilesResult, momentsResult] = await Promise.all([
+        const [histogramResult, statsOutcome, momentsResult] = await Promise.all([
           histogramSql ? runChartQuery(histogramSql) : Promise.resolve(null),
-          runChartQuery(quartilesSql),
+          analystCore().call('column_stats', { table: table.tableName, column: activeColumn.name }),
           runChartQuery(momentsSql),
         ]);
         if (cancelled) return;
 
         const blocks: SqlBlock[] = [];
         if (histogramSql) blocks.push({ label: 'Histogram', sql: histogramSql });
-        blocks.push({ label: 'Quartiles', sql: quartilesSql });
+        if (!isOpError(statsOutcome) && statsOutcome.sql) {
+          blocks.push({ label: 'Quartiles', sql: statsOutcome.sql });
+        }
 
         let box: BoxPlotStats | null = null;
-        const quartiles = parseQuartiles(quartilesResult);
+        const quartiles = quartilesFromColumnStats(statsOutcome);
         if (quartiles) {
           const bounds = computeIqrBounds(quartiles);
           const whiskersSql = buildWhiskersSql(table.tableName, activeColumn.name, bounds);

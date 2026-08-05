@@ -104,8 +104,19 @@ setting restricts retry context to schema + error trace.
   per-IP counters held only for the duration of the rate window — never stored with, or
   joined to, any dataset, key material, or saved object (Cloudflare sees client IPs
   regardless; nothing here adds to that; §23.1, §23.5).
-- **Client-side persistence:** datasets live in DuckDB's in-memory VFS only — closing the
-  tab destroys them. Settings may persist locally; dataset contents never do. **Persistence
+- **Client-side persistence:** **amended 2026-07-29 (master §5.2 Revised(18); v0.70 S6.9,
+  human call) — datasets now persist on the user's own device.** Dataset **bytes** go to the
+  browser's origin-private file system (OPFS) and registry **metadata** (catalog, profiles,
+  classifications, tabs, selection, relationship overrides — never rows) to `localStorage`, so
+  a refresh restores the workspace instead of destroying it; **always on, no opt-in gate**, with
+  a **"Clear workspace data"** control that empties both. Previously datasets lived in DuckDB's
+  in-memory VFS only and closing the tab destroyed them. **No egress claim changes** — OPFS is
+  inside the browser, no byte crosses a wire, D52's "check DevTools" line still passes, and rows
+  leave the machine only through D39/D61 staging or an explicit Save/Share. Not everything is
+  durable: sampled-tier files, API tables (`sourceUrl` re-fetch), derived tables (`generatingSql`
+  replay) and D62 viewer sessions are not stored as bytes, and an unrecoverable table is shown on
+  reload as needing a re-drop rather than as a queryable registry row
+  (`../build/14-workspace-streamline/07-workspace-persistence.md`). **Persistence
   boundary (2026-07-24, D2 amendment — master §5.2): only zero-egress preferences persist
   across sessions** (`Off`, WebLLM-enabled, theme, the BYOK *reference*); **egress-enabling
   modes (`Cloudflare`, a bearer key's active state, D72 grounding) reset to off each session
@@ -114,6 +125,24 @@ setting restricts retry context to schema + error trace.
   only on opting into "Remember my key"** (2026-07-23) — remembering a key across tab closes
   requires an identifier that outlives the tab, and a user who never opts in gains none; every
   other edge call's session id stays per-page-load and content-free.
+- **AI transcript persistence (D74g — amends D41; human call 2026-08-02):** the AI transcript,
+  previously in-memory-only because it is content-bearing, now **persists locally across
+  sessions**. The reason is capability, not convenience: an analyst loop that cannot see what it
+  already established re-derives it, and re-derivation is what exhausts a turn budget (master
+  §11.5's evidence-retention requirement, D74h). **This changes nothing about egress** — the same
+  browser-local mechanism as the persistence bullet above, no byte crosses a wire, and the
+  DevTools check D52's permission line invites still passes. What changes is the **at-rest
+  posture**, stated plainly rather than waved at: question text, generated SQL, returned values,
+  and model prose now survive tab close on a possibly-shared machine — a stronger claim on the
+  user's disk than registry metadata was, since that bullet stores *never rows* and this one
+  stores values that came **from** rows. Three conditions ride with it, none optional: a
+  **visible clear-history control** (folded into "Clear workspace data", so one action means one
+  thing), **no persistence in D62 viewer mode** (a consumption-only session stores nothing, as it
+  already stores no dataset), and the **D46 "may contain sensitive values" caveat applied to
+  stored transcript content** exactly as D72 applies it to transmitted rows. Same D21 language
+  rule as its neighbours — "removes the history this browser stored on this device," never
+  "securely erased." **D41's content-free-telemetry half is untouched:** operator counters still
+  never carry prompt, SQL, or error text.
 - **No third-party tracking by default.** Any future usage analytics are opt-in with a
   visible consent banner, never transmit dataset contents or query text, and are **hard-off
   in local-only mode** (§18) — the zero-network guarantee always wins over measurement.
@@ -139,7 +168,9 @@ setting restricts retry context to schema + error trace.
   in no stored artifact (R2 object, `.dsps`, share) — request-transcript evidence only.
 - Cloud mode: only the disclosed payloads leave; with metadata-only repair on, no data rows
   appear in any request body.
-- Tab close leaves no dataset contents in `localStorage`/`IndexedDB`/cookies (settings only).
+- Tab close leaves no dataset **rows** in `localStorage`/`IndexedDB`/cookies (settings +
+  registry metadata only); dataset **bytes** are in OPFS by design (amended 2026-07-29, §5.2),
+  disclosed, and removed in full by "Clear workspace data".
 - BYOK key never appears in browser storage or request bodies in plaintext (reference token only).
 - Share-link delete control removes the R2 object; TTL expiry actually expires.
 - Paid tiers (if ever, §20.10) only add server-side conveniences already opt-in by design —

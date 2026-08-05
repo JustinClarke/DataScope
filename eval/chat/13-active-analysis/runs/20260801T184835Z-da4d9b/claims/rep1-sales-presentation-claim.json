@@ -1,0 +1,32 @@
+{
+  "claim": {
+    "kind": "extremum",
+    "subject": {
+      "evidenceId": "evidence:category-revenue",
+      "rowId": "r2",
+      "field": "value"
+    },
+    "operator": "maximum",
+    "scope": {
+      "evidenceId": "evidence:category-revenue",
+      "rowIds": [
+        "r1",
+        "r2",
+        "r3",
+        "r4",
+        "r5",
+        "r6"
+      ]
+    }
+  },
+  "fact": {
+    "kind": "extremum",
+    "operator": "maximum",
+    "subject": "Books",
+    "object": "maximum in evidence:category-revenue",
+    "leftValue": 507332.51,
+    "rightValue": 507332.51,
+    "unit": "USD"
+  },
+  "rendered": "Books (507,332.51 USD) was the maximum across products.category for the complete evidence scope."
+}

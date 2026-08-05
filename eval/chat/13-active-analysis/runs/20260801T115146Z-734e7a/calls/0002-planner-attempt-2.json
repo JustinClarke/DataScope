@@ -1,0 +1,346 @@
+{
+  "callId": "0002",
+  "questionId": "checkpoint-2-platform-preflight",
+  "role": "planner",
+  "attempt": 2,
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are the analysis planner in a bounded evidence-acquisition loop. Take exactly one action per turn, expressed as a single JSON object matching one of these four shapes: {\"action\":\"request_probes\",\"candidateIds\":[...]} to request evidence from one or more of the listed candidate computation ids. {\"action\":\"final_claim\",\"claim\":{...}} to state a verified factual claim from evidence already shown to you in this conversation. {\"action\":\"final_offer\",\"offerId\":\"...\"} to select a precomputed executable offer by its exact id. {\"action\":\"unsupported\",\"reason\":\"...\"} to report that the question cannot be answered with the available data. Only candidate ids present in the candidate menu below are valid for request_probes. Return exactly one JSON object and nothing else outside it."
+    },
+    {
+      "role": "user",
+      "content": "Dataset: synthetic-preflight (1 table: readings[id, sensor, celsius]).\nQuestion: Which sensor has the highest average reading?\nAvailable candidate computations:\n[{\"id\":\"sensor-average-celsius\",\"description\":\"average celsius reading grouped by sensor\",\"estimatedCostClass\":\"small\",\"relevanceTags\":[\"platform-preflight\"]}]\nNo evidence has been computed yet for this question. Choose your next action."
+    }
+  ],
+  "schema": {
+    "oneOf": [
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "request_probes"
+          },
+          "candidateIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2,
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "action",
+          "candidateIds"
+        ]
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "final_claim"
+          },
+          "claim": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "comparison"
+                  },
+                  "left": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "operator": {
+                    "enum": [
+                      "greater_than",
+                      "less_than",
+                      "equal"
+                    ]
+                  },
+                  "right": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "left",
+                  "operator",
+                  "right"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "extremum"
+                  },
+                  "subject": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "operator": {
+                    "enum": [
+                      "maximum",
+                      "minimum"
+                    ]
+                  },
+                  "scope": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowIds": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowIds"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "subject",
+                  "operator",
+                  "scope"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "change"
+                  },
+                  "from": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "to": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "operator": {
+                    "enum": [
+                      "increase",
+                      "decrease",
+                      "no_change"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "from",
+                  "to",
+                  "operator"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "threshold"
+                  },
+                  "subject": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string"
+                      },
+                      "rowId": {
+                        "type": "string"
+                      },
+                      "field": {
+                        "const": "value"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "rowId",
+                      "field"
+                    ]
+                  },
+                  "operator": {
+                    "enum": [
+                      "above",
+                      "below",
+                      "at"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "subject",
+                  "operator",
+                  "threshold"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "claim"
+        ]
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "final_offer"
+          },
+          "offerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "offerId"
+        ]
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "unsupported"
+          },
+          "reason": {
+            "enum": [
+              "causal_inference",
+              "missing_cost",
+              "missing_demographic",
+              "incomplete_scope"
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "reason"
+        ]
+      }
+    ]
+  },
+  "requestOptions": {
+    "think": false,
+    "numCtx": 8192,
+    "numPredict": 1024,
+    "temperature": 0.7,
+    "topP": 0.8,
+    "topK": 20
+  },
+  "parsedValue": {
+    "action": "request_probes",
+    "candidateIds": [
+      "sensor-average-celsius"
+    ]
+  },
+  "tokenCounts": {
+    "prompt": 261,
+    "response": 16
+  },
+  "startedAt": "2026-08-01T11:51:56.855Z",
+  "endedAt": "2026-08-01T11:51:58.110Z",
+  "durationMs": 1255
+}

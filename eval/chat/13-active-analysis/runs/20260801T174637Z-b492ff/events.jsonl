@@ -1,0 +1,5 @@
+{"timestamp":"2026-08-01T17:46:37.799Z","sequence":1,"type":"run_started","runId":"20260801T174637Z-b492ff"}
+{"timestamp":"2026-08-01T17:46:37.807Z","sequence":2,"type":"model_resolved","runId":"20260801T174637Z-b492ff","tag":"qwen3:8b","digest":"500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41"}
+{"timestamp":"2026-08-01T17:46:37.812Z","sequence":3,"type":"prompt_surface_checked","runId":"20260801T174637Z-b492ff","questionIdsLeaked":0,"sampleValuesLeaked":0}
+{"timestamp":"2026-08-01T17:46:37.817Z","sequence":4,"type":"fixture_loaded","runId":"20260801T174637Z-b492ff","fixtureIds":["customers","products","orders","order_items"],"candidateCount":9,"offerCount":9}
+{"timestamp":"2026-08-01T18:00:14.414Z","sequence":5,"type":"run_interrupted","runId":"20260801T174637Z-b492ff","reason":{"name":"TypeError","message":"fetch failed","stack":"TypeError: fetch failed","cause":{"name":"Error","message":"read ETIMEDOUT","stack":"Error: read ETIMEDOUT\n    at TCP.onStreamRead (node:internal/stream_base_commons:216:20)"}}}

@@ -50,7 +50,10 @@ v0 gate:
       Spotify or Google Takeout export ZIP → first rendered template chart in ≤ 2 minutes on
       a mid-range laptop, incl. client-side ZIP extraction + template matching; schema drift
       → generic profiling with a banner, never an error dead-end
-- [ ] Closing the tab releases all memory; no dataset contents in `localStorage`/`IndexedDB`
+- [ ] Closing the tab releases all memory; no dataset **rows** in `localStorage`/`IndexedDB`/
+      cookies (settings + registry metadata only). Dataset **bytes** persist in OPFS by design
+      (§5.2, amended 2026-07-29; v0.70 S6.9) — the assertion is that "Clear workspace data"
+      empties OPFS *and* the persisted registry keys, leaving a true cold app
 - [ ] All bundled samples load and profile on a fresh page load
 - [ ] Edge-independent core: with the edge origin blackholed (blocked/unreachable),
       ingest/profile/SQL/charts/insights remain fully functional — never a hang or crash (§4)

@@ -111,7 +111,7 @@ export interface WireToolCall {
 export type WireProviderMessage =
   | { role: 'system'; content: string }
   | { role: 'user'; content: string }
-  | { role: 'assistant'; content: string; toolCall?: WireToolCall }
+  | { role: 'assistant'; content: string; toolCalls?: WireToolCall[] }
   | { role: 'tool'; toolCallId: string; content: string };
 
 /** A tool the model may call (mirrors AITool). */
@@ -121,10 +121,19 @@ export interface WireTool {
   inputSchema: Record<string, unknown>;
 }
 
-/** One provider turn: a final text answer, or a tool-call request (mirrors ProviderTurn). */
-export type WireProviderTurn =
-  | { kind: 'text'; text: string }
-  | { kind: 'tool_call'; call: WireToolCall };
+/**
+ * One provider round-trip (mirrors ProviderTurn). `calls` is an array because
+ * upstream providers emit arrays and the router must not be the place a call
+ * goes missing; an empty `calls` is what makes the turn terminal.
+ *
+ * **Shape changed at A4 (2026-08-02)** from `{ kind: 'text' | 'tool_call' }`.
+ * Client and Worker deploy separately, so `src/services/cloudProvider.ts`
+ * rejects a legacy-shaped turn by name rather than reading `calls` as undefined.
+ */
+export interface WireProviderTurn {
+  text: string
+  calls: WireToolCall[]
+}
 
 /** The D3 routing toggle: user's key first, or Workers-AI free tier until its ceiling. */
 export type RoutingMode = 'prefer-key' | 'free-tier-first';

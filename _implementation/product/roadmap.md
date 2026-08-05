@@ -198,7 +198,15 @@ suppression assist framed as reducing oversight risk, never an all-clear;
 machinery (D34)**; consumer template format documented + opened to community (D30);
 claimable share links re-evaluated at v0.5 planning (D29); **read-only DSPS-serving MCP
 endpoint (D38 stage A)** over explicitly shared artifacts only, under the §23.5
-ceilings/kill-switch/counters ([`../build/09-edge/`](../build/09-edge/)).
+ceilings/kill-switch/counters ([`../build/09-edge/`](../build/09-edge/)) — **stage A is not
+extended into the D74 analyst catalog by accretion, and its ceilings stay on (D74c/f)**.
+
+*MCP gating clarified (D74, 2026-08-02):* D38's staging gate binds **transport reach**, not the
+protocol — the full operation catalog over **browser-local** data is permitted when both MCP
+ends run **in the page process** (no wire, no socket, no subprocess, no inbound listener), which
+is the v0.71 analyst layer. Staging remains the gate for **every** out-of-process transport;
+external clients (Claude Desktop, a local agent) are **deferred, not blocked**, and keep their
+own ADR → [`../build/15-analyst-layer/`](../build/15-analyst-layer/README.md).
 **Deliverable:** pull an API into a table, transform, download, and share a structure-only link that works on another device.
 
 ### Phase 6: Polish & Hardening
@@ -221,8 +229,9 @@ carried here as a v0.5 fallback.)
 %-changed, null/cardinality drift, PSI/KS distribution shift, matching keys inferred,
 folder-aware, **aggregate-only**) ships as the **first post-launch feature**, ahead of the
 rest of Phase 7 — the retention mechanic and pillar #2 of the structure × time arc (D52).
-Phase 7 later absorbs it as one section of the quality report
-([`../build/10-studio/01-quality-report/README.md`](../build/10-studio/01-quality-report/README.md)).
+Phase 7 was designed to later absorb it as one section of the quality report (§20.8 in
+`../DATASCOPE.md`); Phase 7 itself is cut to backlog as of 2026-08-02 (D14 amendment) and
+the Drift Report stands on its own, unaffected.
 
 **Post-v0.5 platform ladder (D61).** The chartered surface-investment sequence after v0.5:
 **browser (shipped) → hosted tier → desktop (D51) → rest on request.** The **hosted tier** is

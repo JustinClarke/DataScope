@@ -75,6 +75,15 @@ interface QueryState {
    * rather than re-running or copying.
    */
   adoptResult: (id: QuerySessionId, result: QueryResult, lastRunSql: string) => void;
+  /**
+   * Overwrites a session's loaded rows and paging handle wholesale (A2's
+   * `loadMoreRows`, `services/sql.ts`) rather than trusting a caller to append
+   * correctly — the first page past the cap comes from a fresh materialization
+   * that does not agree row-for-row with the ad hoc preview it replaces, so
+   * "replace" is the only safe operation on that transition; every page after
+   * it is a genuine append onto that same stable materialization.
+   */
+  setResultPage: (id: QuerySessionId, rows: unknown[][], resultId: string, nextOffset: number | null) => void;
   addChart: (id: QuerySessionId, chart: ChartSpec) => void;
   removeChart: (id: QuerySessionId, index: number) => void;
   clearResult: (id: QuerySessionId) => void;
@@ -133,6 +142,13 @@ export const useQueryStore = create<QueryState>((set) => ({
 
   adoptResult: (id, result, lastRunSql) =>
     set((state) => ({ sessions: patch(state, id, { status: 'success', result, error: null, lastRunSql }) })),
+
+  setResultPage: (id, rows, resultId, nextOffset) =>
+    set((state) => {
+      const current = state.sessions[id]?.result;
+      if (!current) return state;
+      return { sessions: patch(state, id, { result: { ...current, rows, resultId, nextOffset } }) };
+    }),
 
   addChart: (id, chart) =>
     set((state) => ({

@@ -13,11 +13,19 @@ import { EducationalPanelProvider } from '../../app/EducationalPanelContext';
 import type { ClassifiedColumn, Dataset, TableRegistryEntry } from '../../types';
 import type { FkEdge } from '../../lib/relationshipInference';
 
-const { openDestinationMock } = vi.hoisted(() => ({ openDestinationMock: vi.fn() }));
+const { openDestinationMock, analystCoreMock } = vi.hoisted(() => ({
+  openDestinationMock: vi.fn(),
+  analystCoreMock: vi.fn(),
+}));
 vi.mock('../../services/navigation', async () => {
   const actual = await vi.importActual<typeof import('../../services/navigation')>('../../services/navigation');
   return { ...actual, openDestination: openDestinationMock };
 });
+
+// A2's Info panels (top values, term frequency, join coverage) call the
+// analyst core directly — mocked here the same way DistributionModule.test.tsx
+// does, so these tests never reach the real DuckDB-Wasm engine.
+vi.mock('../../services/analyst', () => ({ analystCore: analystCoreMock }));
 
 // Only needed for the single-fetch integration test, which mounts DatasetMap
 // alongside Inspector — same mocking convention as DatasetMap.test.tsx.
@@ -96,6 +104,9 @@ describe('Inspector', () => {
 
   beforeEach(() => {
     openDestinationMock.mockReset();
+    analystCoreMock.mockReset().mockReturnValue({
+      call: vi.fn().mockResolvedValue({ ok: false, code: 'sql_error', message: 'unavailable in test' }),
+    });
     loadDossierInsightsMock.mockReset().mockResolvedValue([]);
     loadTimeCoverageMock.mockReset().mockResolvedValue([]);
     loadRelationshipsMock.mockReset().mockResolvedValue([]);
@@ -107,10 +118,9 @@ describe('Inspector', () => {
     useInferredEdgesStore.setState({ edges: [] });
     useDrawerStore.setState({
       open: true,
-      view: 'info',
-      consoleActivated: false,
       expanded: false,
       height: DRAWER_DEFAULT_HEIGHT,
+      consoleSignal: 0,
     });
     useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
     useTabsStore.setState({ tabs: [], activeTabId: null });
@@ -129,12 +139,13 @@ describe('Inspector', () => {
     expect(getByText('2 cols')).toBeTruthy();
     fireEvent.click(getByText('Open table →'));
     expect(openDestinationMock).toHaveBeenCalledWith('profile', 'o');
-    // §13.3: opening a table also switches the drawer to the console.
-    expect(useDrawerStore.getState().view).toBe('console');
-    expect(useDrawerStore.getState().consoleActivated).toBe(true);
+    // §13.3: opening a table also hands off to the editor next door. Under
+    // S6.5's permanent split that is one signal, not a view change.
+    expect(useDrawerStore.getState().consoleSignal).toBe(1);
+    expect(useDrawerStore.getState().open).toBe(true);
   });
 
-  it('Open table seeds a SELECT only into a never-activated, empty console — and never runs it (S3 scope call 10)', () => {
+  it('Open table seeds a SELECT only into an empty console — and never runs it (S3 scope call 10)', () => {
     useSelectionStore.getState().selectTable('o');
     const { getByText } = render(<Inspector />);
     fireEvent.click(getByText('Open table →'));
@@ -150,12 +161,15 @@ describe('Inspector', () => {
     expect(getSession(CONSOLE_SESSION).sql).toBe('SELECT 1');
   });
 
-  it('Open table does not seed a console that has already been activated, even if its buffer is empty', () => {
+  // S6.5 retires `consoleActivated`, so an empty buffer is the whole condition
+  // — a console the user has already visited and cleared is seeded like any
+  // other empty one. Nothing typed, nothing to lose.
+  it('Open table seeds an already-visited console whose buffer is empty', () => {
     useDrawerStore.getState().activateConsole();
     useSelectionStore.getState().selectTable('o');
     const { getByText } = render(<Inspector />);
     fireEvent.click(getByText('Open table →'));
-    expect(getSession(CONSOLE_SESSION).sql).toBe('');
+    expect(getSession(CONSOLE_SESSION).sql).toBe('SELECT * FROM "orders" LIMIT 100');
   });
 
   it('shows a column scent — semantic + physical type — and a profile click-through', () => {

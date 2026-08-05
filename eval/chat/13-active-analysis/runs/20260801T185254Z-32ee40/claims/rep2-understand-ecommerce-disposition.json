@@ -1,0 +1,50 @@
+{
+  "questionId": "understand-ecommerce",
+  "questionKind": "answerable",
+  "repeat": 2,
+  "transportFailure": null,
+  "action": "final_claim",
+  "repaired": false,
+  "parseError": null,
+  "responseHash": "35f98e584f6cc5827515ace83e46420e78715fdef10dbebacaa7dadf0dcedc5d",
+  "doneReason": "stop",
+  "disposition": {
+    "kind": "final_claim",
+    "rendered": "sum of order_items.quantity multiplied by order_items.unit_price divided by distinct count of order_items.order_id for orders.status equals completed (1,337.35 USD/order) was the maximum for the complete evidence scope."
+  },
+  "rendered": "sum of order_items.quantity multiplied by order_items.unit_price divided by distinct count of order_items.order_id for orders.status equals completed (1,337.35 USD/order) was the maximum for the complete evidence scope.",
+  "verification": {
+    "accepted": true,
+    "fact": {
+      "kind": "extremum",
+      "operator": "maximum",
+      "subject": "sum of order_items.quantity multiplied by order_items.unit_price divided by distinct count of order_items.order_id for orders.status equals completed",
+      "object": "maximum in evidence:completed-aov",
+      "leftValue": 1337.35,
+      "rightValue": 1337.35,
+      "unit": "USD/order"
+    }
+  },
+  "tokens": {
+    "calls": 1,
+    "totalPromptTokens": 2731,
+    "totalResponseTokens": 760,
+    "callHighWaterPromptTokens": 2731
+  },
+  "durationMs": 64135,
+  "claim": {
+    "kind": "extremum",
+    "subject": {
+      "evidenceId": "evidence:completed-aov",
+      "rowId": "r1",
+      "field": "value"
+    },
+    "operator": "maximum",
+    "scope": {
+      "evidenceId": "evidence:completed-aov",
+      "rowIds": [
+        "r1"
+      ]
+    }
+  }
+}

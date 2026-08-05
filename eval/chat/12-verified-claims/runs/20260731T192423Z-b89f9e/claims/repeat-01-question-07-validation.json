@@ -1,0 +1,15 @@
+{
+  "repeat": 1,
+  "questionId": "demographic-control",
+  "questionKind": "control",
+  "firstPassValid": true,
+  "repaired": false,
+  "proposal": {
+    "disposition": "unsupported",
+    "reason": "causal_inference"
+  },
+  "verification": null,
+  "renderedSentence": null,
+  "disposition": "wrong_refusal",
+  "expectedUnsupportedReason": "missing_demographic"
+}

@@ -1,0 +1,12 @@
+{
+  "phase": 4,
+  "questionId": "monthly-revenue-december-2021-to-january-2022",
+  "modelCalls": 1,
+  "firstPassValid": true,
+  "repairAttempted": false,
+  "repairCalls": 0,
+  "verifierAccepted": true,
+  "verifierDisposition": "verified",
+  "renderedSentence": "2022-01-01 was a verified increase from 2021-12-01: 3,745.01 USD to 68,970.39 USD.",
+  "passed": true
+}

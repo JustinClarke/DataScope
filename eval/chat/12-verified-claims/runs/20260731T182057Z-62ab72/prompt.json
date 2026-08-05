@@ -1,0 +1,281 @@
+{
+  "runId": "20260731T182057Z-62ab72",
+  "question": "What changed in January 2022 compared with December 2021?",
+  "evidence": {
+    "id": "monthly-revenue",
+    "metric": "sum(order_items.quantity * products.unit_price)",
+    "unit": "USD",
+    "completeness": "complete",
+    "rows": [
+      {
+        "rowId": "dec-2021",
+        "label": "December 2021 revenue",
+        "value": 12500
+      },
+      {
+        "rowId": "jan-2022",
+        "label": "January 2022 revenue",
+        "value": 13750
+      },
+      {
+        "rowId": "feb-2022",
+        "label": "February 2022 revenue",
+        "value": 11250
+      }
+    ]
+  },
+  "request": {
+    "model": "qwen2.5-coder:7b",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return exactly one ClaimIR JSON object and no prose. Use only the supplied evidenceId, rowId, field, and numeric relations. Choose a relation that directly answers the question and is true of the evidence. Do not describe magnitude with words such as substantial; the schema does not support them."
+      },
+      {
+        "role": "user",
+        "content": "Question: What changed in January 2022 compared with December 2021?\n\nFixed evidence:\n{\n  \"id\": \"monthly-revenue\",\n  \"metric\": \"sum(order_items.quantity * products.unit_price)\",\n  \"unit\": \"USD\",\n  \"completeness\": \"complete\",\n  \"rows\": [\n    {\n      \"rowId\": \"dec-2021\",\n      \"label\": \"December 2021 revenue\",\n      \"value\": 12500\n    },\n    {\n      \"rowId\": \"jan-2022\",\n      \"label\": \"January 2022 revenue\",\n      \"value\": 13750\n    },\n    {\n      \"rowId\": \"feb-2022\",\n      \"label\": \"February 2022 revenue\",\n      \"value\": 11250\n    }\n  ]\n}"
+      }
+    ],
+    "stream": false,
+    "keep_alive": "30m",
+    "format": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "comparison"
+            },
+            "left": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "evidenceId": {
+                  "type": "string"
+                },
+                "rowId": {
+                  "type": "string"
+                },
+                "field": {
+                  "const": "value"
+                }
+              },
+              "required": [
+                "evidenceId",
+                "rowId",
+                "field"
+              ]
+            },
+            "operator": {
+              "enum": [
+                "greater_than",
+                "less_than",
+                "equal"
+              ]
+            },
+            "right": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "evidenceId": {
+                  "type": "string"
+                },
+                "rowId": {
+                  "type": "string"
+                },
+                "field": {
+                  "const": "value"
+                }
+              },
+              "required": [
+                "evidenceId",
+                "rowId",
+                "field"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "left",
+            "operator",
+            "right"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "extremum"
+            },
+            "subject": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "evidenceId": {
+                  "type": "string"
+                },
+                "rowId": {
+                  "type": "string"
+                },
+                "field": {
+                  "const": "value"
+                }
+              },
+              "required": [
+                "evidenceId",
+                "rowId",
+                "field"
+              ]
+            },
+            "operator": {
+              "enum": [
+                "maximum",
+                "minimum"
+              ]
+            },
+            "scope": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "evidenceId": {
+                  "type": "string"
+                },
+                "rowIds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "evidenceId",
+                "rowIds"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "subject",
+            "operator",
+            "scope"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "change"
+            },
+            "from": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "evidenceId": {
+                  "type": "string"
+                },
+                "rowId": {
+                  "type": "string"
+                },
+                "field": {
+                  "const": "value"
+                }
+              },
+              "required": [
+                "evidenceId",
+                "rowId",
+                "field"
+              ]
+            },
+            "to": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "evidenceId": {
+                  "type": "string"
+                },
+                "rowId": {
+                  "type": "string"
+                },
+                "field": {
+                  "const": "value"
+                }
+              },
+              "required": [
+                "evidenceId",
+                "rowId",
+                "field"
+              ]
+            },
+            "operator": {
+              "enum": [
+                "increase",
+                "decrease",
+                "no_change"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "from",
+            "to",
+            "operator"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "threshold"
+            },
+            "subject": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "evidenceId": {
+                  "type": "string"
+                },
+                "rowId": {
+                  "type": "string"
+                },
+                "field": {
+                  "const": "value"
+                }
+              },
+              "required": [
+                "evidenceId",
+                "rowId",
+                "field"
+              ]
+            },
+            "operator": {
+              "enum": [
+                "above",
+                "below",
+                "at"
+              ]
+            },
+            "threshold": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "kind",
+            "subject",
+            "operator",
+            "threshold"
+          ]
+        }
+      ]
+    },
+    "options": {
+      "num_ctx": 8192,
+      "temperature": 0
+    }
+  },
+  "repeats": 3
+}

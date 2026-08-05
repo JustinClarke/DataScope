@@ -9,14 +9,16 @@
 // `_implementation/_misc/_ideation/_experiments/` eventually settles on
 // (nine candidates as of writing, none decided) plugs in by upgrading what
 // `requestSynthesis` returns — this card doesn't change shape when it does.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Activity, TrendingUp } from 'lucide-react';
 import { rankNextActions } from '../../lib/capabilities';
 import { RULE_LABEL, scoreOf, type InsightCandidate, type InsightRuleId, type TableInsights } from '../../lib/insights';
 import { isDestinationReady, MODULE_LABELS, openDestination } from '../../services/navigation';
 import { openQueryTab } from '../../services/queryTabs';
+import { analystCore } from '../../services/analyst';
+import { isOpError, type OpOutcome, type OpResult } from '../../lib/analyst/types';
 import { Tooltip } from '../../components/Tooltip';
-import type { FactRef, RankedAction, TableRegistryEntry } from '../../types';
+import type { FactRef, QueryResult, RankedAction, TableRegistryEntry } from '../../types';
 
 const EXPLORATIONS_SHOWN = 3;
 
@@ -82,6 +84,95 @@ function MoreExplorationRow({ action, index }: { action: RankedAction; index: nu
   return <Tooltip content="No query behind this suggestion yet">{row}</Tooltip>;
 }
 
+interface PeriodOverPeriodTarget {
+  table: TableRegistryEntry;
+  dateColumn: string;
+  metricColumn: string;
+}
+
+/** First table offering a Temporal + Quantitative pair — the same shape `querySuggester`'s own "period vs last" task looks for, but computed here by A1's `time_series` rather than a second hand-rolled query (D58). */
+function findPeriodOverPeriodTarget(tables: TableRegistryEntry[]): PeriodOverPeriodTarget | null {
+  for (const table of tables) {
+    const dateColumn = table.columns?.find((c) => c.semanticType === 'Temporal')?.name;
+    const metricColumn = table.columns?.find((c) => c.semanticType === 'Quantitative')?.name;
+    if (dateColumn && metricColumn) return { table, dateColumn, metricColumn };
+  }
+  return null;
+}
+
+function opResultToQueryResult(outcome: OpResult): QueryResult {
+  return {
+    columnNames: outcome.schema.map((field) => field.name),
+    columnTypes: outcome.schema.map((field) => field.type),
+    rows: outcome.rows,
+    rowCount: outcome.rowCount,
+    executionTimeMs: outcome.elapsedMs,
+  };
+}
+
+/**
+ * Period-over-period in the suggestion set (A2 leaf doc, D53 surface 4) —
+ * calls `time_series` directly rather than pre-building its SQL by hand, so
+ * this can never drift from what the operation itself computes. Clicking it
+ * adopts the result already in hand (Pin's own pattern) instead of re-running
+ * the query a second time.
+ */
+function PeriodOverPeriodRow({ target }: { target: PeriodOverPeriodTarget }) {
+  const [outcome, setOutcome] = useState<OpOutcome | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    analystCore()
+      .call('time_series', {
+        from: target.table.tableName,
+        dateColumn: target.dateColumn,
+        grain: 'month',
+        metrics: [{ fn: 'sum', column: target.metricColumn }],
+      })
+      .then((result) => {
+        if (!cancelled) setOutcome(result);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [target]);
+
+  if (!outcome || isOpError(outcome) || outcome.rows.length === 0 || !outcome.sql) return null;
+
+  const alias = outcome.schema[1]?.name ?? '';
+  const deltaIndex = outcome.schema.findIndex((field) => field.name === `${alias}_delta_pct`);
+  const gapIndex = outcome.schema.findIndex((field) => field.name === 'is_gap');
+  const latest = outcome.rows[outcome.rows.length - 1]!;
+  const delta = deltaIndex >= 0 ? (latest[deltaIndex] as number | null) : null;
+  const isGap = gapIndex >= 0 ? Boolean(latest[gapIndex]) : false;
+  const verb =
+    delta !== null && !isGap
+      ? `${target.metricColumn} by month — latest ${delta >= 0 ? '+' : ''}${delta.toFixed(1)}% vs. prior period`
+      : `${target.metricColumn} by month — period-over-period`;
+
+  return (
+    <button
+      type="button"
+      data-testid="exploration-period-over-period"
+      onClick={() =>
+        openQueryTab({
+          sql: outcome.sql!,
+          name: 'Period over period',
+          result: opResultToQueryResult(outcome),
+          resultSql: outcome.sql!,
+        })
+      }
+      className="flex w-full items-center justify-between gap-2 rounded-(--radius-md) border border-(--color-rule) px-3 py-2 text-left font-mono text-[length:var(--text-md)] text-(--color-ink-2) transition-colors hover:border-(--color-rule-hi) hover:text-(--color-ink)"
+    >
+      <span className="flex items-center gap-2">
+        <span aria-hidden="true" className="text-(--color-ink-3)">{'>_'}</span>
+        {verb}
+      </span>
+      <span aria-hidden="true">→</span>
+    </button>
+  );
+}
+
 function SuggestedExplorations({
   tables,
   tableInsights,
@@ -93,6 +184,7 @@ function SuggestedExplorations({
   const allActions = useMemo(() => rankNextActions(tables, tableInsights ?? []), [tables, tableInsights]);
   const actions = allActions.slice(0, EXPLORATIONS_SHOWN);
   const more = allActions.slice(EXPLORATIONS_SHOWN);
+  const periodTarget = useMemo(() => findPeriodOverPeriodTarget(tables), [tables]);
 
   return (
     <div
@@ -102,7 +194,7 @@ function SuggestedExplorations({
       <h3 className="font-mono text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.08em] text-(--color-ink-3)">
         Suggested Explorations
       </h3>
-      {actions.length === 0 ? (
+      {actions.length === 0 && !periodTarget ? (
         <p className="font-mono text-[length:var(--text-md)] text-(--color-ink-3)">No suggestions yet.</p>
       ) : (
         <div className="flex flex-col gap-1">
@@ -135,6 +227,7 @@ function SuggestedExplorations({
               </Tooltip>
             );
           })}
+          {periodTarget && <PeriodOverPeriodRow target={periodTarget} />}
         </div>
       )}
       {more.length > 0 && (

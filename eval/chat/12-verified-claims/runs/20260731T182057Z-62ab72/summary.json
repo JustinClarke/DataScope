@@ -1,0 +1,11 @@
+{
+  "runId": "20260731T182057Z-62ab72",
+  "parsed": 3,
+  "verified": 3,
+  "repeats": 3,
+  "acceptance": {
+    "parsedAtLeastTwo": true,
+    "verifiedAtLeastTwo": true
+  },
+  "verdict": "pass"
+}

@@ -1,0 +1,7 @@
+{"timestamp":"2026-08-01T17:45:41.035Z","sequence":1,"type":"run_started","runId":"20260801T174540Z-46f79f"}
+{"timestamp":"2026-08-01T17:45:41.039Z","sequence":2,"type":"model_resolved","runId":"20260801T174540Z-46f79f","tag":"qwen3:8b","digest":"500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41"}
+{"timestamp":"2026-08-01T17:45:41.044Z","sequence":3,"type":"fixture_loaded","runId":"20260801T174540Z-46f79f","fixtureIds":["customers","products","orders","order_items"],"offerCount":9}
+{"timestamp":"2026-08-01T17:45:41.070Z","sequence":4,"type":"sql_completed","runId":"20260801T174540Z-46f79f","questionId":"sales-presentation","probeId":"category-revenue","rowCount":6}
+{"timestamp":"2026-08-01T17:45:41.085Z","sequence":5,"type":"sql_completed","runId":"20260801T174540Z-46f79f","questionId":"sales-presentation","probeId":"category-quantity","rowCount":6}
+{"timestamp":"2026-08-01T17:46:32.516Z","sequence":6,"type":"question_terminal","runId":"20260801T174540Z-46f79f","questionId":"sales-presentation","disposition":"final_claim","displayed":true}
+{"timestamp":"2026-08-01T17:46:32.526Z","sequence":7,"type":"run_completed","runId":"20260801T174540Z-46f79f","verdict":"recorded"}

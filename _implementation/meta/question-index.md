@@ -25,7 +25,7 @@ Lives in `_implementation/meta/` alongside [`technical-overview.md`](technical-o
   - §19 Development Phases
 - Implementation reference: `../architecture/system-design.md`
 - Data flow: `../architecture/data-flow.md`
-- Decisions: `../architecture/decisions.md` (D1–D73 — settled; D73 amends D71's §13.3 shell)
+- Decisions: `../architecture/decisions.md` (D1–D74 — settled; D73 amends D71's §13.3 shell; D74 amends D38's MCP gate and D41's transcript rule)
 - ADRs (library/tool rationale — **mostly pending, not settled**): `../architecture/adr/*` (see §10a below)
 - App flow: `../architecture/app-flow.md`
 
@@ -158,7 +158,7 @@ When answering a question, the agent should:
   - `../../DATASCOPE.md` §13.3 (the drawer paragraphs), §10 Module 2, D73 — the standalone SQL tab is **deleted**; SQL is written in exactly one place, the **console** in the bottom drawer. Every surface that displays SQL gains a run action into it; keepers promote into **query tabs**. Build: `../build/14-workspace-streamline/README.md`, `../build/04-sql/README.md`.
 
 - What is in the bottom region — inspector or console?
-  - `../../DATASCOPE.md` §13.3, D73 — **both**, as two user-controlled views of one drawer: `Info` (the W7 inspector, unchanged, still "scent, not dashboard") and the SQL console. Exactly one console instance; results never auto-expand the drawer. Viewer mode gets Info only.
+  - `../../DATASCOPE.md` §13.3, D73 — **both**, as two user-controlled views of one drawer: `Info` (the W7 inspector, unchanged, still "scent, not dashboard") and the SQL console. Exactly one console instance; results never auto-expand the drawer. Viewer mode gets Info only. **As of v0.70 S6.5** (`../build/14-workspace-streamline/06.9-drawer-split-view.md`), the two views are a permanent split rather than a tab switch — console left, Info a clamped-width right sidebar, both visible whenever the drawer is open, collapsing back to the S3 tab switcher below a 900px drawer width.
 
 - What is a query tab / what finally uses the artifact tab kind?
   - `../../DATASCOPE.md` §13.3 (the tab-registry paragraph), D73 — the query tab is the artifact kind's first live member, with two producers (pin-from-console, or a chosen suggestion born pre-run), per-instance and never deduped. Registry: seven singletons → six + one artifact type. Build: `../build/12-workbench/04-tab-model-maturation.md`'s amendment note.
@@ -185,7 +185,13 @@ When answering a question, the agent should:
   - **An overlay modal** (D73, §13.3) — this rejects the earlier "Settings tab" line in favour of what the code ships (`AISettingsPanel`). Export is the opposite call: still a **tab**, with only its entry point moving to the title-bar cluster.
 
 - How do tabs remember state when I switch away?
-  - `../../DATASCOPE.md` §13.3, D71 — keep-mounted is the v0 norm; restore-from-spec is per-type opt-in; full tab-list serialization is deferred to the D61 hosted-tier round.
+  - `../../DATASCOPE.md` §13.3, D71 — keep-mounted is the v0 norm; restore-from-spec is per-type opt-in.
+  - **Amended 2026-07-29:** tab-list serialization is no longer deferred to the D61 hosted-tier round — v0.70 S6.9 persists `tabs`/`activeTabId` locally so the strip survives a refresh. Cross-device sync is still D39/D61's. `../build/14-workspace-streamline/07-workspace-persistence.md` scope call 6.
+
+- Does my workspace survive a refresh / where is my data stored on my machine?
+  - `../../DATASCOPE.md` §5.2 (the client-side-persistence bullet, amended 2026-07-29 at Revised(18)), §18 and §22's re-split criteria; `../build/14-workspace-streamline/07-workspace-persistence.md`.
+  - Short answer: yes, always on, no opt-in. Dataset **bytes** → OPFS; registry **metadata** (catalog, profiles, classifications, tabs, selection, relationship overrides) → `localStorage`; **rows never** reach `localStorage`/cookies. "Clear workspace data" empties both. **No egress claim changed** — OPFS is inside the browser; D2, D21, D23, D52 and D39/D61 are all untouched.
+  - Not everything is stored: sampled-tier files, API tables (`sourceUrl` re-fetch instead), derived tables (`generatingSql` replay) and D62 viewer sessions are not durable as bytes. On reload the engine is the source of truth and the registry is a claim — an unrecoverable table is shown as needing a re-drop, never as a queryable row.
 
 - Where is AI consent in the Workbench / where did the first-run chooser go?
   - `../../DATASCOPE.md` §5.1 (shell-conditional: the current shell keeps the chooser; the Workbench renders flat mode switches + "Configure workspace"), §5.2 (egress modes never persist across sessions), D2/D71; `../build/06-ai/02-modes-byok.md`.
@@ -257,6 +263,31 @@ When answering a question, the agent should:
   - `../../DATASCOPE.md` D53.
 
 ### 6) AI questions
+
+- What is the analyst layer / the operation catalog?
+  - `../../DATASCOPE.md` §11.5, §19 v0.71, D74.
+  - `../build/15-analyst-layer/README.md` (phases A0–A6).
+
+- Is MCP allowed? Over what data?
+  - **D74 amends D38.** The gate binds *transport reach*, not the protocol: in-process MCP
+    (`InMemoryTransport.createLinkedPair()`, both ends in the page) over browser-local data is
+    unrestricted; **any** process boundary — stdio, listener, relay, Streamable HTTP, companion —
+    re-arms D38's staging gate. `../architecture/decisions.md` D38 + D74.
+  - Stage A's shipped `/mcp` Worker route (shared DSPS artifacts) is separate and is **not**
+    extended into the analyst catalog: `../build/09-edge/`, `edge/handlers/mcp.ts`.
+
+- Can Claude Desktop / an external agent reach my dataset?
+  - Not today — **deferred, not blocked** (D74e). A tab cannot accept an inbound connection, so it
+    needs an outbound relay or a companion process owning its own engine. Both are D74b, both need
+    their own ADR. `../build/15-analyst-layer/05-mcp-server.md`.
+
+- Does the AI transcript persist?
+  - **Yes, locally, since D74g (amends D41).** Local-at-rest, **not egress** — the "nothing leaves
+    your browser" claim is unchanged. Ships with a clear-history control, no persistence in D62
+    viewer mode, and the D46 sensitivity caveat. `../foundations/privacy-model.md`, §5.2.
+
+- Why can the AI chat only run one query / show 20 rows today?
+  - Four shipped defects, verified 2026-08-02 — `../build/15-analyst-layer/04-tool-loop.md` (A4).
 
 - What are the three AI modes?
   - `../../DATASCOPE.md` §5.1, D2.
@@ -387,6 +418,12 @@ These document *what the decision must cover*, not a resolved answer — each AD
   - `../architecture/adr/008-sql-lint-parser.md` (pending; re-verify Appendix A's library survey first).
 - What is the Terraform layout and state backend?
   - `../architecture/adr/009-terraform-state-backend.md` (pending).
+- How does a workspace survive a refresh — where do dataset bytes actually live?
+  - `../architecture/adr/011-workspace-persistence-storage.md` (accepted 2026-07-29): staged
+    source bytes in OPFS written through a **worker** sync access handle, re-registered into a
+    still-in-memory engine on load. DuckDB is **not** opened against OPFS — it reopens read-only
+    whenever its WAL is empty at close. Phase detail:
+    `../build/14-workspace-streamline/07-workspace-persistence.md`; master §5.2 Revised(18).
 
 ### 9) Release, roadmap, and future direction
 
@@ -394,8 +431,10 @@ These document *what the decision must cover*, not a resolved answer — each AD
   - `../README.md`
   - `../../DATASCOPE.md` D15, §19.
 
-- What is the Studio arc?
-  - `../../DATASCOPE.md` D12, §19, §20.6, §20.8.
+- What is the Studio arc, and what's actually scheduled?
+  - `../../DATASCOPE.md` D12, §19, §20.6, §20.8. **Phases 7–8 cut to backlog 2026-08-02**
+    (D11/D14 amendments, Revised (19)) — only Phase 9 remains, itself already unscheduled.
+    Relationship-graph's preserved remainder: `../backlog/relationship-graph-erd-ideas.md`.
 
 - What is the Drift Report?
   - `../../DATASCOPE.md` D44.

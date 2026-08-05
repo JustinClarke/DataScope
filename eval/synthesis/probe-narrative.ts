@@ -108,7 +108,7 @@ async function callAiRouter(userPrompt: string): Promise<RouterOutcome> {
   }
   const body = (await res.json()) as AiRouterResponse;
   return {
-    text: body.turn.kind === 'text' ? body.turn.text : '(unexpected tool-call turn)',
+    text: body.turn.calls.length === 0 ? body.turn.text : '(unexpected tool-call turn)',
     servedBy: body.servedBy,
   };
 }

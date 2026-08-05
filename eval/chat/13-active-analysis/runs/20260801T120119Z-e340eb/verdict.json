@@ -1,0 +1,119 @@
+{
+  "checkpoint": 3,
+  "model": {
+    "tag": "qwen3:8b",
+    "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+    "quantizationLevel": "Q4_K_M",
+    "parameterSize": "8.2B",
+    "contextLength": 40960,
+    "capabilities": [
+      "completion",
+      "tools",
+      "thinking"
+    ]
+  },
+  "selectedMode": "thinking",
+  "records": [
+    {
+      "questionId": "understand-ecommerce",
+      "questionKind": "answerable",
+      "responseHash": "814375275c205d533a75d13918ecf5954becc14a4efdcfbfc44eccaff628163e",
+      "action": "request_probes",
+      "candidateIds": [
+        "join-coverage",
+        "table-missingness"
+      ],
+      "selectionSignature": "request_probes:join-coverage,table-missingness",
+      "parseError": null,
+      "doneReason": "stop"
+    },
+    {
+      "questionId": "sales-presentation",
+      "questionKind": "answerable",
+      "responseHash": "de7516eaf5089ad24b51df1c99d6949dc3a1b95bfafe7ae0584a212453af8600",
+      "action": "request_probes",
+      "candidateIds": [
+        "category-quantity",
+        "category-revenue"
+      ],
+      "selectionSignature": "request_probes:category-quantity,category-revenue",
+      "parseError": null,
+      "doneReason": "stop"
+    },
+    {
+      "questionId": "odd-sales-investigation",
+      "questionKind": "answerable",
+      "responseHash": "9b25904d5da4fbde84044ffccff00a6c41d66f60c7fd5a3bd55f7ad23a068c1f",
+      "action": "request_probes",
+      "candidateIds": [
+        "monthly-revenue",
+        "status-revenue"
+      ],
+      "selectionSignature": "request_probes:monthly-revenue,status-revenue",
+      "parseError": null,
+      "doneReason": "stop"
+    },
+    {
+      "questionId": "further-transforms",
+      "questionKind": "answerable",
+      "responseHash": "be24a963e386d9fc526c3a4e871ecec2cd1cd736dcded698d3f80ddb6938ae37",
+      "action": "request_probes",
+      "candidateIds": [
+        "country-orders",
+        "monthly-revenue"
+      ],
+      "selectionSignature": "request_probes:country-orders,monthly-revenue",
+      "parseError": null,
+      "doneReason": "stop"
+    },
+    {
+      "questionId": "causal-control",
+      "questionKind": "control",
+      "responseHash": "95fd4a01f160eca6783e87af9ce47498ceda3b2507b4511690b077ca6dc04e7c",
+      "action": "request_probes",
+      "candidateIds": [
+        "monthly-revenue"
+      ],
+      "selectionSignature": "request_probes:monthly-revenue",
+      "parseError": null,
+      "doneReason": "stop"
+    },
+    {
+      "questionId": "profit-control",
+      "questionKind": "control",
+      "responseHash": "b8f5e242aeef28a170d75e8a7f7404935a30fa96d5c79c930d47b6a1ff178eba",
+      "action": "request_probes",
+      "candidateIds": [
+        "category-revenue"
+      ],
+      "selectionSignature": "request_probes:category-revenue",
+      "parseError": null,
+      "doneReason": "stop"
+    },
+    {
+      "questionId": "demographic-control",
+      "questionKind": "control",
+      "responseHash": "42206b81b316a13af851ffe4b71c5e4659b078b6b6cac7e9be1618146331239c",
+      "action": "unsupported",
+      "candidateIds": null,
+      "selectionSignature": "unsupported",
+      "parseError": null,
+      "doneReason": "stop"
+    },
+    {
+      "questionId": "truncated-maximum-control",
+      "questionKind": "control",
+      "responseHash": "7d73d1b090c06229ab423e7ed9a3dad92138f2a1c68481790d6a3e88f1a70d8a",
+      "action": "unsupported",
+      "candidateIds": null,
+      "selectionSignature": "unsupported",
+      "parseError": null,
+      "doneReason": "stop"
+    }
+  ],
+  "responseHashCollapse": null,
+  "selectionCollapse": null,
+  "crossBoundaryCollision": null,
+  "blocked": false,
+  "passed": true
+}

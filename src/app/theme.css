@@ -333,6 +333,14 @@ body {
   outline-offset: 2px;
 }
 
+/* The empty SQL editor's placeholder line (S6.7). Monaco styles an
+ * `after`-content decoration through a global class name, so it cannot be a
+ * utility class on a component — it still reads the register's own tokens. */
+.sql-editor-placeholder {
+  color: var(--color-ink-3);
+  font-style: italic;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

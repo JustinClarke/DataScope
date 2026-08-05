@@ -320,7 +320,7 @@ computed numbers. A fact stating `84.15` will be narrated as "about 84" and reje
 rounding, ratio, and percentage conversion dies the same way, and kill criterion (c) (≤25%
 false-reject) fails on arithmetic rather than on anything about the mechanism.
 
-**Adopt 02's discipline exactly:** [`groundingCheck.ts`](../../../../eval/02-generate-then-verify/groundingCheck.ts)
+**Adopt 02's discipline exactly:** [`groundingCheck.ts`](../../../../eval/claude/02-generate-then-verify/groundingCheck.ts)
 already exports a `CLOSURE_RULES` array — an explicit, enumerated, logged list of what counts as
 derivable (numeric normalization, year extraction, date-span arithmetic, baseline carryover). 08
 extends that list for computed statistics; it does **not** substitute a fuzzy or tolerance-based
@@ -365,7 +365,7 @@ This design inverts the dynamic:
 
 ## What the citation check does NOT catch (observed live in 03, 2026-07-26)
 
-03's live run is **no longer blocked** — [`eval/03-clause-citation-binding/RESULTS.json`](../../../../eval/03-clause-citation-binding/RESULTS.json)
+03's live run is **no longer blocked** — [`eval/claude/03-clause-citation-binding/RESULTS.json`](../../../../eval/claude/03-clause-citation-binding/RESULTS.json)
 (2026-07-26, `qwen2.5-coder:14b`) records 25 runs: **22/25 served, 23/25 compliant**. Two served
 headlines show leaks that passed `checkCitation` cleanly, and 08 makes both *more* likely because it
 hands the model a far larger fact table and more room to editorialize:
@@ -388,7 +388,7 @@ false-reject rate. Report it as a limit of the mechanism; do not attempt to clos
 
 ## What to build
 
-1. **`eval/08-computed-facts/computeStats.ts`** — runs DuckDB queries against the sample CSVs to
+1. **`eval/claude/08-computed-facts/computeStats.ts`** — runs DuckDB queries against the sample CSVs to
    produce `ComputedFact[]` for each dataset. Pure SQL, deterministic, auditable. Reuses the
    existing DuckDB infrastructure in `eval/duckdb/`, and `correlationSql.ts` / `categoricalSql.ts`
    where they already generate the right query shape. Every function the fact table above needs
@@ -398,7 +398,7 @@ false-reject rate. Report it as a limit of the mechanism; do not attempt to clos
    [`arrowToQueryResult`](../../../../eval/duckdb/duckdb.ts) only unwraps BigInt at the top level —
    a nested one throws "Do not know how to serialize a BigInt". Avoid `histogram()` (it fails test 2
    anyway) or extend the converter first.
-2. **`eval/08-computed-facts/verifyStats.ts`** — recomputes every `ComputedFact` **by a second,
+2. **`eval/claude/08-computed-facts/verifyStats.ts`** — recomputes every `ComputedFact` **by a second,
    independent method** (a plain JS reduction over the raw rows) and asserts equality with the SQL
    result. Kill criterion (g) as written — "spot-check against a manual query" — is circular if the
    check reuses the SQL that produced the number. This runs before any model call and hard-fails the
@@ -407,31 +407,31 @@ false-reject rate. Report it as a limit of the mechanism; do not attempt to clos
    η², Cramér's V, Gini, Pareto share and the arithmetic-consistency check are assembled from
    several SQL pieces and are the realistic places for an off-by-one or a wrong denominator to hide,
    unlike `AVG` which is hard to get wrong.
-3. **`eval/08-computed-facts/closureRules.ts`** — the `derivableFrom` implementation, modelled on
-   [02's `CLOSURE_RULES`](../../../../eval/02-generate-then-verify/groundingCheck.ts): an enumerated,
+3. **`eval/claude/08-computed-facts/closureRules.ts`** — the `derivableFrom` implementation, modelled on
+   [02's `CLOSURE_RULES`](../../../../eval/claude/02-generate-then-verify/groundingCheck.ts): an enumerated,
    exported, logged list. Each claim is evaluated twice (strict / with closure) so the price of each
    rule is measured.
-4. **`eval/08-computed-facts/enrichedFacts.ts`** — merges computed stats with existing
+4. **`eval/claude/08-computed-facts/enrichedFacts.ts`** — merges computed stats with existing
    `buildCitableFacts` output into a unified fact table. Reuses `src/lib/citableFacts.ts`. Also
    selects the exemplar rows, and **asserts the inertness rule** (§1a): every value appearing in an
    exemplar row that is not also in some `ComputedFact`'s value set is reported, and the row is
    dropped rather than sent.
-5. **`eval/08-computed-facts/prompt.ts`** — builds the system + user prompt from the fact table +
+5. **`eval/claude/08-computed-facts/prompt.ts`** — builds the system + user prompt from the fact table +
    exemplar rows. Defines the JSON output schema. **Must set `options.num_ctx` explicitly on the
    Ollama call and record the token count of every prompt** (see Ollama run below).
-6. **`eval/08-computed-facts/sampleLeakCheck.ts`** — automates kill criterion (f). For each served
+6. **`eval/claude/08-computed-facts/sampleLeakCheck.ts`** — automates kill criterion (f). For each served
    claim, extract its stated values; flag any that appear in the exemplar rows' cell values but in
    no `ComputedFact` value set. At 5+ datasets × N=5 × 5 row conditions this is 125+ runs — hand
    audit alone does not scale, and (f) is the criterion that gates the whole row-sending premise.
-7. **`eval/08-computed-facts/run.ts`** — harness runner. Imports existing infrastructure (dataset
+7. **`eval/claude/08-computed-facts/run.ts`** — harness runner. Imports existing infrastructure (dataset
    loader, eval engine, `parseModelAnswer`-style parsing, seam validators) and follows 03's
    `run.ts` structure. Runs on Ollama with N=5 repeats. Takes its dataset list from the manifest,
    not a hardcoded five. **Includes a control arm:** 03's curated-facts condition runs in the same
    process, same session, so the comparison is same-rig and same-day rather than across two runs.
-8. **`eval/08-computed-facts/fixtures.test.ts`** — F1/F2/F3 as unit fixtures, mirroring
-   [03's](../../../../eval/03-clause-citation-binding/fixtures.test.ts). Kill criterion (a) runs here,
+8. **`eval/claude/08-computed-facts/fixtures.test.ts`** — F1/F2/F3 as unit fixtures, mirroring
+   [03's](../../../../eval/claude/03-clause-citation-binding/fixtures.test.ts). Kill criterion (a) runs here,
    before any live call.
-9. **`eval/08-computed-facts/RESULTS.json`** — output (new file, never overwrite existing). Records
+9. **`eval/claude/08-computed-facts/RESULTS.json`** — output (new file, never overwrite existing). Records
    per run: condition, prompt token count, `num_ctx`, rows sent vs rows available, raw model output,
    per-claim disposition under both check settings, the assembled headline, and the cited fact set.
    Also per dataset: fact count by `kind`, and the **mean and maximum value-set size** — the
@@ -647,9 +647,9 @@ ahead of the exhaustive-vs-curated and custody-tiering branches above.
 
 | Candidate | Relationship to 08 |
 | :--- | :--- |
-| **01 — Phrase library** | **Take `detectCapabilities`** ([`src/lib/datasetCapabilities.ts`](../../../../src/lib/datasetCapabilities.ts), product code) as a fact source — it supplies the "well-suited for" clause of §4's target narrative, which no statistic reaches. 01's 16% serve rate was a *coverage* failure, not a correctness one, and inside 08 the key costs nothing. **Leave the hand-authored phrasings** ([`capabilityPhrases.ts`](../../../../eval/01-phrase-library/capabilityPhrases.ts)) — that is 01's R5 authoring burden, and 08's premise is that the model does the wording. |
+| **01 — Phrase library** | **Take `detectCapabilities`** ([`src/lib/datasetCapabilities.ts`](../../../../src/lib/datasetCapabilities.ts), product code) as a fact source — it supplies the "well-suited for" clause of §4's target narrative, which no statistic reaches. 01's 16% serve rate was a *coverage* failure, not a correctness one, and inside 08 the key costs nothing. **Leave the hand-authored phrasings** ([`capabilityPhrases.ts`](../../../../eval/claude/01-phrase-library/capabilityPhrases.ts)) — that is 01's R5 authoring burden, and 08's premise is that the model does the wording. |
 | **02 — Generate then verify** | **Take the `CLOSURE_RULES` discipline** — an enumerated, exported, logged list of what counts as derivable, whose length is reported as a result. This is `derivableFrom`, which 08 must build (§4). **Leave the global token check**: it validates against the whole payload rather than one fact, which is exactly why it cannot catch F1 misattribution. |
-| **03 — Clause citation binding** | 08 **extends** 03, not replaces it. Same citation mechanism, imported unchanged, richer fact set. 03's live run is **complete** ([RESULTS.json](../../../../eval/03-clause-citation-binding/RESULTS.json), 2026-07-26: 22/25 served, 23/25 compliant), so the check is known to work and known to be obeyed — 08's open question is narrowed to whether a richer *input* improves reach without costing determinism or leaking through the row sample. 03 also runs as 08's control arm, same rig, same session. |
+| **03 — Clause citation binding** | 08 **extends** 03, not replaces it. Same citation mechanism, imported unchanged, richer fact set. 03's live run is **complete** ([RESULTS.json](../../../../eval/claude/03-clause-citation-binding/RESULTS.json), 2026-07-26: 22/25 served, 23/25 compliant), so the check is known to work and known to be obeyed — 08's open question is narrowed to whether a richer *input* improves reach without costing determinism or leaking through the row sample. 03 also runs as 08's control arm, same rig, same session. |
 | **04 — Model as editor** | 08's fail-safe is the same as 04's: degrade to the deterministic baseline. But 08 lets the model originate prose (within citations), not just smooth existing text, so R3 reach should be higher. |
 | **05 — Offers not claims** | Orthogonal. 08 could coexist with 05: compute-grounded claims in the headline, offer-style suggestions in the action list. |
 | **06 — Schema-constrained slots** | If Ollama supports it, 06's constrained decoding could be applied to 08's JSON output shape — making the `cites` field's enum the set of valid fact ids at decode time. Worth testing as a follow-on. |
@@ -675,7 +675,7 @@ compliant). Run every sample with N=5.
 **`num_ctx` must be set explicitly, and this is not optional here.** The rig reports
 `qwen2.context_length = 32768`, but `/api/show` returns **no `parameters` block**, so Ollama applies
 its own default context rather than the model's maximum — and
-[03's `callOllama`](../../../../eval/03-clause-citation-binding/run.ts) sends no `options` at all. That
+[03's `callOllama`](../../../../eval/claude/03-clause-citation-binding/run.ts) sends no `options` at all. That
 was harmless for 03, whose prompts were a handful of facts; for 08 it is fatal. A prompt carrying
 computed facts plus hundreds of rows would be **silently truncated**, and every row-ladder cell above
 the default would measure truncation rather than grounding.

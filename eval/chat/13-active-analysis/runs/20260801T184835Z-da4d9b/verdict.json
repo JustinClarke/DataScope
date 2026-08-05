@@ -1,0 +1,276 @@
+{
+  "arm": "B-active",
+  "checkpoint": 5,
+  "model": {
+    "tag": "qwen3:8b",
+    "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+    "quantizationLevel": "Q4_K_M",
+    "parameterSize": "8.2B",
+    "contextLength": 40960,
+    "capabilities": [
+      "completion",
+      "tools",
+      "thinking"
+    ]
+  },
+  "selectedMode": "thinking",
+  "budgets": {
+    "maxRounds": 2,
+    "maxProbesPerRound": 2,
+    "maxProbesTotal": 4,
+    "maxRowsPerPacket": 12,
+    "maxPacketsInContext": 8
+  },
+  "repeats": 2,
+  "seed": "harness-validation",
+  "repeatIsolatedCache": true,
+  "records": [
+    {
+      "questionId": "sales-presentation",
+      "questionKind": "answerable",
+      "repeat": 1,
+      "transportFailure": null,
+      "turns": [
+        {
+          "turn": 1,
+          "action": "request_probes",
+          "candidateIds": [
+            "monthly-revenue",
+            "average-order-value"
+          ],
+          "responseHash": "d669795f05b3f6d1d25cdf93995dd780d430101bc0099cc548463f318fb7ff3b",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 1961,
+          "responseTokens": 19,
+          "estimatedResponseTokens": 385
+        },
+        {
+          "turn": 2,
+          "action": "request_probes",
+          "candidateIds": [
+            "category-revenue",
+            "status-revenue"
+          ],
+          "responseHash": "21e7d6e3942e9e2dd28c31eaed33a1b80fb6b2a50963c831cbb8eaaf334b35c0",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 1935,
+          "responseTokens": 19,
+          "estimatedResponseTokens": 611
+        },
+        {
+          "turn": 3,
+          "action": "final_claim",
+          "candidateIds": null,
+          "responseHash": "35c3fc42a3fdde7c476ef4daddfe95ea53080b1b274b42b300f7a6766dad5ec7",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 2298,
+          "responseTokens": 84,
+          "estimatedResponseTokens": 743
+        }
+      ],
+      "executedCandidateIds": [
+        "monthly-revenue",
+        "average-order-value",
+        "category-revenue",
+        "status-revenue"
+      ],
+      "probeRejections": [],
+      "disposition": {
+        "kind": "final_claim",
+        "claim": {
+          "kind": "extremum",
+          "subject": {
+            "evidenceId": "evidence:category-revenue",
+            "rowId": "r2",
+            "field": "value"
+          },
+          "operator": "maximum",
+          "scope": {
+            "evidenceId": "evidence:category-revenue",
+            "rowIds": [
+              "r1",
+              "r2",
+              "r3",
+              "r4",
+              "r5",
+              "r6"
+            ]
+          }
+        },
+        "fact": {
+          "kind": "extremum",
+          "operator": "maximum",
+          "subject": "Books",
+          "object": "maximum in evidence:category-revenue",
+          "leftValue": 507332.51,
+          "rightValue": 507332.51,
+          "unit": "USD"
+        },
+        "rendered": "Books (507,332.51 USD) was the maximum across products.category for the complete evidence scope."
+      },
+      "rendered": "Books (507,332.51 USD) was the maximum across products.category for the complete evidence scope.",
+      "tokens": {
+        "calls": 3,
+        "totalPromptTokens": 6194,
+        "totalResponseTokens": 1739,
+        "callHighWaterPromptTokens": 2298
+      },
+      "requestedQuestionRelevance": [
+        {
+          "candidateId": "monthly-revenue",
+          "questionRelevance": [
+            "understand-ecommerce",
+            "odd-sales-investigation",
+            "further-transforms"
+          ]
+        },
+        {
+          "candidateId": "average-order-value",
+          "questionRelevance": [
+            "understand-ecommerce"
+          ]
+        },
+        {
+          "candidateId": "category-revenue",
+          "questionRelevance": [
+            "sales-presentation"
+          ]
+        },
+        {
+          "candidateId": "status-revenue",
+          "questionRelevance": [
+            "odd-sales-investigation"
+          ]
+        }
+      ],
+      "durationMs": 115357
+    },
+    {
+      "questionId": "sales-presentation",
+      "questionKind": "answerable",
+      "repeat": 2,
+      "transportFailure": null,
+      "turns": [
+        {
+          "turn": 1,
+          "action": "request_probes",
+          "candidateIds": [
+            "monthly-revenue",
+            "average-order-value"
+          ],
+          "responseHash": "d669795f05b3f6d1d25cdf93995dd780d430101bc0099cc548463f318fb7ff3b",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 2037,
+          "responseTokens": 19,
+          "estimatedResponseTokens": 468
+        },
+        {
+          "turn": 2,
+          "action": "request_probes",
+          "candidateIds": [
+            "category-revenue",
+            "largest-monthly-change"
+          ],
+          "responseHash": "192a935b30de8eb332576a405995d51d8601b2f740448b1bb7370b5d2c89bbda",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 1697,
+          "responseTokens": 21,
+          "estimatedResponseTokens": 352
+        },
+        {
+          "turn": 3,
+          "action": "final_claim",
+          "candidateIds": null,
+          "responseHash": "92ccd31e474d88daae39999cf78c9a132123f0a8d6ef464dcba0d9231980c290",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 3024,
+          "responseTokens": 67,
+          "estimatedResponseTokens": 1138
+        }
+      ],
+      "executedCandidateIds": [
+        "monthly-revenue",
+        "average-order-value",
+        "category-revenue",
+        "largest-monthly-change"
+      ],
+      "probeRejections": [],
+      "disposition": {
+        "kind": "final_claim",
+        "claim": {
+          "kind": "comparison",
+          "left": {
+            "evidenceId": "evidence:category-revenue",
+            "rowId": "r2",
+            "field": "value"
+          },
+          "operator": "greater_than",
+          "right": {
+            "evidenceId": "evidence:category-revenue",
+            "rowId": "r3",
+            "field": "value"
+          }
+        },
+        "fact": {
+          "kind": "comparison",
+          "operator": "greater_than",
+          "subject": "Books",
+          "object": "Electronics",
+          "leftValue": 507332.51,
+          "rightValue": 343403.72,
+          "unit": "USD"
+        },
+        "rendered": "Books (507,332.51 USD) was greater than Electronics (343,403.72 USD)."
+      },
+      "rendered": "Books (507,332.51 USD) was greater than Electronics (343,403.72 USD).",
+      "tokens": {
+        "calls": 3,
+        "totalPromptTokens": 6758,
+        "totalResponseTokens": 1958,
+        "callHighWaterPromptTokens": 3024
+      },
+      "requestedQuestionRelevance": [
+        {
+          "candidateId": "monthly-revenue",
+          "questionRelevance": [
+            "understand-ecommerce",
+            "odd-sales-investigation",
+            "further-transforms"
+          ]
+        },
+        {
+          "candidateId": "average-order-value",
+          "questionRelevance": [
+            "understand-ecommerce"
+          ]
+        },
+        {
+          "candidateId": "category-revenue",
+          "questionRelevance": [
+            "sales-presentation"
+          ]
+        },
+        {
+          "candidateId": "largest-monthly-change",
+          "questionRelevance": [
+            "odd-sales-investigation"
+          ]
+        }
+      ],
+      "durationMs": 112914
+    }
+  ],
+  "turn1DiversityScreen": null
+}

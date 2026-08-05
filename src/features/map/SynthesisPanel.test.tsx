@@ -5,10 +5,11 @@ import type { InsightCandidate, TableInsights } from '../../lib/insights';
 import type { ClassifiedColumn, FactRef, SemanticType, TableRegistryEntry } from '../../types';
 import type { SidebarModule } from '../../stores/ui';
 
-const { openDestinationMock, isDestinationReadyMock, openQueryTabMock, actualRef } = vi.hoisted(() => ({
+const { openDestinationMock, isDestinationReadyMock, openQueryTabMock, analystCoreMock, actualRef } = vi.hoisted(() => ({
   openDestinationMock: vi.fn(),
   isDestinationReadyMock: vi.fn<(module: SidebarModule) => boolean>(),
   openQueryTabMock: vi.fn(),
+  analystCoreMock: vi.fn(),
   actualRef: {} as { isDestinationReady: (module: SidebarModule) => boolean },
 }));
 vi.mock('../../services/navigation', async () => {
@@ -17,6 +18,10 @@ vi.mock('../../services/navigation', async () => {
   return { ...actual, openDestination: openDestinationMock, isDestinationReady: isDestinationReadyMock };
 });
 vi.mock('../../services/queryTabs', () => ({ openQueryTab: openQueryTabMock }));
+// A2's period-over-period suggestion calls `time_series` directly — mocked
+// the same way DistributionModule.test.tsx mocks the analyst core, so a
+// richly-columned fixture never reaches the real DuckDB-Wasm engine.
+vi.mock('../../services/analyst', () => ({ analystCore: analystCoreMock }));
 
 function col(semanticType: SemanticType, name: string): ClassifiedColumn {
   return {
@@ -76,6 +81,9 @@ describe('SynthesisPanel', () => {
     isDestinationReadyMock.mockReset();
     isDestinationReadyMock.mockImplementation(actualRef.isDestinationReady);
     openQueryTabMock.mockReset();
+    analystCoreMock.mockReset().mockReturnValue({
+      call: vi.fn().mockResolvedValue({ ok: false, code: 'sql_error', message: 'unavailable in test' }),
+    });
   });
 
   it('shows the deterministic baseline headline when no AI upgrade has landed', () => {
@@ -238,5 +246,70 @@ describe('SynthesisPanel', () => {
     );
     expect(getByTestId('structural-patterns').textContent).toContain('No findings yet.');
     expect(getByTestId('behavioral-trends').textContent).toContain('No findings yet.');
+  });
+
+  describe('period-over-period suggestion (A2, D53 surface 4)', () => {
+    const richMetrics = table('c', 'metrics', [col('Quantitative', 'amount'), col('Temporal', 'order_date')], 500);
+    const richTables = [orders, regions, richMetrics];
+
+    const TIME_SERIES_OUTCOME = {
+      op: 'time_series',
+      sql: 'SELECT period, sum_amount, is_gap, sum_amount_delta_pct FROM (…) ORDER BY period',
+      resultId: null,
+      schema: [
+        { name: 'period', type: 'TIMESTAMP' },
+        { name: 'sum_amount', type: 'DOUBLE' },
+        { name: 'is_gap', type: 'BOOLEAN' },
+        { name: 'sum_amount_delta_pct', type: 'DOUBLE' },
+      ],
+      rowCount: 2,
+      rows: [
+        [new Date('2026-06-01'), 100, false, null],
+        [new Date('2026-07-01'), 120, false, 20],
+      ],
+      complete: true,
+      nextOffset: null,
+      elapsedMs: 1,
+    };
+
+    it('calls time_series for a table offering a Temporal + Quantitative pair, and adopts its result on click', async () => {
+      const callMock = vi.fn().mockResolvedValue(TIME_SERIES_OUTCOME);
+      analystCoreMock.mockReturnValue({ call: callMock });
+
+      const { findByTestId } = render(
+        <SynthesisPanel tables={richTables} tableInsights={[]} baseline={baseline} headlineFact={null} paused={false} />,
+      );
+
+      const row = await findByTestId('exploration-period-over-period');
+      expect(callMock).toHaveBeenCalledWith('time_series', {
+        from: 'metrics',
+        dateColumn: 'order_date',
+        grain: 'month',
+        metrics: [{ fn: 'sum', column: 'amount' }],
+      });
+      expect(row.textContent).toContain('+20.0%');
+
+      fireEvent.click(row);
+      expect(openQueryTabMock).toHaveBeenCalledWith({
+        sql: TIME_SERIES_OUTCOME.sql,
+        name: 'Period over period',
+        result: {
+          columnNames: ['period', 'sum_amount', 'is_gap', 'sum_amount_delta_pct'],
+          columnTypes: ['TIMESTAMP', 'DOUBLE', 'BOOLEAN', 'DOUBLE'],
+          rows: TIME_SERIES_OUTCOME.rows,
+          rowCount: 2,
+          executionTimeMs: 1,
+        },
+        resultSql: TIME_SERIES_OUTCOME.sql,
+      });
+    });
+
+    it('never calls time_series when no table offers a Temporal + Quantitative pair', () => {
+      const callMock = vi.fn().mockResolvedValue({ ok: false, code: 'sql_error', message: 'n/a' });
+      analystCoreMock.mockReturnValue({ call: callMock });
+
+      render(<SynthesisPanel tables={tables} tableInsights={[]} baseline={baseline} headlineFact={null} paused={false} />);
+      expect(callMock).not.toHaveBeenCalledWith('time_series', expect.anything());
+    });
   });
 });

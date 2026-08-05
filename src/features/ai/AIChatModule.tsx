@@ -19,7 +19,8 @@ import { useVaultStore } from '../../stores/vault';
 import { useWebLLMStore } from '../../stores/webllm';
 import { askAI } from '../../services/ai';
 import { resolveProvider } from '../../services/aiProvider';
-import { runChartQuery } from '../../services/charts';
+import { analystCore } from '../../services/analyst';
+import { analystMcpSession } from '../../services/analystMcp';
 import { isOllamaEndpoint } from '../../services/ollamaProvider';
 import type { AITurn, TableRegistryEntry } from '../../types';
 import type { CloudProviderConfig } from '../../services/cloudProvider';
@@ -142,7 +143,19 @@ export function AIChatModule() {
         overflowBaseUrl: overflowProvider !== undefined ? (byokKey ?? undefined) : undefined,
         tables,
         edges,
-        runSql: (sql) => runChartQuery(sql),
+        // A4: the chat executes through the analyst core, not `runChartQuery`.
+        // `runChartQuery` takes no signal at all, so the abort wiring below used
+        // to cancel the *provider* and leave the query running to completion in
+        // the worker while the UI reported it cancelled. The core's one
+        // cancellation path reaches the engine — and its catalog seam is
+        // `services/transforms.ts`, the same function the SQL console's guarded
+        // run path calls, so no AI route can grow around the guard (A3/D73).
+        //
+        // A5: and it reaches the core over MCP. The chat is an ordinary MCP
+        // host — it discovers the catalog rather than declaring it — so this
+        // pane sees exactly what an external agent would.
+        session: await analystMcpSession(),
+        core: analystCore(),
         metadataOnlyRepair,
         signal: controller.signal,
       });

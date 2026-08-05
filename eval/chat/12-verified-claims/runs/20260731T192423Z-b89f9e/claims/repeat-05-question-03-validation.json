@@ -1,0 +1,14 @@
+{
+  "repeat": 5,
+  "questionId": "odd-sales-investigation",
+  "questionKind": "answerable",
+  "firstPassValid": true,
+  "repaired": false,
+  "proposal": {
+    "disposition": "unsupported",
+    "reason": "causal_inference"
+  },
+  "verification": null,
+  "renderedSentence": null,
+  "disposition": "answerable_unsupported"
+}

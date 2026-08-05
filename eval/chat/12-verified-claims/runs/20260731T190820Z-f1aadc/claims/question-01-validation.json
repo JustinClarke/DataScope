@@ -1,0 +1,56 @@
+[
+  {
+    "claim": {
+      "kind": "threshold",
+      "subject": {
+        "evidenceId": "evidence:completed-aov",
+        "rowId": "r1",
+        "field": "value"
+      },
+      "operator": "above",
+      "threshold": 0
+    },
+    "result": {
+      "accepted": true,
+      "fact": {
+        "kind": "threshold",
+        "operator": "above",
+        "subject": "sum of order_items.quantity multiplied by order_items.unit_price divided by distinct count of order_items.order_id for orders.status equals completed",
+        "object": "declared threshold",
+        "leftValue": 1337.35,
+        "rightValue": 0,
+        "unit": "USD/order"
+      }
+    },
+    "renderedSentence": "sum of order_items.quantity multiplied by order_items.unit_price divided by distinct count of order_items.order_id for orders.status equals completed (1,337.35 USD/order) was above the threshold 0 USD/order."
+  },
+  {
+    "claim": {
+      "kind": "change",
+      "from": {
+        "evidenceId": "evidence:monthly-revenue",
+        "rowId": "r1",
+        "field": "value"
+      },
+      "to": {
+        "evidenceId": "evidence:monthly-revenue",
+        "rowId": "r2",
+        "field": "value"
+      },
+      "operator": "increase"
+    },
+    "result": {
+      "accepted": true,
+      "fact": {
+        "kind": "change",
+        "operator": "increase",
+        "subject": "2022-01-01",
+        "object": "2021-12-01",
+        "leftValue": 68970.39,
+        "rightValue": 3745.01,
+        "unit": "USD"
+      }
+    },
+    "renderedSentence": "2022-01-01 was a verified increase from 2021-12-01: 3,745.01 USD to 68,970.39 USD."
+  }
+]

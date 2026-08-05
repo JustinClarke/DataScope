@@ -1,0 +1,10 @@
+{"timestamp":"2026-07-31T19:08:20.184Z","sequence":1,"type":"run_started","runId":"20260731T190820Z-f1aadc"}
+{"timestamp":"2026-07-31T19:08:20.800Z","sequence":2,"type":"fixture_loaded","runId":"20260731T190820Z-f1aadc","fixtureIds":["orders","order_items"]}
+{"timestamp":"2026-07-31T19:08:20.815Z","sequence":3,"type":"typed_plan_accepted","runId":"20260731T190820Z-f1aadc","questionId":"question-01","probeCount":2}
+{"timestamp":"2026-07-31T19:08:20.860Z","sequence":4,"type":"sql_compiled","runId":"20260731T190820Z-f1aadc","questionId":"question-01","probeId":"completed-aov"}
+{"timestamp":"2026-07-31T19:08:20.869Z","sequence":5,"type":"sql_completed","runId":"20260731T190820Z-f1aadc","questionId":"question-01","probeId":"completed-aov","rowCount":1}
+{"timestamp":"2026-07-31T19:08:20.889Z","sequence":6,"type":"sql_compiled","runId":"20260731T190820Z-f1aadc","questionId":"question-01","probeId":"monthly-revenue"}
+{"timestamp":"2026-07-31T19:08:20.899Z","sequence":7,"type":"sql_completed","runId":"20260731T190820Z-f1aadc","questionId":"question-01","probeId":"monthly-revenue","rowCount":37}
+{"timestamp":"2026-07-31T19:08:20.937Z","sequence":8,"type":"claim_accepted","runId":"20260731T190820Z-f1aadc","questionId":"question-01","disposition":"verified"}
+{"timestamp":"2026-07-31T19:08:20.940Z","sequence":9,"type":"claim_accepted","runId":"20260731T190820Z-f1aadc","questionId":"question-01","disposition":"verified"}
+{"timestamp":"2026-07-31T19:08:20.948Z","sequence":10,"type":"run_completed","runId":"20260731T190820Z-f1aadc","verdict":"recorded"}

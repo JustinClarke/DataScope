@@ -1,5 +1,5 @@
 import type * as arrow from 'apache-arrow';
-import { Decimal, util } from 'apache-arrow';
+import { DataType, util } from 'apache-arrow';
 import type { QueryResult } from '../types';
 
 const MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
@@ -22,7 +22,14 @@ function bigintToCell(value: bigint): number | string {
  * first (`util.bigNumToNumber`'s own scale-aware path).
  */
 function bigNumToCell(value: Uint32Array, type: arrow.DataType | undefined): number | string {
-  if (type instanceof Decimal) {
+  // `DataType.isDecimal` compares Arrow's own `typeId`, not class identity.
+  // `type instanceof Decimal` is the obvious spelling and it is wrong here:
+  // apache-arrow ships dual ESM/CJS builds, so a DuckDB result carrying a
+  // `Decimal` from one build fails `instanceof` against the other and the
+  // value silently falls through to the unscaled-integer path — a DECIMAL(9,2)
+  // of 25.00 rendering as 2500, with no error anywhere. Caught by A0's
+  // two-engine conformance suite (`eval/analyst/conformance.test.ts`).
+  if (DataType.isDecimal(type)) {
     return util.bigNumToNumber(
       value as unknown as Parameters<typeof util.bigNumToNumber>[0],
       type.scale,

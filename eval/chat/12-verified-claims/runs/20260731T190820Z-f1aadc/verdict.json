@@ -1,0 +1,12 @@
+{
+  "phase": 3,
+  "modelCalls": 0,
+  "plansPersisted": 1,
+  "sqlArtifactsPersisted": 2,
+  "evidenceArtifactsPersisted": 2,
+  "claimsPersisted": 2,
+  "verifiedFacts": 2,
+  "renderedSentences": 2,
+  "modelAuthoredLabels": 0,
+  "passed": true
+}

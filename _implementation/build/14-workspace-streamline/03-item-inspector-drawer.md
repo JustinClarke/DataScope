@@ -29,6 +29,13 @@ tabbed, and a split adds a second layout axis (a within-drawer ratio) on top of 
 this phase already introduces. The single-console invariant is unaffected either way: there is
 exactly one console instance regardless of how many ways there are to look at it.
 
+> **Superseded by S6.5** ([`06.9-drawer-split-view.md`](06.9-drawer-split-view.md), 2026-07-28) —
+> and superseded *on this call's own reasoning*, not overridden. The "second layout axis" objection
+> is answered by **removing the axis**: Info becomes a clamped fixed-width right sidebar
+> (`INFO_PANE_WIDTH`), not a draggable ratio, so the split adds one scalar rather than a ratio. The
+> single-console invariant is unaffected, as this call already said it would be. Master §13.3 now
+> records the console-left ordering.
+
 **2. The drawer's geometry is session state in a store, not component state.** `useExplorerWidth`
 (`WorkbenchShell.tsx`, built ad hoc 2026-07-28) keeps the rail's width in local state and resets
 it on reload; the drawer's *height* follows that no-persist precedent, but its `open`/`view`/
@@ -48,6 +55,12 @@ transform guard mounted per-surface, `QuerySuggestions`, and the export-recipe/a
 Download-Parquet affordances all stay exactly as they are. S4 restructures the run path; S5
 deletes the standalone tab and re-homes the affordances; S6 moves `QuerySuggestions` to the map.
 
+> **Amended by S6.5** ([`06.9-drawer-split-view.md`](06.9-drawer-split-view.md), 2026-07-28) —
+> `SqlModule`'s *behaviour* stays unchanged (run path, guard, affordances), but its **internal
+> composition does not**: its body becomes a fixed three-region column (editor / toolbar /
+> results-with-its-own-scroll) instead of a single vertical scroll, and `QuerySuggestions` is not
+> rendered in the console. S6.5 owns that removal if S6 has not closed first.
+
 **5. The `'sql'` tab still exists through S3, and the overlap is accepted deliberately.** For one
 phase the app can have both a `sql` tab and a drawer console mounted. They share the singleton
 `useQueryStore`, so they show the same buffer and the same results — annoying to look at, not
@@ -64,6 +77,16 @@ control is clicked or a caller activates the console programmatically. Once acti
 mounted — `hidden`, never unmounted — across view switches and collapse, so the buffer, results
 and history survive, matching `TabHost`'s keep-mounted contract.
 
+> **Superseded by a closed human decision (2026-07-28), carried by S6.5**
+> ([`06.9-drawer-split-view.md`](06.9-drawer-split-view.md)) — **Monaco loads whenever the drawer
+> opens.** Under a permanent split the console is visible whenever the drawer is, so a cold pane
+> occupying the left half of every open drawer is worse than the chunk; `consoleActivated` and the
+> cold pane are retired, and the `view === 'console'` half of the activation semantics has no
+> referent. §13.3's hard requirement is unaffected — Monaco is still never in the module graph at
+> shell mount. Recorded as a closed decision with its date, not an oversight.
+> `activateConsole()` is redefined in S6.5 (open + restore `infoWidth` to its clamp + scroll the
+> results region into view).
+
 **7. Results never auto-expand, and the prompt's rule is a row count, not a measurement.** When a
 successful result has more rows than the unexpanded drawer can show, the console renders a
 "**N rows — click to expand**" control that sets the expanded state; nothing about a result ever
@@ -72,12 +95,26 @@ rather than a measured overflow: a `ResizeObserver` on the grid would be a more 
 a question whose accepted trade — "a big result is two gestures away, not zero" — does not depend
 on the accuracy.
 
+> **Stands.** S6.5 ([`06.9-drawer-split-view.md`](06.9-drawer-split-view.md), 2026-07-28) does not
+> reopen the row-count constant. It does fix `expanded`'s **implementation**, which shipped setting
+> `100svh` on a `shrink-0` element and therefore pushes the WebLLM dock and status bar off-screen,
+> and scopes the expansion to the console pane so the extra height reaches the results region.
+
 **8. Selection opens the drawer and selects Info, exactly as §13.3 states.** Any selection change
 (table, column, edge) opens the drawer if collapsed and switches the view to Info — including when
 the user was looking at the console. This is master's decided behaviour and is followed rather
 than softened; the cost (a rail click pulls you off a console you were reading) is real, and the
 console's state survives it intact per scope call 6, so the return trip is one click with nothing
 lost. Flagged here rather than quietly hedged.
+
+> **Half stands, amended by S6.5** ([`06.9-drawer-split-view.md`](06.9-drawer-split-view.md),
+> 2026-07-28). The **open** clause stands — it is §13.3's decided behaviour and S6.5 does not
+> reverse it. The **switch to Info** clause has no referent once both panes are permanent, and is
+> replaced by **Info's scroll reset plus a brief non-animated attention treatment on its header**
+> (~400ms, `--color-active`, no focus steal). The re-open cost above is **re-recorded at its new
+> weight** in S6.5: the drawer that a selection forces open now carries a mounted Monaco, and on the
+> session's first selection a ~925 KB chunk fetch — so re-open after a user collapse restores the
+> last geometry rather than defaults, and the collapse control names what will re-open it.
 
 **9. Info gains its rung-2 → rung-3 links, and nothing else.** §13.3 makes Info "never a dead end":
 click-through from any Info content opens the full tab. Table → **Open table** (opens the profile
@@ -94,11 +131,22 @@ would make the scratchpad untrustworthy. Into a console that has never been open
 nothing to lose, and the seed is the difference between landing on an empty editor and landing on
 a runnable query.
 
+> **Both stand unchanged** under S6.5 ([`06.9-drawer-split-view.md`](06.9-drawer-split-view.md),
+> 2026-07-28), with one clarification so the call does not read as dangling: "Open table" still
+> calls `activateConsole()`, but with both panes always shown that call **becomes a no-op on
+> visibility** — it retains its seeding and results-into-view semantics, not a view switch.
+
 **11. Viewer mode needs no code, only a test.** `ViewerMode.tsx` renders its own
 `data-region="inspector"` (a `RelationshipsList`) and never mounts `Inspector`, so the D62
 consumption-only absence §13.3 requires is already structural. This leaf adds the assertion that
 keeps it that way rather than a `viewerMode` branch inside the drawer — a conditional would be a
 second place for the console to leak into a session that must not have one.
+
+> **Stands.** S6.5 ([`06.9-drawer-split-view.md`](06.9-drawer-split-view.md), 2026-07-28) restates
+> this call verbatim as inherited-unchanged and adds the explicit negative it now needs: a permanent
+> split makes §13.3's "Info only, no console" a *layout* claim as well as a mount claim, which
+> invites exactly the branch this call refused — so **S6.5 introduces no `viewerMode` conditional
+> inside the drawer**, and asserts viewer mode renders no split, no splitter and no console pane.
 
 **12. No keyboard shortcut for the drawer.** VS Code's ⌘J is not in D73 or §13.3, and the palette
 (W5) already reaches feature homes. Not built; a fair follow-up.

@@ -1,0 +1,26 @@
+{
+  "provenance": "predeclared-hand-authored-phase-5",
+  "questionId": "demographic-control",
+  "repeat": 1,
+  "question": "Which customer age group generated the most revenue?",
+  "plans": [
+    {
+      "id": "country-orders",
+      "metric": {
+        "kind": "count_distinct",
+        "column": {
+          "table": "orders",
+          "column": "order_id"
+        }
+      },
+      "dimension": {
+        "column": {
+          "table": "customers",
+          "column": "country"
+        }
+      },
+      "filters": [],
+      "maxRows": 100
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "provenance": "hand-authored-phase-3",
+  "claims": [
+    {
+      "kind": "threshold",
+      "subject": {
+        "evidenceId": "evidence:completed-aov",
+        "rowId": "r1",
+        "field": "value"
+      },
+      "operator": "above",
+      "threshold": 0
+    },
+    {
+      "kind": "change",
+      "from": {
+        "evidenceId": "evidence:monthly-revenue",
+        "rowId": "r1",
+        "field": "value"
+      },
+      "to": {
+        "evidenceId": "evidence:monthly-revenue",
+        "rowId": "r2",
+        "field": "value"
+      },
+      "operator": "increase"
+    }
+  ]
+}

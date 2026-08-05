@@ -1,37 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor, fireEvent, within } from '@testing-library/react';
+import { act, render, waitFor, fireEvent, within } from '@testing-library/react';
 import { SqlModule } from './SqlModule';
-import { useQueryStore, CONSOLE_SESSION } from '../../stores/query';
+import { useQueryStore, getSession, CONSOLE_SESSION } from '../../stores/query';
 import { useDatasetsStore } from '../../stores/datasets';
-import { useUIStore } from '../../stores/ui';
-import { useTabsStore } from '../../stores/tabs';
 import { useRunGuardStore } from '../../stores/runGuard';
-import { EducationalPanelProvider } from '../../app/EducationalPanelContext';
 import * as sqlService from '../../services/sql';
 import * as transformsService from '../../services/transforms';
-import * as exportService from '../../services/export';
 import type { Dataset, TableRegistryEntry } from '../../types';
 
-// SqlModule always mounts under EducationalPanelProvider in the real app
-// (App.tsx) — QuerySuggestions, rendered inside SqlModule, calls
-// useEducationalPanel() unconditionally, so every render here needs the same
-// wrapper or that hook throws outside a provider.
-function renderSqlModule() {
-  return render(
-    <EducationalPanelProvider>
-      <SqlModule />
-    </EducationalPanelProvider>,
-  );
-}
-
-// The real MonacoWrapper statically imports `monaco-editor`, which needs a
-// real browser (canvas/layout) to mount — out of scope for a jsdom unit test
-// (verified live instead, see this build's own notes). Stubbed here so this
-// test exercises SqlModule's own wiring: the Suspense boundary, the run
-// button, and the results/history panes. Queries are scoped to each test's
-// own `container` (no RTL auto-cleanup is configured in vitest.config.ts,
-// matching the rest of this test suite's convention) rather than the global
-// `screen`.
+// The real MonacoWrapper statically imports `monaco-editor`, which needs a real
+// browser (canvas/layout) to mount — out of scope for a jsdom unit test,
+// verified live instead. Stubbed here so this exercises the pane's own wiring:
+// the Suspense boundary, Run, and Format.
 vi.mock('./MonacoWrapper', () => ({
   default: ({ onRunQuery }: { onRunQuery: () => void }) => (
     <button type="button" data-testid="fake-monaco" onClick={onRunQuery}>
@@ -50,108 +30,54 @@ vi.mock('../../services/transforms', async () => {
   return { ...actual, runTransform: vi.fn(), materializeInsteadOfMutation: vi.fn(), forceMutation: vi.fn() };
 });
 
-vi.mock('../../services/export', () => ({ downloadTable: vi.fn(async () => {}) }));
+// A2's Check button calls `validate_sql` directly — mocked the same way
+// DistributionModule.test.tsx mocks the analyst core.
+const { analystCoreMock } = vi.hoisted(() => ({ analystCoreMock: vi.fn() }));
+vi.mock('../../services/analyst', () => ({ analystCore: analystCoreMock }));
 
-describe('SqlModule', () => {
+const dataset: Dataset = {
+  id: 'ds-1',
+  name: 'orders.csv',
+  sourceType: 'file',
+  tableNames: ['orders'],
+  ingestedAt: '2026-07-20T00:00:00.000Z',
+};
+
+const sourceTable: TableRegistryEntry = {
+  id: 'tbl-1',
+  tableName: 'orders',
+  datasetId: 'ds-1',
+  origin: 'file',
+  rowCount: 10,
+  columnCount: 2,
+  memoryBytes: 512,
+  createdAt: '2026-07-20T00:00:00.000Z',
+};
+
+const RESULT = { columnNames: [], columnTypes: [], rows: [], rowCount: 0, executionTimeMs: 0 };
+
+describe('SqlModule — the console pane (S6.5)', () => {
   beforeEach(() => {
     useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
-    // No suggestions/tasks should render without a registered, classified
-    // table — keeps QuerySuggestions a no-op for every assertion below.
     useDatasetsStore.setState({ datasets: [], tables: [], workerStatus: 'idle', workerError: null });
-    useUIStore.getState().clearPendingPrefill();
     useRunGuardStore.setState({ pending: null, pendingSession: CONSOLE_SESSION });
-    useTabsStore.setState({ tabs: [], activeTabId: null });
-    // SqlModule chains `.catch()` off the real runQuery's promise, so the mock
-    // must return one too (a bare vi.fn() default returns undefined).
-    vi.mocked(sqlService.runQuery).mockReset().mockResolvedValue({
-      columnNames: [],
-      columnTypes: [],
-      rows: [],
-      rowCount: 0,
-      executionTimeMs: 0,
-    });
-    const transformResult = {
-      columnNames: ['result'],
-      columnTypes: ['Utf8'],
-      rows: [['ok']],
-      rowCount: 1,
-      executionTimeMs: 0,
-    };
-    vi.mocked(transformsService.runTransform).mockReset().mockResolvedValue(transformResult);
-    vi.mocked(transformsService.materializeInsteadOfMutation).mockReset().mockResolvedValue(transformResult);
-    vi.mocked(transformsService.forceMutation).mockReset().mockResolvedValue(transformResult);
-    vi.mocked(exportService.downloadTable).mockReset().mockResolvedValue(undefined);
+    // `requestRun` chains off the real runQuery's promise, so the mock returns one too.
+    vi.mocked(sqlService.runQuery).mockReset().mockResolvedValue(RESULT);
+    vi.mocked(transformsService.runTransform).mockReset().mockResolvedValue(RESULT);
+    analystCoreMock.mockReset();
   });
-
-  const dataset: Dataset = {
-    id: 'ds-1',
-    name: 'orders.csv',
-    sourceType: 'file',
-    tableNames: ['orders'],
-    ingestedAt: '2026-07-20T00:00:00.000Z',
-  };
-  const sourceTable: TableRegistryEntry = {
-    id: 'tbl-1',
-    tableName: 'orders',
-    datasetId: 'ds-1',
-    origin: 'file',
-    rowCount: 10,
-    columnCount: 2,
-    memoryBytes: 512,
-    createdAt: '2026-07-20T00:00:00.000Z',
-  };
 
   it('lazy-loads the editor behind Suspense and renders it', async () => {
-    const { container } = renderSqlModule();
+    const { container } = render(<SqlModule />);
     await waitFor(() => expect(within(container).getByTestId('fake-monaco')).toBeTruthy());
   });
 
-  it('disables Run when the query is empty', async () => {
-    const { container } = renderSqlModule();
-    await waitFor(() =>
-      expect((within(container).getByRole('button', { name: /run/i }) as HTMLButtonElement).disabled).toBe(true),
-    );
-  });
-
-  it('enables Run once SQL is present and calls runQuery on click', async () => {
-    useQueryStore.getState().setSql(CONSOLE_SESSION, 'select 1');
-    const { container } = renderSqlModule();
-
-    await waitFor(() =>
-      expect((within(container).getByRole('button', { name: /run/i }) as HTMLButtonElement).disabled).toBe(false),
-    );
-    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
-    expect(sqlService.runQuery).toHaveBeenCalledWith('select 1', CONSOLE_SESSION);
-  });
-
-  // S5 — the console is the scratchpad, so it is the surface that can promote.
-  it('disables Pin on an empty buffer and pins the query and its result once there is one', async () => {
-    const { container } = renderSqlModule();
-    await waitFor(() =>
-      expect((within(container).getByRole('button', { name: /pin to tab/i }) as HTMLButtonElement).disabled).toBe(true),
-    );
-
-    const result = { columnNames: ['n'], columnTypes: ['BIGINT'], rows: [[1]], rowCount: 1, executionTimeMs: 7 };
-    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'select 1');
-    useQueryStore.getState().querySucceeded(CONSOLE_SESSION, result);
-
-    const pin = await waitFor(() => within(container).getByRole('button', { name: /pin to tab/i }));
-    expect((pin as HTMLButtonElement).disabled).toBe(false);
-    fireEvent.click(pin);
-
-    const tabs = useTabsStore.getState().tabs;
-    expect(tabs).toHaveLength(1);
-    expect(tabs[0].type).toBe('query');
-    // One-way: the console keeps what it had.
-    expect(useQueryStore.getState().sessions[CONSOLE_SESSION].result).toBe(result);
-  });
-
-  it('shows an empty-history message before any statement has run', async () => {
-    const { container } = renderSqlModule();
-    await waitFor(() => expect(container.textContent).toContain('No statements run yet'));
-  });
-
-  it('lists a history entry after a query completes', async () => {
+  /**
+   * The phase's dividing line: this pane writes SQL and runs it, and holds
+   * nothing that a run *produced*. All of it lives in Info now, so a reader of
+   * this pane never has to scroll past a result to reach the editor.
+   */
+  it('holds the code and nothing a run produced — no results, chart, history, pin or export', () => {
     useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'select 1');
     useQueryStore.getState().querySucceeded(CONSOLE_SESSION, {
       columnNames: ['n'],
@@ -161,127 +87,241 @@ describe('SqlModule', () => {
       executionTimeMs: 7,
     });
 
-    const { container } = renderSqlModule();
-    await waitFor(() => expect(container.textContent).toContain('select 1'));
-    expect(container.textContent).toContain('7 ms');
+    const { container } = render(<SqlModule />);
+    expect(within(container).queryByText('Results')).toBeNull();
+    expect(within(container).queryByText('Chart')).toBeNull();
+    expect(within(container).queryByText('History')).toBeNull();
+    expect(within(container).queryByRole('button', { name: /pin to tab/i })).toBeNull();
+    expect(within(container).queryByRole('button', { name: /export recipe/i })).toBeNull();
+    // Nor the suggestions block the drawer's scroll distance was mostly made of.
+    expect(within(container).queryByText('Suggested queries')).toBeNull();
   });
 
-  it('re-runs a history row through the same path as every other surface (S4)', async () => {
-    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'select 1');
-    useQueryStore.getState().querySucceeded(CONSOLE_SESSION, {
-      columnNames: ['n'],
-      columnTypes: ['BIGINT'],
-      rows: [[1]],
-      rowCount: 1,
-      executionTimeMs: 7,
+  it('lays the editor above its toolbar, with only the editor region flexible', () => {
+    const { container } = render(<SqlModule />);
+    const editor = within(container).getByTestId('console-editor-region');
+    const toolbar = within(container).getByTestId('console-toolbar');
+    expect(editor.parentElement).toBe(toolbar.parentElement);
+    expect(editor.compareDocumentPosition(toolbar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(toolbar.className).toContain('shrink-0');
+  });
+
+  it('disables Run on an empty buffer and runs through the shared path once there is SQL', async () => {
+    const empty = render(<SqlModule />);
+    await waitFor(() =>
+      expect((within(empty.container).getByRole('button', { name: /^run/i }) as HTMLButtonElement).disabled).toBe(true),
+    );
+
+    act(() => {
+      useQueryStore.getState().setSql(CONSOLE_SESSION, 'select 1');
     });
-    vi.mocked(sqlService.runQuery).mockClear();
-
-    const { container } = renderSqlModule();
-    const historyRun = await waitFor(() => within(container).getAllByRole('button', { name: /^run$/i })[0]);
-    fireEvent.click(historyRun);
-
+    const run = within(empty.container).getByRole('button', { name: /^run/i }) as HTMLButtonElement;
+    expect(run.disabled).toBe(false);
+    fireEvent.click(run);
     expect(sqlService.runQuery).toHaveBeenCalledWith('select 1', CONSOLE_SESSION);
   });
 
-  it('surfaces a query error in the results area', async () => {
-    useQueryStore.getState().queryStarted(CONSOLE_SESSION, 'select * from missing');
-    useQueryStore.getState().queryFailed(CONSOLE_SESSION, 'Catalog Error: Table with name missing does not exist!');
-
-    const { container } = renderSqlModule();
-    await waitFor(() => expect(within(container).getByRole('alert')).toBeTruthy());
-    expect(within(container).getByRole('alert').textContent).toMatch(/does not exist/i);
-  });
-
-  it('routes a CREATE TABLE AS statement through runTransform, not runQuery', async () => {
-    useQueryStore.getState().setSql(CONSOLE_SESSION, 'CREATE TABLE feats AS SELECT 1');
-    const { container } = renderSqlModule();
-
-    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
-
-    await waitFor(() => expect(transformsService.runTransform).toHaveBeenCalledWith('CREATE TABLE feats AS SELECT 1'));
-    expect(sqlService.runQuery).not.toHaveBeenCalled();
-  });
-
-  it('routes a mutation against a derived table straight through runTransform (no guard)', async () => {
-    useDatasetsStore.getState().registerDataset(dataset, [{ ...sourceTable, origin: 'derived' }]);
-    useQueryStore.getState().setSql(CONSOLE_SESSION, 'DROP TABLE orders');
-    const { container } = renderSqlModule();
-
-    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
-
-    await waitFor(() => expect(transformsService.runTransform).toHaveBeenCalledWith('DROP TABLE orders'));
-    expect(within(container).queryByRole('dialog')).toBeNull();
-  });
-
-  it('hands a source mutation to the guard instead of running it — and renders no modal of its own (S4)', async () => {
+  // S4's interception reaches this pane like every other runner — the guard is
+  // in the run path, not in the surface that raised it.
+  it('hands a source mutation to the guard instead of running it', () => {
     useDatasetsStore.getState().registerDataset(dataset, [sourceTable]);
     useQueryStore.getState().setSql(CONSOLE_SESSION, 'DROP TABLE orders');
-    const { container } = renderSqlModule();
 
-    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
+    const { container } = render(<SqlModule />);
+    fireEvent.click(within(container).getByRole('button', { name: /^run/i }));
 
-    await waitFor(() => expect(useRunGuardStore.getState().pending?.mutationTarget).toBe('orders'));
     expect(transformsService.runTransform).not.toHaveBeenCalled();
-    // The modal is `TransformGuardHost`'s, mounted once in the shell.
+    expect(useRunGuardStore.getState().pending?.mutationTarget).toBe('orders');
+    // The modal belongs to `TransformGuardHost`, mounted once in the shell.
     expect(within(container).queryByRole('dialog')).toBeNull();
   });
 
-  it('runs nothing on mount, whatever a pending prefill holds (S4 — the console is mounted in every session)', async () => {
-    useUIStore.getState().setActiveModule('sql', null, { tableName: 'orders', columns: [], sql: 'SELECT * FROM orders' });
-    const { container } = renderSqlModule();
-
-    await waitFor(() => expect(within(container).getByTestId('fake-monaco')).toBeTruthy());
-    expect(sqlService.runQuery).not.toHaveBeenCalled();
-    expect(transformsService.runTransform).not.toHaveBeenCalled();
-  });
-
-  it('disables "Export recipe" with no derived tables and enables it once one exists', async () => {
-    const { container } = renderSqlModule();
-    await waitFor(() =>
-      expect((within(container).getByRole('button', { name: /export recipe/i }) as HTMLButtonElement).disabled).toBe(
-        true,
-      ),
-    );
-
-    useDatasetsStore.getState().registerDataset(dataset, [{ ...sourceTable, origin: 'derived' }]);
-
-    await waitFor(() =>
-      expect((within(container).getByRole('button', { name: /export recipe/i }) as HTMLButtonElement).disabled).toBe(
-        false,
-      ),
-    );
-  });
-
-  it('shows a Download Parquet shortcut on the Results header once a CTAS registers its derived table, wired to the export service', async () => {
-    useQueryStore.getState().setSql(CONSOLE_SESSION, 'CREATE TABLE feats AS SELECT 1');
-    const derivedTable: TableRegistryEntry = {
-      ...sourceTable,
-      id: 'tbl-2',
-      tableName: 'feats',
-      origin: 'derived',
-      generatingSql: 'CREATE TABLE feats AS SELECT 1',
-    };
-    // Mirrors the real runTransform's order (register the derived table, then
-    // resolve) closely enough for this test's purposes: registration must be
-    // visible before QueryResultsPanel re-renders on the resolved status.
-    vi.mocked(transformsService.runTransform).mockImplementation(async () => {
-      useDatasetsStore.getState().registerDataset(dataset, [derivedTable]);
-      return {
-        columnNames: ['result'],
-        columnTypes: ['Utf8'],
-        rows: [['Created derived table "feats".']],
-        rowCount: 1,
-        executionTimeMs: 0,
-      };
+  describe('Format', () => {
+    it('is disabled with nothing to format', () => {
+      const { container } = render(<SqlModule />);
+      expect((within(container).getByRole('button', { name: /format/i }) as HTMLButtonElement).disabled).toBe(true);
     });
 
-    const { container } = renderSqlModule();
-    fireEvent.click(within(container).getByRole('button', { name: /run/i }));
+    // Writes through the store, not the editor instance, so the buffer stays
+    // the single source of truth and the editor picks the change up the same
+    // way it picks up a prefill.
+    it('rewrites the buffer in place, and never runs it', async () => {
+      useQueryStore.getState().setSql(CONSOLE_SESSION, 'select a,b from t where x=1');
+      const { container } = render(<SqlModule />);
 
-    const downloadButton = await waitFor(() => within(container).getByRole('button', { name: /download parquet/i }));
-    fireEvent.click(downloadButton);
+      fireEvent.click(within(container).getByRole('button', { name: /format/i }));
 
-    await waitFor(() => expect(exportService.downloadTable).toHaveBeenCalledWith(derivedTable, 'parquet'));
+      await waitFor(() => expect(getSession(CONSOLE_SESSION).sql).toContain('\n'));
+      expect(getSession(CONSOLE_SESSION).sql).toMatch(/select\n\s+a,\n\s+b/);
+      expect(sqlService.runQuery).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Check (A2) — validate_sql beside Run', () => {
+    const VALIDATE_SCHEMA = [
+      { name: 'ok', type: 'BOOLEAN' },
+      { name: 'statement_class', type: 'VARCHAR' },
+      { name: 'referenced_objects', type: 'VARCHAR[]' },
+      { name: 'plan', type: 'VARCHAR' },
+      { name: 'error', type: 'VARCHAR' },
+    ];
+
+    function validateOutcome(row: unknown[]) {
+      return {
+        op: 'validate_sql',
+        sql: 'EXPLAIN select * from orders',
+        resultId: null,
+        schema: VALIDATE_SCHEMA,
+        rowCount: 1,
+        rows: [row],
+        complete: true,
+        nextOffset: null,
+        elapsedMs: 1,
+      };
+    }
+
+    it('is disabled with nothing to check', () => {
+      const { container } = render(<SqlModule />);
+      expect((within(container).getByRole('button', { name: /^check/i }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('shows a valid banner naming the statement class and referenced objects, and never runs the query', async () => {
+      const callMock = vi.fn().mockResolvedValue(validateOutcome([true, 'query', ['orders'], 'plan text', null]));
+      analystCoreMock.mockReturnValue({ call: callMock });
+      useQueryStore.getState().setSql(CONSOLE_SESSION, 'select * from orders');
+
+      const { container } = render(<SqlModule />);
+      fireEvent.click(within(container).getByRole('button', { name: /^check/i }));
+
+      await waitFor(() => expect(within(container).getByTestId('console-validate-result').textContent).toContain('Valid'));
+      expect(callMock).toHaveBeenCalledWith('validate_sql', { sql: 'select * from orders' });
+      const banner = within(container).getByTestId('console-validate-result').textContent;
+      expect(banner).toContain('orders');
+      expect(banner).toContain('costs no execution');
+      expect(sqlService.runQuery).not.toHaveBeenCalled();
+    });
+
+    it('shows the failure message from an invalid statement', async () => {
+      const callMock = vi.fn().mockResolvedValue(
+        validateOutcome([false, 'other', [], null, 'syntax error at or near "selct"']),
+      );
+      analystCoreMock.mockReturnValue({ call: callMock });
+      useQueryStore.getState().setSql(CONSOLE_SESSION, 'selct * from orders');
+
+      const { container } = render(<SqlModule />);
+      fireEvent.click(within(container).getByRole('button', { name: /^check/i }));
+
+      await waitFor(() =>
+        expect(within(container).getByTestId('console-validate-result').textContent).toContain('syntax error'),
+      );
+    });
+
+    it('clears a stale check result once the buffer changes', async () => {
+      const callMock = vi.fn().mockResolvedValue(validateOutcome([true, 'query', [], 'plan', null]));
+      analystCoreMock.mockReturnValue({ call: callMock });
+      useQueryStore.getState().setSql(CONSOLE_SESSION, 'select 1');
+
+      const { container } = render(<SqlModule />);
+      fireEvent.click(within(container).getByRole('button', { name: /^check/i }));
+      await waitFor(() => expect(within(container).queryByTestId('console-validate-result')).toBeTruthy());
+
+      act(() => {
+        useQueryStore.getState().setSql(CONSOLE_SESSION, 'select 2');
+      });
+      expect(within(container).queryByTestId('console-validate-result')).toBeNull();
+    });
+  });
+
+  describe('Save as… (A3) — the first-class derive action', () => {
+    function deriveOutcome(name: string, kind: 'table' | 'view', note?: string) {
+      return {
+        op: kind === 'view' ? 'create_view' : 'derive_table',
+        sql: `CREATE ${kind === 'view' ? 'VIEW' : 'TABLE'} "${name}" AS select * from orders`,
+        resultId: null,
+        schema: [
+          { name: 'name', type: 'VARCHAR' },
+          { name: 'kind', type: 'VARCHAR' },
+          { name: 'row_count', type: 'BIGINT' },
+          { name: 'column_count', type: 'BIGINT' },
+        ],
+        rowCount: 1,
+        rows: [[name, kind, 12, 3]],
+        complete: true,
+        nextOffset: null,
+        elapsedMs: 1,
+        ...(note === undefined ? {} : { note }),
+      };
+    }
+
+    function openDeriveBar(sql = 'select * from orders') {
+      useQueryStore.getState().setSql(CONSOLE_SESSION, sql);
+      const rendered = render(<SqlModule />);
+      fireEvent.click(within(rendered.container).getByRole('button', { name: /^save as/i }));
+      return rendered;
+    }
+
+    it('is disabled with nothing to save', () => {
+      const { container } = render(<SqlModule />);
+      expect((within(container).getByRole('button', { name: /^save as/i }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('calls derive_table with the buffer and the typed name, never touching runTransform directly', async () => {
+      const callMock = vi.fn().mockResolvedValue(deriveOutcome('big_orders', 'table'));
+      analystCoreMock.mockReturnValue({ call: callMock });
+
+      const { container } = openDeriveBar();
+      fireEvent.change(within(container).getByLabelText(/save this query as/i), { target: { value: 'big_orders' } });
+      fireEvent.click(within(container).getByTestId('console-derive-confirm'));
+
+      await waitFor(() => expect(callMock).toHaveBeenCalled());
+      expect(callMock).toHaveBeenCalledWith('derive_table', { name: 'big_orders', sql: 'select * from orders' });
+      // The operation owns the statement and the registry write; the console
+      // never composes a CREATE of its own for this action.
+      expect(transformsService.runTransform).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(within(container).getByTestId('console-derive-result').textContent).toContain('big_orders created'),
+      );
+    });
+
+    it('routes to create_view when the kind is switched', async () => {
+      const callMock = vi.fn().mockResolvedValue(deriveOutcome('recent', 'view'));
+      analystCoreMock.mockReturnValue({ call: callMock });
+
+      const { container } = openDeriveBar();
+      fireEvent.change(within(container).getByLabelText(/what to create/i), { target: { value: 'view' } });
+      fireEvent.change(within(container).getByLabelText(/save this query as/i), { target: { value: 'recent' } });
+      fireEvent.click(within(container).getByTestId('console-derive-confirm'));
+
+      await waitFor(() => expect(callMock).toHaveBeenCalledWith('create_view', { name: 'recent', sql: 'select * from orders' }));
+    });
+
+    it('reports the operation’s note, so a renamed object says so', async () => {
+      const callMock = vi
+        .fn()
+        .mockResolvedValue(deriveOutcome('_9_big', 'table', 'Named "_9_big" — "9 Big!" was not a usable object name, or was taken.'));
+      analystCoreMock.mockReturnValue({ call: callMock });
+
+      const { container } = openDeriveBar();
+      fireEvent.change(within(container).getByLabelText(/save this query as/i), { target: { value: '9 Big!' } });
+      fireEvent.click(within(container).getByTestId('console-derive-confirm'));
+
+      await waitFor(() =>
+        expect(within(container).getByTestId('console-derive-result').textContent).toContain('not a usable object name'),
+      );
+    });
+
+    it('keeps the form open on failure so the name and the message sit together', async () => {
+      const callMock = vi.fn().mockResolvedValue({ ok: false, code: 'invalid_argument', message: 'that name is taken' });
+      analystCoreMock.mockReturnValue({ call: callMock });
+
+      const { container } = openDeriveBar();
+      fireEvent.change(within(container).getByLabelText(/save this query as/i), { target: { value: 'orders' } });
+      fireEvent.click(within(container).getByTestId('console-derive-confirm'));
+
+      await waitFor(() =>
+        expect(within(container).getByTestId('console-derive-result').textContent).toContain('that name is taken'),
+      );
+      expect(within(container).queryByTestId('console-derive-bar')).toBeTruthy();
+    });
   });
 });

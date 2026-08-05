@@ -1,0 +1,38 @@
+{
+  "arm": "B-active-turn1-screen",
+  "checkpoint": 3,
+  "model": {
+    "tag": "qwen3:8b",
+    "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+    "quantizationLevel": "Q4_K_M",
+    "parameterSize": "8.2B",
+    "contextLength": 40960,
+    "capabilities": [
+      "completion",
+      "tools",
+      "thinking"
+    ]
+  },
+  "selectedMode": "thinking",
+  "budgets": {
+    "maxRounds": 2,
+    "maxProbesPerRound": 2,
+    "maxProbesTotal": 4,
+    "maxRowsPerPacket": 12,
+    "maxPacketsInContext": 8
+  },
+  "records": [],
+  "turn1DiversityScreen": {
+    "uniqueResponseHashes": 5,
+    "uniqueSelections": 5,
+    "responseHashCollapse": null,
+    "selectionCollapse": null,
+    "crossBoundaryCollision": {
+      "answerableId": "sales-presentation",
+      "controlId": "causal-control",
+      "selection": "request_probes:largest-monthly-change,monthly-revenue"
+    },
+    "blocked": true,
+    "passed": false
+  }
+}

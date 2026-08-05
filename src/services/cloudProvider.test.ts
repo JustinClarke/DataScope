@@ -23,7 +23,7 @@ describe('cloudProvider: request mapping', () => {
     const fetchImpl = vi
       .fn()
       .mockImplementation(() =>
-        Promise.resolve(jsonResponse({ turn: { kind: 'text', text: 'ok' }, servedBy: 'workers-ai' })),
+        Promise.resolve(jsonResponse({ turn: { text: 'ok', calls: [] }, servedBy: 'workers-ai' })),
       );
     const provider = createCloudProvider({
       endpoint: 'https://edge/ai-router',
@@ -41,18 +41,31 @@ describe('cloudProvider: request mapping', () => {
     });
   });
 
-  it('returns the router’s turn on a JSON response', async () => {
-    const turn = { kind: 'tool_call', call: { id: 'c1', name: 'execute_local_sql', input: { sql: 'SELECT 1' } } };
+  it('returns the router’s turn on a JSON response, every call intact', async () => {
+    const turn = {
+      text: 'Checking both.',
+      calls: [
+        { id: 'c1', name: 'run_sql', input: { sql: 'SELECT 1' } },
+        { id: 'c2', name: 'run_sql', input: { sql: 'SELECT 2' } },
+      ],
+    };
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ turn, servedBy: 'byok' }));
     const provider = createCloudProvider({ endpoint: 'https://e', sessionId: 's', routing: 'prefer-key', fetchImpl });
     expect(await provider.complete(messages, tools)).toEqual(turn);
+  });
+
+  it('names a router still on the pre-A4 turn shape rather than reading it as a no-call answer', async () => {
+    const legacy = { kind: 'tool_call', call: { id: 'c1', name: 'execute_local_sql', input: { sql: 'SELECT 1' } } };
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ turn: legacy, servedBy: 'byok' }));
+    const provider = createCloudProvider({ endpoint: 'https://e', sessionId: 's', routing: 'prefer-key', fetchImpl });
+    await expect(provider.complete(messages, tools)).rejects.toThrow(/redeploy the edge Worker/);
   });
 
   it('attaches the BYOK credential when configured; omits the field entirely without one', async () => {
     const fetchImpl = vi
       .fn()
       .mockImplementation(() =>
-        Promise.resolve(jsonResponse({ turn: { kind: 'text', text: 'ok' }, servedBy: 'byok' })),
+        Promise.resolve(jsonResponse({ turn: { text: 'ok', calls: [] }, servedBy: 'byok' })),
       );
     const withKey = createCloudProvider({
       endpoint: 'https://e',
@@ -106,7 +119,7 @@ describe('cloudProvider: streaming', () => {
     const frames = [
       JSON.stringify({ type: 'delta', text: 'SELECT ' }),
       JSON.stringify({ type: 'delta', text: 'count(*)' }),
-      JSON.stringify({ type: 'done', turn: { kind: 'text', text: 'SELECT count(*)' }, servedBy: 'workers-ai' }),
+      JSON.stringify({ type: 'done', turn: { text: 'SELECT count(*)', calls: [] }, servedBy: 'workers-ai' }),
       '[DONE]',
     ];
     const fetchImpl = vi.fn().mockResolvedValue(sseResponse(frames));
@@ -120,6 +133,6 @@ describe('cloudProvider: streaming', () => {
     });
     const turn = await provider.complete(messages, tools);
     expect(tokens).toEqual(['SELECT ', 'count(*)']);
-    expect(turn).toEqual({ kind: 'text', text: 'SELECT count(*)' });
+    expect(turn).toEqual({ text: 'SELECT count(*)', calls: [] });
   });
 });

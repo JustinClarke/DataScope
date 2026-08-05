@@ -167,7 +167,7 @@ function fakeInference(text: string): InferenceProvider & { calls: WireProviderM
     // eslint-disable-next-line require-yield
     async *infer(messages) {
       calls.push(messages)
-      yield { type: 'done' as const, turn: { kind: 'text' as const, text }, tokensIn: 10, tokensOut: 5 }
+      yield { type: 'done' as const, turn: { text, calls: [] }, tokensIn: 10, tokensOut: 5 }
     },
   }
 }

@@ -31,8 +31,8 @@ it does not have to win or lose globally, and this pass measures it rather than 
 **Status:** harness built (2026-07-28); **first live invocation attempted 2026-07-28 and produced
 zero completed calls** — see "First run attempt" under "Ollama run" below. `panelSchema.ts`,
 `slotFacts.ts`, `variants.ts`, `assemble.ts`, `scorePanel.ts`, `opaque.ts`, `corrupt.ts`, `run.ts`
-exist under `eval/10-grounding-ladder/` and typecheck/lint clean (`npx tsc -p eval/tsconfig.json
---noEmit`, `npx oxlint eval/10-grounding-ladder/`); `npm run eval:grounding-ladder` has now been
+exist under `eval/claude/10-grounding-ladder/` and typecheck/lint clean (`npx tsc -p eval/tsconfig.json
+--noEmit`, `npx oxlint eval/claude/10-grounding-ladder/`); `npm run eval:grounding-ladder` has now been
 invoked three times against the live rig and every attempt ended in a transport failure before any
 panel was scored, so `RESULTS.json` still does not exist and no verdict in this doc has moved.
 
@@ -141,7 +141,7 @@ Four things fall out of that table that no prior doc in this folder states:
 
 - **The product fact vocabulary and the eval fact vocabulary have diverged.** `InsightRuleId` has
   **7** rules ([`insights.ts`](../../../../src/lib/insights.ts) L18); `ComputedFactKind` has **21**
-  ([`computeStats.ts`](../../../../eval/08-computed-facts/computeStats.ts) L25). The panel renders
+  ([`computeStats.ts`](../../../../eval/claude/08-computed-facts/computeStats.ts) L25). The panel renders
   `InsightCandidate`s, so 08's richer facts — seasonality, correlation, variance-explained,
   referential integrity — **reach nothing on screen today.** Any arm that wins here needs that
   bridge built, and it is not a prompt change.
@@ -276,7 +276,7 @@ Mechanism held **fixed** at 08's design (computed facts + citation binding, `ver
 hard pre-gate). Three axes vary.
 
 **The output contract is the panel object, not `{claims:[…]}`.** 08's prompt asks for a flat claim
-list ([`prompt.ts`](../../../../eval/08-computed-facts/prompt.ts) L42) and gets back an
+list ([`prompt.ts`](../../../../eval/claude/08-computed-facts/prompt.ts) L42) and gets back an
 undifferentiated pile the harness then has to interpret. Replace it with the shape the UI actually
 consumes:
 
@@ -424,7 +424,7 @@ table — is what gets formalized.
 ## What to build
 
 ```
-eval/10-grounding-ladder/                                                              [built 2026-07-28, unless marked]
+eval/claude/10-grounding-ladder/                                                              [built 2026-07-28, unless marked]
 ├── assemble.ts        ← THE deliverable: budgeted prompt assembler (see below)
 ├── panelSchema.ts     ← the panel output contract + parser (replaces 08's flat {claims:[…]})
 ├── slotFacts.ts       ← ComputedFactKind → PanelSlot partition; builds one fact table per slot
@@ -447,7 +447,7 @@ Plus, in product code because it is worth keeping regardless of the verdict:
 
 ```
 src/lib/promptAssembly.ts   ← the assembler, if phase 1 validates it
-src/lib/computedFacts.ts    ← eval/08-computed-facts/computeStats.ts, re-homed
+src/lib/computedFacts.ts    ← eval/claude/08-computed-facts/computeStats.ts, re-homed
 ```
 
 ### The answer key is the standard
@@ -493,7 +493,7 @@ contract it was never shown, over a candidate set far larger than the output it 
 produce. Fixing that is worth more than any prompt wording, and it is testable in the same pass.
 
 - **Show the model the set it is scored against.** `buildComputedFactsPrompt` sends `{id, statement}`
-  only ([`prompt.ts`](../../../../eval/08-computed-facts/prompt.ts) L46), but `checkCitation` scores
+  only ([`prompt.ts`](../../../../eval/claude/08-computed-facts/prompt.ts) L46), but `checkCitation` scores
   against `fact.entities` and `fact.values`. **The model is graded on a set it never sees.** Send
   `{id, statement, entities, values}` and the constraint becomes visible instead of inferred. This is
   the highest-leverage single change in the folder and it costs tokens, not architecture — and if
@@ -655,7 +655,7 @@ not exist. Three invocations of the smoke cell above, all ending in `TypeError: 
    `context_length: 32768`). The box was saturated cold-loading a 14B q4 with a 32k KV cache, and a
    short-timeout `curl` against a machine doing that will fail every time. **This is the one real,
    reproducible harness bug found: cold load at `num_ctx: 32768` exceeds `run.ts`'s own 600 s
-   `headersTimeout`** ([`run.ts`](../../../../eval/10-grounding-ladder/run.ts) L56), so **call #1 of
+   `headersTimeout`** ([`run.ts`](../../../../eval/claude/10-grounding-ladder/run.ts) L56), so **call #1 of
    any cold run fails by construction**, independent of thermals or model quality.
 2. **Warm model.** Failed at 460 s — under the 600 s timeout, so not that bug. Explained by (3).
 3. **Cause of (2):** Justin stopped the Ollama service mid-call; the Air had got too warm.
@@ -673,7 +673,7 @@ all of it has now landed. Item 6 is the only remaining step, and it is a hardwar
 
 1. ~~**Fix the cold-load timeout in `run.ts`.**~~ **Done.** A warm-up call now runs before any
    scored cell, outside the timing path, on its own 30-min dispatcher
-   ([`ollamaRig.ts`](../../../../eval/10-grounding-ladder/ollamaRig.ts)). Its outcome is recorded in
+   ([`ollamaRig.ts`](../../../../eval/claude/10-grounding-ladder/ollamaRig.ts)). Its outcome is recorded in
    `RESULTS.json`/`CHAT-RESULTS.json` (`warmUp`), and a warm-up failure does not abort the run — the
    per-call transport catch still records what happens next honestly.
 2. ~~**Record `keep_alive` explicitly on every call.**~~ **Done.** `keep_alive: '60m'` (overridable
@@ -707,7 +707,7 @@ to be worth re-testing on the 1.5B WebLLM tier that this doc otherwise writes of
 
 Live-tested against titanic's real `quality` slot (2 live fact ids: `stat:titanic.Age.null-structure`,
 `stat:titanic.Fare.outliers`) via a throwaway script
-([`platformCheck06.ts`](../../../../eval/10-grounding-ladder/platformCheck06.ts), not part of the
+([`platformCheck06.ts`](../../../../eval/claude/10-grounding-ladder/platformCheck06.ts), not part of the
 harness build list). Ollama's `/api/chat` `format` parameter, given a JSON schema whose `cites` array
 is constrained to that 2-id enum, **held cleanly: 3/3 constrained calls returned valid JSON with
 `cites` drawn from the live enum, 0 parse failures.** But the unconstrained baseline (same prompt, no
@@ -775,36 +775,236 @@ becomes answerable, because three of them are answerable *now* and do not wait o
 | :--- | :--- | :--- | :--- |
 | **H1** | **Which computed facts belong in "the panel as it should read"**, per fixture — the C2 half of `PANEL-KEY.json`. `buildKey.ts` filled C1/C3 mechanically and stopped; each fixture entry names the gap in its own `pendingHumanAuthoring` field. 21 fact kinds compete for ≤3 slots per column and no per-fixture mock-up exists to derive the choice from | **Now** | Nothing in the scoring — C2 is checked live against each cell's own slot fact table. Only the human-legible "what should this panel say" reference |
 | **H2** | **Where duplicate-row findings belong** — the shipped code routes `duplicates` to Behavioral Trends (`BEHAVIORAL_RULES`); the mock-up reads duplicate-checking as Data Quality. One of the two is wrong | **Now** | The third finding column's spec, and any slot-misassignment number that touches duplicates (kill criterion k) |
-| **H3** | **What "beat the deterministic ranker" means for the offers slot**, given that the 2026-07-28 offers run found 16 of 24 surfaced offers carry no SQL and `ecommerce` surfaces 5 with 0 executable. Execution reaches a third of the surface, so kill criterion (l) alone cannot decide C5 | **Now** — the evidence is in | The C5 row of the verdict table. Deciding it *after* seeing which arm won is a rationalisation |
-| **H4** | **What happens to the C4 residue, per slot** — converted to an offer (05) or dropped. The doc argues 05 is the ship answer for the header's interpretive clause; that is an argument, not a decision | After phase 1 — the residue count is its input | The Header (domain / suited-for) and Behavioral rows of the verdict table |
+| **H3** | **What "beat the deterministic ranker" means for the offers slot**, given that the 2026-07-28 offers run found 16 of 24 surfaced offers carry no SQL and `ecommerce` surfaces 5 with 0 executable. Execution reaches a third of the surface, so kill criterion (l) alone cannot decide C5 | **Now** — the evidence is in. Still unanswered as of 2026-07-30. The panel arm added a *second*, different offers number (id fidelity, 88.4% at the 7B) which does not answer it either — id discipline is not usefulness | The C5 row of the verdict table. Deciding it *after* seeing which arm won is a rationalisation |
+| **H4** | **What happens to the C4 residue, per slot** — converted to an offer (05) or dropped. The doc argues 05 is the ship answer for the header's interpretive clause; that is an argument, not a decision | After phase 1 — the residue count is its input. Its input still does not exist: the C4 residue was counted (7B 335, Gemini 149) and never read by a human, and the header's own domain claim was never elicited at all | The Header (domain / suited-for) and Behavioral rows of the verdict table |
 | **H5** | **Whether the trend-generalisation guard ships.** Its false-reject half is measured (0/279 deterministic statements). Its hit half comes from the panel arm. A guard that rejects nothing real is dead weight; one that rejects a lot is a live product change to `passesPhrasingGuard` | After phase 1 | Folding `passesTrendGeneralisationGuard` into the shipped guard, which is deliberately not done yet |
-| **H6** | **`num_ctx` for the full pass** — 32768 or 16384. The in-scope pair fits inside 16384; only the ceiling control needs more, and its role is to not fit. 32768 is unproven as a stability fault *and* unproven as safe on this rig | Before the full pass; it is a thermals call on your own hardware | The ~4h run. Both arms read it from `ollamaRig.ts`, so it is one decision, not two |
+| **H6** | **`num_ctx` for the full pass** — 32768 or 16384. The in-scope pair fits inside 16384; only the ceiling control needs more, and its role is to not fit. 32768 is unproven as a stability fault *and* unproven as safe on this rig | Before the full pass; it is a thermals call on your own hardware. Answered in passing for the 7B: the 250-call cross ran at 32768 with no crash | The ~4h run. Both arms read it from `ollamaRig.ts`, so it is one decision, not two |
 | **H7** | **Whether the four-card panel is the right product at all.** This doc measures how truthfully each slot can be filled, never whether a user wants that panel on open — 05's kill criterion (c) | Standing; independent of every result here | Nothing here. Named so a clean verdict is not mistaken for product validation |
 
 H1, H2 and H3 are answerable today and the rig cannot answer them tomorrow.
+
+### Decisions, 2026-07-31 (Justin)
+
+Recorded here rather than rewritten into the table above, per this folder's own convention of
+appending corrections rather than silently editing prior text.
+
+- **H1 — resolved, with a dependency.** Method: compare against what real, widely-used BI
+  dashboards (Tableau/Looker/PowerBI-class tools) actually surface for a given dataset shape, and
+  use that to decide which of the 21 computed facts earn a slot per fixture. **Sequenced after the
+  Map tab's ERD ships** — [`src/features/map/Erd.tsx`](../../../../src/features/map/Erd.tsx),
+  intended to be visible as soon as the app opens — not before.
+- **H2 — resolved.** Duplicate-row findings move to **Data Quality**, not Behavioral Trends.
+  Behavioral Trends stays AI-authored, contingent on the semantic layer (H7, below) maturing first.
+- **H3 — direction given, not yet a metric.** Goal stated as "accurate and useful." Not yet
+  operationalized into a scoreable bar (e.g. accuracy = citation-grounded/correct; usefulness =
+  surfaces something the deterministic ranker's own list wouldn't have) — that operationalization is
+  still owed before H3 can close.
+- **H4 — owned by the user, still open.** Will be tested against the user's own real data to judge
+  whether accuracy is sufficient. Not decided here.
+- **H5 — owned by the user, still open, with an existing lead.** Needs testing for (a) whether the
+  guard blocks any real findings and (b) whether feeding the model too much context confuses it.
+  (b) is not hypothetical — kill criterion (d) above already found the 7B's Behavioral-slot C2 rate
+  falling 75.0% → 56.6% as rows increase, so this should be tested against that existing signal, not
+  from scratch.
+- **H6 — reframed, larger than originally scoped.** Not "32768 vs 16384." The actual ask is an
+  **adaptive strategy by dataset size** — small datasets get full rows + computed facts; large
+  datasets need a different mechanism (sampling, unique-vs-normal-row distinction, summarized
+  computations), with a "sweet spot" still to be found. This is exactly the **"tables larger than
+  context" round** this doc already parked as future work (see "What it does not solve," above), for
+  which `assemble.ts`'s budgeted-assembler seam exists precisely so this round doesn't require a
+  rewrite. Not started; this doc's row-ladder data (the A1 axis) is the starting evidence base for it.
+- **H7 — largely resolved, one caveat.** Header, Structural and Quality confirmed as the intended
+  deterministic slots; Behavioral Trends and free-form synthesis stay LLM-authored. **Caveat:** the
+  Verdict table below still has Structural Patterns and Data Quality's C2 half tagged "provisional:
+  model-narrated, citation-bound," not deterministic — not a contradiction, it reflects that the
+  semantic layer (the computed-facts + citation-grounding mechanism) is still being iterated on to
+  find an efficient, robust implementation before it's locked as deterministic. **Sequencing stated
+  explicitly:** get the semantic layer solid enough to produce good synthesis first, *then* evolve
+  toward a more cohesive, open-ended chat mechanism (free-form questions like "what's odd here that
+  could drive sales," "what transforms should I apply next") — which goes beyond the existing chat
+  arm's scope (factual NL→SQL only, no interpretive/coaching questions tested) and has no eval built
+  for it yet.
 
 ---
 
 ## Verdict
 
-_Unrun. Append here: the per-cell table (fabrication, leak count, R2, R3, prompt tokens, rows sent)
-for all three phase-1 blocks, **broken out per slot and per claim class**; the crossed cell's
-interpretation stated plainly; the chat arm's exec/correctness/repair curve across rungs; the
-offers arm's execution rate; the false-reject delta from showing the model its own value sets; and
-— if OPAQUE barely moved the output — a loud note that recall dominance re-scopes every result in
-this folder._
+> **Run, partially. Two arms have reported: Ollama `qwen2.5-coder:7b` schema-constrained
+> (250/250 compliant, 2026-07-29) — the shipping-tier proxy that decides every cell below — and
+> Gemini 3.6 Flash (265/265 compliant) — an **instrument**, per
+> [11's transfer ledger](./11-gemini-comparison-arm.md#the-transfer-ledger); its numbers are
+> CAPABILITY-tagged, live in the separate labelled block after the table, and decide nothing here.
+>
+> **What the table's decisions rest on, stated so it can be checked:**
+> - The tier is `qwen2.5-coder:7b`, **not** the `qwen2.5-coder:14b` this doc was designed around,
+>   and **neither** of the tiers the product actually ships (Workers AI, R6; WebLLM 1.5B). Every
+>   row below is **provisional pending those two arms.**
+> - The ledger's rule — "a CAPABILITY result from this arm may not appear in 10's verdict table" —
+>   is scoped to **Gemini's** results. The 7B's own CAPABILITY-tagged numbers *are* the shipping
+>   tier and are admissible here; the ledger's own sentence says the verdict is "made on the tier
+>   that will actually ship." Read literally as a blanket ban it would empty this table; that is
+>   not what it says.
+> - `run.ts` persists C2/C3/C4 as **aggregates across structural+quality+behavioral**.
+>   `scorePanel` computes them per slot (`C2Disposition.slot`) and the detail is discarded before
+>   write. **Resolved 2026-07-30, no model call:** `eval/claude/10-grounding-ladder/rescorePerSlot.ts`
+>   replays every compliant record's persisted `raw` panel through `scorePanel` with the slot fact
+>   tables deterministically reconstructed (verified byte-exact against the originally-persisted
+>   aggregates — see its own output). Per-slot C2, by rung, both providers, is in
+>   `PER-SLOT-RESCORE.json`; the three C2 rows below still report one combined number each
+>   (unchanged, since none of the three rows' verdicts turned on the split), but kill criterion (d)
+>   is now assessable — see that criterion's own note.
+> - **Kill criterion (d) ("a directional effect on at least one slot"), resolved 2026-07-30:** the
+>   7B's per-slot C2 rate by rung (row-ladder block) is **not flat everywhere**. `behavioral` falls
+>   75.0% → 71.6% → 70.3% → 56.6% (0→10→100→max) on titanic+product_reviews combined — a real,
+>   monotonic decline concentrated in one slot, obscured by the combined number's noisier read.
+>   `structural`/`quality` show no comparable trend (both bounce within a ~15-point band, no
+>   monotonic direction). Gemini's per-slot rates stay within about 3 points at every slot, every
+>   rung (quality is exactly flat at 100%) — so **the directional effect is 7B-specific**, consistent with `assemble.ts`'s own worry
+>   that more rows dilute rather than help a smaller model's behavioral-slot claims. Criterion (d)
+>   **passes** (a directional effect exists, on `behavioral`); it does not by itself say what to do
+>   about it — that's still a product call.
+>
+> **Still not produced, from this section's own original ask:** R3 ("reach") — never computed, on
+> either arm. The false-reject delta from showing the model its own value sets — that is rider R-D,
+> never authorised, never run. **The rung-matched OPAQUE-vs-CLEAR contrast, computed 2026-07-30 at
+> $0 (`PER-SLOT-RESCORE.json`, `row-ladder-{0,max}` vs `recall-ablation-{0,max}`, both `a3=TRUE`):
+> no consistent recall-dominance signal.** 7B: OPAQUE C2 rate is *higher* than CLEAR on
+> titanic-rows=0 (85.3% vs 75.8%, N=5 vs N=20) but *lower* on the other three rung/fixture pairs
+> (titanic-max 57.6% vs 63.3%; product_reviews-0 60.7% vs 77.8%; product_reviews-max 68.8% vs
+> 77.5%) — direction isn't stable, and OPAQUE's N=5 (28–34 claims) is thin next to CLEAR's N=20
+> (111–140 claims). Gemini: OPAQUE trails CLEAR at every rung/fixture pair, but by a small and
+> shrinking margin (titanic-0 tied at 100%/100%; titanic-max 94.3% vs 99.3%; product_reviews-0
+> 73.3% vs 79.2%; product_reviews-max 80.0% vs 81.7%). **Reading:** the "recall dominance re-scopes
+> everything" worry — that CLEAR's apparent grounding is substantially recall-assisted — is **not
+> supported** at either tier: the 7B shows no stable direction at all, and Gemini's small,
+> one-directional gap is consistent with OPAQUE being a slightly harder condition on its own terms
+> (unfamiliar column tokens), not with CLEAR being propped up by memorised answers. Thin N throughout
+> (R-C, never run, is what would firm this up). Riders **R-A and R-B have now run**
+> (2026-07-30, [11's session 10](./11-gemini-comparison-arm.md#handoff--2026-07-30-session-10-r-a-and-r-b-run--opaque-does-not-blind-on-titanic)).
+> **R-B found OPAQUE does *not* blind on titanic** — see the new CEILING block below the table. R-A
+> found zero C3 at rows=0 on every runnable fixture, consistent with the existing zero-C3 finding.
+> Rider **R-C (variance floor) was never authorised either, so the ladder's power is unquantified**
+> — "flat by rung, no decline" below is an observation at N=5–20, not an established null result.
 
 **The deliverable is this table, filled in.** It is what "the standard" means here: not a finding
 about models, a decision per surface that someone can build from.
 
 | Slot | Class present | Winning architecture | Evidence | Residual risk |
 | :--- | :--- | :--- | :--- | :--- |
-| Header — counts / span | C1 | _(expected: app-composed, D65 — must be beaten, not assumed)_ | | |
-| Header — domain / suited-for | C4 | _(05 offer, or dropped)_ | | |
-| Structural Patterns | C2 | | | |
-| Data Quality & Health | C2 + C3 | _(C3 is app-only by construction)_ | | |
-| Behavioral Trends | C2 + C4 | | | |
-| Suggested Explorations | C5 | _(deterministic ranker is the incumbent — the model must beat it)_ | Offers arm, 2026-07-28: 8/8 executable offers ran and returned rows, 0 phrasing-guard rejects — **but 16 of 24 surfaced offers carry no SQL at all**, and `ecommerce` surfaces 5 with 0 executable | The incumbent is mostly unfalsifiable, so "beat it" needs a second criterion beyond execution |
+| Header — counts / span | C1 | **App-composed (D65) — beaten-attempt failed, not assumed.** Kill criterion (i) fired at the shipping tier, but see the 2026-07-30 correction: the margin is much thinner than the original count suggested | Ollama 7B, 250/250 compliant, 2026-07-29: **254 C1 disagreements on uncorrupted (`a3=TRUE`) cells**, so (i) ("zero C1 disagreements … at *any* rung") fails outright. **Not diffuse — two cells:** `product_reviews::row-ladder` 217 (71% of the run's 304 total) and `stock_prices::ceiling-control` 37 (15/20/2/0 by rung). `titanic::row-ladder` is 0/80; both fixtures' OPAQUE `recall-ablation` cells are 0/10. Counts are *disagreements*, not calls. **Correction, 2026-07-30 — the $0 header read named in Residual-risk is done, and it found a real scorer bug, not a model failure:** `scoreC1`'s `numericTokens` check splits on hyphens, so an ISO date truth (`2023-01-01`) never equality-matches even when a header echoes it byte-for-byte, and a prose date ("January 1, 2023") fails the same way — every digit group gets flagged. Fixed in `scorePanel.ts` (`c1TruthTokens` now also accepts a date truth's year/month/day, padded and bare; tests in `scorePanel.test.ts`) and replayed against the persisted headers (`eval/claude/10-grounding-ladder/rescorePerSlot.ts`'s reconstruction path, deterministic, no model call). Result: `product_reviews::row-ladder` **217 → 5**, `stock_prices::ceiling-control` **37 → 1**; titanic and `recall-ablation` were already 0 and have no date-truth exposure, so they're untouched. **Corrected total: 6, not 254.** The 6 residual cases are two citation-closure edge cases (header pivots to a second resolved fact — a different, pre-existing mechanism) and four "N years" roundings (23 months → "2 years", ~9.5 years → "9 years") — imprecision, not a wrong count or date | **Resolved:** the $0 header read this cell asked for is done (see Evidence's 2026-07-30 correction) — it was a scorer bug, not an unread mechanism, so criterion (m) doesn't apply (the *key* was never wrong; the *scorer* was). Gemini's 0-C1 result on the identical cell is now corroborated rather than merely uncontradicted. **This does not flip the row's verdict** — criterion (i) still requires *zero* and 6 isn't zero — but the practical case for foreclosing a model-narrated header is far weaker than "254 disagreements" implied; whether 6 residual imprecision-class cases still justifies app-composition over a narrower guard (e.g., accept "~N years" rounding, still reject a wrong count/date) is a call for whoever next revisits this row, not decided here. **C1's sign inverts by `a3`:** on `a3=TRUE` a disagreement is a fabrication; on `CORRUPTED` it is *grounding* (the model echoed the fact it was fed) — the date-truth fix does not touch `CORRUPTED`/`DELETED` scoring, since those anchors are `.rowCount` facts, not dates (`pickAnchorFact`'s own priority order). Never quote the 304 total as one rate. `DELETED`-cell C1 uses the session-2 closure fix; Gemini's pre-fix records were never replayed, so no cross-arm C1 total is comparable. Direction of risk is safe: app-composition can only be reopened by a *smaller* tier passing, and none has run |
+| Header — domain / suited-for | C4 | **Open — H4.** Unchanged by either arm | **None. Not measured, on either provider.** `PANEL_RESPONSE_SCHEMA`'s header claim is `{text, cites}` only — there is no domain-guess field, so the harness never asked any model for this claim. Consistent with §"Slot inventory": `domain-guess` is a declared `ComputedFactKind` with **no builder**, and "suited for" has no fact at all — the clause is *unrepresentable*, not merely unverified. The C4 residue that was counted (7B 335, Gemini 149) is combined across structural/quality/behavioral and contains **no** header-domain claim | Nobody has read the residue: this doc's own requirement ("state the C4 residue count **and who read it**") is half-met — counted, unaudited — so H4's input does not exist yet either. One tempting artifact to refuse: the 7B's invented `"Crypto Market Data for Ethereum"` header at `stock_prices::ceiling-control-max` is a broken cell's header text, **not** a measurement of this slot |
+| Structural Patterns | C2 | **Provisional: model-narrated, citation-bound, reject-on-closure-failure.** Not closable until the per-slot re-score below runs | **No per-slot number exists** (see preamble); the following is one figure shared with the two rows beneath, not three measurements. Ollama 7B, 250 calls: **C2 1080/1515 grounded (71.3%)** — ~29% of model-authored claims fail citation closure. By rung: `product_reviews::row-ladder` 77.8 / 74.4 / 82.4 / 77.5% (flat, N=20/rung); `titanic::row-ladder` 75.8 / 78.4 / 83.3 / **63.3**% (only the `max` rung falls, coinciding with leaks jumping to 28). Sample leaks 49, 48 of them on `titanic` | **Criterion (k) fired: 148 slot misassignments across 250 calls** — the fact partition leaked, and (k)'s own text then makes "the cell's other numbers suspect." Because per-slot C2 was discarded, you cannot tell *which* slot leaked. **Criterion (d) is therefore unassessed — neither passed nor failed** — since it requires a directional effect "on at least one *slot*." Unblock costs $0 and needs no model call: replay the persisted `raw` panels through `scorePanel` with the slot fact tables reconstructed, and persist `C2Disposition[].slot`. A 71.3% closure rate means an architecture that renders unclosed claims ships ~29% ungrounded text; one that drops them ships a visibly gappy panel. Which is acceptable is a product call this table cannot make |
+| Data Quality & Health | C2 + C3 | C3 is app-only by construction — **unchallenged, and now also unexercised.** C2 half: as Structural Patterns | **C3: zero occurrences across 515 compliant panels, both tiers, every fixture, every cell** (7B 250/250, Gemini 265/265) — cross-checked twice, from the persisted aggregate and from an independent re-application of `scorePanel`'s own `ABSENCE_PATTERN` to the raw output. No model attempted an absence claim anywhere. C2 half: the same combined 1080/1515 as the row above, not a separate measurement | Zero C3 is a **lower bound from a regex**, not proof the class is absent: `ABSENCE_PATTERN` demonstrably catches an injected F3 (`scorePanel.test.ts`, Phase 1), but a paraphrase it does not match scores zero. And zero C3 does not license model-authored absence claims — criterion (j) makes them fabrications *even when true*, so the app-only ruling stands on construction, not on this count. Independently: the third finding column **does not exist in shipped code** and "checks passed" still has no fact source, so this row's architecture has nothing yet to be right or wrong about |
+| Behavioral Trends | C2 + C4 | **Open.** C2 half as Structural Patterns (provisional, blocked on the same re-score); C4 half is **H4**, unchanged | No slot-specific evidence exists for either half. C2 is the combined figure above; the C4 residue (7B 335, Gemini 149) is likewise combined across three slots and unread by a human — which is also why **H5** (`passesTrendGeneralisationGuard`'s hit half) still has no number | This is the slot where unhedged generalisation lives and where the shipped guard is known not to reach — C4 phrasings clear `FORBIDDEN_PHRASING` clean (§"Two guard gaps"). Sample leaks (verbatim row values reaching claim text) are titanic-concentrated at both tiers (7B 48/49, Gemini 31/31), so "sending rows is safe" is unestablished for a fixture whose values are memorable. **Do not import Gemini's chat-arm "more rows → worse correctness" (71.6% → 56.9%) into this row:** it is the NL→SQL path, CAPABILITY-tagged, and the panel path's own C2 rate is flat by rung on both fixtures at both tiers |
+| Suggested Explorations | C5 | Deterministic ranker is the incumbent — the model must beat it. **Still undecided: H3 is unanswered**, and H3's own rule is that deciding it after seeing which arm won is a rationalisation | Offers arm, 2026-07-28 (no model): 8/8 executable offers ran and returned rows, 0 phrasing-guard rejects — **but 16 of 24 surfaced offers carry no SQL at all**, and `ecommerce` surfaces 5 with 0 executable. **Separate mechanism, do not merge with the above:** the *panel* arm measures offers-array **id fidelity** (`checkOffersCompliance` — did the model return exactly the candidate action-id set, with no invented, dropped or duplicated ids; **no SQL is executed**). Ollama 7B: **221/250 (88.4%)**, with two bad cells — `stock_prices::ceiling-control` 10/20 and `titanic::row-ladder` 64/80 | The incumbent is mostly unfalsifiable, so "beat it" needs a second criterion beyond execution. The two offers numbers cover **disjoint** failure modes and cannot be averaged: an offer can have a perfectly valid id and no SQL at all — that is exactly the 16-of-24 case. And 88.4% id fidelity means the model invents or drops action ids ~12% of the time, i.e. offers pointing at actions that do not exist — a failure the deterministic ranker structurally cannot have. `stock_prices::ceiling-control`'s 50% coincides with that cell's C2 collapse; it is one more symptom, not an independent data point |
+
+> #### Gemini 3.6 Flash — instrument column (CAPABILITY; **decides nothing above**)
+>
+> Per [11's ledger](./11-gemini-comparison-arm.md#the-transfer-ledger), a CAPABILITY result from
+> that arm may not appear in the verdict table. These are recorded because they calibrate the
+> *instrument* and the folder's premise, not the product's providers. 265/265 compliant,
+> `responseSchema`-constrained, `thinkingLevel: minimal`, 0 thinking tokens on every call, ≈$7.16.
+>
+> - C2 1607/1756 (91.5%); C3 **0**; C1 **0 on all 199 uncorrupted calls**; offers id fidelity 265/265
+>   (computed post-hoc in session 8, after the ledger's tags were meant to be assigned — treat as a
+>   post-hoc metric, not a pre-registered ledger tag).
+> - R2 (most-common-header-fraction) 0.40–1.00 across cells vs. the 7B's 0.15–0.85 — Gemini is more
+>   deterministic at **every** rung on **every** fixture. Both figures are CAPABILITY in isolation;
+>   what is worth carrying is only that a large tier-gap in header determinism **exists**, which is
+>   08's R2 concern read at more than one tier. (Computed post-hoc in session 8, after the ledger's
+>   tags were meant to be assigned — treat as a post-hoc metric, not a pre-registered ledger tag.)
+> - Job 2 (folder's provider-independence premise): Gemini reproduces zero C3 and zero clean-data
+>   C1; the 7B reproduces zero C3 but 254 clean-data C1 — a provider-dependent result on the one
+>   axis the premise is loudest about. Not decided here; flagged for the folder's own
+>   premise-status tracking, not resolved by this table.
+> - Chat arm: result-correctness fell monotonically with rows, 71.6% → 64.7% → 63.7% → 56.9%.
+>   **NL→SQL path only** — the panel arm's own C2 is flat by rung.
+>
+> **CEILING conclusions that do transfer downward (failure-dispositive only), and their limits:**
+> - Zero C3 at the ceiling. Gemini failing here would have been dispositive; it did not fail, so
+>   this does **not** by itself clear the 7B — the two results are merely consistent.
+> - **Crossed cell (max × OPAQUE × CORRUPTED): kill criterion (c) PASS** — 10/10 compliant and
+>   coherent at the ceiling, and scoreable at the 7B too. **This says the cell is *interpretable*.
+>   It does not say OPAQUE *blinds* — and now there's a direct measurement.** Rider R-B ran
+>   2026-07-30 and found OPAQUE does **not** blind on titanic: 10/10 re-identified as the Kaggle
+>   Titanic dataset at `rows=0`, all `high` confidence, from anonymised schema statistics alone (row
+>   count + column shapes) — no row values needed. product_reviews stayed blind (0/20), but only
+>   because it has no documented public source corpus to recall in the first place, not because the
+>   anonymisation held. **The crossed cell's "no recall to fall back on" premise is falsified for
+>   titanic**, one of the two in-scope fixtures that cell runs on. See the new block below the table
+>   for the full result and what it narrows the fix to.
+> - Uncapped ≡ max-that-fits on all three fixtures — **tautological** (a ~1M window was never going
+>   to bind), not the hoped-for "was the cap ever binding" finding. The informative half came from
+>   the 7B: Ollama's 32k `num_ctx` **did** bind on `stock_prices` (2,338 of 2,500 rows sent).
+>
+> **RIG findings (transfer totally; they are properties of the harness):**
+> - `scoreC1`'s `DELETED`-condition bug — fixed, session 2. No historical Gemini replay was run.
+> - `estimateTokens` under-estimates real prompt tokens by **≈30% (titanic, N=1) to 41–74%, mean
+>   ≈59% (stock_prices, N=25)**, and the gap grows with prompt density. `assemble.ts`'s
+>   "max-that-fits" rung is sized against that estimator, so **the A1 axis's rung labels are
+>   uncalibrated on every arm.**
+> - **`compliant` in `RunRecord` means schema-valid, not grounded, and at the ceiling condition the
+>   two came apart completely** — see the ceiling-cell note below. Any future report of a raw
+>   compliance rate must say so.
+
+> #### `stock_prices::ceiling-control-max`, Ollama 7B — compliant is not grounded
+>
+> 11's session 7 records the ceiling prose-collapse as "**eliminated** — 5/5 compliant, up from
+> 0/5." Schema-constrained decoding did fix the *parse* failure. It did not fix the *grounding*
+> failure; it changed the failure's shape.
+>
+> All 5/5 repeats are `compliant: true`. All 5/5 have **`c2Ok: 0`** against non-trivial `c2Total`
+> (30 / 13 / 3 / 8 / 3) — every structural, quality and behavioral claim fails citation closure.
+> `avgCiteJaccard` across the 5 is exactly **0.00**: no two repeats cite even one overlapping fact
+> id. The five headers were raw Chinese CSV column names, the literal string `"stock_prices"`, an
+> English paragraph guessing "Alpha Vantage", an invented `"Crypto Market Data for Ethereum"`, and
+> raw English column names. `cites` arrays held column names and row values
+> (`["Open","High","Low","Close","Volume"]`) rather than resolvable fact ids.
+>
+> This is the largest-token cell in the cross (~16.3k prompt tokens, 2,338 rows) and it is **not
+> context-window truncation** — `truncated: false` on every record, well inside 32768 `num_ctx`.
+> It is the row-packing budget's own upper edge. Gemini's identical cell is 40/40 C2-ok with zero
+> degradation, so this is not fixture difficulty shared by both tiers; it is 7B-specific at this
+> density. **N=5** — enough to establish the failure exists and reproduces, not enough to locate
+> the threshold.
+>
+> **The product consequence, which is the reason this is here and not in a footnote:** if
+> `compliant` is used as a health signal, a shipped panel can be 100% schema-valid and 0% grounded
+> at exactly the large-table case the product is for, and every structural monitor reads green.
+
+> #### `titanic`, crossed cell (`OPAQUE` + `CORRUPTED`) — OPAQUE does not blind
+>
+> Rider R-B ([11's session 10](./11-gemini-comparison-arm.md#handoff--2026-07-30-session-10-r-a-and-r-b-run--opaque-does-not-blind-on-titanic))
+> asked Gemini directly, under OPAQUE anonymisation, "what real-world dataset is this?" N=10,
+> `rows=0` and `rows=max`, titanic and product_reviews, scored against a keyword list
+> pre-registered before the run — not against the panel path, so this does not touch `scorePanel`
+> or `RESULTS-*.json` (D58 honored).
+>
+> **Titanic: 10/10 hit rate at `rows=0`, all `high` confidence — the anonymisation leaks through
+> column statistics alone, before a single row value is shown.** Representative excerpt: *"The
+> table has exactly 891 rows, which is the exact row count of the standard Kaggle Titanic
+> train.csv dataset..."* Row values (`rows=max`) added nothing — the hit rate was already 10/10 at
+> `rows=0` — so the leak is entirely in the schema/row-count statistics `opaque.ts` currently
+> leaves untouched, not in the values it does anonymise.
+>
+> product_reviews: 0/20 at both rungs — but this is not evidence the anonymisation *works*; the
+> fixture has no documented public source corpus, so there was nothing memorised to leak. The
+> contrast is fixture-specific, not a validation of the mechanism.
+>
+> **What this means for the crossed cell:** its stated premise — "no recall to fall back on" —
+> does not hold for titanic. Kill criterion (c) still passes (the cell is interpretable), but
+> interpretable is not the same claim as blind, and the two had been read together until now.
+> **Tagged CEILING, dispositive downward**: if the frontier model can't be blinded, no smaller
+> tier should be assumed blinded either. The fix, if pursued, is narrower than "extend `opaque.ts`"
+> in general — it would need to perturb or bucket row counts and column cardinalities specifically,
+> since names and values already anonymise well enough that product_reviews (which has real values,
+> just no famous identity) never leaked.
+>
+> **Not decided here:** none of the six rows above cite the crossed cell as evidence for a
+> "Winning architecture" decision — its role has been calibration/interpretability, not a decision
+> input — so no row is amended by this finding. If a future session wants to close the gap,
+> `opaque.ts` extended to row-count/cardinality bucketing, then a repeat of the crossed cell under
+> the extended anonymisation, is the next concrete step; not authorised or scoped here.
 
 Rows may legitimately land on different architectures. **That is the expected result, not a failure
 to converge** — a header of app-composed counts beside a model-narrated Behavioral column beside a

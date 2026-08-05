@@ -108,7 +108,7 @@ describe('CommandPalette', () => {
     const { getByTestId } = render(<CommandPalette />);
     openPalette();
     fireEvent.click(getByTestId('command-palette-entry-console'));
-    expect(useDrawerStore.getState()).toMatchObject({ view: 'console', consoleActivated: true });
+    expect(useDrawerStore.getState()).toMatchObject({ open: true });
     expect(useTabsStore.getState().tabs).toHaveLength(0);
   });
 

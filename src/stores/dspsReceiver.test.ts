@@ -31,4 +31,13 @@ describe('useDspsReceiverStore (D62 .dsps receiver)', () => {
     useDspsReceiverStore.getState().close();
     expect(useDspsReceiverStore.getState()).toMatchObject({ document: null, error: null });
   });
+
+  // S6.9 / 07d: viewer mode neither persists nor rehydrates. An open .dsps is
+  // someone else's document held for as long as it's on screen — a reload
+  // that reopened it would resurrect a share the user had already dismissed.
+  it('writes nothing to localStorage — viewer mode never persists', () => {
+    localStorage.clear();
+    useDspsReceiverStore.getState().open(doc);
+    expect(localStorage.length).toBe(0);
+  });
 });

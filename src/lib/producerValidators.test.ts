@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
+  chartSpecValidator,
   rankedActionValidator,
   narrationValidator,
   passesPhrasingGuard,
   passesTrendGeneralisationGuard,
 } from './producerValidators'
+import type { ChartSpec } from './../types'
 import type { CitableFact } from './citableFacts'
 import type { FactRef, RankedAction } from '../types'
 
@@ -119,6 +121,46 @@ describe('narrationValidator with a citedFact', () => {
 
   it('still enforces the byte-identity checks even with a citedFact given', () => {
     expect(narrationValidator(fact, { ...fact, sql: 'SELECT 1', statement: 'Fare for Pclass group "1".' }, outlierFact)).toBe(false)
+  })
+})
+
+describe('chartSpecValidator', () => {
+  const baseline: ChartSpec = {
+    type: 'time-series',
+    title: 'revenue, orders over month',
+    xField: 'month',
+    yFields: ['revenue', 'orders'],
+    seriesField: 'region',
+  }
+
+  it('accepts a re-title', () => {
+    expect(chartSpecValidator(baseline, { ...baseline, title: 'Revenue and orders by month' })).toBe(true)
+  })
+
+  it('accepts a subset of the measures, in any order, and a dropped series', () => {
+    expect(chartSpecValidator(baseline, { ...baseline, yFields: ['orders'] })).toBe(true)
+    expect(chartSpecValidator(baseline, { ...baseline, yFields: ['orders', 'revenue'] })).toBe(true)
+    expect(chartSpecValidator(baseline, { ...baseline, seriesField: undefined })).toBe(true)
+  })
+
+  it('rejects any field the baseline did not already name', () => {
+    // The whole safety property: no field name in an accepted spec came from
+    // the model, so the renderer cannot be handed a column the data lacks.
+    expect(chartSpecValidator(baseline, { ...baseline, yFields: ['revenue', 'margin'] })).toBe(false)
+    expect(chartSpecValidator(baseline, { ...baseline, xField: 'quarter' })).toBe(false)
+    expect(chartSpecValidator(baseline, { ...baseline, seriesField: 'segment' })).toBe(false)
+    expect(chartSpecValidator(baseline, { ...baseline, type: 'categorical' })).toBe(false)
+  })
+
+  it('rejects an empty or duplicated measure list', () => {
+    expect(chartSpecValidator(baseline, { ...baseline, yFields: [] })).toBe(false)
+    expect(chartSpecValidator(baseline, { ...baseline, yFields: ['revenue', 'revenue'] })).toBe(false)
+  })
+
+  it('holds the title to the same D45 guard as a re-phrased verb', () => {
+    expect(chartSpecValidator(baseline, { ...baseline, title: 'Orders always peak in March' })).toBe(false)
+    expect(chartSpecValidator(baseline, { ...baseline, title: 'Revenue rose because of the promotion' })).toBe(false)
+    expect(chartSpecValidator(baseline, { ...baseline, title: '' })).toBe(false)
   })
 })
 

@@ -1,0 +1,36 @@
+{
+  "id": "evidence:status-revenue",
+  "metric": "sum_product(order_items.quantity,order_items.unit_price)",
+  "unit": "USD",
+  "dimension": "orders.status",
+  "filters": [],
+  "completeness": "complete",
+  "sourceRowCount": 4,
+  "returnedRowCount": 4,
+  "rows": [
+    {
+      "rowId": "r1",
+      "label": "cancelled",
+      "value": 358072.55,
+      "order": 0
+    },
+    {
+      "rowId": "r2",
+      "label": "completed",
+      "value": 952190.31,
+      "order": 1
+    },
+    {
+      "rowId": "r3",
+      "label": "refunded",
+      "value": 321894.74,
+      "order": 2
+    },
+    {
+      "rowId": "r4",
+      "label": "shipped",
+      "value": 295423.15,
+      "order": 3
+    }
+  ]
+}

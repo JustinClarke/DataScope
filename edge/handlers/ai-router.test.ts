@@ -11,10 +11,10 @@ import { createMemoryRateStore, type RateStore } from '../shared/limiter'
 import { createMemorySink } from '../shared/counters'
 import type { AiRouterRequest, WireProviderTurn } from '../protocol'
 
-const TEXT_TURN: WireProviderTurn = { kind: 'text', text: 'SELECT 1 answered.' }
+const TEXT_TURN: WireProviderTurn = { text: 'SELECT 1 answered.', calls: [] }
 const TOOL_TURN: WireProviderTurn = {
-  kind: 'tool_call',
-  call: { id: 'c1', name: 'execute_local_sql', input: { sql: 'SELECT count(*) FROM orders' } },
+  text: '',
+  calls: [{ id: 'c1', name: 'run_sql', input: { sql: 'SELECT count(*) FROM orders' } }],
 }
 
 /** A provider that yields the given events in order, honoring abort between yields. */

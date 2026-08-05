@@ -1,5 +1,5 @@
 // Widened system prompts for S0 Probe A (00-synthesis-and-limits-probe.md) —
-// split out from run.ts so other harness arms (eval/02-generate-then-verify/)
+// split out from run.ts so other harness arms (eval/claude/02-generate-then-verify/)
 // can import the prompt text without pulling in run.ts's own executable
 // `main()`, which runs unconditionally at module scope on import. This file
 // has no side effects: importing it does nothing but bind these constants.

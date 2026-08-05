@@ -1,0 +1,260 @@
+{
+  "claim": {
+    "kind": "change",
+    "from": {
+      "evidenceId": "evidence:monthly-revenue",
+      "rowId": "r1",
+      "field": "value"
+    },
+    "to": {
+      "evidenceId": "evidence:monthly-revenue",
+      "rowId": "r2",
+      "field": "value"
+    },
+    "operator": "increase"
+  },
+  "resolvedEvidence": {
+    "id": "evidence:monthly-revenue",
+    "metric": "sum_product(order_items.quantity,order_items.unit_price)",
+    "unit": "USD",
+    "dimension": "orders.order_date/month",
+    "completeness": "complete",
+    "rows": [
+      {
+        "rowId": "r1",
+        "label": "2021-12-01",
+        "value": 3745.01,
+        "order": 0
+      },
+      {
+        "rowId": "r2",
+        "label": "2022-01-01",
+        "value": 68970.39,
+        "order": 1
+      },
+      {
+        "rowId": "r3",
+        "label": "2022-02-01",
+        "value": 45638.76,
+        "order": 2
+      },
+      {
+        "rowId": "r4",
+        "label": "2022-03-01",
+        "value": 54908.59,
+        "order": 3
+      },
+      {
+        "rowId": "r5",
+        "label": "2022-04-01",
+        "value": 70401.8,
+        "order": 4
+      },
+      {
+        "rowId": "r6",
+        "label": "2022-05-01",
+        "value": 40913.93,
+        "order": 5
+      },
+      {
+        "rowId": "r7",
+        "label": "2022-06-01",
+        "value": 51558.55,
+        "order": 6
+      },
+      {
+        "rowId": "r8",
+        "label": "2022-07-01",
+        "value": 38680.17,
+        "order": 7
+      },
+      {
+        "rowId": "r9",
+        "label": "2022-08-01",
+        "value": 61207.42,
+        "order": 8
+      },
+      {
+        "rowId": "r10",
+        "label": "2022-09-01",
+        "value": 43568.29,
+        "order": 9
+      },
+      {
+        "rowId": "r11",
+        "label": "2022-10-01",
+        "value": 51674.86,
+        "order": 10
+      },
+      {
+        "rowId": "r12",
+        "label": "2022-11-01",
+        "value": 50892.97,
+        "order": 11
+      },
+      {
+        "rowId": "r13",
+        "label": "2022-12-01",
+        "value": 42879.22,
+        "order": 12
+      },
+      {
+        "rowId": "r14",
+        "label": "2023-01-01",
+        "value": 53837.72,
+        "order": 13
+      },
+      {
+        "rowId": "r15",
+        "label": "2023-02-01",
+        "value": 60101.99,
+        "order": 14
+      },
+      {
+        "rowId": "r16",
+        "label": "2023-03-01",
+        "value": 36680.08,
+        "order": 15
+      },
+      {
+        "rowId": "r17",
+        "label": "2023-04-01",
+        "value": 64234.64,
+        "order": 16
+      },
+      {
+        "rowId": "r18",
+        "label": "2023-05-01",
+        "value": 37592.43,
+        "order": 17
+      },
+      {
+        "rowId": "r19",
+        "label": "2023-06-01",
+        "value": 48013.62,
+        "order": 18
+      },
+      {
+        "rowId": "r20",
+        "label": "2023-07-01",
+        "value": 62826.99,
+        "order": 19
+      },
+      {
+        "rowId": "r21",
+        "label": "2023-08-01",
+        "value": 55341.38,
+        "order": 20
+      },
+      {
+        "rowId": "r22",
+        "label": "2023-09-01",
+        "value": 63484.62,
+        "order": 21
+      },
+      {
+        "rowId": "r23",
+        "label": "2023-10-01",
+        "value": 60835.65,
+        "order": 22
+      },
+      {
+        "rowId": "r24",
+        "label": "2023-11-01",
+        "value": 65019.75,
+        "order": 23
+      },
+      {
+        "rowId": "r25",
+        "label": "2023-12-01",
+        "value": 35565.32,
+        "order": 24
+      },
+      {
+        "rowId": "r26",
+        "label": "2024-01-01",
+        "value": 55112.86,
+        "order": 25
+      },
+      {
+        "rowId": "r27",
+        "label": "2024-02-01",
+        "value": 56620.89,
+        "order": 26
+      },
+      {
+        "rowId": "r28",
+        "label": "2024-03-01",
+        "value": 67196.51,
+        "order": 27
+      },
+      {
+        "rowId": "r29",
+        "label": "2024-04-01",
+        "value": 55723.09,
+        "order": 28
+      },
+      {
+        "rowId": "r30",
+        "label": "2024-05-01",
+        "value": 46623.78,
+        "order": 29
+      },
+      {
+        "rowId": "r31",
+        "label": "2024-06-01",
+        "value": 63532.96,
+        "order": 30
+      },
+      {
+        "rowId": "r32",
+        "label": "2024-07-01",
+        "value": 67196.21,
+        "order": 31
+      },
+      {
+        "rowId": "r33",
+        "label": "2024-08-01",
+        "value": 67225.94,
+        "order": 32
+      },
+      {
+        "rowId": "r34",
+        "label": "2024-09-01",
+        "value": 50324.42,
+        "order": 33
+      },
+      {
+        "rowId": "r35",
+        "label": "2024-10-01",
+        "value": 47926.73,
+        "order": 34
+      },
+      {
+        "rowId": "r36",
+        "label": "2024-11-01",
+        "value": 56515.34,
+        "order": 35
+      },
+      {
+        "rowId": "r37",
+        "label": "2024-12-01",
+        "value": 25007.87,
+        "order": 36
+      }
+    ]
+  },
+  "result": {
+    "accepted": true,
+    "fact": {
+      "kind": "change",
+      "operator": "increase",
+      "subject": "2022-01-01",
+      "object": "2021-12-01",
+      "leftValue": 68970.39,
+      "rightValue": 3745.01,
+      "unit": "USD"
+    }
+  },
+  "renderedSentence": "2022-01-01 was a verified increase from 2021-12-01: 3,745.01 USD to 68,970.39 USD."
+}

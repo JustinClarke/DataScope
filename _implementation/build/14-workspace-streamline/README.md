@@ -56,7 +56,9 @@ goes to its own tab.
 | S4 | **Run from anywhere + the shared guarded run path:** a run action on every surface that displays SQL, and `TransformGuardModal` moved into the one run path every runner calls | S3 |
 | S5 | **Query tabs + the registry amendment:** the artifact kind's first live member with both producers; `'sql'` removed from the union, `TAB_TYPE_BY_MODULE` and the palette; Pivot's own results home; Export's entry point to the title bar; settings confirmed as the overlay | S3, S4 |
 | S6 | **Map composition:** options strip removed, Suggested Explorations (top 3 + view-more → a pre-run query tab), Structural ‖ Behavioral finding columns at independent heights | S5 |
-| S6.9 | **Workspace persistence across refresh:** durable dataset bytes (OPFS-backed DuckDB or byte-staging + re-register) plus registry/UI-state rehydration (`datasets`/`tabs`/`selection`/`relationships`), reconciled against whatever DuckDB actually recovers on load. Four sub-steps: spike → durable row storage → registry persist → rehydration bootstrap. Sequenced before S7 by human instruction, not gated by S0 | none (parallel-safe with S1–S6) |
+| S6.5 | **The drawer split view:** Info and the SQL editor permanently visible, one job each — **Info left** (selection scent, then the result, its chart, the exports, Pin, the recipe, the history) and **the editor right** (code, Run, Format, nothing a run produced) — on one clamped ratio, replacing S3's tab switch. Expanding stacks them (editor above, Info beneath) and a too-narrow drawer does the same, so no pane is ever hidden and no view switcher survives. Monaco loads on drawer open, gets a token-built theme, SQL indentation rules and a DuckDB-dialect formatter. Carries the fix for shipped S3's `expanded` state pushing the dock off-screen. Sequenced before S6.9 by human instruction, not gated by S0 | S3, S4, S5 |
+| S6.7 | **Info opens on content:** Info renders only when a selection exists or the console has a result — otherwise the SQL pane takes the drawer's full width, with an inviting placeholder in the empty editor. Info is then scoped down to the result alone (no chart, no inline history); Pin to tab becomes the primary action directly above it, and a History button opens the session's run log in its own singleton tab (`TabType`'s ninth member, same registry discipline S5 used for `query`). Reverses S6.5 scope calls 3 and 5 at the visibility level only — a run remains one of exactly two triggers that force Info open, so a result still can never land in a hidden pane. Sequenced after S6.5, before S6.9, not gated by S0 | S6.5 |
+| S6.9 | **Workspace persistence across refresh:** durable dataset bytes (OPFS-backed DuckDB or byte-staging + re-register) plus registry/UI-state rehydration (`datasets`/`tabs`/`selection`/`relationships`/`drawer`), reconciled against whatever DuckDB actually recovers on load. **Always on, no opt-in gate** (human call 2026-07-29), which makes a **"Clear workspace data"** control part of the same phase rather than a follow-up. **Requires a master amendment** — §5.2's "dataset contents never persist" and the matching §18/§22 criteria are re-split (no rows in `localStorage`/cookies; bytes in OPFS by design); no D-row is reversed, since D2's persistence boundary governs *egress modes* and every egress claim is untouched. Durability is **per registry origin**: sampled-tier files, API tables and derived tables are rebuilt or re-dropped, not stored. Four sub-steps: spike → durable row storage → registry persist → rehydration bootstrap | none (parallel-safe with S1–S6) |
 | S7 | **AI Dataset Synthesis — gated, not scheduled.** Blocked on S0's verdict | S6, **S0** |
 
 **S0 sits ahead of all of them** — [`00-synthesis-and-limits-probe.md`](00-synthesis-and-limits-probe.md),
@@ -143,13 +145,16 @@ explicit home or an explicit "dropped" call in S5's leaf — none may be discove
   this intact.
 - **`TransformGuardModal`** → the shared run path (above). Not optional.
 - **The export-recipe action** (§12.2), **`AutoChartPanel`** (also used by `InsightFeed`), and
-  the **Download-Parquet-on-CTAS** shortcut → the query tabs, and surfaced in the drawer as
-  deliberate chrome rather than a button pile.
-- **`QuerySuggestions`** → the map's Suggested Explorations (S6), which is the same question as
-  the console's cold state asked twice: the console starts on a composed info pane with an
-  explicit "open SQL editor" control, not a query list.
-- **Monaco's lazy boundary** → the console's first *open*, never the shell's mount. A drawer
-  present in every session must not pull the ~2 MB chunk at startup (§15).
+  the **Download-Parquet-on-CTAS** shortcut → the query tabs, and in the drawer they belong to
+  **Info** rather than to the editor beside it (S6.5): each is about what a run produced, and the
+  SQL pane holds only the code.
+- **`QuerySuggestions`** → the map's Suggested Explorations (S6). S6.5 removed it from the console
+  and left the component in the tree for S6 to re-home; the console's cold state that S3 paired
+  this with is retired (S6.5 scope call 9).
+- **Monaco's lazy boundary** → the **drawer's** first open, never the shell's mount. A drawer
+  present in every session must not pull the ~2 MB chunk at startup (§15). The SQL formatter rides
+  the same boundary, and its Format button imports on the click, so neither reaches the startup
+  chunk.
 
 Known run-action sources, each needing its affordance wired individually (S4): the four
 per-chart-type `GeneratedSql` blocks (`features/charts/{time-series,distribution,categorical,

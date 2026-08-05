@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useTabsStore } from './tabs';
+import { TABS_STORAGE_KEY, useTabsStore } from './tabs';
 
 beforeEach(() => {
+  localStorage.clear();
   useTabsStore.setState({ tabs: [], activeTabId: null });
 });
 
@@ -134,6 +135,56 @@ describe('tabs store', () => {
       expect(tab!.id).not.toBe('attacker-chosen-id');
       // No path spreads artifactSpec's keys onto the stored tab at all.
       expect(Object.keys(tab!).sort()).toEqual(['id', 'initializer', 'subject', 'type']);
+    });
+  });
+
+  describe('persistence (07c)', () => {
+    it('persists exactly tabs and activeTabId', () => {
+      const id = useTabsStore.getState().openTab('map', 'orders');
+
+      const raw = localStorage.getItem(TABS_STORAGE_KEY);
+      expect(raw).toBeTruthy();
+      const parsed = JSON.parse(raw!);
+      expect(parsed.state).toEqual({
+        tabs: [{ id, type: 'map', subject: 'orders', initializer: null }],
+        activeTabId: id,
+      });
+    });
+
+    it('a persisted payload from an old schema version rehydrates to a safe, empty default rather than crashing', async () => {
+      localStorage.setItem(
+        TABS_STORAGE_KEY,
+        JSON.stringify({ state: { tabs: 'not-an-array', activeTabId: 42 }, version: 0 }),
+      );
+
+      await useTabsStore.persist.rehydrate();
+
+      const state = useTabsStore.getState();
+      expect(Array.isArray(state.tabs)).toBe(true);
+      expect(state.activeTabId).toBeNull();
+    });
+
+    it('a restored tab id is never reused by a freshly opened tab', async () => {
+      // A large suffix, guaranteed to exceed whatever this module's `nextTabId`
+      // counter reached from earlier tests in this file — the collision this
+      // guards against only shows up once the counter passes the restored id.
+      const restoredId = 'tab-999999';
+      localStorage.setItem(
+        TABS_STORAGE_KEY,
+        JSON.stringify({
+          state: {
+            tabs: [{ id: restoredId, type: 'map', subject: 'orders', initializer: null }],
+            activeTabId: restoredId,
+          },
+          version: 1,
+        }),
+      );
+
+      await useTabsStore.persist.rehydrate();
+      const newId = useTabsStore.getState().openTab('map', 'customers');
+
+      expect(newId).not.toBe(restoredId);
+      expect(useTabsStore.getState().tabs.map((t) => t.id)).toEqual([restoredId, newId]);
     });
   });
 });

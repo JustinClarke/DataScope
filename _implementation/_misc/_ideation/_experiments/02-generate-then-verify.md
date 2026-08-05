@@ -99,9 +99,9 @@ That is this approach's one genuine strength: **it makes provider choice irrelev
 ## Verdict
 
 **Run 2026-07-26.** Built the two files "What to build" specified as a pure module —
-[`eval/02-generate-then-verify/groundingCheck.ts`](../../../../eval/02-generate-then-verify/groundingCheck.ts)
+[`eval/claude/02-generate-then-verify/groundingCheck.ts`](../../../../eval/claude/02-generate-then-verify/groundingCheck.ts)
 (`allowedMentions` + `groundingCheck`) — plus a harness arm
-([`eval/02-generate-then-verify/run.ts`](../../../../eval/02-generate-then-verify/run.ts)) that reuses
+([`eval/claude/02-generate-then-verify/run.ts`](../../../../eval/claude/02-generate-then-verify/run.ts)) that reuses
 the widened prompts verbatim (relocated from `eval/synthesis/run.ts` into a new side-effect-free
 [`eval/synthesis/prompts.ts`](../../../../eval/synthesis/prompts.ts) — see the incident note below) and
 the real seam (`requestSynthesis`, D58 unbroken) over Ollama. Evaluated in the order the doc itself

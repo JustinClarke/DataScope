@@ -1,10 +1,11 @@
 // §22 privacy checklist, exercised at the state layer (01-foundation/02-state-management.md
-// test plan): populate a dataset, "reload," and confirm localStorage holds settings keys
-// only. IndexedDB isn't asserted here — nothing in this store layer opens a database yet
-// (that lands with DuckDB's OPFS persistence, Phase 2/8); asserting it now would be vacuous.
+// test plan): populate a dataset, "reload," and confirm localStorage holds exactly what the
+// 07c-amended §22 allows — settings, plus the datasets registry's catalog metadata — and never
+// row content. IndexedDB isn't asserted here — nothing in this store layer opens a database yet
+// (DuckDB's OPFS staging is services/opfsStaging.ts, not this store).
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useByokKeyStore } from './byokKey';
-import { useDatasetsStore } from './datasets';
+import { DATASETS_STORAGE_KEY, useDatasetsStore } from './datasets';
 import { SETTINGS_STORAGE_KEY, useSettingsStore } from './settings';
 import type { Dataset, TableRegistryEntry } from '../types';
 
@@ -40,14 +41,14 @@ beforeEach(() => {
 });
 
 describe('privacy gate', () => {
-  it('a populated dataset never reaches localStorage; only settings survive "reload"', () => {
+  it('a populated dataset persists only its catalog metadata (07c) — never row content', () => {
     useDatasetsStore.getState().registerDataset(dataset, [table]);
     useSettingsStore.getState().setTheme('dark');
 
-    expect(localStorageKeys()).toEqual([SETTINGS_STORAGE_KEY]);
+    expect(localStorageKeys().sort()).toEqual([DATASETS_STORAGE_KEY, SETTINGS_STORAGE_KEY].sort());
 
-    const persisted = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY)!);
-    expect(persisted.state).toEqual({
+    const settingsPersisted = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY)!);
+    expect(settingsPersisted.state).toEqual({
       aiMode: null,
       byokPreference: 'free-tier-first',
       // The D3 routing-touched flag is a preference too — never dataset content.
@@ -62,10 +63,12 @@ describe('privacy gate', () => {
       shareLinks: [],
     });
 
-    const raw = JSON.stringify(persisted);
-    expect(raw).not.toContain('sensitive-customers');
-    expect(raw).not.toContain('customers');
-    expect(raw).not.toContain('ds-1');
+    const datasetsPersisted = JSON.parse(localStorage.getItem(DATASETS_STORAGE_KEY)!);
+    // Exactly the catalog whitelist — name, table names, schema. Never
+    // `workerStatus`, and never a row: `Dataset`/`TableRegistryEntry` carry no
+    // field that could hold one, so the amended §22 line ("no rows in
+    // localStorage") holds by construction, not by omitting the dataset entirely.
+    expect(datasetsPersisted.state).toEqual({ datasets: [dataset], tables: [table] });
   });
 
   it('a BYOK key survives only in memory — never localStorage, in any storage key (D9)', () => {

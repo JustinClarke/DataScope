@@ -7,7 +7,7 @@
 // server-side vault, build/09-edge/03-vault) is shown but not yet available, so
 // the panel never implies a persisted key it can't deliver. BYOK routing
 // overflow itself lives in the edge router (build/09-edge/01).
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settings';
 import { useByokKeyStore } from '../../stores/byokKey';
@@ -17,6 +17,9 @@ import { usePauseSignalStore } from '../../stores/pauseSignal';
 import { WEBLLM_DOWNLOAD_SIZE } from '../../services/webllm';
 import { isOllamaEndpoint } from '../../services/ollamaProvider';
 import { storeVaultedKey, deleteVaultedKey } from '../../services/vaultClient';
+import { usePersistenceStore } from '../../stores/persistence';
+import { clearWorkspaceData, estimateWorkspaceBytes } from '../../services/workspace';
+import { formatBytes } from '../../lib/formatBytes';
 import type { VaultErrorCode } from '../../../edge/protocol';
 import type { AIMode } from '../../types';
 
@@ -40,6 +43,65 @@ const STORE_FAILURE: Partial<Record<VaultErrorCode | 'unreachable', string>> = {
   'bad-request': 'That key couldn’t be stored.',
   unreachable: UNREACHABLE,
 };
+
+/**
+ * "Clear workspace data" (S6.9 scope call 2) — the only user answer to "get
+ * this off my machine" now that dataset bytes survive a refresh (§5.2, as
+ * amended). It empties this browser's origin-private storage *and* the
+ * persisted registry keys, then reloads, because a half-clear that leaves
+ * metadata pointing at deleted bytes is the exact inconsistency 07d exists to
+ * prevent. The copy states what is verifiable and never claims "securely
+ * erased" (D21) — a browser cannot promise what the filesystem underneath it
+ * did.
+ */
+function WorkspaceDataSection() {
+  const [usedBytes, setUsedBytes] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const stagingStatus = usePersistenceStore((s) => s.status);
+  const stagingNote = usePersistenceStore((s) => s.note);
+
+  useEffect(() => {
+    void estimateWorkspaceBytes().then(setUsedBytes);
+  }, []);
+
+  return (
+    <div className="mt-5 space-y-2 border-t border-(--color-border) pt-4">
+      <h3 className="text-sm font-medium text-(--color-fg)">Workspace data</h3>
+      <p className="text-xs text-(--color-fg-muted)">
+        Tables you drop in are stored on this device, in this browser, so a refresh doesn’t lose
+        your workspace. Nothing is uploaded — this storage is inside the browser.
+        {usedBytes !== null && ` This site is currently using about ${formatBytes(usedBytes)}.`}
+      </p>
+      {stagingNote !== null && stagingStatus !== 'ready' && (
+        <p className="text-xs text-(--color-fg-muted)" role="status">
+          {stagingNote}
+        </p>
+      )}
+      <button
+        type="button"
+        disabled={clearing}
+        onClick={() => {
+          if (!confirming) {
+            setConfirming(true);
+            return;
+          }
+          setClearing(true);
+          void clearWorkspaceData();
+        }}
+        className="rounded-lg border border-(--color-border) px-3 py-2 text-sm text-(--color-fg) disabled:opacity-40"
+      >
+        {confirming ? 'Confirm — clear and reload' : 'Clear workspace data'}
+      </button>
+      {confirming && (
+        <p className="text-xs text-(--color-fg-muted)">
+          Removes the files this browser stored on this device and reloads the page. Your tables
+          and tabs are gone after this; settings are kept.
+        </p>
+      )}
+    </div>
+  );
+}
 
 interface AISettingsPanelProps {
   onClose: () => void;
@@ -281,6 +343,8 @@ export function AISettingsPanel({ onClose, hideModeSwitch = false }: AISettingsP
             </label>
           </div>
         )}
+
+        <WorkspaceDataSection />
       </div>
     </div>
   );

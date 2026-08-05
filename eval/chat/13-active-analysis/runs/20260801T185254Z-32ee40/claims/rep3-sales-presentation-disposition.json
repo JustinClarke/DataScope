@@ -1,0 +1,55 @@
+{
+  "questionId": "sales-presentation",
+  "questionKind": "answerable",
+  "repeat": 3,
+  "transportFailure": null,
+  "action": "final_claim",
+  "repaired": false,
+  "parseError": null,
+  "responseHash": "cb9016c02b9b75b961b45e4c0b13d43f9a87d79c003cc7b90f714c4fb68b8134",
+  "doneReason": "stop",
+  "disposition": {
+    "kind": "final_claim",
+    "rendered": "Books (507,332.51 USD) was the maximum across products.category for the complete evidence scope."
+  },
+  "rendered": "Books (507,332.51 USD) was the maximum across products.category for the complete evidence scope.",
+  "verification": {
+    "accepted": true,
+    "fact": {
+      "kind": "extremum",
+      "operator": "maximum",
+      "subject": "Books",
+      "object": "maximum in evidence:category-revenue",
+      "leftValue": 507332.51,
+      "rightValue": 507332.51,
+      "unit": "USD"
+    }
+  },
+  "tokens": {
+    "calls": 1,
+    "totalPromptTokens": 1438,
+    "totalResponseTokens": 565,
+    "callHighWaterPromptTokens": 1438
+  },
+  "durationMs": 35246,
+  "claim": {
+    "kind": "extremum",
+    "subject": {
+      "evidenceId": "evidence:category-revenue",
+      "rowId": "r2",
+      "field": "value"
+    },
+    "operator": "maximum",
+    "scope": {
+      "evidenceId": "evidence:category-revenue",
+      "rowIds": [
+        "r1",
+        "r2",
+        "r3",
+        "r4",
+        "r5",
+        "r6"
+      ]
+    }
+  }
+}

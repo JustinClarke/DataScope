@@ -8,6 +8,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}', 'edge/**/*.test.ts', 'packages/**/*.test.ts', 'eval/03-clause-citation-binding/*.test.ts', 'eval/08-computed-facts/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'edge/**/*.test.ts', 'packages/**/*.test.ts', 'eval/analyst/*.test.ts', 'eval/claude/03-clause-citation-binding/*.test.ts', 'eval/claude/08-computed-facts/*.test.ts', 'eval/claude/10-grounding-ladder/*.test.ts', 'eval/chat/**/*.test.ts'],
   },
 })

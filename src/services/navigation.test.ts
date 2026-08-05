@@ -9,7 +9,7 @@ vi.mock('./runPath', () => ({ runInConsole: vi.fn() }));
 
 beforeEach(() => {
   useTabsStore.setState({ tabs: [], activeTabId: null });
-  useDrawerStore.setState({ open: true, view: 'info', consoleActivated: false, expanded: false });
+  useDrawerStore.setState({ open: true, expanded: false, consoleSignal: 0 });
   vi.mocked(runPath.runInConsole).mockReset();
 });
 
@@ -65,7 +65,7 @@ describe('openDestination', () => {
     openDestination('sql', null, { tableName: 'orders', columns: [] });
 
     expect(runPath.runInConsole).not.toHaveBeenCalled();
-    expect(useDrawerStore.getState()).toMatchObject({ view: 'console', consoleActivated: true });
+    expect(useDrawerStore.getState()).toMatchObject({ open: true });
     expect(useTabsStore.getState().tabs).toHaveLength(0);
   });
 

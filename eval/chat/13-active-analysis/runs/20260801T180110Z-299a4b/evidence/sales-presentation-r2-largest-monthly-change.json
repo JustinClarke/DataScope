@@ -1,0 +1,77 @@
+{
+  "id": "evidence:largest-monthly-change",
+  "metric": "change(sum_product(order_items.quantity,order_items.unit_price))",
+  "unit": "USD",
+  "filters": [],
+  "completeness": "truncated",
+  "sourceRowCount": 11,
+  "returnedRowCount": 11,
+  "rows": [
+    {
+      "rowId": "delta1",
+      "label": "2021-12-01 to 2022-01-01",
+      "value": 65225.38,
+      "order": 0
+    },
+    {
+      "rowId": "delta2",
+      "label": "2022-01-01 to 2022-02-01",
+      "value": -23331.63,
+      "order": 1
+    },
+    {
+      "rowId": "delta3",
+      "label": "2022-02-01 to 2022-03-01",
+      "value": 9269.83,
+      "order": 2
+    },
+    {
+      "rowId": "delta4",
+      "label": "2022-03-01 to 2022-04-01",
+      "value": 15493.21,
+      "order": 3
+    },
+    {
+      "rowId": "delta5",
+      "label": "2022-04-01 to 2022-05-01",
+      "value": -29487.87,
+      "order": 4
+    },
+    {
+      "rowId": "delta6",
+      "label": "2022-05-01 to 2022-06-01",
+      "value": 10644.62,
+      "order": 5
+    },
+    {
+      "rowId": "delta7",
+      "label": "2022-06-01 to 2022-07-01",
+      "value": -12878.38,
+      "order": 6
+    },
+    {
+      "rowId": "delta8",
+      "label": "2022-07-01 to 2022-08-01",
+      "value": 22527.25,
+      "order": 7
+    },
+    {
+      "rowId": "delta9",
+      "label": "2022-08-01 to 2022-09-01",
+      "value": -17639.13,
+      "order": 8
+    },
+    {
+      "rowId": "delta10",
+      "label": "2022-09-01 to 2022-10-01",
+      "value": 8106.57,
+      "order": 9
+    },
+    {
+      "rowId": "delta11",
+      "label": "2022-10-01 to 2022-11-01",
+      "value": -781.89,
+      "order": 10
+    }
+  ]
+}

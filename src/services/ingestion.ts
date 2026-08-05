@@ -28,6 +28,7 @@ import { RelayFetchError, type RelayFetchErrorCode } from './relayClient';
 import { getSharedObject } from './export';
 import type { StructureReport } from '../lib/structureReport';
 import { hashBytesHex } from '../lib/dsps';
+import { stageTable, unstageTable } from './opfsStaging';
 import type { PersistenceErrorCode } from '../../edge/protocol';
 
 export class IngestionError extends Error {
@@ -59,7 +60,9 @@ export function quoteIdentifier(name: string): string {
   return `"${name.replace(/"/g, '""')}"`;
 }
 
-function quoteLiteral(value: string): string {
+// Exported for the restore path (services/workspace.ts), which rebuilds a
+// staged table through the same reader call this file's ingest builds.
+export function quoteLiteral(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
 }
 
@@ -229,6 +232,34 @@ async function ingestBuffer(
   };
 }
 
+/**
+ * Stage a table's source bytes so it survives a refresh (S6.9 / 07b).
+ *
+ * Scope call 5 decides durability per origin, not uniformly: only a
+ * **non-sampled `file`/`sample`** table is staged. A sampled-tier file is
+ * never fully read into memory by design, so persisting its bytes would
+ * re-introduce exactly the full buffer that tier exists to avoid; `api` tables
+ * re-fetch and `derived` tables replay their `generatingSql` instead.
+ *
+ * Called after the ingest succeeds, so a file DuckDB refused never leaves
+ * bytes behind, and passed the original `File` wherever one exists — a `Blob`
+ * crosses `postMessage` by reference, so a large drop isn't copied just to be
+ * persisted. Never throws: an undurable workspace is a reported state, not an
+ * ingest failure.
+ */
+async function stageDurableSource(ingested: IngestedTable, fileName: string, source: Blob): Promise<void> {
+  if (ingested.sampled) return;
+  await stageTable(
+    {
+      tableName: ingested.tableName,
+      fileName,
+      fileHash: ingested.fileHash,
+      stagedAt: ingested.createdAt,
+    },
+    source,
+  );
+}
+
 function existingTableNames(): Set<string> {
   return new Set(useDatasetsStore.getState().tables.map((t) => t.tableName));
 }
@@ -279,6 +310,7 @@ async function loadFile(file: File): Promise<Dataset> {
   const sampled = tier === 'sampled';
   const source: Uint8Array | File = sampled ? file : new Uint8Array(await file.arrayBuffer());
   const ingested = await ingestBuffer(engine, file.name, source, tableName, sampled);
+  await stageDurableSource(ingested, file.name, file);
 
   const dataset: Dataset = {
     id: crypto.randomUUID(),
@@ -305,6 +337,11 @@ async function loadSample(sampleId: string): Promise<Dataset> {
     const response = await fetch(file.url);
     if (!response.ok) throw new IngestionError(`Couldn't load sample file "${file.url}".`);
     const buffer = new Uint8Array(await response.arrayBuffer());
+    // Taken before ingest: `registerFileBuffer` transfers and detaches
+    // `buffer`, so there would be nothing left to stage afterwards. Bundled
+    // samples are small, which is what makes this copy free here and wrong on
+    // the dropped-file path (which stages the `File` itself instead).
+    const stageable = new Blob([buffer]);
     const vfsName = file.url.split('/').pop() ?? file.tableName;
     const tableName = dedupeTableName(file.tableName, taken);
     taken.add(tableName);
@@ -313,6 +350,7 @@ async function loadSample(sampleId: string): Promise<Dataset> {
     // any tier boundary — no size-tier check needed here (unlike loadFile/
     // loadFiles below), always the ordinary in-memory path.
     const ingested = await ingestBuffer(engine, vfsName, buffer, tableName, false);
+    await stageDurableSource(ingested, vfsName, stageable);
     tableNames.push(ingested.tableName);
     entries.push(toRegistryEntry(ingested, datasetId, 'sample'));
   }
@@ -587,6 +625,7 @@ export async function loadFiles(rawFiles: File[]): Promise<BatchIngestResult> {
       const sampled = tier === 'sampled';
       const source: Uint8Array | File = sampled ? file : new Uint8Array(await file.arrayBuffer());
       const ingested = await ingestBuffer(engine, file.name, source, tableName, sampled);
+      await stageDurableSource(ingested, file.name, file);
       tableNames.push(ingested.tableName);
       entries.push(toRegistryEntry(ingested, datasetId, 'file'));
     } catch (error) {
@@ -622,6 +661,9 @@ export async function removeDataset(datasetId: string): Promise<void> {
   const engine = await loadEngine();
   for (const tableName of dataset.tableNames) {
     await engine.duckDBEngine.execute(`DROP TABLE IF EXISTS ${quoteIdentifier(tableName)}`);
+    // Without this the table would reappear on the next reload, restored from
+    // bytes whose registry entry the user just deleted (S6.9 / 07b).
+    await unstageTable(tableName);
   }
   store.removeDataset(datasetId);
 }
@@ -635,7 +677,12 @@ export async function removeTable(tableId: string): Promise<void> {
   if (!table) return;
 
   const engine = await loadEngine();
-  await engine.duckDBEngine.execute(`DROP TABLE IF EXISTS ${quoteIdentifier(table.tableName)}`);
+  // `DROP TABLE` does not drop a view (A3) — issuing the wrong keyword would
+  // leave the object in DuckDB with no registry row pointing at it, which is
+  // the S6.9 "registry is a claim" failure running in the other direction.
+  const keyword = table.kind === 'view' ? 'VIEW' : 'TABLE';
+  await engine.duckDBEngine.execute(`DROP ${keyword} IF EXISTS ${quoteIdentifier(table.tableName)}`);
+  await unstageTable(table.tableName);
   store.removeTable(tableId);
 }
 

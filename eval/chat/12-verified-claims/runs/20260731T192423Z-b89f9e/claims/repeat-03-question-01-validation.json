@@ -1,0 +1,14 @@
+{
+  "repeat": 3,
+  "questionId": "understand-ecommerce",
+  "questionKind": "answerable",
+  "firstPassValid": true,
+  "repaired": false,
+  "proposal": {
+    "disposition": "unsupported",
+    "reason": "causal_inference"
+  },
+  "verification": null,
+  "renderedSentence": null,
+  "disposition": "answerable_unsupported"
+}

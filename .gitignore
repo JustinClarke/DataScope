@@ -13,6 +13,19 @@ dist-ssr
 *.local
 *.tsbuildinfo
 
+# Local environment files may contain provider keys. Keep a safe template commit-visible.
+.env
+.env.*
+!.env.example
+
+# Test and tool caches/reports
+coverage/
+.nyc_output/
+.cache/
+.vite/
+playwright-report/
+test-results/
+
 # D40 eval harness run output (generated; the labeled set + harness code are the artifact, not a run's numbers)
 eval/EVAL-RESULTS.json
 eval/webllm/
@@ -37,6 +50,9 @@ infra/*.tfplan
 # graphify knowledge graph — generated from the codebase (AST), rebuild with
 # `graphify update .`. The skill under .claude/skills/graphify/ IS committed.
 graphify-out/
+
+# Scratch file with a live Gemini API key pasted in plaintext (2026-07-29) — not otherwise ignored
+/api
 
 # Editor directories and files
 .vscode/*

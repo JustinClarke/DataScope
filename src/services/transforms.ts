@@ -1,7 +1,14 @@
-// Transformation layer (§10 Module 2, §12.1) — `CREATE TABLE AS` registration,
-// the mutation guard, and one-click undo for derived tables. SELECT/WITH stay
-// on services/sql.ts's row-capped path and never reach here; SqlModule routes
-// any other statement class through `runTransform`.
+// Transformation layer (§10 Module 2, §12.1) — `CREATE TABLE AS` / `CREATE
+// VIEW AS` registration, the mutation guard, and one-click undo for derived
+// objects. SELECT/WITH stay on services/sql.ts's row-capped path and never
+// reach here; SqlModule routes any other statement class through
+// `runTransform`.
+//
+// A3 added a third caller — the analyst core's `derive_table`/`create_view`/
+// `drop_derived`, via `services/analyst.ts` — and deliberately added no second
+// implementation of any of the above. That is the whole reason A3 depends on
+// v0.70 S4: a derive route that skipped this file would be a data-loss path the
+// SQL console never had.
 import type { ClassifiedColumn, ColumnProfile, Dataset, QueryResult, TableRegistryEntry } from '../types';
 import { useDatasetsStore } from '../stores/datasets';
 import { classifyStatement, redirectMutationTarget, type StatementInfo } from '../lib/statementClass';
@@ -16,6 +23,12 @@ function loadEngine(): Promise<EngineModule> {
 }
 
 export class TransformError extends Error {}
+
+export interface TransformOutcome {
+  result: QueryResult;
+  /** The entry a `CREATE TABLE AS` / `CREATE VIEW AS` registered — present only for those two statement classes. */
+  registered?: TableRegistryEntry;
+}
 
 /**
  * Thrown by `runTransform` for a mutation (UPDATE/DELETE/ALTER/DROP)
@@ -48,6 +61,9 @@ async function describeTable(engine: EngineModule, tableName: string) {
   const [describeResult, countResult, sizeResult] = await Promise.all([
     engine.duckDBEngine.execute(`DESCRIBE ${quoteIdentifier(tableName)}`),
     engine.duckDBEngine.execute(`SELECT COUNT(*) AS n FROM ${quoteIdentifier(tableName)}`),
+    // A view has no row of its own in `duckdb_tables()`, so this comes back
+    // empty and `memoryBytes` is 0 — which is the true answer for a view, not
+    // a missing one: it stores nothing.
     engine.duckDBEngine.execute(
       `SELECT estimated_size FROM duckdb_tables() WHERE table_name = '${tableName.replace(/'/g, "''")}'`,
     ),
@@ -70,8 +86,13 @@ async function registerDerivedTable(
   engine: EngineModule,
   tableName: string,
   generatingSql: string,
+  kind: 'table' | 'view' = 'table',
 ): Promise<TableRegistryEntry> {
   const { columnCount, rowCount, memoryBytes } = await describeTable(engine, tableName);
+  // A view is profiled and classified like a table, which does cost one scan
+  // of its query. The alternative is a rail entry the inspector can say
+  // nothing about — and a view whose columns are unknown is not "queryable by
+  // name" in any sense a user would recognize.
   const profile: ColumnProfile[] = await summarizeTable(engine, tableName);
   const columns: ClassifiedColumn[] = await classifyTable(engine, tableName, profile, rowCount);
 
@@ -87,6 +108,7 @@ async function registerDerivedTable(
     tableName,
     datasetId: dataset.id,
     origin: 'derived',
+    kind,
     rowCount,
     columnCount,
     memoryBytes,
@@ -141,6 +163,19 @@ async function reconcileAfterMutation(
  * doesn't go stale; anything else runs unwrapped, untouched by this layer.
  */
 export async function runTransform(sql: string): Promise<QueryResult> {
+  return (await runTransformDetailed(sql)).result;
+}
+
+/**
+ * What `runTransform` does, plus the registry entry it registered.
+ *
+ * The two are **one function, not two that agree**: A3's `derive_table` has to
+ * report the object it made, and re-reading the store afterwards to guess which
+ * entry appeared would be exactly the second path this layer exists to prevent
+ * (D58). `runTransform` keeps its `QueryResult`-only signature because that is
+ * all the console and `runPath` ever wanted.
+ */
+export async function runTransformDetailed(sql: string): Promise<TransformOutcome> {
   const info = classifyStatement(sql);
   if (isSourceMutation(info)) throw new MutationGuardRequired(info);
 
@@ -148,8 +183,14 @@ export async function runTransform(sql: string): Promise<QueryResult> {
 
   if (info.class === 'ctas' && info.ctasTable) {
     await execute(engine, info.sql);
-    await registerDerivedTable(engine, info.ctasTable, info.sql);
-    return toQueryResult(`Created derived table "${info.ctasTable}".`);
+    const registered = await registerDerivedTable(engine, info.ctasTable, info.sql);
+    return { result: toQueryResult(`Created derived table "${info.ctasTable}".`), registered };
+  }
+
+  if (info.class === 'cview' && info.viewName) {
+    await execute(engine, info.sql);
+    const registered = await registerDerivedTable(engine, info.viewName, info.sql, 'view');
+    return { result: toQueryResult(`Created view "${info.viewName}".`), registered };
   }
 
   await execute(engine, info.sql);
@@ -159,7 +200,7 @@ export async function runTransform(sql: string): Promise<QueryResult> {
     if (target) await reconcileAfterMutation(target.id, info.mutationKind);
   }
 
-  return toQueryResult('Statement executed.');
+  return { result: toQueryResult('Statement executed.') };
 }
 
 /**

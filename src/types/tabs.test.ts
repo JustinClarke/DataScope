@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TAB_KIND, TAB_GLYPH, tabLabel, type TabSpec, type TabType } from './tabs';
+import { useTabsStore } from '../stores/tabs';
+import { HISTORY_TAB_SUBJECT } from '../features/sql/HistoryTab';
 
 function tab(type: TabType, subject: string): TabSpec {
   return { id: 'tab-1', type, subject, initializer: null };
@@ -7,11 +9,22 @@ function tab(type: TabType, subject: string): TabSpec {
 
 // The registry amendment D73 call (2) lands as one change (S5).
 describe('the tab registry after D73', () => {
-  it('is six singletons + one artifact type', () => {
+  it('is eight singletons + one artifact type', () => {
     const kinds = Object.values(TAB_KIND);
-    expect(kinds.filter((k) => k === 'singleton')).toHaveLength(7);
+    expect(kinds.filter((k) => k === 'singleton')).toHaveLength(8);
     expect(kinds.filter((k) => k === 'artifact')).toHaveLength(1);
     expect(TAB_KIND.query).toBe('artifact');
+  });
+
+  // S6.7: one run log per session, never per-table — the same reasoning `map`
+  // and `export` already carry.
+  it('makes history a singleton, and repeat opens dedupe to one tab', () => {
+    expect(TAB_KIND.history).toBe('singleton');
+    useTabsStore.setState({ tabs: [], activeTabId: null });
+    const first = useTabsStore.getState().openTab('history', HISTORY_TAB_SUBJECT);
+    const second = useTabsStore.getState().openTab('history', HISTORY_TAB_SUBJECT);
+    expect(second).toBe(first);
+    expect(useTabsStore.getState().tabs).toHaveLength(1);
   });
 
   it('has no sql member — SQL is written in the drawer console now', () => {

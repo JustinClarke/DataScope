@@ -1,0 +1,84 @@
+{
+  "id": "evidence:monthly-revenue",
+  "metric": "sum_product(order_items.quantity,order_items.unit_price)",
+  "unit": "USD",
+  "dimension": "orders.order_date/month",
+  "filters": [],
+  "completeness": "truncated",
+  "sourceRowCount": 37,
+  "returnedRowCount": 12,
+  "rows": [
+    {
+      "rowId": "r1",
+      "label": "2021-12-01",
+      "value": 3745.01,
+      "order": 0
+    },
+    {
+      "rowId": "r2",
+      "label": "2022-01-01",
+      "value": 68970.39,
+      "order": 1
+    },
+    {
+      "rowId": "r3",
+      "label": "2022-02-01",
+      "value": 45638.76,
+      "order": 2
+    },
+    {
+      "rowId": "r4",
+      "label": "2022-03-01",
+      "value": 54908.59,
+      "order": 3
+    },
+    {
+      "rowId": "r5",
+      "label": "2022-04-01",
+      "value": 70401.8,
+      "order": 4
+    },
+    {
+      "rowId": "r6",
+      "label": "2022-05-01",
+      "value": 40913.93,
+      "order": 5
+    },
+    {
+      "rowId": "r7",
+      "label": "2022-06-01",
+      "value": 51558.55,
+      "order": 6
+    },
+    {
+      "rowId": "r8",
+      "label": "2022-07-01",
+      "value": 38680.17,
+      "order": 7
+    },
+    {
+      "rowId": "r9",
+      "label": "2022-08-01",
+      "value": 61207.42,
+      "order": 8
+    },
+    {
+      "rowId": "r10",
+      "label": "2022-09-01",
+      "value": 43568.29,
+      "order": 9
+    },
+    {
+      "rowId": "r11",
+      "label": "2022-10-01",
+      "value": 51674.86,
+      "order": 10
+    },
+    {
+      "rowId": "r12",
+      "label": "2022-11-01",
+      "value": 50892.97,
+      "order": 11
+    }
+  ]
+}

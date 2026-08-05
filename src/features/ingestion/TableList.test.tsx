@@ -3,6 +3,7 @@ import { render, fireEvent, act, within } from '@testing-library/react';
 import { TableList } from './TableList';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useSelectionStore } from '../../stores/selection';
+import { useRehydrationStore } from '../../stores/rehydration';
 import { EducationalPanelProvider } from '../../app/EducationalPanelContext';
 import type { FkEdge } from '../../lib/relationshipInference';
 import type { ClassifiedColumn, Dataset, TableRegistryEntry } from '../../types';
@@ -82,6 +83,7 @@ const orders: TableRegistryEntry = {
 beforeEach(() => {
   useDatasetsStore.setState({ tables: [], datasets: [], workerStatus: 'idle', workerError: null });
   useSelectionStore.setState({ selectedTableId: null, selectedColumn: null, selectedEdgeId: null, lastSelectionKind: null });
+  useRehydrationStore.setState({ outcomes: {} });
 });
 
 function renderTableList(overrides: Partial<Parameters<typeof TableList>[0]> = {}) {
@@ -444,6 +446,80 @@ describe('TableList', () => {
 
       expect(onRemove).toHaveBeenCalledWith('t-customers');
       expect(container.querySelector('[data-testid="trow-columns-t-customers"]')).toBeNull();
+    });
+  });
+
+  // S6.9 / 07d: the rail has to render all three reconciliation outcomes
+  // distinguishably, and a lost entry must never be presented as a normal row —
+  // a clickable registry entry whose table doesn't exist is the specific
+  // failure the sub-step exists to make impossible.
+  describe('rehydration outcomes (07d)', () => {
+    const rates: TableRegistryEntry = {
+      id: 't-rates',
+      tableName: 'rates',
+      datasetId: 'ds-1',
+      origin: 'api',
+      rowCount: 12,
+      columnCount: 3,
+      memoryBytes: 2048,
+      createdAt: dataset.ingestedAt,
+      sourceUrl: 'https://example.test/rates',
+    };
+
+    it('renders a lost table with its reason, and with nothing to click into', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      useRehydrationStore.getState().setOutcomes([
+        {
+          tableId: 't-customers',
+          tableName: 'customers',
+          status: 'lost',
+          reason: 'This was a sampled preview, so its rows were never stored — re-drop the file.',
+        },
+      ]);
+      const onSelectTable = vi.fn();
+
+      const { container } = renderTableList({ reflow: true, onSelectTable });
+      const row = within(container).getByTestId('trow-unavailable-t-customers');
+
+      expect(row.dataset.rehydration).toBe('lost');
+      expect(row.textContent).toContain('its rows were never stored');
+      expect(container.querySelector('[data-testid="trow-chevron-t-customers"]')).toBeNull();
+      fireEvent.click(row);
+      expect(onSelectTable).not.toHaveBeenCalled();
+    });
+
+    it('offers a recoverable api table its recovery action, and fires nothing until clicked', () => {
+      useDatasetsStore.getState().registerDataset({ ...dataset, tableNames: ['rates'] }, [rates]);
+      useRehydrationStore.getState().setOutcomes([
+        {
+          tableId: 't-rates',
+          tableName: 'rates',
+          status: 'recoverable',
+          recovery: 'refetch',
+          reason: 'Not fetched yet — refresh it from its source.',
+        },
+      ]);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      const { container } = renderTableList({ reflow: true });
+      const row = within(container).getByTestId('trow-unavailable-t-rates');
+
+      expect(row.dataset.rehydration).toBe('recoverable');
+      expect(row.textContent).toContain('Refresh from source');
+      expect(fetchSpy).not.toHaveBeenCalled();
+      fetchSpy.mockRestore();
+    });
+
+    it('leaves a restored table as an ordinary row', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [customers]);
+      useRehydrationStore
+        .getState()
+        .setOutcomes([{ tableId: 't-customers', tableName: 'customers', status: 'restored', reason: null }]);
+
+      const { container } = renderTableList({ reflow: true, onSelectTable: vi.fn() });
+
+      expect(container.querySelector('[data-testid="trow-unavailable-t-customers"]')).toBeNull();
+      expect(within(container).getByTestId('trow-chevron-t-customers')).toBeTruthy();
     });
   });
 });

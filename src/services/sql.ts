@@ -1,5 +1,8 @@
 import type { QueryResult } from '../types';
-import { useQueryStore, CONSOLE_SESSION, type QuerySessionId } from '../stores/query';
+import { useQueryStore, getSession, CONSOLE_SESSION, type QuerySessionId } from '../stores/query';
+import { analystCore } from './analyst';
+import { isOpError } from '../lib/analyst/types';
+import { MAX_PREVIEW_ROWS } from '../lib/analyst/operations';
 
 // duckdb-wasm (and the multi-MB WASM it pulls) is only needed once a query
 // actually runs, so the engine module is imported lazily — this is what keeps
@@ -124,6 +127,38 @@ export function cancelQuery(session: QuerySessionId = CONSOLE_SESSION, queryId?:
   if (!current) return;
   if (queryId !== undefined && queryId !== current.id) return;
   current.controller.abort();
+}
+
+/**
+ * Paging replaces the 100k cliff (A2, master §13.3) — rather than re-running
+ * the capped statement with an `OFFSET` (unsound for an unordered query, see
+ * `resultStore.ts`), the first call materializes it once through the analyst
+ * core's `run_sql` and *replaces* the ad hoc capped preview with that stable
+ * page; every call after pages the same materialization via `read_result`.
+ * Returns an error message on failure, `null` on success or when there is
+ * nothing to load.
+ */
+export async function loadMoreRows(session: QuerySessionId = CONSOLE_SESSION): Promise<string | null> {
+  const { result, lastRunSql } = getSession(session);
+  if (!result) return null;
+
+  if (result.resultId) {
+    if (result.nextOffset === null || result.nextOffset === undefined) return null;
+    const outcome = await analystCore().call('read_result', {
+      resultId: result.resultId,
+      offset: result.nextOffset,
+      limit: MAX_PREVIEW_ROWS,
+    });
+    if (isOpError(outcome)) return outcome.message;
+    useQueryStore.getState().setResultPage(session, [...result.rows, ...outcome.rows], result.resultId, outcome.nextOffset);
+    return null;
+  }
+
+  const outcome = await analystCore().call('run_sql', { sql: lastRunSql, limit: MAX_PREVIEW_ROWS });
+  if (isOpError(outcome)) return outcome.message;
+  if (!outcome.resultId) return null;
+  useQueryStore.getState().setResultPage(session, outcome.rows, outcome.resultId, outcome.nextOffset);
+  return null;
 }
 
 export function getHistory(): QueryResult[] {

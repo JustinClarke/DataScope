@@ -19,16 +19,28 @@ interface AutoChartPanelProps {
   result: QueryResult;
   /** The query that produced the result — a light hint the translator uses to tell an aggregate apart from raw numeric columns. */
   sql?: string;
+  /**
+   * A spec to open on instead of the translator's own recommendation (A6): what
+   * `create_chart` produced and `chartSpecValidator` cleared. It is displayed,
+   * never trusted — every field in it was already in the deterministic baseline
+   * the validator checked against, and switching type with the picker discards
+   * it for a freshly derived one, so no model-supplied field outlives it.
+   */
+  spec?: ChartSpec;
 }
 
 /**
- * The auto-chart surface shared by the SQL playground and the "open as chart"
- * actions: it asks the translator for the best fit, shows it, and — for a real
- * chart — offers a picker to switch chart type or fall back to the table. The
- * picker mutates the spec; it never invents chart props of its own.
+ * The auto-chart surface shared by the SQL playground, the "open as chart"
+ * actions and the AI transcript: it asks the translator for the best fit, shows
+ * it, and — for a real chart — offers a picker to switch chart type or fall back
+ * to the table. The picker mutates the spec; it never invents chart props of its
+ * own.
  */
-export function AutoChartPanel({ result, sql }: AutoChartPanelProps) {
-  const recommendation = useMemo(() => recommendChart(result, sql), [result, sql]);
+export function AutoChartPanel({ result, sql, spec }: AutoChartPanelProps) {
+  const recommendation = useMemo(
+    () => (spec ? ({ kind: 'chart', spec } as const) : recommendChart(result, sql)),
+    [result, sql, spec],
+  );
   const chartTypes = useMemo(() => availableChartTypes(result), [result]);
 
   // null = the user chose "Table"; undefined = follow the recommendation.

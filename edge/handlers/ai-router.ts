@@ -174,7 +174,7 @@ async function drain(
   }
   // A well-behaved provider always yields `done`; a generator that returns
   // without one is a provider bug, surfaced as an empty text turn.
-  return { turn: { kind: 'text', text: '' }, tokensIn: 0, tokensOut: 0 }
+  return { turn: { text: '', calls: [] }, tokensIn: 0, tokensOut: 0 }
 }
 
 const SSE_HEADERS = { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' }

@@ -1,0 +1,25 @@
+{
+  "questionId": "further-transforms",
+  "questionKind": "answerable",
+  "repeat": 2,
+  "transportFailure": null,
+  "action": "final_offer",
+  "repaired": false,
+  "parseError": null,
+  "responseHash": "eff90f63d47651984def1fa2fe504c174b75a6a578e8cd78b8bea4431751f779",
+  "doneReason": "stop",
+  "disposition": {
+    "kind": "final_offer",
+    "offerId": "offer:largest-monthly-change"
+  },
+  "rendered": null,
+  "verification": null,
+  "tokens": {
+    "calls": 1,
+    "totalPromptTokens": 2399,
+    "totalResponseTokens": 253,
+    "callHighWaterPromptTokens": 2399
+  },
+  "durationMs": 14873,
+  "claim": null
+}

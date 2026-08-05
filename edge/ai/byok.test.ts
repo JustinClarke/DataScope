@@ -75,10 +75,9 @@ describe('createByokResolver — D9 pass-through custody', () => {
       new AbortController().signal,
     )
     const ev = (await provider!.infer(MESSAGES, TOOLS, new AbortController().signal).next()).value as {
-      turn: { kind: string; call: { name: string; input: unknown } }
+      turn: { text: string; calls: Array<{ id: string; name: string; input: unknown }> }
     }
-    expect(ev.turn.kind).toBe('tool_call')
-    expect(ev.turn.call).toEqual({ id: 'call_x', name: 'execute_local_sql', input: { sql: 'SELECT 1' } })
+    expect(ev.turn.calls).toEqual([{ id: 'call_x', name: 'execute_local_sql', input: { sql: 'SELECT 1' } }])
   })
 
   it('resolves to null for a vault reference when no vault is configured', async () => {

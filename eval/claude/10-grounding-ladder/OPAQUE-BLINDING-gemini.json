@@ -1,0 +1,506 @@
+{
+  "ranAt": "2026-07-30T08:40:10.357Z",
+  "rider": "R-B — does OPAQUE blind the model? (11-gemini-comparison-arm.md, Phase 5)",
+  "note": "Not the panel path: no PanelAnswer, no scorePanel, never written to RESULTS-*.json (D58 boundary). Keyword lists pre-registered before this run (see IDENTIFYING_TERMS in the source) — product_reviews' list is a plausible-guess set, not a confirmed real-world provenance, since no source corpus is documented anywhere in this repo for that fixture. Kill line, stated in advance: any hit rate above 0 at rows=0 means anonymisation leaks through column statistics alone; a hit rate that rises from rows=0 to rows=max localises the leak to row values rather than the schema.",
+  "identifyingTerms": {
+    "titanic": [
+      "titanic",
+      "lusitania"
+    ],
+    "product_reviews": [
+      "amazon",
+      "yelp",
+      "kaggle",
+      "flipkart",
+      "walmart",
+      "e-commerce review",
+      "product review dataset"
+    ]
+  },
+  "records": [
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 1,
+      "guess": "Titanic survival dataset",
+      "confidence": "high",
+      "reasoning": "The table has exactly 891 rows, which is the exact row count of the standard Kaggle Titanic train.csv dataset. The 10 feature columns correspond to PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, and Embarked (or similar combinations excluding Ticket/Cabin or having 10 attributes).",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 95
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 2,
+      "guess": "Titanic passenger manifest dataset",
+      "confidence": "high",
+      "reasoning": "The table has exactly 891 rows, which is the exact row count of the classic Kaggle Titanic training set (train.csv). The 10 feature columns correspond to PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, and Embarked.",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 84
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 3,
+      "guess": "Titanic passenger survival dataset",
+      "confidence": "high",
+      "reasoning": "The table has exactly 891 rows, which matches the standard Kaggle Titanic training dataset (train.csv). The 10 columns correspond to PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, and Embarked.",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 78
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 4,
+      "guess": "Titanic dataset (Kaggle)",
+      "confidence": "high",
+      "reasoning": "The table table_a has exactly 891 rows, which is the exact row count of the standard Kaggle Titanic train.csv training dataset.",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 54
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 5,
+      "guess": "Titanic Dataset",
+      "confidence": "high",
+      "reasoning": "The schema has 891 rows, which is the exact row count of the classic Kaggle Titanic training dataset (train.csv). The 10 columns correspond to PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, and Embarked (or similar combination of Titanic variables).",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 82
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 6,
+      "guess": "Titanic",
+      "confidence": "high",
+      "reasoning": "The row count of exactly 891 rows in table_a is a classic signature of the standard Kaggle Titanic training dataset (train.csv), which contains 891 passengers and 12 columns (or 10-12 columns depending on ID/target inclusion).",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 77
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 7,
+      "guess": "Titanic passenger manifest",
+      "confidence": "high",
+      "reasoning": "The dataset contains exactly 891 rows in its training split, which is the canonical row count for the classic Kaggle Titanic dataset containing columns like PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, Embarked.",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 75
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 8,
+      "guess": "Titanic survival dataset",
+      "confidence": "high",
+      "reasoning": "The table has exactly 891 rows, which matches the standard train.csv dataset for the Kaggle Titanic machine learning competition. The 10 columns correspond to PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, and Embarked (or similar subset of features).",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 86
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 9,
+      "guess": "Titanic survival dataset",
+      "confidence": "high",
+      "reasoning": "The table table_a has exactly 891 rows, which is the exact row count of the classic Kaggle Titanic training dataset (train.csv). It features 10-12 columns representing PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, Embarked.",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 87
+    },
+    {
+      "fixture": "titanic",
+      "rung": 0,
+      "repeat": 10,
+      "guess": "Titanic dataset",
+      "confidence": "high",
+      "reasoning": "The table has exactly 891 rows and 10 columns matching the standard Kaggle Titanic passenger training dataset (PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Ticket, Fare, Cabin, Embarked).",
+      "hit": true,
+      "promptTokens": 244,
+      "responseTokens": 67
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 1,
+      "guess": "Titanic dataset (synthetic/obfuscated)",
+      "confidence": "high",
+      "reasoning": "The table structure exactly matches the famous Titanic dataset (891 rows, columns representing Survived (0/1), Pclass (1/2/3), Name, Sex, Age, SibSp, Parch, Fare, and Embarked (C/Q/S)). The textual names and quantitative values like Fares/Ages appear to be synthetically permuted or generated while preserving the exact schema and categorical structure of the Titanic 891-row training set.",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 130
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 2,
+      "guess": "Titanic synthetic/anonymized dataset",
+      "confidence": "high",
+      "reasoning": "The table structure exactly matches the classic 891-row Kaggle Titanic training set with anonymized columns and perturbed values: col_1 is PassengerId (1-891), col_2 is Survived (0/1), col_3 is Pclass (1, 2, 3), col_4 is Name, col_5 is Sex (male/female), col_6 is Age, col_7 is SibSp, col_8 is Parch, col_9 is Fare, and col_10 is Embarked (C, Q, S).",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 153
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 3,
+      "guess": "Titanic passenger survival dataset (synthetic or modified)",
+      "confidence": "high",
+      "reasoning": "The table structure exactly matches the Titanic dataset schema (891 rows, PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, Embarked). The names and fare values have been synthetically replaced/modified, but the exact row count (891), column roles (binary survival, 1/2/3 pclass, age ranges, discrete sibsp/parch counts, floating fares, C/Q/S embarkation ports) uniquely identify it as a modified version of the standard Kaggle Titanic dataset.",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 141
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 4,
+      "guess": "Titanic passenger survival dataset (synthetic/perturbed)",
+      "confidence": "high",
+      "reasoning": "The table structure exactly matches the famous Titanic dataset with 891 rows and 10 columns corresponding to PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, and Embarked (C, S, Q). While names and numbers have been slightly randomized/anonymized, the column domains, categorical structures, null patterns in age, and exact 891 row count are characteristic of Kaggle's Titanic dataset.",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 122
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 5,
+      "guess": "Titanic passenger dataset (modified/anonymized)",
+      "confidence": "high",
+      "reasoning": "The table has exactly 891 rows (matching the famous Kaggle Titanic training set). Columns correspond to PassengerId, Survived (0/1), Pclass (1/2/3), Name (scrambled/anonymized names here), Sex (female/male), Age, SibSp, Parch, Fare, and Embarked (C/Q/S).",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 104
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 6,
+      "guess": "Synthetic Titanic Dataset",
+      "confidence": "high",
+      "reasoning": "The table structure exactly matches the classic 891-row Titanic dataset (PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, Embarked). While the names, ages, and fares have been randomized or synthesized using common surnames and altered numerical distributions, the number of rows (891), survival binary flag (0/1), class categories (1, 2, 3), sex categories (male, female), missing values in age, and embarkation ports (C, Q, S) uniquely identify it as a transformed/obfuscated Titanic dataset.",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 146
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 7,
+      "guess": "Titanic passenger list (synthetic/anonymized version)",
+      "confidence": "high",
+      "reasoning": "The dataset contains exactly 891 rows, matching the classic Titanic Kaggle dataset. The columns correspond to PassengerId, Survived (0/1), Pclass (1, 2, 3), Name, Sex, Age, SibSp, Parch, Fare, and Embarked (C, Q, S). The names have been replaced with common Anglo-Saxon names, but the structure, exact row count, and distributions of class, sex, age, siblings/spouses, parents/children, fare, and embarkation ports strictly match the standard Titanic Kaggle training set.",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 147
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 8,
+      "guess": "Titanic passenger dataset (synthetic / perturbed version)",
+      "confidence": "high",
+      "reasoning": "The table structure exactly matches the classic 891-row Titanic dataset with columns for PassengerId, Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, and Embarked (C/Q/S). While names and exact values (e.g. fare/age) have been syntheticized/perturbed to anonymize the raw text, the size (891 rows), categorical distributions (Sex: male/female, Embarked: C/Q/S, Pclass: 1/2/3, Survived: 0/1), and column layout are characteristic of the Titanic dataset.",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 156
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 9,
+      "guess": "Synthetic Titanic Dataset",
+      "confidence": "high",
+      "reasoning": "The table structure exactly matches the famous Titanic dataset (891 rows, columns for Survived, Pclass, Name, Sex, Age, SibSp, Parch, Fare, Embarked), but the text names and exact numerical values (ages, fares) have been perturbed/synthesized while keeping the schema, row count, and overall value domains intact.",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 92
+    },
+    {
+      "fixture": "titanic",
+      "rung": "max",
+      "repeat": 10,
+      "guess": "Titanic Passenger Manifest (synthetic / anonymized)",
+      "confidence": "high",
+      "reasoning": "The dataset contains exactly 891 rows (matching the famous Kaggle Titanic training set). The columns correspond to PassengerId (col_1), Survived (col_2, binary 0/1), Pclass (col_3, values 1-3), Name (col_4, altered to common synthetic names), Sex (col_5), Age (col_6), SibSp (col_7), Parch (col_8), Fare (col_9), and Embarked (col_10, with values C, Q, S).",
+      "hit": true,
+      "promptTokens": 25809,
+      "responseTokens": 141
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 1,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema is completely anonymized with generic column names (col_1 to col_5), type descriptions (Identifier, Quantitative, Categorical, Temporal), and only 520 rows, without any raw data values or domain-specific metadata to identify the dataset.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 73
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 2,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema contains only generic column types (Identifier, Quantitative, Categorical, Temporal) without any specific column names or raw sample values to identify the real-world dataset.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 53
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 3,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The schema contains only generic column types, anonymized table and column names, no sample values, and no specific domain features to identify a real-world dataset.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 45
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 4,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema contains only generic column data types and column names (col_1 through col_5) with no raw data sample or specific domain identifiers to distinguish the dataset.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 53
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 5,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema contains only generic table and column names (col_1 through col_5) with standard abstract types (Identifier, Quantitative, Categorical, Temporal) and no sample data values or specific domain column names to enable identification.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 65
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 6,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema contains only generic table and column names (table_a, col_1 through col_5) with basic statistical data types and no specific sample values or descriptive column metadata, making it impossible to uniquely identify a real-world dataset.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 68
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 7,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema contains only generic table and column names with broad data types and no sample values or domain-specific metadata.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 42
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 8,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema only contains 5 anonymized column names with general data types and 520 rows, without any recognizable column names, values, or domain-specific metadata.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 54
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 9,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema contains only generic column types (Identifier, Quantitative, Categorical, Temporal) with anonymized table and column names, and no specific values or domain-specific metadata to identify a dataset.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 58
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": 0,
+      "repeat": 10,
+      "guess": "unknown",
+      "confidence": "low",
+      "reasoning": "The provided schema contains only 5 generic anonymized columns (Identifier, Quantitative, Categorical, Categorical, Temporal) with no sample data values or specific structural indicators to identify the dataset.",
+      "hit": false,
+      "promptTokens": 203,
+      "responseTokens": 56
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 1,
+      "guess": "synthetic e-commerce product reviews",
+      "confidence": "low",
+      "reasoning": "The dataset contains standard synthetic or template-generated e-commerce customer reviews with numeric ratings (col_3, 1-5 scale), generic text templates matching each rating tier (col_4), product/customer IDs (col_2), review IDs (col_1), and UNIX timestamp milliseconds (col_5) spanning 2023–2024.",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 100
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 2,
+      "guess": "synthetic customer reviews dataset",
+      "confidence": "high",
+      "reasoning": "The data features artificially generated customer reviews with generic templated feedback matching star ratings (1 to 5), numeric product/customer IDs, and Unix timestamps. The exact repetitive review text templates (e.g., 'Broke after a week of light use, disappointed.', 'Solid build quality, no complaints so far.') indicate it is a synthetic dataset generated for benchmarking, testing, or mock e-commerce database demonstrations.",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 113
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 3,
+      "guess": "synthetic customer reviews dataset",
+      "confidence": "high",
+      "reasoning": "The data features artificially generated or template-based e-commerce product reviews. Column 1 is a review ID, Column 2 is a product ID (integers 1 to 120), Column 3 is a 1-5 star rating, Column 4 is a repeating template string matching the rating (e.g., star rating 1 maps to 'Broke after a week of light use, disappointed.', 'Poor packaging...', 'Not as described...'; star rating 5 maps to 'Works exactly as described...', 'Great value...', 'Shipping was fast...'), and Column 5 contains Unix millisecond timestamps ranging from 2023 to 2024.",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 171
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 4,
+      "guess": "synthetic customer product reviews dataset",
+      "confidence": "high",
+      "reasoning": "The data features a review ID, product ID (1-120), star rating (1-5), template-generated short review text corresponding strictly to the star rating, and Unix epoch timestamps in milliseconds ranging from 2023 to 2024. The identical review text templates repeated across hundreds of entries indicate a synthetically generated dataset for testing data pipelines, databases, or NLP tasks.",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 113
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 5,
+      "guess": "synthetic e-commerce product reviews",
+      "confidence": "low",
+      "reasoning": "The data contains generated or synthetic customer review ratings (1-5 star ratings in col_3), review comments (col_4) selected from a fixed template set (e.g. 'Shipping was fast and the quality exceeded expectations.', 'Does the job but nothing special.'), timestamps (col_5), product IDs (col_2), and review IDs (col_1).",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 100
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 6,
+      "guess": "synthetic_product_reviews",
+      "confidence": "high",
+      "reasoning": "The dataset contains standard synthetic/mock e-commerce review data, where numeric product IDs map directly to rating scores (1-5), template text reviews (e.g. 'Shipping was fast...', 'Broke after a week...'), and epoch millisecond timestamps ranging from 2023 to 2024.",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 97
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 7,
+      "guess": "synthetic e-commerce product reviews",
+      "confidence": "high",
+      "reasoning": "The data consists of generated/synthetic e-commerce product reviews. Column 1 is a row ID, Column 2 is a product ID (1-120), Column 3 is a 1-5 star rating, Column 4 contains templated review text strings directly matching the rating score (e.g. 1 star maps to 'Broke after a week...', 5 star maps to 'Works exactly as described...'), and Column 5 contains Unix millisecond timestamps.",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 123
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 8,
+      "guess": "synthetic e-commerce product reviews dataset",
+      "confidence": "low",
+      "reasoning": "The data consists of anonymized IDs, product ratings (1 to 5), canned boilerplate review comments corresponding to each rating level (e.g. 'Not as described, considering a return' for 1, 'Shipping was fast...' for 4/5), and Unix epoch millisecond timestamps ranging between 2023 and 2024. The presence of repetitive, template-like comments strongly indicates synthetic or mock benchmark data for sentiment analysis or database tests.",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 121
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 9,
+      "guess": "synthetic_e_commerce_reviews",
+      "confidence": "low",
+      "reasoning": "The data contains synthetic or template-generated e-commerce review ratings (1-5 star ratings in col_3), stock review phrases (col_4), product/customer IDs (col_2), and Unix epoch millisecond timestamps (col_5).",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 85
+    },
+    {
+      "fixture": "product_reviews",
+      "rung": "max",
+      "repeat": 10,
+      "guess": "synthetic_e_commerce_reviews",
+      "confidence": "low",
+      "reasoning": "The dataset contains customer reviews with numerical star ratings (1 to 5), boilerplate template review comments, product IDs, review IDs, and Unix millisecond timestamps ranging from early 2023 to late 2024. The repetitive nature of the text responses suggests a synthetically generated product review benchmark dataset.",
+      "hit": false,
+      "promptTokens": 17405,
+      "responseTokens": 97
+    }
+  ],
+  "summary": {
+    "titanic/rows=0": {
+      "n": 10,
+      "hitRate": 1,
+      "hitConfidences": [
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high"
+      ]
+    },
+    "titanic/rows=max": {
+      "n": 10,
+      "hitRate": 1,
+      "hitConfidences": [
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high",
+        "high"
+      ]
+    },
+    "product_reviews/rows=0": {
+      "n": 10,
+      "hitRate": 0,
+      "hitConfidences": []
+    },
+    "product_reviews/rows=max": {
+      "n": 10,
+      "hitRate": 0,
+      "hitConfidences": []
+    }
+  }
+}

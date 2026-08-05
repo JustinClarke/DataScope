@@ -139,17 +139,15 @@ interface WorkersAiChatResult {
 /** Maps our wire messages onto Workers AI's OpenAI-style chat messages. */
 function toWorkersAiMessages(messages: WireProviderMessage[]): Array<Record<string, unknown>> {
   return messages.map((m) => {
-    if (m.role === 'assistant' && m.toolCall !== undefined) {
+    if (m.role === 'assistant' && m.toolCalls !== undefined && m.toolCalls.length > 0) {
       return {
         role: 'assistant',
         content: m.content,
-        tool_calls: [
-          {
-            id: m.toolCall.id,
-            type: 'function',
-            function: { name: m.toolCall.name, arguments: JSON.stringify(m.toolCall.input) },
-          },
-        ],
+        tool_calls: m.toolCalls.map((call) => ({
+          id: call.id,
+          type: 'function',
+          function: { name: call.name, arguments: JSON.stringify(call.input) },
+        })),
       }
     }
     if (m.role === 'tool') {
@@ -182,18 +180,24 @@ function newToolCallId(): string {
   return id
 }
 
-/** Turns a Workers AI result into one wire turn — a tool call if present, else text. */
+/**
+ * Turns a Workers AI result into one wire turn, carrying **every** emitted call
+ * in emitted order alongside whatever prose came with it (A4 defect iii — this
+ * used to read `tool_calls[0]` and drop the rest silently). An empty `calls` is
+ * what the client reads as terminal.
+ */
 function toWireTurn(result: WorkersAiChatResult): WireProviderTurn {
-  const call = result.tool_calls?.[0]
-  if (call !== undefined) {
-    const input =
-      typeof call.arguments === 'string'
-        ? safeParse(call.arguments)
-        : (call.arguments ?? {})
-    const wireCall: WireToolCall = { id: newToolCallId(), name: call.name, input }
-    return { kind: 'tool_call', call: wireCall }
-  }
-  return { kind: 'text', text: result.response ?? '' }
+  const calls = (result.tool_calls ?? []).map((call): WireToolCall => ({
+    id: newToolCallId(),
+    name: call.name,
+    input: typeof call.arguments === 'string' ? safeParse(call.arguments) : (call.arguments ?? {}),
+  }))
+  return { text: result.response ?? '', calls }
+}
+
+/** What the model actually produced this turn, for the token-count fallback: its prose plus every call's arguments. */
+function completionText(turn: WireProviderTurn): string {
+  return turn.text + turn.calls.map((c) => JSON.stringify(c.input)).join('')
 }
 
 function safeParse(raw: string): unknown {
@@ -268,11 +272,23 @@ interface WorkersAiStreamChunk {
   usage?: { prompt_tokens?: number; completion_tokens?: number }
 }
 
+/** One call being reassembled across chunks, identified by the provider's own `index`. */
+interface StreamToolCall {
+  index: number
+  name: string | null
+  args: string
+}
+
 /** The turn being reassembled from a chunk stream, plus running usage. */
 interface StreamTurnState {
   text: string
-  toolName: string | null
-  toolArgs: string
+  /**
+   * Every call in the stream, kept separate by `index` and ordered by first
+   * appearance. This used to be a single `toolName`/`toolArgs` pair with
+   * `index !== 0` skipped outright, which silently dropped every parallel call
+   * after the first (A4 defect iii, streamed half).
+   */
+  toolCalls: StreamToolCall[]
   /** From the trailing summary chunk (authoritative), when one arrives. */
   summary: { tokensIn: number; tokensOut: number } | null
   /** Fallbacks accumulated from per-token chunks, used when no summary arrives. */
@@ -283,8 +299,7 @@ interface StreamTurnState {
 export function newStreamTurnState(): StreamTurnState {
   return {
     text: '',
-    toolName: null,
-    toolArgs: '',
+    toolCalls: [],
     summary: null,
     promptTokensSeen: 0,
     completionTokensSum: 0,
@@ -293,17 +308,21 @@ export function newStreamTurnState(): StreamTurnState {
 
 /**
  * Applies one parsed chunk to the state; returns text to emit as a delta, or
- * null. Only the first tool call (index 0) is kept — the wire turn carries a
- * single call, same as the non-streamed mapping. Once a tool call opens, text
- * deltas stop (there is nothing token-streamable about a JSON argument blob —
- * a garbled partial would only mislead the transcript).
+ * null. Once any tool call opens, text deltas stop (there is nothing
+ * token-streamable about a JSON argument blob — a garbled partial would only
+ * mislead the transcript).
  */
 export function applyStreamChunk(state: StreamTurnState, chunk: WorkersAiStreamChunk): string | null {
   const choice = chunk.choices?.[0]
   for (const tc of choice?.delta?.tool_calls ?? []) {
-    if ((tc.index ?? 0) !== 0) continue
-    if (typeof tc.function?.name === 'string') state.toolName = tc.function.name
-    if (typeof tc.function?.arguments === 'string') state.toolArgs += tc.function.arguments
+    const index = tc.index ?? 0
+    let call = state.toolCalls.find((c) => c.index === index)
+    if (call === undefined) {
+      call = { index, name: null, args: '' }
+      state.toolCalls.push(call)
+    }
+    if (typeof tc.function?.name === 'string') call.name = tc.function.name
+    if (typeof tc.function?.arguments === 'string') call.args += tc.function.arguments
   }
   if (chunk.usage !== undefined) {
     const prompt = chunk.usage.prompt_tokens ?? 0
@@ -318,7 +337,7 @@ export function applyStreamChunk(state: StreamTurnState, chunk: WorkersAiStreamC
     }
   }
   const content = choice?.delta?.content
-  if (typeof content === 'string' && content !== '' && state.toolName === null) {
+  if (typeof content === 'string' && content !== '' && state.toolCalls.length === 0) {
     state.text += content
     return content
   }
@@ -381,9 +400,7 @@ export function createWorkersAiProvider(ai: Ai, model: string): InferenceProvide
         const whole = result as WorkersAiChatResult
         const turn = toWireTurn(whole)
         const tokensIn = whole.usage?.prompt_tokens ?? Math.ceil(promptChars / 4)
-        const tokensOut =
-          whole.usage?.completion_tokens ??
-          estimateTokens(turn.kind === 'text' ? turn.text : JSON.stringify(turn.call.input))
+        const tokensOut = whole.usage?.completion_tokens ?? estimateTokens(completionText(turn))
         yield { type: 'done', turn, tokensIn, tokensOut }
         return
       }
@@ -427,21 +444,18 @@ export function createWorkersAiProvider(ai: Ai, model: string): InferenceProvide
         }
       }
 
-      const turn: WireProviderTurn =
-        state.toolName !== null
-          ? {
-              kind: 'tool_call',
-              call: { id: newToolCallId(), name: state.toolName, input: safeParse(state.toolArgs) },
-            }
-          : { kind: 'text', text: state.text }
+      const turn: WireProviderTurn = {
+        text: state.text,
+        calls: state.toolCalls.flatMap((call): WireToolCall[] =>
+          call.name === null ? [] : [{ id: newToolCallId(), name: call.name, input: safeParse(call.args) }],
+        ),
+      }
       const tokensIn =
         state.summary?.tokensIn ??
         (state.promptTokensSeen > 0 ? state.promptTokensSeen : Math.ceil(promptChars / 4))
       const tokensOut =
         state.summary?.tokensOut ??
-        (state.completionTokensSum > 0
-          ? state.completionTokensSum
-          : estimateTokens(turn.kind === 'text' ? turn.text : JSON.stringify(turn.call.input)))
+        (state.completionTokensSum > 0 ? state.completionTokensSum : estimateTokens(completionText(turn)))
       yield { type: 'done', turn, tokensIn, tokensOut }
     },
   }

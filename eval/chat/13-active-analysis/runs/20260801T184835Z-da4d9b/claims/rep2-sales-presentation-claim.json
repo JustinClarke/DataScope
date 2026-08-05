@@ -1,0 +1,26 @@
+{
+  "claim": {
+    "kind": "comparison",
+    "left": {
+      "evidenceId": "evidence:category-revenue",
+      "rowId": "r2",
+      "field": "value"
+    },
+    "operator": "greater_than",
+    "right": {
+      "evidenceId": "evidence:category-revenue",
+      "rowId": "r3",
+      "field": "value"
+    }
+  },
+  "fact": {
+    "kind": "comparison",
+    "operator": "greater_than",
+    "subject": "Books",
+    "object": "Electronics",
+    "leftValue": 507332.51,
+    "rightValue": 343403.72,
+    "unit": "USD"
+  },
+  "rendered": "Books (507,332.51 USD) was greater than Electronics (343,403.72 USD)."
+}

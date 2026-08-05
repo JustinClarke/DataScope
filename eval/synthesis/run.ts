@@ -110,7 +110,7 @@ function makeVariantFetch(systemPrompt: string): typeof fetch {
       return new Response(JSON.stringify({ error: 'ai-down' }), { status: res.status });
     }
     const body = (await res.json()) as AiRouterResponse;
-    const text = body.turn.kind === 'text' ? body.turn.text : '';
+    const text = body.turn.calls.length === 0 ? body.turn.text : '';
     try {
       const answer = parseModelAnswer(text, request.baseline.actions.length);
       return new Response(JSON.stringify(sliceFromAnswer(request, answer)), { status: 200 });

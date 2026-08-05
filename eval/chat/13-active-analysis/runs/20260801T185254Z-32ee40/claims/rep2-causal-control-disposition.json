@@ -1,0 +1,26 @@
+{
+  "questionId": "causal-control",
+  "questionKind": "control",
+  "repeat": 2,
+  "transportFailure": null,
+  "action": "unsupported",
+  "repaired": false,
+  "parseError": null,
+  "responseHash": "a7e213626d1b3f5bd4ec72ff23bd6395358f42564cab58f42c4dcb5de9a6e13d",
+  "doneReason": "stop",
+  "disposition": {
+    "kind": "unsupported",
+    "reason": "causal_inference"
+  },
+  "rendered": null,
+  "verification": null,
+  "tokens": {
+    "calls": 1,
+    "totalPromptTokens": 2456,
+    "totalResponseTokens": 475,
+    "callHighWaterPromptTokens": 2456
+  },
+  "durationMs": 34351,
+  "claim": null,
+  "expectedUnsupportedReason": "causal_inference"
+}

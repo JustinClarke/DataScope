@@ -110,14 +110,20 @@ describe('ViewerMode (W8, D62 Workbench amendment)', () => {
     expect(within(container).queryByRole('dialog')).toBeNull();
   });
 
-  // S3 (D62 consumption-only): the drawer is a shell region viewer mode never
-  // assembles, so the console's absence is structural — there is no
-  // `viewerMode` branch inside the drawer to keep it that way.
-  it('renders no console, no editor and no view switcher', () => {
+  // S3/S6.5 (D62 consumption-only): the drawer is a shell region viewer mode
+  // never assembles, so the console's absence is structural — there is no
+  // `viewerMode` branch inside the drawer to keep it that way. S6.5 makes
+  // §13.3's "Info only, no console" a layout claim as well as a mount one,
+  // which is exactly what would invite that branch: a split rendered here with
+  // an empty console pane would hand a `.dsps` recipient query access over a
+  // report that carries no rows to query.
+  it('renders no console, no editor, no splitter and no view switcher', () => {
     const { container } = render(<ViewerMode document={REPORT} error={null} />);
     expect(container.querySelector('[data-testid="inspector-drawer"]')).toBeNull();
-    expect(container.querySelector('[data-testid="drawer-console"]')).toBeNull();
-    expect(container.querySelector('[data-testid="console-cold-state"]')).toBeNull();
+    expect(container.querySelector('[data-testid="drawer-console-pane"]')).toBeNull();
+    expect(container.querySelector('[data-testid="drawer-info-pane"]')).toBeNull();
+    expect(container.querySelector('[data-testid="console-editor-region"]')).toBeNull();
+    expect(within(container).queryByRole('separator', { name: 'Resize info panel' })).toBeNull();
     expect(within(container).queryByRole('button', { name: 'SQL Console' })).toBeNull();
     expect(within(container).queryByRole('button', { name: 'Info' })).toBeNull();
   });

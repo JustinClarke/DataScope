@@ -5,32 +5,17 @@
 //
 // The pinned 1.5B coder does not emit structured tool calls reliably; what it
 // does reliably is single-shot SQL generation with plain-text extraction. So
-// this provider keeps the control flow deterministic and asks the model only
-// for content: when the conversation needs SQL (a fresh question, a failed or
-// lint-blocked attempt) it prompts for one SELECT and wraps the extracted text
-// as an execute_local_sql call; when the last tool result carries rows it
-// prompts for a plain-language answer and returns a text turn. The model never
-// chooses the control path, so the loop's caps still bound every turn.
+// this provider does not ask it to drive — it walks the shared ladder in
+// `toolLadder.ts` and reads the reply the same way on every rung: SQL in the
+// text becomes a call, prose ends the turn. The model chooses *what* to do; it
+// never has to express that choice in a format it cannot produce.
+//
+// A4 removed the trapdoor that used to sit on this path: a row result no longer
+// forces an answer-only round-trip, so a second query is reachable here too.
+// The ladder's follow-up budget is what keeps the turn terminating.
 import type { AIProvider, AITool, ProviderMessage, ProviderTurn } from '../types';
 import { webllmChat, type WebLLMChatMessage } from './webllm';
-
-// The instructions and mode test are shared with the Ollama provider — the same
-// pinned small coder runs behind both, so both drive it the same deterministic way.
-export const SQL_INSTRUCTION =
-  'Reply with ONLY one DuckDB SQL SELECT statement that answers the question — ' +
-  'no explanation, no code fence commentary. DuckDB uses Postgres dialect: ' +
-  'double-quoted identifiers, LIMIT not TOP.';
-
-export const ANSWER_INSTRUCTION =
-  'The rows above answer the question. Reply with a short plain-language answer ' +
-  'for the user. Do not write SQL.';
-
-/** Pull one SQL statement out of the model's text; null when there is none. */
-export function extractSql(text: string): string | null {
-  const fence = text.match(/```(?:sql)?\s*([\s\S]*?)```/i);
-  const candidate = (fence ? fence[1] : text).trim().split(';')[0].trim();
-  return /^\(*\s*(select|with)\b/i.test(candidate) ? candidate : null;
-}
+import { RUNG_INSTRUCTION, SQL_TOOL, extractSql, ladderRung } from './toolLadder';
 
 /**
  * Render the loop's conversation for a plain chat model. Tool traffic becomes
@@ -44,22 +29,19 @@ export function toChatMessages(messages: ProviderMessage[]): WebLLMChatMessage[]
     if (message.role === 'system' || message.role === 'user') {
       chat.push({ role: message.role, content: message.content });
     } else if (message.role === 'assistant') {
-      const sql =
-        message.toolCall && typeof (message.toolCall.input as { sql?: unknown })?.sql === 'string'
-          ? ((message.toolCall.input as { sql: string }).sql)
-          : null;
-      chat.push({ role: 'assistant', content: sql ? '```sql\n' + sql + '\n```' : message.content });
+      // Every call the model made, in emitted order — rendering only the first
+      // would show it a history it did not have (A4 defect iii).
+      const sql = (message.toolCalls ?? [])
+        .map((call) => (call.input as { sql?: unknown })?.sql)
+        .filter((s): s is string => typeof s === 'string')
+        .map((s) => '```sql\n' + s + '\n```')
+        .join('\n');
+      chat.push({ role: 'assistant', content: sql || message.content });
     } else {
       chat.push({ role: 'user', content: `Result of running that SQL:\n${message.content}` });
     }
   }
   return chat;
-}
-
-/** The loop serializes a successful execution as a JSON object; errors are prose. */
-export function lastToolResultIsRows(messages: ProviderMessage[]): boolean {
-  const last = messages[messages.length - 1];
-  return last?.role === 'tool' && last.content.trimStart().startsWith('{');
 }
 
 /** Settles with the chat result, or an AbortError the moment `signal` fires. */
@@ -88,30 +70,23 @@ export function createWebLLMProvider(
   return {
     id: 'webllm',
     async complete(messages, tools: AITool[], options): Promise<ProviderTurn> {
-      const sqlTool = tools.find((t) => t.name === 'execute_local_sql');
-      const rendered = toChatMessages(messages);
-
-      // Rows are in: ask for the answer, end the loop with a text turn.
-      if (sqlTool === undefined || lastToolResultIsRows(messages)) {
-        const text = await raceAbort(
-          chat([...rendered, { role: 'user', content: ANSWER_INSTRUCTION }], { maxTokens: 256 }),
-          options?.signal,
-        );
-        return { kind: 'text', text: text.trim() };
-      }
-
-      // Fresh question or a failed attempt: ask for (corrected) SQL.
+      const sqlTool = tools.find((t) => t.name === SQL_TOOL);
+      const rung = ladderRung(messages, sqlTool !== undefined);
       const output = await raceAbort(
-        chat([...rendered, { role: 'user', content: SQL_INSTRUCTION }], { maxTokens: 256 }),
+        chat([...toChatMessages(messages), { role: 'user', content: RUNG_INSTRUCTION[rung] }], { maxTokens: 256 }),
         options?.signal,
       );
-      const sql = extractSql(output);
-      // No SQL in the output means the model answered in prose (or declined) —
-      // surface that as the final text rather than fabricating a call.
-      if (sql === null) return { kind: 'text', text: output.trim() };
+      const text = output.trim();
+
+      // The answer rung never carries a call; on the other two, SQL in the reply
+      // is the call and prose is the answer. No SQL where SQL was asked for
+      // means the model answered (or declined) — surfaced as text rather than
+      // fabricating a call it did not make.
+      const sql = rung === 'answer' || sqlTool === undefined ? null : extractSql(output);
+      if (sql === null) return { text, calls: [] };
       return {
-        kind: 'tool_call',
-        call: { id: crypto.randomUUID().replace(/-/g, '').slice(0, 9), name: sqlTool.name, input: { sql } },
+        text,
+        calls: [{ id: crypto.randomUUID().replace(/-/g, '').slice(0, 9), name: sqlTool!.name, input: { sql } }],
       };
     },
   };

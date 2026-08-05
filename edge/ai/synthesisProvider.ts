@@ -205,7 +205,8 @@ async function synthesizeVia(
   let text: string | null = null
   for (let step = await gen.next(); !step.done; step = await gen.next()) {
     if (step.value.type === 'done') {
-      text = step.value.turn.kind === 'text' ? step.value.turn.text : null
+      // Synthesis offers no tools, so a turn carrying calls is out of contract.
+      text = step.value.turn.calls.length === 0 ? step.value.turn.text : null
       break
     }
   }

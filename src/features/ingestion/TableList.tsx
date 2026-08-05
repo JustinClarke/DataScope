@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { RefreshCw, Trash2, Undo2, ChevronRight, ChevronDown } from 'lucide-react';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useSelectionStore } from '../../stores/selection';
+import { useRehydrationStore, type TableOutcome } from '../../stores/rehydration';
+import { recoverTable } from '../../services/rehydration';
 import { useEducationalPanel } from '../../app/useEducationalPanel';
 import { formatBytes } from '../../lib/formatBytes';
 import { keyColumnsFor } from '../../lib/dossier';
@@ -17,6 +19,16 @@ const ORIGIN_LABEL: Record<TableRegistryEntry['origin'], string> = {
   derived: 'derived',
   shared: 'shared link',
 };
+
+/**
+ * A view says "view", not "derived" (A3). Both are derived by origin, but what
+ * the reader needs from this badge is whether the rows are *there* — a view
+ * re-runs its query on every read and stores nothing, which is also why its
+ * size badge is 0 B rather than missing.
+ */
+function originLabel(table: TableRegistryEntry): string {
+  return table.kind === 'view' ? 'view' : ORIGIN_LABEL[table.origin];
+}
 
 interface TableListProps {
   onRemove: (tableId: string) => void;
@@ -73,7 +85,7 @@ function RowMetadata({ table }: { table: TableRegistryEntry }) {
         {table.rowCount.toLocaleString()} rows × {table.columnCount} cols
       </span>
       <span className="font-mono text-[length:var(--text-2xs)] uppercase tracking-[0.1em] text-(--color-ink-3)">
-        {ORIGIN_LABEL[table.origin]}
+        {originLabel(table)}
       </span>
       <span className="text-[length:var(--text-xs)] text-(--color-ink-3)">{formatBytes(table.memoryBytes)}</span>
       {table.origin === 'api' && table.lastFetchedAt && (
@@ -140,6 +152,63 @@ function RowActions({
         {table.origin === 'derived' ? <Undo2 size={16} aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}
       </button>
     </>
+  );
+}
+
+/**
+ * A reconciled row that didn't come back (S6.9 / 07d). The whole point is that
+ * it is *not* the row above: no name button, no column disclosure, no stats —
+ * nothing that invites a click that would query a table the engine doesn't
+ * have. It states the reason, and offers the recovery only where one exists
+ * (never fired on load, always by this button).
+ */
+function UnavailableRow({
+  table,
+  outcome,
+  onRemove,
+}: {
+  table: TableRegistryEntry;
+  outcome: TableOutcome;
+  onRemove: (tableId: string) => void;
+}) {
+  const [recovering, setRecovering] = useState(false);
+
+  return (
+    <li
+      data-testid={`trow-unavailable-${table.id}`}
+      data-rehydration={outcome.status}
+      className="group flex flex-col gap-1 rounded-(--radius-sm) px-4 py-2 opacity-70"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="trow__name min-w-0 font-mono text-[length:var(--text-base)] text-(--color-ink-3) line-through">
+          {table.tableName}
+        </span>
+        <div className="flex shrink-0 items-center gap-1">
+          {outcome.status === 'recoverable' && (
+            <button
+              type="button"
+              disabled={recovering}
+              onClick={() => {
+                setRecovering(true);
+                void recoverTable(table.id).finally(() => setRecovering(false));
+              }}
+              className="rounded px-1.5 py-0.5 text-[length:var(--text-xs)] text-(--color-accent) hover:underline disabled:opacity-50"
+            >
+              {outcome.recovery === 'refetch' ? 'Refresh from source' : 'Rebuild'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onRemove(table.id)}
+            aria-label={`Remove ${table.tableName}`}
+            className="rounded p-1 text-(--color-fg-muted) transition-colors hover:bg-(--color-border) hover:text-(--color-fg)"
+          >
+            <Trash2 size={16} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <p className="pl-0 text-[length:var(--text-xs)] text-(--color-warn)">{outcome.reason}</p>
+    </li>
   );
 }
 
@@ -265,6 +334,7 @@ export function TableList({
 }: TableListProps) {
   const tables = useDatasetsStore((state) => state.tables);
   const selectedTableId = useSelectionStore((state) => state.selectedTableId);
+  const outcomes = useRehydrationStore((state) => state.outcomes);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
 
   if (tables.length === 0) return null;
@@ -283,6 +353,13 @@ export function TableList({
       {!hideHeading && <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">Registered tables</h2>}
       <ul className="flex flex-col gap-2">
         {tables.map((table) => {
+          // 07d: reconciliation's answer comes first — a row the engine can't
+          // back never reaches the ordinary compositions below, reflowed or not.
+          const outcome = outcomes[table.id];
+          if (outcome && outcome.status !== 'restored') {
+            return <UnavailableRow key={table.id} table={table} outcome={outcome} onRemove={onRemove} />;
+          }
+
           const isSelected = table.id === selectedTableId;
           const rowClassName = `group flex items-center justify-between gap-2 rounded-(--radius-sm) px-4 py-2 outline outline-2 -outline-offset-2 outline-transparent ${
             isSelected ? 'bg-(--color-elev) shadow-[inset_2px_0_0_var(--color-active)]' : 'hover:bg-(--color-elev)'

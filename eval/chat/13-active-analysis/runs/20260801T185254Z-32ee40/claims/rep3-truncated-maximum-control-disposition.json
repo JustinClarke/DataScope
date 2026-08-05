@@ -1,0 +1,49 @@
+{
+  "questionId": "truncated-maximum-control",
+  "questionKind": "control",
+  "repeat": 3,
+  "transportFailure": null,
+  "action": "final_claim",
+  "repaired": false,
+  "parseError": null,
+  "responseHash": "dd34288d07385d9b374d1d5c557afd5bfc6eafb1e2d4af258a3ca7bc2eb98615",
+  "doneReason": "stop",
+  "disposition": {
+    "kind": "rejected_claim",
+    "reason": "INCOMPLETE_SCOPE",
+    "detail": "Evidence evidence:product-revenue-truncated is truncated and cannot prove a global extremum."
+  },
+  "rendered": null,
+  "verification": {
+    "accepted": false,
+    "reason": "INCOMPLETE_SCOPE",
+    "detail": "Evidence evidence:product-revenue-truncated is truncated and cannot prove a global extremum."
+  },
+  "tokens": {
+    "calls": 1,
+    "totalPromptTokens": 1133,
+    "totalResponseTokens": 382,
+    "callHighWaterPromptTokens": 1133
+  },
+  "durationMs": 25676,
+  "claim": {
+    "kind": "extremum",
+    "subject": {
+      "evidenceId": "evidence:product-revenue-truncated",
+      "rowId": "r3",
+      "field": "value"
+    },
+    "operator": "maximum",
+    "scope": {
+      "evidenceId": "evidence:product-revenue-truncated",
+      "rowIds": [
+        "r1",
+        "r2",
+        "r3",
+        "r4",
+        "r5"
+      ]
+    }
+  },
+  "expectedUnsupportedReason": "incomplete_scope"
+}

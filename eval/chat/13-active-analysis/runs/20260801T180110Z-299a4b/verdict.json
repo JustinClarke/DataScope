@@ -1,0 +1,149 @@
+{
+  "arm": "B-active",
+  "checkpoint": 4,
+  "model": {
+    "tag": "qwen3:8b",
+    "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+    "quantizationLevel": "Q4_K_M",
+    "parameterSize": "8.2B",
+    "contextLength": 40960,
+    "capabilities": [
+      "completion",
+      "tools",
+      "thinking"
+    ]
+  },
+  "selectedMode": "thinking",
+  "budgets": {
+    "maxRounds": 2,
+    "maxProbesPerRound": 2,
+    "maxProbesTotal": 4,
+    "maxRowsPerPacket": 12,
+    "maxPacketsInContext": 8
+  },
+  "records": [
+    {
+      "questionId": "sales-presentation",
+      "questionKind": "answerable",
+      "turns": [
+        {
+          "turn": 1,
+          "action": "request_probes",
+          "candidateIds": [
+            "monthly-revenue",
+            "average-order-value"
+          ],
+          "responseHash": "d669795f05b3f6d1d25cdf93995dd780d430101bc0099cc548463f318fb7ff3b",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 1945,
+          "responseTokens": 19,
+          "estimatedResponseTokens": 367
+        },
+        {
+          "turn": 2,
+          "action": "request_probes",
+          "candidateIds": [
+            "largest-monthly-change",
+            "status-revenue"
+          ],
+          "responseHash": "da548f2a718afa9314efc8ed0e4531d47a71fab91d7a9eed5efc89b0141a805a",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 1854,
+          "responseTokens": 21,
+          "estimatedResponseTokens": 523
+        },
+        {
+          "turn": 3,
+          "action": "final_claim",
+          "candidateIds": null,
+          "responseHash": "e2b59afa1c850c1b20b1d361fe8393e9b42fa8ce07509478b6b97709aea0c92d",
+          "repaired": false,
+          "parseError": null,
+          "doneReason": "stop",
+          "promptTokens": 2504,
+          "responseTokens": 78,
+          "estimatedResponseTokens": 582
+        }
+      ],
+      "executedCandidateIds": [
+        "monthly-revenue",
+        "average-order-value",
+        "largest-monthly-change",
+        "status-revenue"
+      ],
+      "probeRejections": [],
+      "disposition": {
+        "kind": "final_claim",
+        "claim": {
+          "kind": "extremum",
+          "subject": {
+            "evidenceId": "evidence:status-revenue",
+            "rowId": "r2",
+            "field": "value"
+          },
+          "operator": "maximum",
+          "scope": {
+            "evidenceId": "evidence:status-revenue",
+            "rowIds": [
+              "r1",
+              "r2",
+              "r3",
+              "r4"
+            ]
+          }
+        },
+        "fact": {
+          "kind": "extremum",
+          "operator": "maximum",
+          "subject": "completed",
+          "object": "maximum in evidence:status-revenue",
+          "leftValue": 952190.31,
+          "rightValue": 952190.31,
+          "unit": "USD"
+        },
+        "rendered": "completed (952,190.31 USD) was the maximum for the complete evidence scope."
+      },
+      "rendered": "completed (952,190.31 USD) was the maximum for the complete evidence scope.",
+      "tokens": {
+        "calls": 3,
+        "totalPromptTokens": 6303,
+        "totalResponseTokens": 1472,
+        "callHighWaterPromptTokens": 2504
+      },
+      "requestedQuestionRelevance": [
+        {
+          "candidateId": "monthly-revenue",
+          "questionRelevance": [
+            "understand-ecommerce",
+            "odd-sales-investigation",
+            "further-transforms"
+          ]
+        },
+        {
+          "candidateId": "average-order-value",
+          "questionRelevance": [
+            "understand-ecommerce"
+          ]
+        },
+        {
+          "candidateId": "largest-monthly-change",
+          "questionRelevance": [
+            "odd-sales-investigation"
+          ]
+        },
+        {
+          "candidateId": "status-revenue",
+          "questionRelevance": [
+            "odd-sales-investigation"
+          ]
+        }
+      ],
+      "durationMs": 101522
+    }
+  ],
+  "turn1DiversityScreen": null
+}

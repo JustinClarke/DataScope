@@ -55,6 +55,20 @@ function toWireMessage(m: ProviderMessage): AiRouterRequest['messages'][number] 
   return m as AiRouterRequest['messages'][number];
 }
 
+/**
+ * The client and the Worker deploy separately, and A4 changed the turn shape
+ * from `{ kind: 'text' | 'tool_call' }` to `{ text, calls[] }`. A router still
+ * on the old shape would otherwise read as a turn with `calls: undefined` —
+ * a silent no-tool-calls answer, which is exactly the class of failure this
+ * phase exists to remove. So the skew is named instead.
+ */
+function readWireTurn(turn: WireProviderTurn): ProviderTurn {
+  if (!Array.isArray(turn?.calls) || typeof turn?.text !== 'string') {
+    throw new Error('cloud router returned a pre-A4 turn shape — redeploy the edge Worker.');
+  }
+  return { text: turn.text, calls: turn.calls };
+}
+
 async function readError(response: Response): Promise<never> {
   let code: string | undefined;
   try {
@@ -108,7 +122,7 @@ async function readStream(
     }
   }
   if (turn === null) throw new Error('cloud router stream: no final turn');
-  return turn;
+  return readWireTurn(turn);
 }
 
 /**
@@ -148,7 +162,7 @@ export function createCloudProvider(config: CloudProviderConfig): AIProvider {
         return readStream(response, config.onToken);
       }
       const body = (await response.json()) as AiRouterResponse;
-      return body.turn;
+      return readWireTurn(body.turn);
     },
   };
 }

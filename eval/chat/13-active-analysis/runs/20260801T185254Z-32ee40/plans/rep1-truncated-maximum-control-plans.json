@@ -1,0 +1,30 @@
+{
+  "provenance": "predeclared-hand-authored-phase-5",
+  "questionId": "truncated-maximum-control",
+  "repeat": 1,
+  "question": "Which product has the global maximum revenue?",
+  "plans": [
+    {
+      "id": "product-revenue-truncated",
+      "metric": {
+        "kind": "sum_product",
+        "left": {
+          "table": "order_items",
+          "column": "quantity"
+        },
+        "right": {
+          "table": "order_items",
+          "column": "unit_price"
+        }
+      },
+      "dimension": {
+        "column": {
+          "table": "products",
+          "column": "name"
+        }
+      },
+      "filters": [],
+      "maxRows": 5
+    }
+  ]
+}

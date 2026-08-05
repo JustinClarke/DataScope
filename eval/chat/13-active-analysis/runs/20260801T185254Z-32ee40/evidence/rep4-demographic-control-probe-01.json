@@ -1,0 +1,57 @@
+{
+  "id": "evidence:country-orders",
+  "metric": "count_distinct(orders.order_id)",
+  "unit": "order",
+  "dimension": "customers.country",
+  "completeness": "complete",
+  "rows": [
+    {
+      "rowId": "r1",
+      "label": "AU",
+      "value": 237,
+      "order": 0
+    },
+    {
+      "rowId": "r2",
+      "label": "BR",
+      "value": 196,
+      "order": 1
+    },
+    {
+      "rowId": "r3",
+      "label": "CA",
+      "value": 205,
+      "order": 2
+    },
+    {
+      "rowId": "r4",
+      "label": "DE",
+      "value": 158,
+      "order": 3
+    },
+    {
+      "rowId": "r5",
+      "label": "FR",
+      "value": 180,
+      "order": 4
+    },
+    {
+      "rowId": "r6",
+      "label": "GB",
+      "value": 145,
+      "order": 5
+    },
+    {
+      "rowId": "r7",
+      "label": "IN",
+      "value": 115,
+      "order": 6
+    },
+    {
+      "rowId": "r8",
+      "label": "US",
+      "value": 164,
+      "order": 7
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useDatasetsStore } from './datasets';
+import { DATASETS_STORAGE_KEY, useDatasetsStore } from './datasets';
 import type { Dataset, TableRegistryEntry } from '../types';
 
 const dataset: Dataset = {
@@ -22,6 +22,7 @@ const table: TableRegistryEntry = {
 };
 
 beforeEach(() => {
+  localStorage.clear();
   useDatasetsStore.setState({ datasets: [], tables: [], workerStatus: 'idle', workerError: null });
 });
 
@@ -246,5 +247,41 @@ describe('datasets store', () => {
     useDatasetsStore.getState().setWorkerStatus('error', 'worker crashed');
     expect(useDatasetsStore.getState().workerStatus).toBe('error');
     expect(useDatasetsStore.getState().workerError).toBe('worker crashed');
+  });
+
+  describe('persistence (07c)', () => {
+    it('persists exactly the catalog whitelist — no row data, no worker status', () => {
+      useDatasetsStore.getState().registerDataset(dataset, [table]);
+      useDatasetsStore.getState().setWorkerStatus('ready');
+
+      const raw = localStorage.getItem(DATASETS_STORAGE_KEY);
+      expect(raw).toBeTruthy();
+      const parsed = JSON.parse(raw!);
+      // Exact match proves nothing beyond `datasets`/`tables` reaches storage —
+      // no `workerStatus`/`workerError`, and no raw row data (neither field's
+      // type carries any), even though `columns`/`profile` are aggregates.
+      expect(parsed.state).toEqual({ datasets: [dataset], tables: [table] });
+    });
+
+    it('never persists workerStatus/workerError — a restored "ready" would be a lie the app reads', () => {
+      useDatasetsStore.getState().setWorkerStatus('ready');
+      const raw = localStorage.getItem(DATASETS_STORAGE_KEY);
+      const parsed = JSON.parse(raw!);
+      expect(parsed.state.workerStatus).toBeUndefined();
+      expect(parsed.state.workerError).toBeUndefined();
+    });
+
+    it('a persisted payload from an old schema version rehydrates to a safe, array-shaped default rather than crashing', async () => {
+      localStorage.setItem(
+        DATASETS_STORAGE_KEY,
+        JSON.stringify({ state: { datasets: 'not-an-array', tables: { garbage: true } }, version: 0 }),
+      );
+
+      await useDatasetsStore.persist.rehydrate();
+
+      const state = useDatasetsStore.getState();
+      expect(Array.isArray(state.datasets)).toBe(true);
+      expect(Array.isArray(state.tables)).toBe(true);
+    });
   });
 });

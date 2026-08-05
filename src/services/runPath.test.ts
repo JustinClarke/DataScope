@@ -51,7 +51,7 @@ describe('runPath', () => {
   beforeEach(() => {
     useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
     useDatasetsStore.setState({ datasets: [], tables: [], workerStatus: 'idle', workerError: null });
-    useDrawerStore.setState({ open: true, view: 'info', consoleActivated: false, expanded: false });
+    useDrawerStore.setState({ open: true, expanded: false, consoleSignal: 0 });
     useRunGuardStore.setState({ pending: null, pendingSession: CONSOLE_SESSION });
     vi.mocked(sqlService.runQuery).mockReset().mockResolvedValue(result);
     vi.mocked(transformsService.runTransform).mockReset().mockResolvedValue(result);
@@ -124,7 +124,7 @@ describe('runPath', () => {
       runInConsole('select 42');
 
       expect(getSession(CONSOLE_SESSION).sql).toBe('select 42');
-      expect(useDrawerStore.getState()).toMatchObject({ open: true, view: 'console', consoleActivated: true });
+      expect(useDrawerStore.getState()).toMatchObject({ open: true });
       expect(sqlService.runQuery).toHaveBeenCalledWith('select 42', CONSOLE_SESSION);
     });
 
@@ -144,7 +144,7 @@ describe('runPath', () => {
     it('is a no-op on empty SQL, leaving the buffer and the drawer alone', () => {
       runInConsole('  ');
       expect(getSession(CONSOLE_SESSION).sql).toBe('');
-      expect(useDrawerStore.getState().consoleActivated).toBe(false);
+      expect(useDrawerStore.getState().consoleSignal).toBe(0);
       expect(sqlService.runQuery).not.toHaveBeenCalled();
     });
   });

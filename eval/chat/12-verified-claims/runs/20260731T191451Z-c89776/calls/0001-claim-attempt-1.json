@@ -1,0 +1,537 @@
+{
+  "callId": "0001",
+  "questionId": "monthly-revenue-december-2021-to-january-2022",
+  "role": "claim",
+  "attempt": 1,
+  "messages": [
+    {
+      "role": "system",
+      "content": "Return exactly one ClaimIR JSON object and no prose. Use only evidenceId, rowId, and field values present in the supplied deterministic evidence. Choose the relation that directly answers the question and is true of the evidence. For a time comparison, use kind \"change\", with the earlier cell in \"from\" and the later cell in \"to\". Do not add labels, explanations, magnitude words, or unsupported fields."
+    },
+    {
+      "role": "user",
+      "content": "Question: What changed in January 2022 compared with December 2021?\n\nDeterministic evidence:\n{\n  \"id\": \"evidence:monthly-revenue\",\n  \"metric\": \"sum_product(order_items.quantity,order_items.unit_price)\",\n  \"unit\": \"USD\",\n  \"dimension\": \"orders.order_date/month\",\n  \"completeness\": \"complete\",\n  \"rows\": [\n    {\n      \"rowId\": \"r1\",\n      \"label\": \"2021-12-01\",\n      \"value\": 3745.01,\n      \"order\": 0\n    },\n    {\n      \"rowId\": \"r2\",\n      \"label\": \"2022-01-01\",\n      \"value\": 68970.39,\n      \"order\": 1\n    },\n    {\n      \"rowId\": \"r3\",\n      \"label\": \"2022-02-01\",\n      \"value\": 45638.76,\n      \"order\": 2\n    },\n    {\n      \"rowId\": \"r4\",\n      \"label\": \"2022-03-01\",\n      \"value\": 54908.59,\n      \"order\": 3\n    },\n    {\n      \"rowId\": \"r5\",\n      \"label\": \"2022-04-01\",\n      \"value\": 70401.8,\n      \"order\": 4\n    },\n    {\n      \"rowId\": \"r6\",\n      \"label\": \"2022-05-01\",\n      \"value\": 40913.93,\n      \"order\": 5\n    },\n    {\n      \"rowId\": \"r7\",\n      \"label\": \"2022-06-01\",\n      \"value\": 51558.55,\n      \"order\": 6\n    },\n    {\n      \"rowId\": \"r8\",\n      \"label\": \"2022-07-01\",\n      \"value\": 38680.17,\n      \"order\": 7\n    },\n    {\n      \"rowId\": \"r9\",\n      \"label\": \"2022-08-01\",\n      \"value\": 61207.42,\n      \"order\": 8\n    },\n    {\n      \"rowId\": \"r10\",\n      \"label\": \"2022-09-01\",\n      \"value\": 43568.29,\n      \"order\": 9\n    },\n    {\n      \"rowId\": \"r11\",\n      \"label\": \"2022-10-01\",\n      \"value\": 51674.86,\n      \"order\": 10\n    },\n    {\n      \"rowId\": \"r12\",\n      \"label\": \"2022-11-01\",\n      \"value\": 50892.97,\n      \"order\": 11\n    },\n    {\n      \"rowId\": \"r13\",\n      \"label\": \"2022-12-01\",\n      \"value\": 42879.22,\n      \"order\": 12\n    },\n    {\n      \"rowId\": \"r14\",\n      \"label\": \"2023-01-01\",\n      \"value\": 53837.72,\n      \"order\": 13\n    },\n    {\n      \"rowId\": \"r15\",\n      \"label\": \"2023-02-01\",\n      \"value\": 60101.99,\n      \"order\": 14\n    },\n    {\n      \"rowId\": \"r16\",\n      \"label\": \"2023-03-01\",\n      \"value\": 36680.08,\n      \"order\": 15\n    },\n    {\n      \"rowId\": \"r17\",\n      \"label\": \"2023-04-01\",\n      \"value\": 64234.64,\n      \"order\": 16\n    },\n    {\n      \"rowId\": \"r18\",\n      \"label\": \"2023-05-01\",\n      \"value\": 37592.43,\n      \"order\": 17\n    },\n    {\n      \"rowId\": \"r19\",\n      \"label\": \"2023-06-01\",\n      \"value\": 48013.62,\n      \"order\": 18\n    },\n    {\n      \"rowId\": \"r20\",\n      \"label\": \"2023-07-01\",\n      \"value\": 62826.99,\n      \"order\": 19\n    },\n    {\n      \"rowId\": \"r21\",\n      \"label\": \"2023-08-01\",\n      \"value\": 55341.38,\n      \"order\": 20\n    },\n    {\n      \"rowId\": \"r22\",\n      \"label\": \"2023-09-01\",\n      \"value\": 63484.62,\n      \"order\": 21\n    },\n    {\n      \"rowId\": \"r23\",\n      \"label\": \"2023-10-01\",\n      \"value\": 60835.65,\n      \"order\": 22\n    },\n    {\n      \"rowId\": \"r24\",\n      \"label\": \"2023-11-01\",\n      \"value\": 65019.75,\n      \"order\": 23\n    },\n    {\n      \"rowId\": \"r25\",\n      \"label\": \"2023-12-01\",\n      \"value\": 35565.32,\n      \"order\": 24\n    },\n    {\n      \"rowId\": \"r26\",\n      \"label\": \"2024-01-01\",\n      \"value\": 55112.86,\n      \"order\": 25\n    },\n    {\n      \"rowId\": \"r27\",\n      \"label\": \"2024-02-01\",\n      \"value\": 56620.89,\n      \"order\": 26\n    },\n    {\n      \"rowId\": \"r28\",\n      \"label\": \"2024-03-01\",\n      \"value\": 67196.51,\n      \"order\": 27\n    },\n    {\n      \"rowId\": \"r29\",\n      \"label\": \"2024-04-01\",\n      \"value\": 55723.09,\n      \"order\": 28\n    },\n    {\n      \"rowId\": \"r30\",\n      \"label\": \"2024-05-01\",\n      \"value\": 46623.78,\n      \"order\": 29\n    },\n    {\n      \"rowId\": \"r31\",\n      \"label\": \"2024-06-01\",\n      \"value\": 63532.96,\n      \"order\": 30\n    },\n    {\n      \"rowId\": \"r32\",\n      \"label\": \"2024-07-01\",\n      \"value\": 67196.21,\n      \"order\": 31\n    },\n    {\n      \"rowId\": \"r33\",\n      \"label\": \"2024-08-01\",\n      \"value\": 67225.94,\n      \"order\": 32\n    },\n    {\n      \"rowId\": \"r34\",\n      \"label\": \"2024-09-01\",\n      \"value\": 50324.42,\n      \"order\": 33\n    },\n    {\n      \"rowId\": \"r35\",\n      \"label\": \"2024-10-01\",\n      \"value\": 47926.73,\n      \"order\": 34\n    },\n    {\n      \"rowId\": \"r36\",\n      \"label\": \"2024-11-01\",\n      \"value\": 56515.34,\n      \"order\": 35\n    },\n    {\n      \"rowId\": \"r37\",\n      \"label\": \"2024-12-01\",\n      \"value\": 25007.87,\n      \"order\": 36\n    }\n  ]\n}"
+    }
+  ],
+  "schema": {
+    "oneOf": [
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "comparison"
+          },
+          "left": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string"
+              },
+              "rowId": {
+                "type": "string"
+              },
+              "field": {
+                "const": "value"
+              }
+            },
+            "required": [
+              "evidenceId",
+              "rowId",
+              "field"
+            ]
+          },
+          "operator": {
+            "enum": [
+              "greater_than",
+              "less_than",
+              "equal"
+            ]
+          },
+          "right": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string"
+              },
+              "rowId": {
+                "type": "string"
+              },
+              "field": {
+                "const": "value"
+              }
+            },
+            "required": [
+              "evidenceId",
+              "rowId",
+              "field"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "left",
+          "operator",
+          "right"
+        ]
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "extremum"
+          },
+          "subject": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string"
+              },
+              "rowId": {
+                "type": "string"
+              },
+              "field": {
+                "const": "value"
+              }
+            },
+            "required": [
+              "evidenceId",
+              "rowId",
+              "field"
+            ]
+          },
+          "operator": {
+            "enum": [
+              "maximum",
+              "minimum"
+            ]
+          },
+          "scope": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string"
+              },
+              "rowIds": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "evidenceId",
+              "rowIds"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "subject",
+          "operator",
+          "scope"
+        ]
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "change"
+          },
+          "from": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string"
+              },
+              "rowId": {
+                "type": "string"
+              },
+              "field": {
+                "const": "value"
+              }
+            },
+            "required": [
+              "evidenceId",
+              "rowId",
+              "field"
+            ]
+          },
+          "to": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string"
+              },
+              "rowId": {
+                "type": "string"
+              },
+              "field": {
+                "const": "value"
+              }
+            },
+            "required": [
+              "evidenceId",
+              "rowId",
+              "field"
+            ]
+          },
+          "operator": {
+            "enum": [
+              "increase",
+              "decrease",
+              "no_change"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "from",
+          "to",
+          "operator"
+        ]
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "threshold"
+          },
+          "subject": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string"
+              },
+              "rowId": {
+                "type": "string"
+              },
+              "field": {
+                "const": "value"
+              }
+            },
+            "required": [
+              "evidenceId",
+              "rowId",
+              "field"
+            ]
+          },
+          "operator": {
+            "enum": [
+              "above",
+              "below",
+              "at"
+            ]
+          },
+          "threshold": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "subject",
+          "operator",
+          "threshold"
+        ]
+      }
+    ]
+  },
+  "requestOptions": {
+    "endpoint": "http://100.126.157.97:11434/api/chat",
+    "body": {
+      "model": "qwen2.5-coder:7b",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Return exactly one ClaimIR JSON object and no prose. Use only evidenceId, rowId, and field values present in the supplied deterministic evidence. Choose the relation that directly answers the question and is true of the evidence. For a time comparison, use kind \"change\", with the earlier cell in \"from\" and the later cell in \"to\". Do not add labels, explanations, magnitude words, or unsupported fields."
+        },
+        {
+          "role": "user",
+          "content": "Question: What changed in January 2022 compared with December 2021?\n\nDeterministic evidence:\n{\n  \"id\": \"evidence:monthly-revenue\",\n  \"metric\": \"sum_product(order_items.quantity,order_items.unit_price)\",\n  \"unit\": \"USD\",\n  \"dimension\": \"orders.order_date/month\",\n  \"completeness\": \"complete\",\n  \"rows\": [\n    {\n      \"rowId\": \"r1\",\n      \"label\": \"2021-12-01\",\n      \"value\": 3745.01,\n      \"order\": 0\n    },\n    {\n      \"rowId\": \"r2\",\n      \"label\": \"2022-01-01\",\n      \"value\": 68970.39,\n      \"order\": 1\n    },\n    {\n      \"rowId\": \"r3\",\n      \"label\": \"2022-02-01\",\n      \"value\": 45638.76,\n      \"order\": 2\n    },\n    {\n      \"rowId\": \"r4\",\n      \"label\": \"2022-03-01\",\n      \"value\": 54908.59,\n      \"order\": 3\n    },\n    {\n      \"rowId\": \"r5\",\n      \"label\": \"2022-04-01\",\n      \"value\": 70401.8,\n      \"order\": 4\n    },\n    {\n      \"rowId\": \"r6\",\n      \"label\": \"2022-05-01\",\n      \"value\": 40913.93,\n      \"order\": 5\n    },\n    {\n      \"rowId\": \"r7\",\n      \"label\": \"2022-06-01\",\n      \"value\": 51558.55,\n      \"order\": 6\n    },\n    {\n      \"rowId\": \"r8\",\n      \"label\": \"2022-07-01\",\n      \"value\": 38680.17,\n      \"order\": 7\n    },\n    {\n      \"rowId\": \"r9\",\n      \"label\": \"2022-08-01\",\n      \"value\": 61207.42,\n      \"order\": 8\n    },\n    {\n      \"rowId\": \"r10\",\n      \"label\": \"2022-09-01\",\n      \"value\": 43568.29,\n      \"order\": 9\n    },\n    {\n      \"rowId\": \"r11\",\n      \"label\": \"2022-10-01\",\n      \"value\": 51674.86,\n      \"order\": 10\n    },\n    {\n      \"rowId\": \"r12\",\n      \"label\": \"2022-11-01\",\n      \"value\": 50892.97,\n      \"order\": 11\n    },\n    {\n      \"rowId\": \"r13\",\n      \"label\": \"2022-12-01\",\n      \"value\": 42879.22,\n      \"order\": 12\n    },\n    {\n      \"rowId\": \"r14\",\n      \"label\": \"2023-01-01\",\n      \"value\": 53837.72,\n      \"order\": 13\n    },\n    {\n      \"rowId\": \"r15\",\n      \"label\": \"2023-02-01\",\n      \"value\": 60101.99,\n      \"order\": 14\n    },\n    {\n      \"rowId\": \"r16\",\n      \"label\": \"2023-03-01\",\n      \"value\": 36680.08,\n      \"order\": 15\n    },\n    {\n      \"rowId\": \"r17\",\n      \"label\": \"2023-04-01\",\n      \"value\": 64234.64,\n      \"order\": 16\n    },\n    {\n      \"rowId\": \"r18\",\n      \"label\": \"2023-05-01\",\n      \"value\": 37592.43,\n      \"order\": 17\n    },\n    {\n      \"rowId\": \"r19\",\n      \"label\": \"2023-06-01\",\n      \"value\": 48013.62,\n      \"order\": 18\n    },\n    {\n      \"rowId\": \"r20\",\n      \"label\": \"2023-07-01\",\n      \"value\": 62826.99,\n      \"order\": 19\n    },\n    {\n      \"rowId\": \"r21\",\n      \"label\": \"2023-08-01\",\n      \"value\": 55341.38,\n      \"order\": 20\n    },\n    {\n      \"rowId\": \"r22\",\n      \"label\": \"2023-09-01\",\n      \"value\": 63484.62,\n      \"order\": 21\n    },\n    {\n      \"rowId\": \"r23\",\n      \"label\": \"2023-10-01\",\n      \"value\": 60835.65,\n      \"order\": 22\n    },\n    {\n      \"rowId\": \"r24\",\n      \"label\": \"2023-11-01\",\n      \"value\": 65019.75,\n      \"order\": 23\n    },\n    {\n      \"rowId\": \"r25\",\n      \"label\": \"2023-12-01\",\n      \"value\": 35565.32,\n      \"order\": 24\n    },\n    {\n      \"rowId\": \"r26\",\n      \"label\": \"2024-01-01\",\n      \"value\": 55112.86,\n      \"order\": 25\n    },\n    {\n      \"rowId\": \"r27\",\n      \"label\": \"2024-02-01\",\n      \"value\": 56620.89,\n      \"order\": 26\n    },\n    {\n      \"rowId\": \"r28\",\n      \"label\": \"2024-03-01\",\n      \"value\": 67196.51,\n      \"order\": 27\n    },\n    {\n      \"rowId\": \"r29\",\n      \"label\": \"2024-04-01\",\n      \"value\": 55723.09,\n      \"order\": 28\n    },\n    {\n      \"rowId\": \"r30\",\n      \"label\": \"2024-05-01\",\n      \"value\": 46623.78,\n      \"order\": 29\n    },\n    {\n      \"rowId\": \"r31\",\n      \"label\": \"2024-06-01\",\n      \"value\": 63532.96,\n      \"order\": 30\n    },\n    {\n      \"rowId\": \"r32\",\n      \"label\": \"2024-07-01\",\n      \"value\": 67196.21,\n      \"order\": 31\n    },\n    {\n      \"rowId\": \"r33\",\n      \"label\": \"2024-08-01\",\n      \"value\": 67225.94,\n      \"order\": 32\n    },\n    {\n      \"rowId\": \"r34\",\n      \"label\": \"2024-09-01\",\n      \"value\": 50324.42,\n      \"order\": 33\n    },\n    {\n      \"rowId\": \"r35\",\n      \"label\": \"2024-10-01\",\n      \"value\": 47926.73,\n      \"order\": 34\n    },\n    {\n      \"rowId\": \"r36\",\n      \"label\": \"2024-11-01\",\n      \"value\": 56515.34,\n      \"order\": 35\n    },\n    {\n      \"rowId\": \"r37\",\n      \"label\": \"2024-12-01\",\n      \"value\": 25007.87,\n      \"order\": 36\n    }\n  ]\n}"
+        }
+      ],
+      "stream": false,
+      "keep_alive": "30m",
+      "format": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "comparison"
+              },
+              "left": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceId": {
+                    "type": "string"
+                  },
+                  "rowId": {
+                    "type": "string"
+                  },
+                  "field": {
+                    "const": "value"
+                  }
+                },
+                "required": [
+                  "evidenceId",
+                  "rowId",
+                  "field"
+                ]
+              },
+              "operator": {
+                "enum": [
+                  "greater_than",
+                  "less_than",
+                  "equal"
+                ]
+              },
+              "right": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceId": {
+                    "type": "string"
+                  },
+                  "rowId": {
+                    "type": "string"
+                  },
+                  "field": {
+                    "const": "value"
+                  }
+                },
+                "required": [
+                  "evidenceId",
+                  "rowId",
+                  "field"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "left",
+              "operator",
+              "right"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "extremum"
+              },
+              "subject": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceId": {
+                    "type": "string"
+                  },
+                  "rowId": {
+                    "type": "string"
+                  },
+                  "field": {
+                    "const": "value"
+                  }
+                },
+                "required": [
+                  "evidenceId",
+                  "rowId",
+                  "field"
+                ]
+              },
+              "operator": {
+                "enum": [
+                  "maximum",
+                  "minimum"
+                ]
+              },
+              "scope": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceId": {
+                    "type": "string"
+                  },
+                  "rowIds": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "evidenceId",
+                  "rowIds"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "subject",
+              "operator",
+              "scope"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "change"
+              },
+              "from": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceId": {
+                    "type": "string"
+                  },
+                  "rowId": {
+                    "type": "string"
+                  },
+                  "field": {
+                    "const": "value"
+                  }
+                },
+                "required": [
+                  "evidenceId",
+                  "rowId",
+                  "field"
+                ]
+              },
+              "to": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceId": {
+                    "type": "string"
+                  },
+                  "rowId": {
+                    "type": "string"
+                  },
+                  "field": {
+                    "const": "value"
+                  }
+                },
+                "required": [
+                  "evidenceId",
+                  "rowId",
+                  "field"
+                ]
+              },
+              "operator": {
+                "enum": [
+                  "increase",
+                  "decrease",
+                  "no_change"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "from",
+              "to",
+              "operator"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "threshold"
+              },
+              "subject": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceId": {
+                    "type": "string"
+                  },
+                  "rowId": {
+                    "type": "string"
+                  },
+                  "field": {
+                    "const": "value"
+                  }
+                },
+                "required": [
+                  "evidenceId",
+                  "rowId",
+                  "field"
+                ]
+              },
+              "operator": {
+                "enum": [
+                  "above",
+                  "below",
+                  "at"
+                ]
+              },
+              "threshold": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "kind",
+              "subject",
+              "operator",
+              "threshold"
+            ]
+          }
+        ]
+      },
+      "options": {
+        "num_ctx": 8192,
+        "temperature": 0
+      }
+    },
+    "timeoutMs": 600000
+  },
+  "http": {
+    "status": 200,
+    "headers": {
+      "content-length": "608",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 31 Jul 2026 19:15:09 GMT"
+    },
+    "rawResponseBody": "{\"model\":\"qwen2.5-coder:7b\",\"created_at\":\"2026-07-31T19:15:09.420571Z\",\"message\":{\"role\":\"assistant\",\"content\":\"{\\n  \\\"kind\\\": \\\"change\\\",\\n  \\\"from\\\": {\\n    \\\"evidenceId\\\": \\\"evidence:monthly-revenue\\\",\\n    \\\"rowId\\\": \\\"r1\\\",\\n    \\\"field\\\": \\\"value\\\"\\n  },\\n  \\\"to\\\": {\\n    \\\"evidenceId\\\": \\\"evidence:monthly-revenue\\\",\\n    \\\"rowId\\\": \\\"r2\\\",\\n    \\\"field\\\": \\\"value\\\"\\n  },\\n  \\\"operator\\\": \\\"increase\\\"\\n}\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":16341618959,\"load_duration\":1694491000,\"prompt_eval_count\":2087,\"prompt_eval_duration\":10148785000,\"eval_count\":93,\"eval_duration\":4492385000}"
+  },
+  "parsedValue": {
+    "kind": "change",
+    "from": {
+      "evidenceId": "evidence:monthly-revenue",
+      "rowId": "r1",
+      "field": "value"
+    },
+    "to": {
+      "evidenceId": "evidence:monthly-revenue",
+      "rowId": "r2",
+      "field": "value"
+    },
+    "operator": "increase"
+  },
+  "tokenCounts": {
+    "prompt": 2087,
+    "response": 93
+  },
+  "startedAt": "2026-07-31T19:14:52.673Z",
+  "endedAt": "2026-07-31T19:15:09.100Z",
+  "durationMs": 16432
+}

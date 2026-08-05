@@ -1,0 +1,11 @@
+{"timestamp":"2026-07-31T19:14:51.998Z","sequence":1,"type":"run_started","runId":"20260731T191451Z-c89776"}
+{"timestamp":"2026-07-31T19:14:52.608Z","sequence":2,"type":"fixture_loaded","runId":"20260731T191451Z-c89776","fixtureIds":["orders","order_items"]}
+{"timestamp":"2026-07-31T19:14:52.621Z","sequence":3,"type":"typed_plan_accepted","runId":"20260731T191451Z-c89776","questionId":"monthly-revenue-december-2021-to-january-2022","probeCount":1,"provenance":"hand-authored"}
+{"timestamp":"2026-07-31T19:14:52.630Z","sequence":4,"type":"sql_compiled","runId":"20260731T191451Z-c89776","questionId":"monthly-revenue-december-2021-to-january-2022","probeId":"monthly-revenue"}
+{"timestamp":"2026-07-31T19:14:52.634Z","sequence":5,"type":"sql_started","runId":"20260731T191451Z-c89776","questionId":"monthly-revenue-december-2021-to-january-2022","probeId":"monthly-revenue"}
+{"timestamp":"2026-07-31T19:14:52.670Z","sequence":6,"type":"sql_completed","runId":"20260731T191451Z-c89776","questionId":"monthly-revenue-december-2021-to-january-2022","probeId":"monthly-revenue","rowCount":37}
+{"timestamp":"2026-07-31T19:14:52.673Z","sequence":7,"type":"model_request_started","runId":"20260731T191451Z-c89776","questionId":"monthly-revenue-december-2021-to-january-2022","role":"claim","attempt":1}
+{"timestamp":"2026-07-31T19:15:09.093Z","sequence":8,"type":"model_request_returned","runId":"20260731T191451Z-c89776","questionId":"monthly-revenue-december-2021-to-january-2022","role":"claim","attempt":1,"httpStatus":200}
+{"timestamp":"2026-07-31T19:15:09.114Z","sequence":9,"type":"response_parsed","runId":"20260731T191451Z-c89776","questionId":"monthly-revenue-december-2021-to-january-2022","disposition":"first_pass_valid"}
+{"timestamp":"2026-07-31T19:15:09.166Z","sequence":10,"type":"claim_accepted","runId":"20260731T191451Z-c89776","questionId":"monthly-revenue-december-2021-to-january-2022","disposition":"verified"}
+{"timestamp":"2026-07-31T19:15:09.175Z","sequence":11,"type":"run_completed","runId":"20260731T191451Z-c89776","verdict":"recorded"}

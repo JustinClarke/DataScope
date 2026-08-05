@@ -6,8 +6,18 @@
 // every open tab, hiding inactive ones) — this store just never drops a tab
 // from `tabs[]` on its own, which is what makes that possible.
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { TAB_KIND, type TabSpec, type TabType } from '../types/tabs';
 import type { ThreadConfig } from '../types/actions';
+
+export const TABS_STORAGE_KEY = 'datascope-tabs';
+
+/** The 07c whitelist: the open tab list and which one is active — nothing else. */
+interface PersistedTabsState {
+  tabs: TabSpec[];
+  activeTabId: string | null;
+}
+const TABS_PERSIST_VERSION = 1;
 
 interface TabsState {
   tabs: TabSpec[];
@@ -38,29 +48,54 @@ interface TabsState {
 
 let nextTabId = 0;
 
-export const useTabsStore = create<TabsState>((set, get) => ({
-  tabs: [],
-  activeTabId: null,
-  openTab: (type, subject, initializer = null, _artifactSpec) => {
-    if (TAB_KIND[type] === 'singleton') {
-      const existing = get().tabs.find((tab) => tab.type === type && tab.subject === subject);
-      if (existing) {
-        set({ activeTabId: existing.id });
-        return existing.id;
-      }
-    }
-    const id = `tab-${++nextTabId}`;
-    const tab: TabSpec = { id, type, subject, initializer };
-    set((state) => ({ tabs: [...state.tabs, tab], activeTabId: id }));
-    return id;
-  },
-  closeTab: (id) =>
-    set((state) => {
-      const tabs = state.tabs.filter((tab) => tab.id !== id);
-      const activeTabId =
-        state.activeTabId === id ? (tabs[tabs.length - 1]?.id ?? null) : state.activeTabId;
-      return { tabs, activeTabId };
+export const useTabsStore = create<TabsState>()(
+  persist(
+    (set, get) => ({
+      tabs: [],
+      activeTabId: null,
+      openTab: (type, subject, initializer = null, _artifactSpec) => {
+        if (TAB_KIND[type] === 'singleton') {
+          const existing = get().tabs.find((tab) => tab.type === type && tab.subject === subject);
+          if (existing) {
+            set({ activeTabId: existing.id });
+            return existing.id;
+          }
+        }
+        const id = `tab-${++nextTabId}`;
+        const tab: TabSpec = { id, type, subject, initializer };
+        set((state) => ({ tabs: [...state.tabs, tab], activeTabId: id }));
+        return id;
+      },
+      closeTab: (id) =>
+        set((state) => {
+          const tabs = state.tabs.filter((tab) => tab.id !== id);
+          const activeTabId =
+            state.activeTabId === id ? (tabs[tabs.length - 1]?.id ?? null) : state.activeTabId;
+          return { tabs, activeTabId };
+        }),
+      setActiveTab: (id) =>
+        set((state) => (state.tabs.some((tab) => tab.id === id) ? { activeTabId: id } : state)),
     }),
-  setActiveTab: (id) =>
-    set((state) => (state.tabs.some((tab) => tab.id === id) ? { activeTabId: id } : state)),
-}));
+    {
+      name: TABS_STORAGE_KEY,
+      storage: createJSONStorage(() => localStorage),
+      version: TABS_PERSIST_VERSION,
+      partialize: (state): PersistedTabsState => ({ tabs: state.tabs, activeTabId: state.activeTabId }),
+      migrate: (persisted, version): PersistedTabsState =>
+        version === TABS_PERSIST_VERSION ? (persisted as PersistedTabsState) : { tabs: [], activeTabId: null },
+      // Restored tabs carry ids like `tab-3` minted by a previous `nextTabId`
+      // counter, which always restarts at 0 on a fresh load. Without this, the
+      // next `openTab` after a restore could mint an id already sitting in the
+      // restored list — two tabs sharing one id, and the id that `closeTab`/
+      // `setActiveTab`/React keys all assume is unique.
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const restoredMax = state.tabs.reduce((max, tab) => {
+          const match = /^tab-(\d+)$/.exec(tab.id);
+          return match ? Math.max(max, Number(match[1])) : max;
+        }, 0);
+        nextTabId = Math.max(nextTabId, restoredMax);
+      },
+    },
+  ),
+);

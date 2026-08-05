@@ -1,0 +1,45 @@
+{
+  "id": "evidence:category-revenue",
+  "metric": "sum_product(order_items.quantity,order_items.unit_price)",
+  "unit": "USD",
+  "dimension": "products.category",
+  "completeness": "complete",
+  "rows": [
+    {
+      "rowId": "r1",
+      "label": "Apparel",
+      "value": 218687.71,
+      "order": 0
+    },
+    {
+      "rowId": "r2",
+      "label": "Books",
+      "value": 507332.51,
+      "order": 1
+    },
+    {
+      "rowId": "r3",
+      "label": "Electronics",
+      "value": 343403.72,
+      "order": 2
+    },
+    {
+      "rowId": "r4",
+      "label": "Home",
+      "value": 209184.93,
+      "order": 3
+    },
+    {
+      "rowId": "r5",
+      "label": "Sporting Goods",
+      "value": 260576.11,
+      "order": 4
+    },
+    {
+      "rowId": "r6",
+      "label": "Toys",
+      "value": 388395.77,
+      "order": 5
+    }
+  ]
+}

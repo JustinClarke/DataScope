@@ -1,0 +1,39 @@
+{
+  "id": "evidence:product-revenue-truncated",
+  "metric": "sum_product(order_items.quantity,order_items.unit_price)",
+  "unit": "USD",
+  "dimension": "products.name",
+  "completeness": "truncated",
+  "rows": [
+    {
+      "rowId": "r1",
+      "label": "Apparel Item 100",
+      "value": 14610.54,
+      "order": 0
+    },
+    {
+      "rowId": "r2",
+      "label": "Apparel Item 118",
+      "value": 8928.16,
+      "order": 1
+    },
+    {
+      "rowId": "r3",
+      "label": "Apparel Item 123",
+      "value": 17402.17,
+      "order": 2
+    },
+    {
+      "rowId": "r4",
+      "label": "Apparel Item 124",
+      "value": 2741.75,
+      "order": 3
+    },
+    {
+      "rowId": "r5",
+      "label": "Apparel Item 128",
+      "value": 12478.83,
+      "order": 4
+    }
+  ]
+}

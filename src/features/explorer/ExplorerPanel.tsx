@@ -7,11 +7,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { TableList } from '../ingestion/TableList';
 import { DataQualityPanel } from './DataQualityPanel';
+import { ValueSearch } from './ValueSearch';
 import { removeTable, refreshTableFromSource, IngestionError } from '../../services/ingestion';
 import { useSelectionStore } from '../../stores/selection';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useRelationshipsStore } from '../../stores/relationships';
 import { useInferredEdgesStore } from '../../stores/inferredEdges';
+import { useRehydrationStore, usableTableNames } from '../../stores/rehydration';
 import { applyOverrides, type RelationshipOverrides } from '../../lib/relationshipInference';
 import { openDestination } from '../../services/navigation';
 import type { TableRegistryEntry } from '../../types';
@@ -61,8 +63,13 @@ function useExplorerEdges(tables: TableRegistryEntry[]) {
   const repointed = useRelationshipsStore((state) => state.repointed);
   const added = useRelationshipsStore((state) => state.added);
 
+  const outcomes = useRehydrationStore((state) => state.outcomes);
+
   const overrides = useMemo<RelationshipOverrides>(() => ({ removed, repointed, added }), [removed, repointed, added]);
-  const liveTableNames = useMemo(() => tables.map((t) => t.tableName), [tables]);
+  // 07d: "live" now means reconciled-usable, not merely registered — an override
+  // naming a table that didn't come back is kept but goes inert, which is
+  // exactly what `applyOverrides` already does for a name it isn't given.
+  const liveTableNames = useMemo(() => usableTableNames(outcomes, tables), [outcomes, tables]);
   return useMemo(() => applyOverrides(inferredEdges, overrides, liveTableNames), [inferredEdges, overrides, liveTableNames]);
 }
 
@@ -109,6 +116,7 @@ export function ExplorerPanel() {
   return (
     <div data-testid="explorer-panel" className="flex h-full min-h-0 flex-col overflow-hidden">
       <ExplorerHeader />
+      <ValueSearch />
       {error && <p role="alert">{error}</p>}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <TableList

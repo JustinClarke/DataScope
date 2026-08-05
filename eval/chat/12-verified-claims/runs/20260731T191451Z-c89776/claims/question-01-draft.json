@@ -1,0 +1,20 @@
+{
+  "provenance": "model-first-pass-phase-4",
+  "questionId": "monthly-revenue-december-2021-to-january-2022",
+  "claim": {
+    "kind": "change",
+    "from": {
+      "evidenceId": "evidence:monthly-revenue",
+      "rowId": "r1",
+      "field": "value"
+    },
+    "to": {
+      "evidenceId": "evidence:monthly-revenue",
+      "rowId": "r2",
+      "field": "value"
+    },
+    "operator": "increase"
+  },
+  "parseError": null,
+  "repairAttempted": false
+}

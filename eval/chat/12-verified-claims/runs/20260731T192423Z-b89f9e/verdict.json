@@ -1,0 +1,111 @@
+{
+  "phase": 5,
+  "source": "persisted-artifacts",
+  "questions": 8,
+  "repeats": 5,
+  "expectedTrials": 40,
+  "observedTrials": 40,
+  "modelCalls": 40,
+  "transportSuccess": "40/40",
+  "firstPassValidity": "40/40",
+  "validityAfterOneRepair": "40/40",
+  "dispositions": {
+    "answerable_unsupported": 20,
+    "control_claim_rejected": 5,
+    "correct_refusal": 5,
+    "wrong_refusal": 10
+  },
+  "repeatYield": [
+    {
+      "repeat": 1,
+      "verifiedAnswerableQuestions": 0,
+      "required": 3,
+      "passed": false
+    },
+    {
+      "repeat": 2,
+      "verifiedAnswerableQuestions": 0,
+      "required": 3,
+      "passed": false
+    },
+    {
+      "repeat": 3,
+      "verifiedAnswerableQuestions": 0,
+      "required": 3,
+      "passed": false
+    },
+    {
+      "repeat": 4,
+      "verifiedAnswerableQuestions": 0,
+      "required": 3,
+      "passed": false
+    },
+    {
+      "repeat": 5,
+      "verifiedAnswerableQuestions": 0,
+      "required": 3,
+      "passed": false
+    }
+  ],
+  "correctControlRefusals": "5/20",
+  "displayedControlClaims": 0,
+  "deterministicRenderCoverage": "0/0",
+  "falseAcceptanceRate": "0/16",
+  "falseAcceptedFixtureIds": [],
+  "responseHashes": [
+    "82f6a7d94547aac4db12083cab5b49a34d1aeffa8c761188fe974ef3436854a5",
+    "652cda7c4f085230b67eec4d6aceeb5e380e6080f2f5ff94bbfe5e3c600c5a4c",
+    "7e301ca7105791c54ceca521af1ce9e51ab43770dfcfa2fab454d7790c10128b",
+    "433f9ae28c0d37e9219322abd21ff35de7e9146c008f730c4f716f9de31947cb",
+    "a89fb91d5151893c7d678f58fb48035ac4b04905428668afbc397098fae106ba",
+    "3236cb0f1c7dd49ec30ad2a43a0617b76beccde3fa992bb75fe9e887c1366f94",
+    "7343227509d34692f2c91bcfc23f1429d4d4ae54f65aaa466ad42ab9de017f4f",
+    "46246e9df3c9668d025068493c9e49294e97f7722e505c51ff4b5dd3e1119f34",
+    "e25517ad3bd51f256b0c8c8497e2051b6e168a5bcbf6caaaed0ebad9fc509337",
+    "2d286eeb6fa2c31d98792615654fb646280b2859bd223f0f9405deaf17fb09a2",
+    "78bdb83e583ee9fdf46756678da3511fb08a11e465a7b5d9482e9b163e820e71",
+    "a4d1b1a0b525c050b14f0f23c550d417126e9b1c8e32e73f9d06bc8276f6ace0",
+    "e652ca0ba79673f8f53a43c24e08d1f50480a2d1e91ba5ecfff2510b4eb8d457",
+    "9d7cf1c67991e47704aa4ed79d9d763be744db378bd2de2913539c2e2fdb78a1",
+    "267dea85058300663c7f0a0f76c1fb25e3c326839372d0e44cd3c8f0843fd4f7",
+    "5d5272e17bf709723907d4193414dc1e216c54bcd2af924165e9fe5b2a988091",
+    "670c0140d5a219641be634986cf3e6237df41622b5b67958d82c37f51987a57e",
+    "a763ccabe9bd625dc47b1ff9afb1a3c5505679052b9015bd43598170651cd02c",
+    "fc2d4829c31e05c219275e30b619cc7913581253c88d03df17cd4a314682730c",
+    "707d4bd54502611a3b0248aa4d867be3c2941108804025ec5c594117e656f0bb",
+    "a0aee78e0af36ddde2518fc174a6a0085aad33c8925d7dcee927bdbb3bd1a374",
+    "8646445ff308edcba0251c769cd4e39a9cf68243b486aa03658c32092972be86",
+    "fb43cc45701e53b42955750615f1fe71c943d7cf43ee21b22fe9acddcd1f9d47",
+    "4ef84a2352f534ea31ac59442f25bf1bffc2b0e4920daafd4eebf9a5cf15efc7",
+    "768605360e2847f30f3ba99a8860e0d4cdc92213ddd61d903e97ad0aade777e8",
+    "4f1fe31e2edcb30ef1696cfc1fe31b607b0461564bf39e559a3b41264a05a3f0",
+    "ecb53bae42af07d324d1467342f48d16612158503f913ea517e3a759d200f505",
+    "540bd21b2d08c8a8d8b25814ae29c2444d942f364b6f05f4c8203ba64b70cb7d",
+    "b1f7e725f7bb07133995b1e6a8340bd159fdffa5ad32f4a5b50b1aa94fbe1203",
+    "9b51dc1434a5e8e5e2d04d48fe35410d83ae8907fe9726defe592074d1b6747f",
+    "549225d1f6a5bd9a958e0eedd4d8b9a6b95c86f8ac06c9bd553e4b83f61c4452",
+    "796d6b18904c8daee6bddf5a75a9e23d4f7b7960d45088641892ee3c175200b4",
+    "5a740b3aff415ab1c41f85152b0050d96fb568b7c1c0b539daf2e405a68d72dd",
+    "76afd2d5552d756cc1df00cc076ad74d1fc779b7e9d3b7913b3c9eaec71aaf8a",
+    "b969112af1bf9540c9e35d808e05d99877d2ec535c0630b37916fdeacacc5d82",
+    "6a9b01932551cce7c5d41ee9d8302d002f8888cdb17f50c693550925324f8edc",
+    "b86a51ae655fb49e2241aae6d8d44a56ec0e46a725c2c02276ec2bcf1a0a5264",
+    "37c73023b89af81ece3f124d4efcdf7d7cebed2bd9524616adffe0e018857653",
+    "f04713466b5dac251d4d54013ee0680e3e73276e8afd3027ce650f2e6ad10093",
+    "3bfe3f55aa9e8c1dbe10431d83ba59ebfd132c9ed76af7b669ff4ab007401b9a"
+  ],
+  "uniqueResponseHashes": 40,
+  "humanUsefulness": {
+    "status": "pending-additive-human-audit",
+    "rubric": {
+      "writtenBeforeLiveResponses": true,
+      "scale": {
+        "0": "The verified fact is unrelated to the question or no usable fact survives.",
+        "1": "The verified fact is relevant but only partially supports a useful analyst response.",
+        "2": "The verified fact directly supports a useful response to the question."
+      },
+      "rule": "Score the selected investigation, not fluency. Safety and deterministic acceptance are unchanged by this score."
+    }
+  },
+  "passed": false
+}

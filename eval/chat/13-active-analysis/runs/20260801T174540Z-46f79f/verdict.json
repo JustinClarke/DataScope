@@ -1,0 +1,51 @@
+{
+  "arm": "A-fixed",
+  "model": {
+    "tag": "qwen3:8b",
+    "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+    "quantizationLevel": "Q4_K_M",
+    "parameterSize": "8.2B",
+    "contextLength": 40960,
+    "capabilities": [
+      "completion",
+      "tools",
+      "thinking"
+    ]
+  },
+  "selectedMode": "thinking",
+  "records": [
+    {
+      "questionId": "sales-presentation",
+      "questionKind": "answerable",
+      "action": "final_claim",
+      "repaired": false,
+      "parseError": null,
+      "responseHash": "cb9016c02b9b75b961b45e4c0b13d43f9a87d79c003cc7b90f714c4fb68b8134",
+      "doneReason": "stop",
+      "disposition": {
+        "kind": "final_claim",
+        "rendered": "Books (507,332.51 USD) was the maximum for the complete evidence scope."
+      },
+      "rendered": "Books (507,332.51 USD) was the maximum for the complete evidence scope.",
+      "verification": {
+        "accepted": true,
+        "fact": {
+          "kind": "extremum",
+          "operator": "maximum",
+          "subject": "Books",
+          "object": "maximum in evidence:category-revenue",
+          "leftValue": 507332.51,
+          "rightValue": 507332.51,
+          "unit": "USD"
+        }
+      },
+      "tokens": {
+        "calls": 1,
+        "totalPromptTokens": 1373,
+        "totalResponseTokens": 482,
+        "callHighWaterPromptTokens": 1373
+      },
+      "durationMs": 51462
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "sentences": [
+    "sum of order_items.quantity multiplied by order_items.unit_price divided by distinct count of order_items.order_id for orders.status equals completed (1,337.35 USD/order) was above the threshold 0 USD/order.",
+    "2022-01-01 was a verified increase from 2021-12-01: 3,745.01 USD to 68,970.39 USD."
+  ]
+}

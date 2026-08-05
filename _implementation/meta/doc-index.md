@@ -185,19 +185,7 @@ Each phase folder's `README.md` states its section dependency and exit criteria;
 
 | File | Purpose |
 | :--- | :--- |
-| [README.md](../build/10-studio/README.md) | Tier: v1 · Phases: 7–9 (§19, D12) · Depends on: the complete v0 + v0.5 stack, |
-
-### `10-studio/01-quality-report`
-
-| File | Purpose |
-| :--- | :--- |
-| [README.md](../build/10-studio/01-quality-report/README.md) | Tier: v1 · Phase: 7 (§19, D14) — but the Drift Report component (D44) is pulled |
-
-### `10-studio/02-relationship-graph`
-
-| File | Purpose |
-| :--- | :--- |
-| [README.md](../build/10-studio/02-relationship-graph/README.md) | Tier: v1 · Phase: 8 (§19, D11) · Design: §20.6 · Depends on: |
+| [README.md](../build/10-studio/README.md) | Tier: backlog · Phase 9 only (§19, D11) — Phases 7–8 cut to backlog 2026-08-02, |
 
 ### `10-studio/03-semantic-dbt-export`
 

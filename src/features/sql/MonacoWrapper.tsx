@@ -14,6 +14,9 @@ import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import { useDatasetsStore } from '../../stores/datasets';
 import { useQueryStore, getSession, type QuerySessionId } from '../../stores/query';
 import { buildCompletionItems } from './completionProvider';
+import { ensureMonacoTheme, MONACO_THEME_ID } from './monacoTheme';
+import { consolePlaceholder } from './editorPlaceholder';
+import { formatSql } from './sqlFormatting';
 
 // Self-hosted (same-origin) worker, matching the rest of the app's ADR-001
 // same-origin-asset convention rather than Monaco's CDN-loader default. Only
@@ -63,11 +66,38 @@ function ensureCompletionProvider(): void {
   });
 }
 
+// Monaco's bundled SQL contribution ships brackets and comment syntax but no
+// indentation rules, which is why `autoIndent` looks inert on a SQL buffer: it
+// has nothing to consult. These two registrations are what make it work —
+// indent after an opening paren, dedent the line that closes it — and the
+// formatting provider is what gives the editor its built-in Format Document
+// (⇧⌥F) and format-on-paste over the same function the toolbar button calls.
+let languageFeaturesRegistered = false;
+function ensureSqlLanguageFeatures(): void {
+  if (languageFeaturesRegistered) return;
+  languageFeaturesRegistered = true;
+
+  monaco.languages.setLanguageConfiguration('sql', {
+    indentationRules: {
+      increaseIndentPattern: /\([^)]*$/,
+      decreaseIndentPattern: /^\s*\)/,
+    },
+  });
+
+  monaco.languages.registerDocumentFormattingEditProvider('sql', {
+    provideDocumentFormattingEdits(model) {
+      return [{ range: model.getFullModelRange(), text: formatSql(model.getValue()) }];
+    },
+  });
+}
+
 interface MonacoWrapperProps {
   /** Which query session this editor's buffer belongs to (S5) — the console, or one query tab. */
   sessionId: QuerySessionId;
   /** Invoked by the Ctrl/Cmd+Enter editor action; the run button lives outside this component. */
   onRunQuery: () => void;
+  /** Fill the parent instead of the standalone surfaces' fixed height — the drawer console's editor region owns its own height (S6.5). */
+  fillHeight?: boolean;
 }
 
 /**
@@ -75,7 +105,7 @@ interface MonacoWrapperProps {
  * imports) only ever loads behind `React.lazy` (see `LazySqlEditor.tsx`), so it
  * must not be imported from anything reachable at startup.
  */
-export default function MonacoWrapper({ sessionId, onRunQuery }: MonacoWrapperProps) {
+export default function MonacoWrapper({ sessionId, onRunQuery, fillHeight = false }: MonacoWrapperProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Ref indirection so the Ctrl/Cmd+Enter action (bound once, at editor
   // creation) always calls the latest `onRunQuery` without recreating the
@@ -88,18 +118,51 @@ export default function MonacoWrapper({ sessionId, onRunQuery }: MonacoWrapperPr
 
     ensureWorkerEnvironment();
     ensureCompletionProvider();
+    ensureSqlLanguageFeatures();
+    // Resolved from the container, so an editor inside a register-pinned
+    // subtree (`[data-theme]`) reads that register's values rather than the
+    // document's.
+    ensureMonacoTheme(containerRef.current);
 
     const editor = monaco.editor.create(containerRef.current, {
       value: getSession(sessionId).sql,
       language: 'sql',
+      theme: MONACO_THEME_ID,
       automaticLayout: true,
       minimap: { enabled: false },
       fontSize: 13,
       scrollBeyondLastLine: false,
+      autoIndent: 'full',
+      formatOnPaste: true,
     });
+
+    // The empty buffer's one-line invitation (S6.7), as a decoration rather
+    // than an overlay element so it scrolls, wraps and disappears with the
+    // text it stands in for. The table name is read at render time, so a file
+    // dropped after the editor mounted still names a real table.
+    const placeholder = editor.createDecorationsCollection();
+    const renderPlaceholder = () => {
+      placeholder.set(
+        editor.getValue().length > 0
+          ? []
+          : [
+              {
+                range: new monaco.Range(1, 1, 1, 1),
+                options: {
+                  after: {
+                    content: consolePlaceholder(useDatasetsStore.getState().tables),
+                    inlineClassName: 'sql-editor-placeholder',
+                  },
+                },
+              },
+            ],
+      );
+    };
+    renderPlaceholder();
 
     const changeSub = editor.onDidChangeModelContent(() => {
       useQueryStore.getState().setSql(sessionId, editor.getValue());
+      renderPlaceholder();
     });
 
     const runAction = editor.addAction({
@@ -132,7 +195,7 @@ export default function MonacoWrapper({ sessionId, onRunQuery }: MonacoWrapperPr
   return (
     <div
       ref={containerRef}
-      className="h-64 w-full overflow-hidden rounded-lg border border-(--color-border)"
+      className={`w-full overflow-hidden rounded-lg border border-(--color-border) ${fillHeight ? 'h-full' : 'h-64'}`}
       data-testid="monaco-container"
     />
   );

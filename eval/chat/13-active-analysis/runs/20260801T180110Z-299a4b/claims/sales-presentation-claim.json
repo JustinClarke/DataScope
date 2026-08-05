@@ -1,0 +1,30 @@
+{
+  "claim": {
+    "kind": "extremum",
+    "subject": {
+      "evidenceId": "evidence:status-revenue",
+      "rowId": "r2",
+      "field": "value"
+    },
+    "operator": "maximum",
+    "scope": {
+      "evidenceId": "evidence:status-revenue",
+      "rowIds": [
+        "r1",
+        "r2",
+        "r3",
+        "r4"
+      ]
+    }
+  },
+  "fact": {
+    "kind": "extremum",
+    "operator": "maximum",
+    "subject": "completed",
+    "object": "maximum in evidence:status-revenue",
+    "leftValue": 952190.31,
+    "rightValue": 952190.31,
+    "unit": "USD"
+  },
+  "rendered": "completed (952,190.31 USD) was the maximum for the complete evidence scope."
+}

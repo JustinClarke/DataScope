@@ -1,0 +1,11 @@
+{"timestamp":"2026-08-01T18:47:28.533Z","sequence":1,"type":"run_started","runId":"20260801T184728Z-e71afa"}
+{"timestamp":"2026-08-01T18:47:28.536Z","sequence":2,"type":"model_resolved","runId":"20260801T184728Z-e71afa","tag":"qwen3:8b","digest":"500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41"}
+{"timestamp":"2026-08-01T18:47:28.539Z","sequence":3,"type":"prompt_surface_checked","runId":"20260801T184728Z-e71afa","questionIdsLeaked":0,"sampleValuesLeaked":0,"guarded":"system prompt, question text, source fields, offer menu","unguarded":"deterministic aggregate evidence packets (kill criterion 3 permits aggregate group labels)"}
+{"timestamp":"2026-08-01T18:47:28.545Z","sequence":4,"type":"fixture_loaded","runId":"20260801T184728Z-e71afa","fixtureIds":["customers","products","orders","order_items"],"offerCount":9}
+{"timestamp":"2026-08-01T18:47:28.568Z","sequence":5,"type":"sql_completed","runId":"20260801T184728Z-e71afa","questionId":"sales-presentation","repeat":1,"probeId":"category-revenue","rowCount":6}
+{"timestamp":"2026-08-01T18:47:28.581Z","sequence":6,"type":"sql_completed","runId":"20260801T184728Z-e71afa","questionId":"sales-presentation","repeat":1,"probeId":"category-quantity","rowCount":6}
+{"timestamp":"2026-08-01T18:48:00.444Z","sequence":7,"type":"question_terminal","runId":"20260801T184728Z-e71afa","questionId":"sales-presentation","repeat":1,"disposition":"final_claim","displayed":true}
+{"timestamp":"2026-08-01T18:48:00.488Z","sequence":8,"type":"sql_completed","runId":"20260801T184728Z-e71afa","questionId":"sales-presentation","repeat":2,"probeId":"category-revenue","rowCount":6}
+{"timestamp":"2026-08-01T18:48:00.507Z","sequence":9,"type":"sql_completed","runId":"20260801T184728Z-e71afa","questionId":"sales-presentation","repeat":2,"probeId":"category-quantity","rowCount":6}
+{"timestamp":"2026-08-01T18:48:28.311Z","sequence":10,"type":"question_terminal","runId":"20260801T184728Z-e71afa","questionId":"sales-presentation","repeat":2,"disposition":"final_claim","displayed":true}
+{"timestamp":"2026-08-01T18:48:28.324Z","sequence":11,"type":"run_completed","runId":"20260801T184728Z-e71afa","verdict":"recorded"}

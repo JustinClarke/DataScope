@@ -7,6 +7,7 @@
 // honest "couldn't match a template" reply) — matching the product's honest
 // "no provider" degradation rather than pretending to loop.
 import type { AIProvider, ProviderMessage, ProviderTurn } from '../../src/types';
+import { SQL_TOOL } from '../../src/services/toolLadder';
 import { parseSchemaPrompt, type ParsedTable } from './schemaParse';
 
 const AGG_PATTERNS: { re: RegExp; agg: string; wantsColumn: boolean }[] = [
@@ -84,7 +85,7 @@ export function createLocalTemplateProvider(): AIProvider {
 
       if (alreadyCalledTool) {
         const toolResult = [...messages].reverse().find((m) => m.role === 'tool');
-        return { kind: 'text', text: toolResult ? 'Here is the result.' : "I couldn't answer that." };
+        return { text: toolResult ? 'Here is the result.' : "I couldn't answer that.", calls: [] };
       }
 
       const tables = system && system.role === 'system' ? parseSchemaPrompt(system.content) : [];
@@ -92,9 +93,9 @@ export function createLocalTemplateProvider(): AIProvider {
       const sql = generateTemplateSql(question, tables);
 
       if (!sql) {
-        return { kind: 'text', text: "This question doesn't match one of the fixed local templates (count / average / total / highest / lowest, optionally grouped)." };
+        return { text: "This question doesn't match one of the fixed local templates (count / average / total / highest / lowest, optionally grouped).", calls: [] };
       }
-      return { kind: 'tool_call', call: { id: crypto.randomUUID(), name: 'execute_local_sql', input: { sql } } };
+      return { text: '', calls: [{ id: crypto.randomUUID(), name: SQL_TOOL, input: { sql } }] };
     },
   };
 }

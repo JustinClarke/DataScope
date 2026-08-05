@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useSelectionStore } from './selection';
+import { SELECTION_STORAGE_KEY, useSelectionStore } from './selection';
 
 beforeEach(() => {
+  localStorage.clear();
   useSelectionStore.setState({
     selectedTableId: null,
     selectedColumn: null,
@@ -64,6 +65,39 @@ describe('selection store', () => {
       selectedColumn: null,
       selectedEdgeId: null,
       lastSelectionKind: null,
+    });
+  });
+
+  describe('persistence (07c)', () => {
+    it('persists all four slots — 07d reconciles them against tables that came back', () => {
+      useSelectionStore.getState().selectTable('t-1');
+      useSelectionStore.getState().selectColumn('t-1', 'amount');
+
+      const raw = localStorage.getItem(SELECTION_STORAGE_KEY);
+      expect(raw).toBeTruthy();
+      const parsed = JSON.parse(raw!);
+      expect(parsed.state).toEqual({
+        selectedTableId: 't-1',
+        selectedColumn: { tableId: 't-1', column: 'amount' },
+        selectedEdgeId: null,
+        lastSelectionKind: 'column',
+      });
+    });
+
+    it('a persisted payload from an old schema version rehydrates to a safe, cleared default rather than crashing', async () => {
+      localStorage.setItem(
+        SELECTION_STORAGE_KEY,
+        JSON.stringify({ state: { selectedTableId: 123, lastSelectionKind: 'not-a-real-kind' }, version: 0 }),
+      );
+
+      await useSelectionStore.persist.rehydrate();
+
+      expect(useSelectionStore.getState()).toMatchObject({
+        selectedTableId: null,
+        selectedColumn: null,
+        selectedEdgeId: null,
+        lastSelectionKind: null,
+      });
     });
   });
 });

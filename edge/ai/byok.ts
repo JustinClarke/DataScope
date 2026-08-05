@@ -18,6 +18,7 @@ import type {
   WireProviderMessage,
   WireProviderTurn,
   WireTool,
+  WireToolCall,
 } from '../protocol'
 
 /** OpenAI-compatible chat-completions endpoint (the canonical pass-through case). */
@@ -36,17 +37,15 @@ interface OpenAiChatResult {
 
 function toOpenAiMessages(messages: WireProviderMessage[]): Array<Record<string, unknown>> {
   return messages.map((m) => {
-    if (m.role === 'assistant' && m.toolCall !== undefined) {
+    if (m.role === 'assistant' && m.toolCalls !== undefined && m.toolCalls.length > 0) {
       return {
         role: 'assistant',
         content: m.content,
-        tool_calls: [
-          {
-            id: m.toolCall.id,
-            type: 'function',
-            function: { name: m.toolCall.name, arguments: JSON.stringify(m.toolCall.input) },
-          },
-        ],
+        tool_calls: m.toolCalls.map((call) => ({
+          id: call.id,
+          type: 'function',
+          function: { name: call.name, arguments: JSON.stringify(call.input) },
+        })),
       }
     }
     if (m.role === 'tool') {
@@ -63,19 +62,29 @@ function toOpenAiTools(tools: WireTool[]): Array<Record<string, unknown>> {
   }))
 }
 
+/**
+ * Every emitted call crosses, in emitted order — not `tool_calls[0]` (A4 defect
+ * iii). A model that correctly asks for three things in parallel used to have
+ * two vanish here with no error and no log, then see results that did not match
+ * what it asked for.
+ *
+ * Prose alongside calls is carried too: `text` and `calls` are independent, so
+ * the client decides what is terminal rather than this mapping deciding for it.
+ */
 function toWireTurn(result: OpenAiChatResult): WireProviderTurn {
   const message = result.choices?.[0]?.message
-  const call = message?.tool_calls?.[0]
-  if (call?.function?.name !== undefined) {
+  const calls = (message?.tool_calls ?? []).flatMap((call): WireToolCall[] => {
+    const name = call.function?.name
+    if (name === undefined) return []
     let input: unknown = {}
     try {
-      input = JSON.parse(call.function.arguments ?? '{}')
+      input = JSON.parse(call.function?.arguments ?? '{}')
     } catch {
-      input = call.function.arguments ?? {}
+      input = call.function?.arguments ?? {}
     }
-    return { kind: 'tool_call', call: { id: call.id ?? 'call_0', name: call.function.name, input } }
-  }
-  return { kind: 'text', text: message?.content ?? '' }
+    return [{ id: call.id ?? `call_${name}`, name, input }]
+  })
+  return { text: message?.content ?? '', calls }
 }
 
 /**

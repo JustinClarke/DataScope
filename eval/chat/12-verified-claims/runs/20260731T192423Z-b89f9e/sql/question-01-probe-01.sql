@@ -1,0 +1,1 @@
+SELECT DATE_TRUNC('month', t1."order_date") AS label, ROUND(SUM(t0."quantity" * t0."unit_price"), 2) AS value FROM "order_items" t0 LEFT JOIN "orders" t1 ON t0."order_id" = t1."order_id" GROUP BY 1 ORDER BY label ASC LIMIT 101

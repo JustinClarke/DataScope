@@ -114,7 +114,7 @@ describe('createWorkersAiProvider', () => {
     )
     expect(ev).toEqual({
       type: 'done',
-      turn: { kind: 'text', text: 'SELECT 1' },
+      turn: { text: 'SELECT 1', calls: [] },
       tokensIn: 30,
       tokensOut: 5,
     })
@@ -126,13 +126,13 @@ describe('createWorkersAiProvider', () => {
     })
     const provider = createWorkersAiProvider(ai, 'model')
     const gen = provider.infer(MESSAGES, TOOLS, new AbortController().signal)
-    const ev = (await gen.next()).value as { turn: { kind: string; call: { id: string; name: string; input: unknown } } }
-    expect(ev.turn.kind).toBe('tool_call')
-    expect(ev.turn.call.name).toBe('execute_local_sql')
-    expect(ev.turn.call.input).toEqual({ sql: 'SELECT count(*) FROM orders' })
+    const ev = (await gen.next()).value as { turn: { text: string; calls: Array<{ id: string; name: string; input: unknown }> } }
+    expect(ev.turn.calls).toHaveLength(1)
+    expect(ev.turn.calls[0].name).toBe('execute_local_sql')
+    expect(ev.turn.calls[0].input).toEqual({ sql: 'SELECT count(*) FROM orders' })
     // The id must be exactly 9 chars of [a-zA-Z0-9] — Mistral rejects any other
     // shape when the id is echoed back on the tool result.
-    expect(ev.turn.call.id).toMatch(/^[A-Za-z0-9]{9}$/)
+    expect(ev.turn.calls[0].id).toMatch(/^[A-Za-z0-9]{9}$/)
   })
 
   it('raises WorkersAiCeilingError on a capacity/neuron-limit error so the router can overflow', async () => {
@@ -214,7 +214,7 @@ describe('createWorkersAiProvider (streamed)', () => {
     expect(events).toEqual([
       { type: 'delta', text: 'SELECT' },
       { type: 'delta', text: ' 1' },
-      { type: 'done', turn: { kind: 'text', text: 'SELECT 1' }, tokensIn: 8, tokensOut: 2 },
+      { type: 'done', turn: { text: 'SELECT 1', calls: [] }, tokensIn: 8, tokensOut: 2 },
     ])
   })
 
@@ -233,15 +233,15 @@ describe('createWorkersAiProvider (streamed)', () => {
     expect(events).toHaveLength(1)
     const done = events[0] as {
       type: string
-      turn: { kind: string; call: { id: string; name: string; input: unknown } }
+      turn: { text: string; calls: Array<{ id: string; name: string; input: unknown }> }
       tokensIn: number
       tokensOut: number
     }
     expect(done.type).toBe('done')
-    expect(done.turn.kind).toBe('tool_call')
-    expect(done.turn.call.name).toBe('execute_local_sql')
-    expect(done.turn.call.input).toEqual({ sql: 'SELECT count(*) FROM orders' })
-    expect(done.turn.call.id).toMatch(/^[A-Za-z0-9]{9}$/)
+    expect(done.turn.calls).toHaveLength(1)
+    expect(done.turn.calls[0].name).toBe('execute_local_sql')
+    expect(done.turn.calls[0].input).toEqual({ sql: 'SELECT count(*) FROM orders' })
+    expect(done.turn.calls[0].id).toMatch(/^[A-Za-z0-9]{9}$/)
     // No summary chunk arrived: prompt from the opening chunk, completion summed.
     expect(done.tokensIn).toBe(107)
     expect(done.tokensOut).toBe(20)
@@ -255,8 +255,8 @@ describe('createWorkersAiProvider (streamed)', () => {
     ])
     const provider = createWorkersAiProvider(ai, 'model')
     const events = await collect(provider.infer(MESSAGES, TOOLS, new AbortController().signal))
-    const done = events[0] as { turn: { call: { input: unknown } } }
-    expect(done.turn.call.input).toBe('not json')
+    const done = events[0] as { turn: { calls: Array<{ input: unknown }> } }
+    expect(done.turn.calls[0].input).toBe('not json')
   })
 
   it('finalizes from accumulated state when the stream closes without [DONE]', async () => {
@@ -267,7 +267,7 @@ describe('createWorkersAiProvider (streamed)', () => {
     const events = await collect(provider.infer(MESSAGES, TOOLS, new AbortController().signal))
     expect(events).toEqual([
       { type: 'delta', text: 'OK' },
-      { type: 'done', turn: { kind: 'text', text: 'OK' }, tokensIn: 5, tokensOut: 1 },
+      { type: 'done', turn: { text: 'OK', calls: [] }, tokensIn: 5, tokensOut: 1 },
     ])
   })
 

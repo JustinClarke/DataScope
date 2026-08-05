@@ -1,0 +1,9 @@
+{
+  "writtenBeforeLiveResponses": true,
+  "scale": {
+    "0": "The verified fact is unrelated to the question or no usable fact survives.",
+    "1": "The verified fact is relevant but only partially supports a useful analyst response.",
+    "2": "The verified fact directly supports a useful response to the question."
+  },
+  "rule": "Score the selected investigation, not fluency. Safety and deterministic acceptance are unchanged by this score."
+}

@@ -19,7 +19,10 @@ const MAX_BAR_CATEGORIES = 50;
 // SVG point ceiling for a line/scatter before it degrades to the grid. Interim
 // value: the large-series canvas/downsampling threshold is a later charting
 // decision, so this stays conservative rather than rendering a janky chart.
-const MAX_PLOTTABLE_ROWS = 5000;
+// Exported for A6's `create_chart`, which refuses a result past this ceiling
+// *before* loading its rows — the alternative being to page 5,000 rows out of
+// 100,000 and let the mapper plot the truncation as if it were the series.
+export const MAX_PLOTTABLE_ROWS = 5000;
 // Cap on measures drawn against one axis, so a wide aggregate stays readable.
 const MAX_Y_SERIES = 3;
 

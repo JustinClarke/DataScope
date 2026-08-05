@@ -17,8 +17,13 @@ import { AutoChartPanel } from './AutoChartPanel';
  * This is also where two of the deleted SQL page's affordances (§13.3) live, so
  * they reach the query tabs by construction rather than being copied onto them:
  * auto-charting a result, and the Download-Parquet-on-CTAS shortcut.
+ *
+ * `showChart` is off in exactly one place: the drawer's Info pane (S6.7), where
+ * a chart is a *different view* of the result competing for room in a pane that
+ * only exists because there is a result to show. A full-height query tab has
+ * the room, so it keeps the chart it inherited.
  */
-export function QueryOutput({ sessionId }: { sessionId: QuerySessionId }) {
+export function QueryOutput({ sessionId, showChart = true }: { sessionId: QuerySessionId; showChart?: boolean }) {
   const { status, result, error, sql, lastRunSql } = useQuerySession(sessionId);
   const tables = useDatasetsStore((state) => state.tables);
   const [exportingDerived, setExportingDerived] = useState(false);
@@ -64,10 +69,10 @@ export function QueryOutput({ sessionId }: { sessionId: QuerySessionId }) {
             </button>
           )}
         </div>
-        <ResultsGrid status={status} result={result} error={error} sql={ranSql} />
+        <ResultsGrid sessionId={sessionId} status={status} result={result} error={error} sql={ranSql} />
       </div>
 
-      {status === 'success' && result && result.rowCount > 0 && lastRunWasQuery && (
+      {showChart && status === 'success' && result && result.rowCount > 0 && lastRunWasQuery && (
         <div>
           <h3 className="mb-2 text-sm font-medium text-(--color-fg)">Chart</h3>
           <AutoChartPanel result={result} sql={ranSql} />
@@ -78,16 +83,19 @@ export function QueryOutput({ sessionId }: { sessionId: QuerySessionId }) {
 }
 
 /**
- * The session-wide log of what ran. The console renders it — it is the
- * scratchpad, where "what did I just run" is the question. A query tab is one
- * query and its result and renders none (S5 scope call 2).
+ * The session-wide log of what ran — every session's runs, not just the
+ * console's. A query tab is one query and its result and renders none (S5
+ * scope call 2).
+ *
+ * Its one caller since S6.7 is the `history` tab, which owns the heading; the
+ * list renders none of its own. Nothing about the component changed in the
+ * move — relocating a render target is all it was.
  */
 export function QueryHistory() {
   const history = useQueryStore((state) => state.history);
 
   return (
     <div>
-      <h3 className="mb-2 text-sm font-medium text-(--color-fg)">History</h3>
       {history.length === 0 ? (
         <p className="text-sm text-(--color-fg-muted)">No statements run yet this session.</p>
       ) : (

@@ -125,11 +125,11 @@ before trusting any run result.
 1. `src/lib/datasetCapabilities.ts` + `.test.ts` — `detectCapabilities`. **Real product code**, not
    eval-scoped — this doc's own "What to build" #1 calls it worth having independent of this
    candidate's fate.
-2. `eval/01-phrase-library/capabilityPhrases.ts` — the hand-authored phrase asset. Experiment-scoped
+2. `eval/claude/01-phrase-library/capabilityPhrases.ts` — the hand-authored phrase asset. Experiment-scoped
    (ideation README: "nothing here ships").
-3. `eval/01-phrase-library/selection.ts` — prompt builder, index-response parser/validator,
+3. `eval/claude/01-phrase-library/selection.ts` — prompt builder, index-response parser/validator,
    deterministic headline assembly (counts + span + selected phrases).
-4. `eval/01-phrase-library/run.ts` — the harness. **Import, do not copy:** `eval/dataset/tables.ts`
+4. `eval/claude/01-phrase-library/run.ts` — the harness. **Import, do not copy:** `eval/dataset/tables.ts`
    (sample loader), `eval/duckdb/` (engine), and the real seam — call `requestSynthesis`
    (`src/services/synthesis.ts`) with a custom Ollama `fetchImpl`, exactly like
    `eval/synthesis/run.ts`'s `makeOllamaFetch` does, so `narrationValidator`/`rankedActionValidator`
@@ -138,9 +138,9 @@ before trusting any run result.
    below) doesn't fit the existing `PromptVariant`/`makeVariantFetch` machinery in
    `eval/synthesis/run.ts`, which assumes the production `{headline, actions}` contract. That's *why*
    this candidate gets its own folder rather than a new arm in the shared file.
-5. `package.json`: add `"eval:phrase-library": "tsx eval/01-phrase-library/run.ts"`.
+5. `package.json`: add `"eval:phrase-library": "tsx eval/claude/01-phrase-library/run.ts"`.
 
-Write results to `eval/01-phrase-library/RESULTS.json` (new file, per the README rig rules).
+Write results to `eval/claude/01-phrase-library/RESULTS.json` (new file, per the README rig rules).
 
 ### Two deviations from this doc's illustrative JSON (§ Mechanism, step 3)
 
@@ -204,7 +204,7 @@ seven rubric rows.
 **Run 2026-07-26.** Built exactly the five files the implementation plan specified —
 [`src/lib/datasetCapabilities.ts`](../../../../src/lib/datasetCapabilities.ts) +
 [`.test.ts`](../../../../src/lib/datasetCapabilities.test.ts) (9/9 passing, fixtures built from the real
-classified shape of all five samples, not the doc's abstract examples), `eval/01-phrase-library/`'s
+classified shape of all five samples, not the doc's abstract examples), `eval/claude/01-phrase-library/`'s
 `capabilityPhrases.ts`, `selection.ts`, `run.ts`, and `package.json`'s `eval:phrase-library` script.
 Full project typecheck clean. Ran N=5 repeats × 5 samples × 2 arms (selective, extractive-floor) =
 50 calls against `qwen2.5-coder:14b` over the Ollama rig, through the real seam

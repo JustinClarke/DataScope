@@ -30,8 +30,8 @@ describe('AITurnView — transcript audit trail (§11.1)', () => {
       createdAt: '',
       corrections: [{ from: 'fair', to: 'fare' }],
       attempts: [
-        { attempt: 1, sql: 'SELECT avg(fair) FROM t', status: 'error', executionTimeMs: 0, error: 'Binder Error: column "fair" not found' },
-        { attempt: 2, sql: 'SELECT class, avg(fare) FROM t GROUP BY class', status: 'ok', executionTimeMs: 6, rowCount: 3 },
+        { attempt: 1, op: 'run_sql', sql: 'SELECT avg(fair) FROM t', status: 'error', executionTimeMs: 0, error: 'Binder Error: column "fair" not found' },
+        { attempt: 2, op: 'run_sql', sql: 'SELECT class, avg(fare) FROM t GROUP BY class', status: 'ok', executionTimeMs: 6, rowCount: 3 },
       ],
       chart: { kind: 'chart', spec: { type: 'categorical', title: 'x', xField: 'class', yFields: ['avg_fare'] } },
     };
@@ -40,13 +40,56 @@ describe('AITurnView — transcript audit trail (§11.1)', () => {
     // Every generated query is visible.
     expect(container.textContent).toContain('SELECT avg(fair) FROM t');
     expect(container.textContent).toContain('SELECT class, avg(fare) FROM t GROUP BY class');
-    // The execution log: failure, then success with rows + timing and the retry marker.
+    // The execution log: failure, then success with rows + timing and the call marker.
     expect(container.textContent).toContain('✗ failed');
     expect(container.textContent).toContain('Binder Error');
     expect(container.textContent).toContain('3 rows · 6 ms');
-    expect(container.textContent).toContain('retry 1');
+    expect(container.textContent).toContain('call 2');
     // Stage-1 correction and stage-6 chart are surfaced.
     expect(getByText(/Read “fair” as “fare”/)).toBeTruthy();
+    expect(container.textContent).toContain('Chart · categorical');
+  });
+
+  it('draws the chart when the turn carries its rows, through the shared chart panel (A6)', () => {
+    const turn: AITurn = {
+      id: 'a1',
+      role: 'assistant',
+      content: 'Revenue climbs through Q1.',
+      createdAt: '',
+      chart: { kind: 'chart', spec: { type: 'categorical', title: 'Revenue by product', xField: 'product', yFields: ['revenue'] } },
+      chartResult: {
+        columnNames: ['product', 'revenue'],
+        columnTypes: ['VARCHAR', 'DOUBLE'],
+        rows: [['A', 100], ['B', 80]],
+        rowCount: 2,
+        executionTimeMs: 4,
+      },
+    };
+    const { container, getByRole } = render(<AITurnView turn={turn} />);
+
+    // The panel, not the one-line label it replaces: the picker is the tell,
+    // and the model's own title is what it opened on.
+    expect(container.textContent).toContain('Revenue by product');
+    expect(container.textContent).not.toContain('Chart · categorical');
+    expect(getByRole('button', { name: 'Table' })).toBeTruthy();
+  });
+
+  it('renders a single aggregate value as a stat card', () => {
+    const turn: AITurn = { id: 'a1', role: 'assistant', content: '', createdAt: '', chart: { kind: 'kpi', label: 'total orders', value: '1,204' } };
+    const { container } = render(<AITurnView turn={turn} />);
+    expect(container.textContent).toContain('1,204');
+  });
+
+  it('falls back to the label when the turn has a recommendation but no rows', () => {
+    // A stage-6 recommendation whose result was released, or an older turn.
+    const turn: AITurn = {
+      id: 'a1',
+      role: 'assistant',
+      content: '',
+      createdAt: '',
+      chart: { kind: 'chart', spec: { type: 'categorical', title: 'x', xField: 'class', yFields: ['avg_fare'] } },
+    };
+    const { container } = render(<AITurnView turn={turn} />);
     expect(container.textContent).toContain('Chart · categorical');
   });
 

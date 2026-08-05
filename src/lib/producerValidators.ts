@@ -3,7 +3,7 @@
 // producer never self-certifies: the client computes the deterministic baseline,
 // receives the candidate, and applies these. A false result degrades in place to
 // the baseline. Pure — no I/O, no model call.
-import type { FactRef, RankedAction } from '../types'
+import type { ChartSpec, FactRef, RankedAction } from '../types'
 import { checkCitation, type CitableFact } from './citableFacts'
 
 /**
@@ -69,7 +69,7 @@ export function passesPhrasingGuard(statement: string): boolean {
  *
  * Deliberately NOT folded into `passesPhrasingGuard`: it is applied and
  * counted as a measurement first (its false-reject rate against the app's own
- * deterministic statements is a reported result, `eval/10-grounding-ladder/
+ * deterministic statements is a reported result, `eval/claude/10-grounding-ladder/
  * runOffers.ts`), so it earns the shipped path with a number rather than a
  * judgement. Exported as a list, not just a regex, because its length is
  * reported alongside `CLOSURE_RULES`' — and, like that list, it may not grow to
@@ -106,6 +106,39 @@ export function passesTrendGeneralisationGuard(statement: string): boolean {
  * a real statistic attached to the wrong column, not just an invented one.
  * Optional and additive: every existing 2-arg call site is unaffected.
  */
+/**
+ * Seam 3 validator (A6) — the gate on `create_chart`'s optional model-supplied
+ * `spec`. Same discipline as the two above, one layer down: the deterministic
+ * producer is `chartMapper`, which reads the *actual* result and can only ever
+ * name columns that result has, and the candidate is accepted as a
+ * **narrowing** of that baseline — never a widening.
+ *
+ * True only when:
+ *  - `type` is unchanged. The chart form is the translator's call; a model that
+ *    wants a different one asks for it by parameter, which re-runs the mapper.
+ *  - `xField` is unchanged, and `seriesField` is the baseline's or dropped.
+ *  - `yFields` is a non-empty, duplicate-free **subset** of the baseline's, in
+ *    any order. Dropping a measure is a legitimate editorial choice; adding one
+ *    would be naming a column the renderer was never told exists.
+ *  - `title` is a non-empty string that clears the D45 phrasing guard — the one
+ *    free-text field, held to the same bar as `RankedAction.verb`.
+ *
+ * The subset rule is the whole safety property: **no field name in an accepted
+ * spec came from the model.** Every one of them was already in the baseline,
+ * which was built from the result's own schema, so the chart renderer can never
+ * be handed a field the data does not have.
+ */
+export function chartSpecValidator(baseline: ChartSpec, candidate: ChartSpec): boolean {
+  if (candidate.type !== baseline.type) return false
+  if (candidate.xField !== baseline.xField) return false
+  if (candidate.seriesField !== undefined && candidate.seriesField !== baseline.seriesField) return false
+  if (!Array.isArray(candidate.yFields) || candidate.yFields.length === 0) return false
+  if (new Set(candidate.yFields).size !== candidate.yFields.length) return false
+  if (!candidate.yFields.every((field) => baseline.yFields.includes(field))) return false
+  if (typeof candidate.title !== 'string' || candidate.title.trim() === '') return false
+  return passesPhrasingGuard(candidate.title)
+}
+
 export function narrationValidator(baseline: FactRef, candidate: FactRef, citedFact?: CitableFact): boolean {
   const structurallyIntact =
     candidate.sql === baseline.sql &&

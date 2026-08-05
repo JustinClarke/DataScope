@@ -10,6 +10,7 @@
 // framework check only," never a cloud quality number (D40's own honesty
 // rule, mirrored from D43).
 import type { AIProvider, ProviderMessage, ProviderTurn } from '../../src/types';
+import { SQL_TOOL } from '../../src/services/toolLadder';
 
 export function createMockCloudProvider(referenceSql: string): AIProvider {
   return {
@@ -17,9 +18,9 @@ export function createMockCloudProvider(referenceSql: string): AIProvider {
     async complete(messages: ProviderMessage[]): Promise<ProviderTurn> {
       const alreadyCalledTool = messages.some((m) => m.role === 'tool');
       if (alreadyCalledTool) {
-        return { kind: 'text', text: 'Here is the result.' };
+        return { text: 'Here is the result.', calls: [] };
       }
-      return { kind: 'tool_call', call: { id: crypto.randomUUID(), name: 'execute_local_sql', input: { sql: referenceSql } } };
+      return { text: '', calls: [{ id: crypto.randomUUID(), name: SQL_TOOL, input: { sql: referenceSql } }] };
     },
   };
 }

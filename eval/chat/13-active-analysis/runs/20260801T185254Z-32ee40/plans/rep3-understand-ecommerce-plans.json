@@ -1,0 +1,67 @@
+{
+  "provenance": "predeclared-hand-authored-phase-5",
+  "questionId": "understand-ecommerce",
+  "repeat": 3,
+  "question": "What can I understand from this ecommerce data?",
+  "plans": [
+    {
+      "id": "monthly-revenue",
+      "metric": {
+        "kind": "sum_product",
+        "left": {
+          "table": "order_items",
+          "column": "quantity"
+        },
+        "right": {
+          "table": "order_items",
+          "column": "unit_price"
+        }
+      },
+      "dimension": {
+        "column": {
+          "table": "orders",
+          "column": "order_date"
+        },
+        "timeGrain": "month"
+      },
+      "filters": [],
+      "maxRows": 100
+    },
+    {
+      "id": "completed-aov",
+      "metric": {
+        "kind": "ratio",
+        "numerator": {
+          "kind": "sum_product",
+          "left": {
+            "table": "order_items",
+            "column": "quantity"
+          },
+          "right": {
+            "table": "order_items",
+            "column": "unit_price"
+          }
+        },
+        "denominator": {
+          "kind": "count_distinct",
+          "column": {
+            "table": "order_items",
+            "column": "order_id"
+          }
+        },
+        "scale": 1
+      },
+      "filters": [
+        {
+          "column": {
+            "table": "orders",
+            "column": "status"
+          },
+          "operator": "equals",
+          "value": "completed"
+        }
+      ],
+      "maxRows": 1
+    }
+  ]
+}

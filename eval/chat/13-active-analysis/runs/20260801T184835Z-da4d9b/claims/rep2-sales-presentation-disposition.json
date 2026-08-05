@@ -1,0 +1,85 @@
+{
+  "questionId": "sales-presentation",
+  "questionKind": "answerable",
+  "repeat": 2,
+  "transportFailure": null,
+  "disposition": {
+    "kind": "final_claim",
+    "claim": {
+      "kind": "comparison",
+      "left": {
+        "evidenceId": "evidence:category-revenue",
+        "rowId": "r2",
+        "field": "value"
+      },
+      "operator": "greater_than",
+      "right": {
+        "evidenceId": "evidence:category-revenue",
+        "rowId": "r3",
+        "field": "value"
+      }
+    },
+    "fact": {
+      "kind": "comparison",
+      "operator": "greater_than",
+      "subject": "Books",
+      "object": "Electronics",
+      "leftValue": 507332.51,
+      "rightValue": 343403.72,
+      "unit": "USD"
+    },
+    "rendered": "Books (507,332.51 USD) was greater than Electronics (343,403.72 USD)."
+  },
+  "rendered": "Books (507,332.51 USD) was greater than Electronics (343,403.72 USD).",
+  "turns": [
+    {
+      "turn": 1,
+      "action": "request_probes",
+      "candidateIds": [
+        "monthly-revenue",
+        "average-order-value"
+      ],
+      "responseHash": "d669795f05b3f6d1d25cdf93995dd780d430101bc0099cc548463f318fb7ff3b",
+      "repaired": false,
+      "parseError": null,
+      "doneReason": "stop",
+      "promptTokens": 2037,
+      "responseTokens": 19,
+      "estimatedResponseTokens": 468
+    },
+    {
+      "turn": 2,
+      "action": "request_probes",
+      "candidateIds": [
+        "category-revenue",
+        "largest-monthly-change"
+      ],
+      "responseHash": "192a935b30de8eb332576a405995d51d8601b2f740448b1bb7370b5d2c89bbda",
+      "repaired": false,
+      "parseError": null,
+      "doneReason": "stop",
+      "promptTokens": 1697,
+      "responseTokens": 21,
+      "estimatedResponseTokens": 352
+    },
+    {
+      "turn": 3,
+      "action": "final_claim",
+      "candidateIds": null,
+      "responseHash": "92ccd31e474d88daae39999cf78c9a132123f0a8d6ef464dcba0d9231980c290",
+      "repaired": false,
+      "parseError": null,
+      "doneReason": "stop",
+      "promptTokens": 3024,
+      "responseTokens": 67,
+      "estimatedResponseTokens": 1138
+    }
+  ],
+  "executedCandidateIds": [
+    "monthly-revenue",
+    "average-order-value",
+    "category-revenue",
+    "largest-monthly-change"
+  ],
+  "probeRejections": []
+}

@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Copy, Download } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Copy, Download, Loader2 } from 'lucide-react';
 import type { QueryResult } from '../../types';
-import type { QueryStatus } from '../../stores/query';
+import type { QuerySessionId, QueryStatus } from '../../stores/query';
 import { DataTable, type SortDirection } from '../../components/DataTable';
-import { RESULT_ROW_CAP } from '../../services/sql';
+import { loadMoreRows } from '../../services/sql';
 import { formatCellText, truncateForDisplay } from './cellFormat';
 import { downloadCsv, downloadXlsx, copySql } from './resultsExport';
 
 interface ResultsGridProps {
+  sessionId: QuerySessionId;
   status: QueryStatus;
   result: QueryResult | null;
   error: string | null;
@@ -29,22 +30,47 @@ function compareCells(a: unknown, b: unknown, direction: SortDirection): number 
   return String(a).localeCompare(String(b)) * sign;
 }
 
-export function ResultsGrid({ status, result, error, sql }: ResultsGridProps) {
+export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGridProps) {
   const [sortColumnIndex, setSortColumnIndex] = useState<number | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [page, setPage] = useState(0);
   const [expandedCell, setExpandedCell] = useState<string | null>(null);
   const [exporting, setExporting] = useState<'csv' | 'xlsx' | 'sql' | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  // `loadMoreRows` grows the *same* result in place — it must not look like a
+  // new query landed, or a user mid-page loses their place for having asked
+  // for more of what they were already looking at.
+  const skipNextResetRef = useRef(false);
 
   // A new result (different query) always starts back at page 1, unsorted —
   // stale sort/page state from the previous query's shape would otherwise
   // silently carry over.
   useEffect(() => {
+    if (skipNextResetRef.current) {
+      skipNextResetRef.current = false;
+      return;
+    }
     setSortColumnIndex(null);
     setSortDirection('asc');
     setPage(0);
     setExpandedCell(null);
+    setLoadingMore(false);
+    setLoadMoreError(null);
   }, [sql, result]);
+
+  async function handleLoadMore() {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    setLoadMoreError(null);
+    skipNextResetRef.current = true;
+    const message = await loadMoreRows(sessionId);
+    if (message) {
+      skipNextResetRef.current = false;
+      setLoadMoreError(message);
+    }
+    setLoadingMore(false);
+  }
 
   const sortedRows = useMemo(() => {
     if (!result) return [];
@@ -75,6 +101,9 @@ export function ResultsGrid({ status, result, error, sql }: ResultsGridProps) {
   const currentPage = Math.min(page, totalPages - 1);
   const pageRows = sortedRows.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
   const isCapped = result.rows.length < result.rowCount;
+  // `undefined` (never paged past the initial preview) and any real offset
+  // both mean "more to load"; only an explicit `null` means every row is in.
+  const canLoadMore = isCapped && result.nextOffset !== null;
 
   const columns = result.columnNames.map((name, i) => ({ key: String(i), label: name, sortable: true }));
 
@@ -141,13 +170,30 @@ export function ResultsGrid({ status, result, error, sql }: ResultsGridProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-(--color-fg-muted)">
-          {result.rowCount.toLocaleString()} row{result.rowCount === 1 ? '' : 's'} in{' '}
-          {result.executionTimeMs.toFixed(0)} ms
-          {isCapped
-            ? ` — showing first ${result.rows.length.toLocaleString()} (${RESULT_ROW_CAP.toLocaleString()}-row cap; refine your query to see the rest)`
-            : ''}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-xs text-(--color-fg-muted)">
+            {result.rowCount.toLocaleString()} row{result.rowCount === 1 ? '' : 's'} in{' '}
+            {result.executionTimeMs.toFixed(0)} ms
+            {isCapped ? ` — ${result.rows.length.toLocaleString()} loaded` : ''}
+          </p>
+          {canLoadMore && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              data-testid="results-load-more"
+              className="flex items-center gap-1 rounded border border-(--color-border) px-2 py-0.5 text-xs font-medium text-(--color-accent) disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loadingMore && <Loader2 size={12} aria-hidden="true" className="animate-spin" />}
+              {loadingMore ? 'Loading…' : 'Load more rows'}
+            </button>
+          )}
+          {loadMoreError && (
+            <span role="alert" data-testid="results-load-more-error" className="text-xs text-(--color-error)">
+              {loadMoreError}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2 text-xs">
           <button
             type="button"

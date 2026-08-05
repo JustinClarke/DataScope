@@ -6,7 +6,7 @@
 // as a validated *inner* artifact spec (ChartSpec/ViewSpec, `producerValidators`
 // in `types/producers.ts`) — never as the envelope itself.
 import type { LucideIcon } from 'lucide-react';
-import { Table, Terminal, LayoutGrid, BarChart3, GitCompareArrows, Download, Plus } from 'lucide-react';
+import { Table, Terminal, LayoutGrid, BarChart3, GitCompareArrows, Download, Plus, History } from 'lucide-react';
 import type { ThreadConfig } from './actions';
 
 /**
@@ -23,8 +23,21 @@ import type { ThreadConfig } from './actions';
  * drawer console replaces the standalone playground — SQL is written in exactly
  * one place) and `'query'` is added, `'export'` staying with only its entry
  * point moving to the title bar. Net: six singletons + one artifact type.
+ *
+ * S6.7 adds `'history'` — the session's run log, evicted from the drawer's Info
+ * pane (where it was a disclosure competing with the result for room) into a
+ * tab of its own. One log, never per-table, so it is a singleton like the rest.
  */
-export type TabType = 'map' | 'profile' | 'query' | 'pivot' | 'charts' | 'correlation' | 'export' | 'ingestion';
+export type TabType =
+  | 'map'
+  | 'profile'
+  | 'query'
+  | 'pivot'
+  | 'charts'
+  | 'correlation'
+  | 'export'
+  | 'ingestion'
+  | 'history';
 
 /** The app-authored envelope (D55/D71). */
 export interface TabSpec {
@@ -62,6 +75,7 @@ export const TAB_KIND: Record<TabType, TabKind> = {
   correlation: 'singleton',
   export: 'singleton',
   ingestion: 'singleton',
+  history: 'singleton',
 };
 
 /**
@@ -81,6 +95,7 @@ export const TAB_GLYPH: Record<TabType, TabGlyph> = {
   correlation: { kind: 'icon', Icon: GitCompareArrows },
   export: { kind: 'icon', Icon: Download },
   ingestion: { kind: 'icon', Icon: Plus },
+  history: { kind: 'icon', Icon: History },
 };
 
 /**

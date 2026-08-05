@@ -24,8 +24,10 @@ new features, no behavior change — same posture V2 took toward its own chrome.
 **1. The mock's `.trow` role key-square (fact = amber / junction = purple / default = neutral)
 has no data source in this codebase and doesn't get one here.** Checked `types/dataset.ts`,
 `DatasetMap.tsx`, and `services/` — no fact/dimension/junction classification exists anywhere;
-the relationship-inference spike (D17) and `10-studio/02-relationship-graph` are the only work
-that could ever produce it, and neither is scheduled. Unlike V2's `TAB_KIND` (a real enum already
+the relationship-inference spike (D17) and Studio Phase 8's entity/fact-dim inference are the
+only work that could ever produce it, and Phase 8 is cut to backlog as of 2026-08-02
+(`../../backlog/relationship-graph-erd-ideas.md`), further from scheduled than when this was
+written. Unlike V2's `TAB_KIND` (a real enum already
 sitting at one placeholder value), there is no placeholder enum to wire here — inventing a
 `TableRole` type with a single always-`'unclassified'` value would be speculative plumbing for a
 classifier that doesn't exist, which Part I's Simplicity First rule rules out. `.trow__key`

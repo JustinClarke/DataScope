@@ -1,0 +1,181 @@
+{
+  "runId": "20260801T185254Z-32ee40",
+  "startedAt": "2026-08-01T18:52:54.551Z",
+  "command": [
+    "/opt/homebrew/Cellar/node/26.5.0/bin/node",
+    "/Users/justin/github/DataScope/eval/chat/13-active-analysis/runFixed.ts",
+    "--repeats=5",
+    "--seed=checkpoint-5-20260801"
+  ],
+  "workingDirectory": "/Users/justin/github/DataScope",
+  "experimentVersion": "13.4",
+  "schemaVersions": {
+    "manifest": 1,
+    "events": 1,
+    "calls": 1
+  },
+  "git": {
+    "commit": "60e66d0ae6042d35eaa9c8b14ac9880a4fc2f26d",
+    "statusShort": " M .gitignore\n M _implementation/DATASCOPE.md\n M _implementation/_misc/_ideation/_experiments/01-phrase-library.md\n M _implementation/_misc/_ideation/_experiments/02-generate-then-verify.md\n M _implementation/_misc/_ideation/_experiments/08-computed-facts-with-data.md\n M _implementation/_misc/_ideation/_experiments/10-grounding-ladder.md\n M _implementation/_misc/_ideation/_experiments/11-gemini-comparison-arm.md\n M _implementation/_misc/_ideation/_experiments/README.md\n M _implementation/architecture/decisions.md\n M _implementation/build/14-workspace-streamline/03-item-inspector-drawer.md\n M _implementation/build/14-workspace-streamline/README.md\n M _implementation/foundations/privacy-model.md\n M _implementation/foundations/testing-strategy.md\n M _implementation/meta/question-index.md\n M _implementation/status/BUILD-ORDER-HISTORY.md\n M _implementation/status/BUILD-ORDER.md\n D eval/01-phrase-library/RESULTS.json\n D eval/01-phrase-library/capabilityPhrases.ts\n D eval/01-phrase-library/run.ts\n D eval/01-phrase-library/selection.ts\n D eval/02-generate-then-verify/RESULTS.json\n D eval/02-generate-then-verify/ZERO-COST-RESULTS.json\n D eval/02-generate-then-verify/groundingCheck.ts\n D eval/02-generate-then-verify/run.ts\n D eval/02-generate-then-verify/zero-cost-check.ts\n D eval/03-clause-citation-binding/RESULTS.json\n D eval/03-clause-citation-binding/fixtures.test.ts\n D eval/03-clause-citation-binding/prompt.ts\n D eval/03-clause-citation-binding/run.ts\n D eval/08-computed-facts/RESULTS.json\n D eval/08-computed-facts/closureRules.ts\n D eval/08-computed-facts/computeStats.ts\n D eval/08-computed-facts/enrichedFacts.ts\n D eval/08-computed-facts/fixtures.test.ts\n D eval/08-computed-facts/prompt.ts\n D eval/08-computed-facts/run.ts\n D eval/08-computed-facts/sampleLeakCheck.ts\n D eval/08-computed-facts/verifyStats.ts\n D eval/10-grounding-ladder/OFFERS-RESULTS.json\n D eval/10-grounding-ladder/PANEL-KEY.json\n D eval/10-grounding-ladder/RESULTS.json\n D eval/10-grounding-ladder/assemble.ts\n D eval/10-grounding-ladder/buildKey.ts\n D eval/10-grounding-ladder/corrupt.ts\n D eval/10-grounding-ladder/ollamaRig.ts\n D eval/10-grounding-ladder/opaque.ts\n D eval/10-grounding-ladder/panelSchema.ts\n D eval/10-grounding-ladder/platformCheck06.ts\n D eval/10-grounding-ladder/run.ts\n D eval/10-grounding-ladder/runChat.ts\n D eval/10-grounding-ladder/runOffers.ts\n D eval/10-grounding-ladder/scorePanel.ts\n D eval/10-grounding-ladder/slotFacts.ts\n D eval/10-grounding-ladder/variants.ts\n M eval/synthesis/prompts.ts\n M package-lock.json\n M package.json\n M src/app/WorkbenchShell.test.tsx\n M src/app/WorkbenchShell.tsx\n M src/app/theme.css\n M src/features/ai/AISettingsPanel.tsx\n M src/features/explorer/ExplorerPanel.tsx\n M src/features/ingestion/TableList.test.tsx\n M src/features/ingestion/TableList.tsx\n D src/features/inspector/DrawerConsole.test.tsx\n D src/features/inspector/DrawerConsole.tsx\n M src/features/inspector/Inspector.test.tsx\n M src/features/inspector/Inspector.tsx\n M src/features/inspector/InspectorDrawer.test.tsx\n M src/features/inspector/InspectorDrawer.tsx\n M src/features/palette/CommandPalette.test.tsx\n M src/features/sql/LazySqlEditor.tsx\n M src/features/sql/MonacoWrapper.tsx\n M src/features/sql/QueryResultsPanel.tsx\n M src/features/sql/SqlModule.test.tsx\n M src/features/sql/SqlModule.tsx\n M src/features/viewer/ViewerMode.test.tsx\n M src/lib/datasetCapabilities.ts\n M src/lib/producerValidators.ts\n M src/services/ingestion.ts\n M src/services/navigation.test.ts\n M src/services/runPath.test.ts\n M src/stores/datasets.test.ts\n M src/stores/datasets.ts\n M src/stores/drawer.test.ts\n M src/stores/drawer.ts\n M src/stores/dspsReceiver.test.ts\n M src/stores/privacy.test.ts\n M src/stores/relationships.test.ts\n M src/stores/relationships.ts\n M src/stores/selection.test.ts\n M src/stores/selection.ts\n M src/stores/tabs.test.ts\n M src/stores/tabs.ts\n M src/types/tabs.test.ts\n M src/types/tabs.ts\n M vitest.config.ts\n?? _implementation/_misc/_ideation/_experiments/12-verified-claim-ir.md\n?? _implementation/_misc/_ideation/_experiments/13-active-analysis-loop.md\n?? _implementation/_misc/_ideation/_experiments/research\n?? _implementation/_misc/_ideation/plain-english/\n?? _implementation/architecture/adr/011-workspace-persistence-storage.md\n?? _implementation/build/14-workspace-streamline/06.9-drawer-split-view.md\n?? _implementation/build/14-workspace-streamline/06.95-info-on-content.md\n?? _implementation/build/14-workspace-streamline/07-workspace-persistence.md\n?? eval/chat/\n?? eval/claude/\n?? src/features/inspector/DrawerInfo.test.tsx\n?? src/features/inspector/DrawerInfo.tsx\n?? src/features/sql/HistoryTab.test.tsx\n?? src/features/sql/HistoryTab.tsx\n?? src/features/sql/editorPlaceholder.test.ts\n?? src/features/sql/editorPlaceholder.ts\n?? src/features/sql/monacoTheme.test.ts\n?? src/features/sql/monacoTheme.ts\n?? src/features/sql/sqlFormatting.ts\n?? src/services/ingestionStaging.test.ts\n?? src/services/opfsStaging.test.ts\n?? src/services/opfsStaging.ts\n?? src/services/rehydration.test.ts\n?? src/services/rehydration.ts\n?? src/services/workspace.test.ts\n?? src/services/workspace.ts\n?? src/stores/persistence.ts\n?? src/stores/rehydration.ts\n?? src/test/fakeOpfs.ts\n?? src/workers/opfs.worker.ts\n?? src/workers/opfsStaging.protocol.test.ts\n?? src/workers/opfsStaging.protocol.ts"
+  },
+  "runtime": {
+    "node": "v26.5.0",
+    "duckdbWasm": "1.32.0",
+    "harness": "13.4"
+  },
+  "fixtures": [
+    {
+      "id": "customers",
+      "absolutePath": "/Users/justin/github/DataScope/public/samples/ecommerce/customers.csv",
+      "byteSize": 22553,
+      "sha256": "6f18c3272c007abfe977ee5acf38a3df1ac063a0457f30a1da964e23857dcf77"
+    },
+    {
+      "id": "products",
+      "absolutePath": "/Users/justin/github/DataScope/public/samples/ecommerce/products.csv",
+      "byteSize": 5243,
+      "sha256": "1dd5df037f32b85c52470f71ca569e27016d3277fc28cc6cfac470c45656904c"
+    },
+    {
+      "id": "orders",
+      "absolutePath": "/Users/justin/github/DataScope/public/samples/ecommerce/orders.csv",
+      "byteSize": 39929,
+      "sha256": "9a82faa6504e9a8b20fc63bfb226266ca0e7171c4d04bbd523573aded0ee24e8"
+    },
+    {
+      "id": "order_items",
+      "absolutePath": "/Users/justin/github/DataScope/public/samples/ecommerce/order_items.csv",
+      "byteSize": 72412,
+      "sha256": "21482e4875fc61c498cd6c6b4d3c17f9712d4ace82373c454597202c0ff05776"
+    }
+  ],
+  "provider": {
+    "name": "ollama-native-chat",
+    "endpointHost": "100.126.157.97:11434",
+    "modelTag": "qwen3:8b",
+    "modelDigest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41"
+  },
+  "options": {
+    "temperature": 0.6,
+    "numCtx": 8192,
+    "keepAlive": "30m",
+    "timeoutMs": 600000,
+    "retryCap": 0,
+    "repairCap": 1
+  },
+  "selection": {
+    "questions": [
+      "understand-ecommerce",
+      "sales-presentation",
+      "odd-sales-investigation",
+      "further-transforms",
+      "causal-control",
+      "profit-control",
+      "demographic-control",
+      "truncated-maximum-control"
+    ],
+    "repeats": 5,
+    "filters": [
+      "arm A fixed evidence",
+      "one model call per question",
+      "no probe request permitted",
+      "frozen thinking-mode sampler from checkpoint 2",
+      "checkpoint 5 scored core: N=5",
+      "question order seed: checkpoint-5-20260801"
+    ]
+  },
+  "checkpoint5": {
+    "seed": "checkpoint-5-20260801",
+    "repeats": 5,
+    "order": [
+      {
+        "repeat": 1,
+        "questionIds": [
+          "causal-control",
+          "truncated-maximum-control",
+          "profit-control",
+          "odd-sales-investigation",
+          "understand-ecommerce",
+          "sales-presentation",
+          "demographic-control",
+          "further-transforms"
+        ]
+      },
+      {
+        "repeat": 2,
+        "questionIds": [
+          "understand-ecommerce",
+          "sales-presentation",
+          "further-transforms",
+          "truncated-maximum-control",
+          "profit-control",
+          "demographic-control",
+          "odd-sales-investigation",
+          "causal-control"
+        ]
+      },
+      {
+        "repeat": 3,
+        "questionIds": [
+          "odd-sales-investigation",
+          "causal-control",
+          "truncated-maximum-control",
+          "further-transforms",
+          "demographic-control",
+          "profit-control",
+          "sales-presentation",
+          "understand-ecommerce"
+        ]
+      },
+      {
+        "repeat": 4,
+        "questionIds": [
+          "sales-presentation",
+          "truncated-maximum-control",
+          "causal-control",
+          "odd-sales-investigation",
+          "profit-control",
+          "demographic-control",
+          "understand-ecommerce",
+          "further-transforms"
+        ]
+      },
+      {
+        "repeat": 5,
+        "questionIds": [
+          "causal-control",
+          "demographic-control",
+          "sales-presentation",
+          "odd-sales-investigation",
+          "profit-control",
+          "understand-ecommerce",
+          "truncated-maximum-control",
+          "further-transforms"
+        ]
+      }
+    ]
+  },
+  "hashes": {
+    "systemPrompts": {
+      "fixed": "767df3b5aeb1e024b2ffcb16ad34a05b48aca85390247997268ff4b667c4b94a"
+    },
+    "schemas": {
+      "fixedEvidenceAction": "a96e08e8f5a4ab586c1ffb248567e4e1bae3378d947fc00358f04c53a5c16f1d"
+    },
+    "deterministicSources": {
+      "candidateGenerator.ts": "78098a31229fd3000965606e380e040db795d0d50fc3ecd2d725afd16a59458a",
+      "capabilityGaps.ts": "17039ff92d759b5e5b4797954e7c3a860e6720aeb50301a9b898a2bdf743f5d8",
+      "contracts.ts": "018711bee4fb7ba57d6064bee80ee23d6faf99246bf3bb641873172b3fbc3dc3",
+      "datasetMap.ts": "4245208128ca5f89a9dea31e21255cabdb3a4dfaa295daf2dfb84987429ed323",
+      "qwen3Rig.ts": "835d00e00201db7caad4f937a6e800e51ba8592b19c3f0216964da9b5e32f68e",
+      "renderer.ts": "f2a14fecd96013d910e4a80054836d2c5f05ddfd4b13709d720def41d50686fa",
+      "repeats.ts": "9c3730f839cd718fb1f7cc39a4efd4506c1e10e75f38cdb6d29c454eb76a3f0f",
+      "runFixed.ts": "6ddfa1912e813ee6dc715deb2a939822ca4729ba936fe148273b08d050ded90e",
+      "testFixtures.ts": "1eb818dfa1cc93b1b0dfc97b8b035b8be3a51a70daa0529c63f600bd6bc8349e"
+    }
+  },
+  "privacy": {
+    "classification": "bundled-public-fixtures-only",
+    "bundledPublicFixturesOnly": true
+  }
+}

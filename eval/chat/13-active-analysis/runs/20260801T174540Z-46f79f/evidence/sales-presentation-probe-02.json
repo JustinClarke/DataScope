@@ -1,0 +1,45 @@
+{
+  "id": "evidence:category-quantity",
+  "metric": "sum(order_items.quantity)",
+  "unit": "item",
+  "dimension": "products.category",
+  "completeness": "complete",
+  "rows": [
+    {
+      "rowId": "r1",
+      "label": "Apparel",
+      "value": 1170,
+      "order": 0
+    },
+    {
+      "rowId": "r2",
+      "label": "Books",
+      "value": 2425,
+      "order": 1
+    },
+    {
+      "rowId": "r3",
+      "label": "Electronics",
+      "value": 1961,
+      "order": 2
+    },
+    {
+      "rowId": "r4",
+      "label": "Home",
+      "value": 1526,
+      "order": 3
+    },
+    {
+      "rowId": "r5",
+      "label": "Sporting Goods",
+      "value": 1479,
+      "order": 4
+    },
+    {
+      "rowId": "r6",
+      "label": "Toys",
+      "value": 1885,
+      "order": 5
+    }
+  ]
+}

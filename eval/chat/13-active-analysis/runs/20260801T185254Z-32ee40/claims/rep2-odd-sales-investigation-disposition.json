@@ -1,0 +1,47 @@
+{
+  "questionId": "odd-sales-investigation",
+  "questionKind": "answerable",
+  "repeat": 2,
+  "transportFailure": null,
+  "action": "final_claim",
+  "repaired": false,
+  "parseError": null,
+  "responseHash": "1e8432692878f18d28856e81fdf5215654bb52cbb560fc48ad98ca58fa657532",
+  "doneReason": "stop",
+  "disposition": {
+    "kind": "rejected_claim",
+    "reason": "RELATION_FALSE",
+    "detail": "358072.55 is not the maximum; the extremum is 952190.31."
+  },
+  "rendered": null,
+  "verification": {
+    "accepted": false,
+    "reason": "RELATION_FALSE",
+    "detail": "358072.55 is not the maximum; the extremum is 952190.31."
+  },
+  "tokens": {
+    "calls": 1,
+    "totalPromptTokens": 3412,
+    "totalResponseTokens": 1240,
+    "callHighWaterPromptTokens": 3412
+  },
+  "durationMs": 98181,
+  "claim": {
+    "kind": "extremum",
+    "subject": {
+      "evidenceId": "evidence:status-revenue",
+      "rowId": "r1",
+      "field": "value"
+    },
+    "operator": "maximum",
+    "scope": {
+      "evidenceId": "evidence:status-revenue",
+      "rowIds": [
+        "r1",
+        "r2",
+        "r3",
+        "r4"
+      ]
+    }
+  }
+}

@@ -1,18 +1,24 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { WorkbenchShell } from './WorkbenchShell';
 import { useDatasetsStore } from '../stores/datasets';
 import { useTabsStore } from '../stores/tabs';
+import { useSelectionStore } from '../stores/selection';
+import { useRehydrationStore } from '../stores/rehydration';
+import { usePersistenceStore } from '../stores/persistence';
 import { useDspsReceiverStore } from '../stores/dspsReceiver';
 import { useSettingsStore } from '../stores/settings';
 import { useByokKeyStore } from '../stores/byokKey';
 import { useRunGuardStore } from '../stores/runGuard';
 import { useQueryStore, CONSOLE_SESSION } from '../stores/query';
 import { openQueryTab } from '../services/queryTabs';
+import { HISTORY_TAB_SUBJECT } from '../features/sql/HistoryTab';
 import { classifyStatement } from '../lib/statementClass';
 import * as ingestionService from '../services/ingestion';
 import type { TableRegistryEntry } from '../types';
 import type { StructureReport } from '../lib/structureReport';
+import type { RestoreReport } from '../services/workspace';
 
 // Wraps the real module so `loadSharedDataset` can be mocked per-test for the
 // share-link tests (ported from App.test.tsx, HANDOFF-W8-CUTOVER.md) while
@@ -23,6 +29,23 @@ vi.mock('../services/ingestion', async (importOriginal) => {
     ...actual,
     loadSharedDataset: vi.fn(actual.loadSharedDataset),
   };
+});
+
+// Workspace restoration crosses the browser-storage boundary. Shell tests use
+// an empty restore by default; the lifecycle tests below control exactly when
+// it settles, while workspace/rehydration correctness stays covered by their
+// service-level suites.
+const { restoreStagedTablesMock, rehydrateWorkspaceMock } = vi.hoisted(() => ({
+  restoreStagedTablesMock: vi.fn(),
+  rehydrateWorkspaceMock: vi.fn(),
+}));
+vi.mock('../services/workspace', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/workspace')>();
+  return { ...actual, restoreStagedTables: restoreStagedTablesMock };
+});
+vi.mock('../services/rehydration', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/rehydration')>();
+  return { ...actual, rehydrateWorkspace: rehydrateWorkspaceMock };
 });
 
 // ProfileDashboard (mounted as `'profile'` tab content, W3) pulls in
@@ -46,6 +69,11 @@ vi.mock('../services/dossier', () => ({
 }));
 const { loadRelationshipsMock } = vi.hoisted(() => ({ loadRelationshipsMock: vi.fn() }));
 vi.mock('../services/relationships', () => ({ loadRelationships: loadRelationshipsMock }));
+const { loadDatasetQualityReportMock } = vi.hoisted(() => ({ loadDatasetQualityReportMock: vi.fn() }));
+vi.mock('../services/dataQuality', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../services/dataQuality')>();
+  return { ...actual, loadDatasetQualityReport: loadDatasetQualityReportMock };
+});
 // SqlModule (mounted as `'sql'` tab content, W7.5) statically lazy-imports the
 // real Monaco editor, which needs a real browser to mount — stubbed the same
 // way SqlModule.test.tsx stubs it, so this stays a UI/wiring test.
@@ -88,6 +116,7 @@ function table(overrides: Partial<TableRegistryEntry> & Pick<TableRegistryEntry,
 
 const TABLE_A = table({ id: 't-a', tableName: 'orders' });
 const TABLE_B = table({ id: 't-b', tableName: 'customers' });
+const EMPTY_RESTORE: RestoreReport = { tables: [], durationMs: 0 };
 
 beforeEach(() => {
   loadTableCardStatsMock.mockReset().mockResolvedValue({});
@@ -95,10 +124,18 @@ beforeEach(() => {
   loadDossierInsightsMock.mockReset().mockResolvedValue([]);
   loadTimeCoverageMock.mockReset().mockResolvedValue([]);
   loadRelationshipsMock.mockReset().mockResolvedValue([]);
+  loadDatasetQualityReportMock.mockReset().mockResolvedValue({ warnings: [], passedRules: [] });
+  restoreStagedTablesMock.mockReset().mockResolvedValue(EMPTY_RESTORE);
+  rehydrateWorkspaceMock.mockReset().mockResolvedValue([]);
   useDatasetsStore.setState({ tables: [], datasets: [], workerStatus: 'idle', workerError: null });
   useTabsStore.setState({ tabs: [], activeTabId: null });
   useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
   useDspsReceiverStore.setState({ document: null, error: null });
+  // S6.7 ties the drawer's Info pane to there being a selection or a run, so
+  // the selection store is part of this file's reset now.
+  useSelectionStore.getState().clearSelection();
+  useRehydrationStore.setState({ outcomes: {} });
+  usePersistenceStore.setState({ status: 'unknown', note: null, restore: EMPTY_RESTORE });
 });
 
 describe('WorkbenchShell — act assembly (§13.3, W1/W6)', () => {
@@ -215,6 +252,78 @@ describe('WorkbenchShell — act assembly (§13.3, W1/W6)', () => {
   });
 });
 
+describe('WorkbenchShell — workspace restore lifecycle (S6.9 / 07b)', () => {
+  beforeEach(() => {
+    usePersistenceStore.setState({ restore: null });
+  });
+
+  it('does not publish a restore that completes after the shell has unmounted', async () => {
+    let resolveRestore!: (report: RestoreReport) => void;
+    const pendingRestore = new Promise<RestoreReport>((resolve) => {
+      resolveRestore = resolve;
+    });
+    restoreStagedTablesMock.mockReturnValueOnce(pendingRestore);
+
+    const { unmount } = render(<WorkbenchShell />);
+    unmount();
+
+    await act(async () => {
+      resolveRestore({ tables: [], durationMs: 1 });
+      await pendingRestore;
+      await Promise.resolve();
+    });
+
+    expect(usePersistenceStore.getState().restore).toBeNull();
+  });
+
+  it('publishes the restore to the active Strict Mode mount', async () => {
+    let resolveRestore!: (report: RestoreReport) => void;
+    const pendingRestore = new Promise<RestoreReport>((resolve) => {
+      resolveRestore = resolve;
+    });
+    restoreStagedTablesMock.mockReturnValueOnce(pendingRestore);
+
+    render(
+      <StrictMode>
+        <WorkbenchShell />
+      </StrictMode>,
+    );
+
+    const report = { tables: [], durationMs: 1 };
+    await act(async () => {
+      resolveRestore(report);
+      await pendingRestore;
+      await Promise.resolve();
+    });
+
+    expect(usePersistenceStore.getState().restore).toEqual(report);
+  });
+
+  it('does not mount engine-backed shell consumers before persisted tables are restored', async () => {
+    let resolveRestore!: (report: RestoreReport) => void;
+    const pendingRestore = new Promise<RestoreReport>((resolve) => {
+      resolveRestore = resolve;
+    });
+    restoreStagedTablesMock.mockReturnValueOnce(pendingRestore);
+    useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
+
+    const { container } = render(<WorkbenchShell />);
+
+    expect(container.querySelector('[data-act="restore"]')).not.toBeNull();
+    expect(container.querySelector('[data-act="shell"]')).toBeNull();
+    expect(loadDossierInsightsMock).not.toHaveBeenCalled();
+    expect(loadRelationshipsMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveRestore({ tables: [], durationMs: 1 });
+      await pendingRestore;
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(container.querySelector('[data-act="shell"]')).not.toBeNull());
+  });
+});
+
 describe('WorkbenchShell — tab host (canvas region, W3)', () => {
   beforeEach(() => {
     useDatasetsStore.setState({ datasets: [DATASET] });
@@ -287,6 +396,49 @@ describe('WorkbenchShell — tab host (canvas region, W3)', () => {
 
     expect(useTabsStore.getState().tabs).toHaveLength(0);
     expect(useQueryStore.getState().sessions[tabId]).toBeUndefined();
+  });
+});
+
+// S6.9 / 07d: a restored tab whose subject didn't survive the reload degrades
+// rather than dangling. Closing it would discard a tab the user opened;
+// mounting the dashboard over a table the engine doesn't have is the dangling
+// reference itself.
+describe('WorkbenchShell — a tab on a lost subject (07d)', () => {
+  beforeEach(() => {
+    useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
+  });
+
+  it('shows the reason in place of the profile dashboard, and keeps the tab open', () => {
+    const tabId = useTabsStore.getState().openTab('profile', TABLE_A.id);
+    useRehydrationStore.getState().setOutcomes([
+      {
+        tableId: TABLE_A.id,
+        tableName: TABLE_A.tableName,
+        status: 'lost',
+        reason: 'This was a sampled preview, so its rows were never stored — re-drop the file.',
+      },
+    ]);
+
+    const { container } = render(<WorkbenchShell />);
+    const content = container.querySelector(`[data-testid="tab-content-${tabId}"]`)!;
+
+    expect(within(content as HTMLElement).getByTestId('tab-subject-unavailable').textContent).toContain(
+      'its rows were never stored',
+    );
+    expect(container.querySelector(`[data-testid="tab-header-${tabId}"]`)).toBeTruthy();
+  });
+
+  it('mounts the dashboard normally for a restored subject', () => {
+    const tabId = useTabsStore.getState().openTab('profile', TABLE_A.id);
+    useRehydrationStore
+      .getState()
+      .setOutcomes([{ tableId: TABLE_A.id, tableName: TABLE_A.tableName, status: 'restored', reason: null }]);
+
+    const { container } = render(<WorkbenchShell />);
+    const content = container.querySelector(`[data-testid="tab-content-${tabId}"]`)!;
+
+    expect(content.querySelector('[data-testid="tab-subject-unavailable"]')).toBeNull();
+    expect(content.querySelector('h2')?.textContent).toBe(TABLE_A.tableName);
   });
 });
 
@@ -386,6 +538,14 @@ describe('WorkbenchShell — module-wiring tab content (W7.5)', () => {
     const { container } = render(<WorkbenchShell />);
     expect(within(container).getByText('Drop files, a folder, or a ZIP')).toBeTruthy();
   });
+
+  it('a history tab renders the session run log (S6.7)', () => {
+    useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
+    useTabsStore.getState().openTab('history', HISTORY_TAB_SUBJECT);
+    const { container } = render(<WorkbenchShell />);
+    expect(container.querySelector('[data-testid="history-tab"]')).not.toBeNull();
+    expect(within(container).getByText('No statements run yet this session.')).toBeTruthy();
+  });
 });
 
 describe('WorkbenchShell — right AI pane, inspector, status bar (W7)', () => {
@@ -396,20 +556,26 @@ describe('WorkbenchShell — right AI pane, inspector, status bar (W7)', () => {
   it('mounts AIPane, Inspector, and StatusBar with real content in their regions', () => {
     const { container } = render(<WorkbenchShell />);
     expect(within(container.querySelector('[data-region="ai-pane"]')!).getByText('Off')).toBeTruthy();
-    expect(
-      within(container.querySelector('[data-region="inspector"]')!).getByText(/Select a table, column, or relationship/),
-    ).toBeTruthy();
+    // With nothing selected and nothing run the inspector region is the editor
+    // alone (S6.7) — its toolbar is the region's real content now.
+    expect(within(container.querySelector('[data-region="inspector"]')!).getByTestId('console-toolbar')).toBeTruthy();
     expect(within(container.querySelector('[data-region="status-bar"]')!).getByText(/Engine:/)).toBeTruthy();
   });
 
-  // S3: the bottom region is the drawer, not a bare Inspector — and §13.3's
-  // stacking is load-bearing, because an expanded drawer must push against the
-  // canvas and never over the dock or the status bar.
+  // S3/S6.5: the bottom region is the drawer, not a bare Inspector, and since
+  // S6.5 it hosts both panes at once. §13.3's stacking is load-bearing, because
+  // an expanded drawer must push against the canvas and never over the dock or
+  // the status bar.
   it('hosts the inspector drawer in the inspector region, stacked canvas → drawer → dock → status bar (S3)', () => {
+    // A selection is what earns Info its place since S6.7; the console pane is
+    // there either way.
+    useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
+    useSelectionStore.getState().selectTable(TABLE_A.id);
     const { container } = render(<WorkbenchShell />);
-    const region = container.querySelector('[data-region="inspector"]')!;
-    expect(within(region as HTMLElement).getByTestId('inspector-drawer')).toBeTruthy();
-    expect(within(region as HTMLElement).getByRole('button', { name: 'SQL Console' })).toBeTruthy();
+    const region = container.querySelector('[data-region="inspector"]')! as HTMLElement;
+    expect(within(region).getByTestId('inspector-drawer')).toBeTruthy();
+    expect(within(region).getByTestId('drawer-console-pane')).toBeTruthy();
+    expect(within(region).getByTestId('drawer-info-pane')).toBeTruthy();
 
     // The dock sits between the drawer and the status bar in the JSX, but it
     // renders nothing unless WebLLM is eligible, so it carries no marker to
@@ -422,6 +588,26 @@ describe('WorkbenchShell — right AI pane, inspector, status bar (W7)', () => {
     for (let i = 0; i < order.length - 1; i += 1) {
       expect(order[i].compareDocumentPosition(order[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
+  });
+
+  /**
+   * The defect shipped S3 (`BUILD-ORDER.md`, 2026-07-28): `100svh` on a
+   * `shrink-0` element whose in-flow siblings are the dock and the status bar
+   * pushes both below the fold, taking the privacy posture dot with them. The
+   * criterion S3 checked was checked against an assertion its test never made.
+   */
+  it('expands the drawer against the canvas, leaving the dock and status bar in the flow (S6.5)', () => {
+    const { container } = render(<WorkbenchShell />);
+    fireEvent.click(within(container).getByRole('button', { name: 'Expand drawer to full height' }));
+
+    const drawer = within(container).getByTestId('inspector-drawer');
+    expect(drawer.style.height).not.toBe('100svh');
+    expect(drawer.style.height).toContain('calc(100svh -');
+
+    const statusBar = container.querySelector('[data-region="status-bar"]')!;
+    const inspector = container.querySelector('[data-region="inspector"]')!;
+    expect(inspector.compareDocumentPosition(statusBar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(statusBar.parentElement).toBe(inspector.parentElement);
   });
 
   it('"Configure workspace" (AI pane) opens the shared settings modal with the Mode fieldset hidden', () => {

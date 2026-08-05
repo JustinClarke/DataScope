@@ -15,6 +15,7 @@ import { ProfileDashboard } from '../features/profiling/ProfileDashboard';
 import { DatasetMap } from '../features/map/DatasetMap';
 import { QueryTab } from '../features/sql/QueryTab';
 import { PivotModule } from '../features/sql/PivotModule';
+import { HistoryTab } from '../features/sql/HistoryTab';
 import { ChartsModule } from '../features/charts/ChartsModule';
 import { CorrelationModule } from '../features/charts/correlation/CorrelationModule';
 import { ExportModule } from '../features/export/ExportModule';
@@ -30,6 +31,10 @@ import { useApplyWorkbenchAIDefault } from './useApplyWorkbenchAIDefault';
 import { EducationalPanelProvider } from './EducationalPanelContext';
 import { loadSharedDataset, IngestionError } from '../services/ingestion';
 import { closeQueryTab } from '../services/queryTabs';
+import { restoreStagedTables, type RestoreReport } from '../services/workspace';
+import { usePersistenceStore } from '../stores/persistence';
+import { rehydrateWorkspace } from '../services/rehydration';
+import { useRehydrationStore, isTableUsable } from '../stores/rehydration';
 
 /** The map is dataset-wide, not per-table — there is no natural per-table subject the way `'profile'` has one (W4, §13.3). Exported for the command palette's map entry (W5). */
 export const MAP_TAB_SUBJECT = 'workspace';
@@ -444,6 +449,17 @@ function Welcome() {
 // never a second global (see `hooks/useThreadPrefill.ts`'s `override` doc).
 function TabContent({ tab }: { tab: TabSpec }) {
   const prefill = tab.initializer?.prefilledConfig ?? null;
+  const outcomes = useRehydrationStore((state) => state.outcomes);
+  // 07d: a restored tab whose subject didn't survive the reload degrades rather
+  // than dangling — it says so in place, instead of closing itself (the user
+  // opened it) or mounting a dashboard over a table the engine doesn't have.
+  if (tab.type === 'profile' && !isTableUsable(outcomes, tab.subject)) {
+    return (
+      <p data-testid="tab-subject-unavailable" className="p-6 text-sm text-(--color-fg-muted)">
+        {outcomes[tab.subject]?.reason ?? 'This table is no longer available.'}
+      </p>
+    );
+  }
   if (tab.type === 'profile') return <ProfileDashboard initialTableId={tab.subject} />;
   // S5: the standalone SQL playground is gone. `SqlModule` is the drawer
   // console's body now, and a query tab is its own runner on its own session —
@@ -454,6 +470,7 @@ function TabContent({ tab }: { tab: TabSpec }) {
   if (tab.type === 'correlation') return <CorrelationModule prefill={prefill} />;
   if (tab.type === 'export') return <ExportModule />;
   if (tab.type === 'ingestion') return <IngestionPanel />;
+  if (tab.type === 'history') return <HistoryTab />;
   return <DatasetMap />;
 }
 
@@ -682,19 +699,70 @@ function useShareLinkOpener(): void {
   }, []);
 }
 
+// Workspace restore (S6.9 / 07b): the staged bytes go back into the fresh
+// in-memory worker once per load, so a hard reload lands on tables that are
+// queryable again without a re-drop. Engine-only on purpose — the report lands
+// in the persistence store, and 07d's `rehydrateWorkspace` is what reconciles
+// it against the persisted registry and lets the rail render anything at all.
+let workspaceRestoreInFlight: Promise<RestoreReport> | null = null;
+
+function restoreWorkspaceSingleFlight(): Promise<RestoreReport> {
+  if (workspaceRestoreInFlight) return workspaceRestoreInFlight;
+
+  const restore = restoreStagedTables();
+  workspaceRestoreInFlight = restore;
+  const clear = () => {
+    if (workspaceRestoreInFlight === restore) workspaceRestoreInFlight = null;
+  };
+  void restore.then(clear, clear);
+  return restore;
+}
+
+function useWorkspaceRestore(): void {
+  useEffect(() => {
+    // A later remount in the same page load has nothing left to do. Strict
+    // Mode's development remount happens while this is still null, so it joins
+    // the in-flight job below instead.
+    if (usePersistenceStore.getState().restore !== null) return;
+    let cancelled = false;
+    void restoreWorkspaceSingleFlight().then((report) => {
+      if (cancelled) return;
+      usePersistenceStore.getState().setRestore(report);
+      return rehydrateWorkspace(report);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+}
+
 export function WorkbenchShell() {
   const hasDatasets = useDatasetsStore((state) => state.datasets.length > 0);
   const workerStatus = useDatasetsStore((state) => state.workerStatus);
+  const workspaceRestore = usePersistenceStore((state) => state.restore);
   const dspsDocument = useDspsReceiverStore((state) => state.document);
   const dspsError = useDspsReceiverStore((state) => state.error);
   const act = selectWorkbenchAct({ hasDatasets, workerStatus });
   useMapAutoOpen(hasDatasets);
   useShareLinkOpener();
+  useWorkspaceRestore();
 
   // Viewer mode (W8, D62 Workbench amendment) wins regardless of act — a
   // dropped `.dsps` presents immediately whether or not any dataset is
   // already loaded, mirroring the old shell's own App.tsx handling.
   if (dspsDocument || dspsError) return <ViewerMode document={dspsDocument} error={dspsError} />;
+  // Persisted registry metadata rehydrates synchronously, before OPFS bytes
+  // have been registered with the fresh DuckDB worker. Keep engine-backed
+  // shell consumers unmounted across that gap: the map and quality panel
+  // otherwise query table names that exist in the registry but not yet in
+  // the engine. The restore job itself remains owned by useWorkspaceRestore.
+  if (hasDatasets && workspaceRestore === null) {
+    return (
+      <div data-act="restore" className="flex h-svh items-center justify-center bg-(--color-canvas)">
+        <p className="font-mono text-[length:var(--text-sm)] text-(--color-ink-3)">Restoring workspace…</p>
+      </div>
+    );
+  }
   if (act === 'act0' || act === 'act1') {
     return (
       <div data-act={act}>

@@ -1,0 +1,18 @@
+{
+  "id": "evidence:completed-aov",
+  "metric": "ratio(sum_product(order_items.quantity,order_items.unit_price),count_distinct(order_items.order_id),scale=1)",
+  "unit": "USD/order",
+  "filters": [
+    "orders.status equals completed"
+  ],
+  "completeness": "complete",
+  "sourceRowCount": 1,
+  "returnedRowCount": 1,
+  "rows": [
+    {
+      "rowId": "r1",
+      "label": "sum of order_items.quantity multiplied by order_items.unit_price divided by distinct count of order_items.order_id for orders.status equals completed",
+      "value": 1337.35
+    }
+  ]
+}
