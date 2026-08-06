@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Gemini Nano — flat-schema probe</title>
+<style>
+  body { font-family: ui-monospace, monospace; max-width: 1040px; margin: 2rem auto; padding: 0 1rem; background:#0b0d10; color:#d8dee4; }
+  h1 { font-size: 1.1rem; }
+  button { font: inherit; padding: 0.5rem 1rem; cursor: pointer; background:#1b2027; color:#d8dee4; border:1px solid #333; border-radius:4px; }
+  button:disabled { opacity:0.5; cursor:default; }
+  #status { white-space: pre-wrap; background:#12151a; border:1px solid #262b32; padding:0.75rem; border-radius:4px; margin:1rem 0; font-size:0.85rem; max-height:220px; overflow:auto; }
+  table { border-collapse: collapse; width:100%; font-size:0.8rem; margin-top:1rem; }
+  th, td { border:1px solid #262b32; padding:0.4rem 0.5rem; text-align:left; vertical-align:top; }
+  th { background:#161a20; }
+  td.sql { max-width: 340px; white-space: pre-wrap; word-break: break-word; }
+  .ok { color:#7ee787; }
+  .bad { color:#ff7b72; }
+  .summary { margin-top:1rem; font-size:0.95rem; }
+</style>
+<!--
+  Points bare specifiers at this repo's own node_modules (already resolved for the app by
+  Vite; there is no Vite here, so a browser needs an explicit map). Nothing under this
+  directory is vendored — running this file requires `npm install` having been run at the
+  repo root and requires being served from a path where "../../../node_modules/..." resolves,
+  i.e. from eval/claude/16-light-model-sql-ceiling/ with the repo root as the server root.
+-->
+<script type="importmap">
+{
+  "imports": {
+    "apache-arrow": "../../../node_modules/apache-arrow/Arrow.dom.mjs",
+    "tslib": "../../../node_modules/tslib/tslib.es6.mjs",
+    "flatbuffers": "../../../node_modules/flatbuffers/mjs/flatbuffers.js"
+  }
+}
+</script>
+</head>
+<body>
+<h1>Gemini Nano — flat-schema probe (real execution, real ground truth)</h1>
+<p>Hypothesis: the 4-table probe's failures (wrong aggregation grain, hallucinated columns — see
+<a href="4table-schema-probe.html" style="color:#7ee787">4table-schema-probe.html</a>) came from
+cross-table joins and aggregate grain, not row count or column count per se. This runs the same
+style of questions against a single flat denormalized table — no joins possible — and
+<b>actually executes</b> each generated SQL statement against real DuckDB-WASM data, comparing to
+a precomputed ground-truth value. Syntactic validity is not good enough as a metric; this checks
+whether the number is right. Write-up:
+<a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling.md" style="color:#7ee787">experiment 16</a>
+(this is Probe 4).</p>
+<button id="run">Run probe</button>
+<button id="copy" disabled>Copy JSON results</button>
+<div id="status">Idle. Click "Run probe".</div>
+<div id="out"></div>
+
+<script type="module">
+import * as duckdb from '../../../node_modules/@duckdb/duckdb-wasm/dist/duckdb-browser.mjs';
+
+const abs = (p) => new URL(p, document.baseURI).href;
+const DUCKDB_DIST = '../../../node_modules/@duckdb/duckdb-wasm/dist/';
+const BUNDLES = {
+  mvp: { mainModule: abs(DUCKDB_DIST + 'duckdb-mvp.wasm'), mainWorker: abs(DUCKDB_DIST + 'duckdb-browser-mvp.worker.js') },
+  eh: { mainModule: abs(DUCKDB_DIST + 'duckdb-eh.wasm'), mainWorker: abs(DUCKDB_DIST + 'duckdb-browser-eh.worker.js') },
+};
+
+const SCHEMA_TEXT = `Table: sales(sale_id INTEGER, customer_name TEXT, region TEXT, category TEXT, product_name TEXT, price DECIMAL, quantity INTEGER, status TEXT, sold_at DATE)`;
+
+const SQL_INSTRUCTION =
+  'Reply with ONLY one DuckDB SQL SELECT statement that answers the question — ' +
+  'no explanation, no code fence commentary. DuckDB uses Postgres dialect: ' +
+  'double-quoted identifiers, LIMIT not TOP.';
+
+function extractSql(text) {
+  const fence = text.match(/```(?:sql|duckdb)?\s*([\s\S]*?)```/i);
+  const candidate = (fence ? fence[1] : text).trim().split(';')[0].trim();
+  return /^\(*\s*(select|with)\b/i.test(candidate) ? candidate : null;
+}
+
+// Each question paired with the known-correct SQL used to compute ground truth.
+// Deliberately unambiguous on a flat table: one row = one atomic sale, no fan-out risk.
+const QUESTIONS = [
+  { q: 'How many rows are there in total?', gold: 'SELECT COUNT(*) FROM sales' },
+  { q: 'What is the total revenue (price times quantity, summed)?', gold: 'SELECT SUM(price * quantity) FROM sales' },
+  { q: 'How many distinct customers are there?', gold: 'SELECT COUNT(DISTINCT customer_name) FROM sales' },
+  { q: 'How many sales were made in the "west" region?', gold: "SELECT COUNT(*) FROM sales WHERE region = 'west'" },
+  { q: 'What is the average price per sale row?', gold: 'SELECT AVG(price) FROM sales' },
+  { q: 'Which category generates the most revenue?', gold: 'SELECT category FROM sales GROUP BY category ORDER BY SUM(price * quantity) DESC LIMIT 1' },
+  { q: 'How many sales have a status of "cancelled"?', gold: "SELECT COUNT(*) FROM sales WHERE status = 'cancelled'" },
+  { q: 'What is the total quantity sold in the "electronics" category?', gold: "SELECT SUM(quantity) FROM sales WHERE category = 'electronics'" },
+];
+
+const SQL_SCHEMA = { type: 'object', properties: { sql: { type: 'string' } }, required: ['sql'], additionalProperties: false };
+
+function log(msg) {
+  const el = document.getElementById('status');
+  el.textContent += '\n' + msg;
+  el.scrollTop = el.scrollHeight;
+}
+
+function resolveLanguageModel() {
+  if ('LanguageModel' in self) return self.LanguageModel;
+  if (self.ai && self.ai.languageModel) return self.ai.languageModel;
+  return null;
+}
+
+async function initDuckDB() {
+  const bundle = await duckdb.selectBundle(BUNDLES);
+  const worker = new Worker(bundle.mainWorker);
+  const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
+  const db = new duckdb.AsyncDuckDB(logger, worker);
+  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  const conn = await db.connect();
+  return { db, conn };
+}
+
+async function seed(conn) {
+  // Deterministic synthetic data, same generation style as the app's own eval fixtures.
+  await conn.query(`
+    CREATE TABLE sales AS
+    SELECT
+      i AS sale_id,
+      ('cust_' || (i % 23)) AS customer_name,
+      (['west','east','north','south'])[1 + (i % 4)] AS region,
+      (['electronics','apparel','home','toys'])[1 + (i % 4)] AS category,
+      ('product_' || (i % 40)) AS product_name,
+      ROUND(5 + (i * 7 % 200), 2) AS price,
+      1 + (i % 5) AS quantity,
+      CASE WHEN i % 9 = 0 THEN 'cancelled' ELSE 'completed' END AS status,
+      DATE '2024-01-01' + ((i % 365)::INTEGER) AS sold_at
+    FROM range(1500) t(i)
+  `);
+}
+
+async function execScalar(conn, sql) {
+  const result = await conn.query(sql);
+  const rows = result.toArray();
+  if (rows.length === 0) return null;
+  const row = rows[0].toJSON ? rows[0].toJSON() : rows[0];
+  const values = Object.values(row);
+  return values[0];
+}
+
+function valuesMatch(a, b) {
+  if (a === null || b === null) return a === b;
+  const na = Number(a), nb = Number(b);
+  if (!Number.isNaN(na) && !Number.isNaN(nb)) return Math.abs(na - nb) < 0.01;
+  return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+}
+
+async function runOne(LM, conn, item) {
+  const prompt = `${SCHEMA_TEXT}\n\nQuestion: ${item.q}\n\n${SQL_INSTRUCTION}`;
+  const row = { question: item.q };
+
+  let gold;
+  try {
+    gold = await execScalar(conn, item.gold);
+  } catch (e) {
+    row.goldError = String(e);
+  }
+  row.gold = gold;
+
+  const session = await LM.create();
+  let text = '';
+  let error = null;
+  const t0 = performance.now();
+  try {
+    text = await session.prompt(prompt, { responseConstraint: SQL_SCHEMA });
+  } catch (e) {
+    error = String(e);
+  }
+  row.ms = Math.round(performance.now() - t0);
+  session.destroy();
+
+  let sql = null;
+  if (!error) {
+    try {
+      const parsed = JSON.parse(text);
+      sql = typeof parsed.sql === 'string' ? parsed.sql.trim().split(';')[0].trim() : extractSql(text);
+    } catch {
+      sql = extractSql(text);
+    }
+  }
+  row.raw = text;
+  row.sql = sql;
+
+  if (!sql) {
+    row.outcome = 'no_sql_extracted';
+    return row;
+  }
+
+  try {
+    const actual = await execScalar(conn, sql);
+    row.actual = actual;
+    row.outcome = valuesMatch(actual, gold) ? 'correct' : 'wrong_value';
+  } catch (e) {
+    row.outcome = 'execution_error';
+    row.executionError = String(e);
+  }
+
+  return row;
+}
+
+function renderRows(rows) {
+  const out = document.getElementById('out');
+  let correct = 0;
+  let html = '<table><thead><tr><th>Question</th><th>Generated SQL</th><th>Gold</th><th>Actual</th><th>Outcome</th><th>ms</th></tr></thead><tbody>';
+  for (const r of rows) {
+    if (r.outcome === 'correct') correct++;
+    const cls = r.outcome === 'correct' ? 'ok' : 'bad';
+    html += `<tr>
+      <td>${r.question}</td>
+      <td class="sql">${(r.sql || r.raw || '(none)').toString().replace(/</g,'&lt;')}</td>
+      <td>${r.gold}</td>
+      <td>${r.actual !== undefined ? r.actual : (r.executionError || '')}</td>
+      <td class="${cls}">${r.outcome}</td>
+      <td>${r.ms}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  html += `<div class="summary">Execution-verified correct: <b>${correct}/${rows.length}</b></div>`;
+  out.innerHTML = html;
+}
+
+document.getElementById('run').addEventListener('click', async () => {
+  const runBtn = document.getElementById('run');
+  const copyBtn = document.getElementById('copy');
+  runBtn.disabled = true;
+  document.getElementById('status').textContent = 'Checking for Chrome Prompt API...';
+
+  const LM = resolveLanguageModel();
+  if (!LM) {
+    log('LanguageModel not found in this browser/context.');
+    runBtn.disabled = false;
+    return;
+  }
+  log('Found Prompt API. Checking availability()...');
+  try {
+    const availability = await LM.availability();
+    log('availability(): ' + availability);
+  } catch (e) {
+    log('availability() check failed (continuing anyway): ' + e);
+  }
+
+  log('Booting DuckDB-WASM and seeding fixture data...');
+  const { conn } = await initDuckDB();
+  await seed(conn);
+  log('Seed complete: 1500-row single-table "sales" fixture.');
+
+  const rows = [];
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    log(`Running question ${i + 1}/${QUESTIONS.length}: ${QUESTIONS[i].q}`);
+    try {
+      const row = await runOne(LM, conn, QUESTIONS[i]);
+      rows.push(row);
+      log(`  -> ${row.outcome}`);
+    } catch (e) {
+      log(`  failed: ${e}`);
+      rows.push({ question: QUESTIONS[i].q, outcome: 'harness_error', error: String(e) });
+    }
+  }
+
+  log('Done.');
+  renderRows(rows);
+  copyBtn.disabled = false;
+  copyBtn.onclick = async () => {
+    const json = JSON.stringify(rows, null, 2);
+    try {
+      await navigator.clipboard.writeText(json);
+      copyBtn.textContent = 'Copied!';
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = json;
+      ta.style.position = 'fixed';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed — see console';
+      if (!ok) console.error('Clipboard copy failed:', e);
+    }
+    setTimeout(() => { copyBtn.textContent = 'Copy JSON results'; }, 1500);
+  };
+  runBtn.disabled = false;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Gemini Nano SQL probe — 4-table schema</title>
+<style>
+  body { font-family: ui-monospace, monospace; max-width: 980px; margin: 2rem auto; padding: 0 1rem; background:#0b0d10; color:#d8dee4; }
+  h1 { font-size: 1.1rem; }
+  button { font: inherit; padding: 0.5rem 1rem; cursor: pointer; background:#1b2027; color:#d8dee4; border:1px solid #333; border-radius:4px; }
+  button:disabled { opacity:0.5; cursor:default; }
+  #status { white-space: pre-wrap; background:#12151a; border:1px solid #262b32; padding:0.75rem; border-radius:4px; margin:1rem 0; font-size:0.85rem; }
+  table { border-collapse: collapse; width:100%; font-size:0.8rem; margin-top:1rem; }
+  th, td { border:1px solid #262b32; padding:0.4rem 0.5rem; text-align:left; vertical-align:top; }
+  th { background:#161a20; position:sticky; top:0; }
+  td.sql { max-width: 360px; white-space: pre-wrap; word-break: break-word; }
+  .ok { color:#7ee787; }
+  .bad { color:#ff7b72; }
+  .summary { margin-top:1rem; font-size:0.95rem; }
+  code { background:#1b2027; padding:0.1rem 0.3rem; border-radius:3px; }
+</style>
+</head>
+<body>
+<h1>Gemini Nano (Chrome Prompt API) — SQL-generation probe, 4-table schema</h1>
+<p>Mirrors DataScope's WebLLM tool ladder: same schema-in-prompt shape, same
+<code>SQL_INSTRUCTION</code>, same <code>extractSql()</code> regex (now including the
+<code>```duckdb</code> fence fix). Runs two arms per question — unconstrained prose
+(what the ladder does today) and JSON-schema-constrained output (what Nano can do that
+WebLLM's model can't) — against the same 4-table schema and 8 questions used in the
+earlier Ollama probe. See
+<a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling.md" style="color:#7ee787">experiment 16</a>
+for the write-up (this is Probe 3 there — note its syntactic-only pass rate overstates real
+correctness; see the flat-schema probe in this folder for the execution-verified version).</p>
+<button id="run">Run probe</button>
+<button id="copy" disabled>Copy JSON results</button>
+<div id="status">Idle. Click "Run probe".</div>
+<div id="out"></div>
+
+<script>
+const SCHEMA_TEXT = `Tables:
+customers(customer_id INTEGER, name TEXT, region TEXT, signed_up_at DATE)
+products(product_id INTEGER, name TEXT, category TEXT, price DECIMAL)
+orders(order_id INTEGER, customer_id INTEGER, ordered_at DATE, status TEXT)
+order_items(order_item_id INTEGER, order_id INTEGER, product_id INTEGER, quantity INTEGER)`;
+
+const REAL_TABLES = ['customers', 'products', 'orders', 'order_items'];
+
+// Byte-identical to src/services/toolLadder.ts SQL_INSTRUCTION (post duckdb-fence fix).
+const SQL_INSTRUCTION =
+  'Reply with ONLY one DuckDB SQL SELECT statement that answers the question — ' +
+  'no explanation, no code fence commentary. DuckDB uses Postgres dialect: ' +
+  'double-quoted identifiers, LIMIT not TOP.';
+
+// Same regex as toolLadder.ts's extractSql() after today's fix.
+function extractSql(text) {
+  const fence = text.match(/```(?:sql|duckdb)?\s*([\s\S]*?)```/i);
+  const candidate = (fence ? fence[1] : text).trim().split(';')[0].trim();
+  return /^\(*\s*(select|with)\b/i.test(candidate) ? candidate : null;
+}
+
+const QUESTIONS = [
+  'How many customers do we have in total?',
+  'What is the total revenue across all orders?',
+  'How many distinct customers have placed at least one order?',
+  'List the top 5 products by total quantity sold.',
+  'How many orders were placed by customers in the "west" region?',
+  'What is the average order value?',
+  'Which product category generates the most revenue?',
+  'How many orders have a status of "cancelled"?',
+];
+
+const SQL_SCHEMA = {
+  type: 'object',
+  properties: { sql: { type: 'string' } },
+  required: ['sql'],
+  additionalProperties: false,
+};
+
+function log(msg) {
+  document.getElementById('status').textContent += '\n' + msg;
+}
+
+function resolveLanguageModel() {
+  if ('LanguageModel' in self) return self.LanguageModel;
+  if (self.ai && self.ai.languageModel) return self.ai.languageModel;
+  return null;
+}
+
+function checkReferencesRealTables(sql) {
+  if (!sql) return false;
+  const lower = sql.toLowerCase();
+  return REAL_TABLES.some((t) => lower.includes(t));
+}
+
+async function runOne(LM, question) {
+  const prompt = `${SCHEMA_TEXT}\n\nQuestion: ${question}\n\n${SQL_INSTRUCTION}`;
+  const row = { question };
+
+  // Arm A: unconstrained prose, same as the WebLLM ladder does today.
+  {
+    const session = await LM.create();
+    const t0 = performance.now();
+    let text = '';
+    let error = null;
+    try {
+      text = await session.prompt(prompt);
+    } catch (e) {
+      error = String(e);
+    }
+    row.unconstrained = {
+      ms: Math.round(performance.now() - t0),
+      raw: text,
+      error,
+      extractedSql: error ? null : extractSql(text),
+    };
+    row.unconstrained.validSyntax = !!row.unconstrained.extractedSql;
+    row.unconstrained.referencesRealTables = checkReferencesRealTables(row.unconstrained.extractedSql);
+    session.destroy();
+  }
+
+  // Arm B: JSON-schema constrained output — the thing WebLLM's pinned model can't do.
+  {
+    const session = await LM.create();
+    const t0 = performance.now();
+    let text = '';
+    let error = null;
+    let parsed = null;
+    try {
+      text = await session.prompt(prompt, { responseConstraint: SQL_SCHEMA });
+      try { parsed = JSON.parse(text); } catch { /* leave null */ }
+    } catch (e) {
+      error = String(e);
+    }
+    const sql = parsed && typeof parsed.sql === 'string' ? parsed.sql.trim().split(';')[0].trim() : null;
+    row.constrained = {
+      ms: Math.round(performance.now() - t0),
+      raw: text,
+      error,
+      extractedSql: sql,
+      validSyntax: !!sql && /^\(*\s*(select|with)\b/i.test(sql),
+      referencesRealTables: checkReferencesRealTables(sql),
+    };
+    session.destroy();
+  }
+
+  return row;
+}
+
+function renderRows(rows) {
+  const out = document.getElementById('out');
+  let unconstrainedOk = 0, constrainedOk = 0;
+  let html = '<table><thead><tr><th>Question</th>' +
+    '<th>Unconstrained SQL</th><th>U-valid</th><th>U-ms</th>' +
+    '<th>Constrained SQL</th><th>C-valid</th><th>C-ms</th></tr></thead><tbody>';
+  for (const r of rows) {
+    if (r.unconstrained.validSyntax && r.unconstrained.referencesRealTables) unconstrainedOk++;
+    if (r.constrained.validSyntax && r.constrained.referencesRealTables) constrainedOk++;
+    html += `<tr>
+      <td>${r.question}</td>
+      <td class="sql">${(r.unconstrained.extractedSql || r.unconstrained.error || '(none)').replace(/</g,'&lt;')}</td>
+      <td class="${r.unconstrained.validSyntax ? 'ok' : 'bad'}">${r.unconstrained.validSyntax ? 'yes' : 'no'}</td>
+      <td>${r.unconstrained.ms}</td>
+      <td class="sql">${(r.constrained.extractedSql || r.constrained.error || '(none)').replace(/</g,'&lt;')}</td>
+      <td class="${r.constrained.validSyntax ? 'ok' : 'bad'}">${r.constrained.validSyntax ? 'yes' : 'no'}</td>
+      <td>${r.constrained.ms}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  html += `<div class="summary">Unconstrained: <b>${unconstrainedOk}/${rows.length}</b> clean SQL referencing real tables &nbsp;|&nbsp; Constrained: <b>${constrainedOk}/${rows.length}</b></div>`;
+  out.innerHTML = html;
+}
+
+document.getElementById('run').addEventListener('click', async () => {
+  const runBtn = document.getElementById('run');
+  const copyBtn = document.getElementById('copy');
+  runBtn.disabled = true;
+  document.getElementById('status').textContent = 'Checking for Chrome Prompt API...';
+
+  const LM = resolveLanguageModel();
+  if (!LM) {
+    log('Not found. Neither `LanguageModel` nor `self.ai.languageModel` exists in this browser/context.');
+    log('This needs Chrome (desktop) — check chrome://flags/#prompt-api-for-gemini-nano or your Chrome version\'s current API surface.');
+    runBtn.disabled = false;
+    return;
+  }
+  log('Found Prompt API entry point.');
+
+  try {
+    const availability = await LM.availability();
+    log('availability(): ' + availability);
+    if (availability === 'unavailable') {
+      log('Model reports unavailable on this device/profile — stopping.');
+      runBtn.disabled = false;
+      return;
+    }
+    if (availability === 'downloadable' || availability === 'after-download') {
+      log('Model needs to download first. Triggering session create with a monitor...');
+      const probe = await LM.create({
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => log(`download: ${Math.round(e.loaded * 100)}%`));
+        },
+      });
+      probe.destroy();
+      log('Download/init complete.');
+    }
+  } catch (e) {
+    log('availability() check failed: ' + e);
+  }
+
+  const rows = [];
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    log(`Running question ${i + 1}/${QUESTIONS.length}...`);
+    try {
+      const row = await runOne(LM, QUESTIONS[i]);
+      rows.push(row);
+    } catch (e) {
+      log(`  failed: ${e}`);
+      rows.push({ question: QUESTIONS[i], unconstrained: { error: String(e), ms: 0, validSyntax: false, referencesRealTables: false }, constrained: { error: String(e), ms: 0, validSyntax: false, referencesRealTables: false } });
+    }
+  }
+
+  log('Done.');
+  renderRows(rows);
+  copyBtn.disabled = false;
+  copyBtn.onclick = async () => {
+    const json = JSON.stringify(rows, null, 2);
+    try {
+      await navigator.clipboard.writeText(json);
+      copyBtn.textContent = 'Copied!';
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = json;
+      ta.style.position = 'fixed';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed — see console';
+      if (!ok) console.error('Clipboard copy failed:', e);
+    }
+    setTimeout(() => { copyBtn.textContent = 'Copy JSON results'; }, 1500);
+  };
+  runBtn.disabled = false;
+});
+</script>
+</body>
+</html>

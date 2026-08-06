@@ -62,7 +62,7 @@ export const MAX_UNSTRUCTURED_FOLLOW_UPS = 2;
 
 /** Pull one SQL statement out of the model's text; null when there is none. */
 export function extractSql(text: string): string | null {
-  const fence = text.match(/```(?:sql)?\s*([\s\S]*?)```/i);
+  const fence = text.match(/```(?:sql|duckdb)?\s*([\s\S]*?)```/i);
   const candidate = (fence ? fence[1] : text).trim().split(';')[0].trim();
   return /^\(*\s*(select|with)\b/i.test(candidate) ? candidate : null;
 }
