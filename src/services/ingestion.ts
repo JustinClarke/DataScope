@@ -185,7 +185,7 @@ async function ingestBuffer(
   await engine.duckDBEngine.registerFile(vfsName, source);
 
   const selectSql = `SELECT * FROM ${readerCall(detected, quoteLiteral(vfsName))}`;
-  const createSql = `CREATE TABLE ${quoteIdentifier(tableName)} AS ${
+  const createSql = `CREATE OR REPLACE TABLE ${quoteIdentifier(tableName)} AS ${
     sampled ? `${selectSql} LIMIT ${SAMPLE_ROW_LIMIT}` : selectSql
   }`;
 

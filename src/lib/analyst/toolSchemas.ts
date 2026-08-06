@@ -77,7 +77,7 @@ export const ANALYST_TOOLS: readonly AnalystToolSchema[] = [
     name: 'get_schema',
     title: 'Get schema',
     description:
-      'The whole dataset in one call: every table with row and column counts, every column with its physical type, semantic class, null fraction and distinct count, plus inferred relationships and their join SQL. Costs one metadata read and no query. You are given this in your first turn — call it again only after creating or dropping an object. Returns inline and complete; no result handle. For one table in full depth, including key columns and time coverage, use describe_table.',
+      'Every column in the dataset as one row of table_name, column_name and data_type — tables and views alike, ordered by table then by position. That is the whole of it: no row counts, no null or distinct counts, no semantic classification, and no relationships. Costs one metadata read and no query. You are given this in your first turn — call it again only after creating or dropping an object. Returns inline and complete; no result handle. For a table\'s per-column spread and null percentage use describe_table; for the inferred join between two tables use join_coverage.',
     inputSchema: object({
       table: { type: 'string', description: 'Optional: restrict to one table. Omit for the whole dataset.' },
     }),
@@ -86,7 +86,7 @@ export const ANALYST_TOOLS: readonly AnalystToolSchema[] = [
     name: 'describe_table',
     title: 'Describe table',
     description:
-      'One table in full depth: every column typed and classified with the reason for its classification, key columns, columns shared with other tables, and time coverage when a temporal column exists. Returns inline and complete. Does not return rows — use sample_rows for that — and does not compute per-column distributions, which is column_stats.',
+      'One row per column of a table or view, from SUMMARIZE: column_name, column_type, min, max, approx_unique, avg, std, q25, q50, q75, count and null_percentage. approx_unique is an estimate and can exceed the true distinct count; min, max, avg, std and the quartiles arrive as text and are null for a type that has no such statistic. Costs one scan, and returns a result handle — past 100 columns, page it with read_result. A derived table or view also carries a lineage note naming what it came from and what depends on it. Does not return rows — use sample_rows — and does not classify columns, name key columns, or infer relationships.',
     inputSchema: object({ table: { type: 'string', description: 'Table or view name.' } }, ['table']),
   },
   {
@@ -104,7 +104,7 @@ export const ANALYST_TOOLS: readonly AnalystToolSchema[] = [
     name: 'column_stats',
     title: 'Column statistics',
     description:
-      'A typed statistical summary of one column, shaped by its semantic class. Numeric: min, max, mean, stddev, median, quartiles, IQR bounds, whiskers, outliers and a 10-bucket histogram. Temporal: min, max, span, inferred grain, populated periods and gaps. Categorical: distinct count, top values with counts and shares, tail share. Text: length distribution, average word count, samples. One aggregate query; returns inline and complete. For the full value list with a filter or a custom ordering use distinct_values; for word counts inside text use text_frequency.',
+      'A one-row statistical summary of one column, shaped by the column\'s declared SQL type — not by any semantic class. Always: row_count, non_null, nulls, distinct_count. Numeric adds min, max, mean, stddev, q1, median and q3; temporal adds min and max as text; boolean adds nothing, since the counts are the whole story; text and every other type add min_length, max_length and mean_length over the value cast to text. One aggregate query; returns inline and complete, noting the declared type. No histogram, no IQR or outlier bounds, and no top values — for values with their counts and shares use distinct_values, for word counts inside text use text_frequency, and for a temporal column\'s grain and gaps use time_series.',
     inputSchema: object(
       { table: { type: 'string' }, column: { type: 'string' } },
       ['table', 'column'],
@@ -326,13 +326,20 @@ export const ANALYST_TOOLS: readonly AnalystToolSchema[] = [
     name: 'create_chart',
     title: 'Create chart',
     description:
-      'Chart a result you already produced, or a query, using the same translator the app itself charts with. It reads the result and picks the fitting form — line for a time series, bar for a category, scatter for two measures — or tells you plainly why this result shape supports none, which is a real answer and not a failure: a time series needs a temporal column, a bar chart needs few enough categories to stay legible. Optionally name a type, or pass a spec to narrow the one it chose: you may re-title it and drop measures, not name columns of your own. Charts what is in front of it; it does not compute, filter or sort, so shape the result first with aggregate, time_series or run_sql.',
+      'Chart a result you already produced, or a query, using the same translator the app itself charts with. It reads the result and picks the fitting form — line for a time series, bar for a category, scatter for two measures — or tells you plainly why this result shape supports none, which is a real answer and not a failure: a time series needs a temporal column, a bar chart needs few enough categories to stay legible. A single aggregate value comes back as a stat, which has no axes and so no spec to refine. Charts at most 5000 rows and refuses past that, so aggregate the result down first. Optionally name a type, or pass a spec to narrow the one it chose: you may re-title it and drop measures, not name columns of your own. Charts what is in front of it; it does not compute, filter or sort, so shape the result first with aggregate, time_series or run_sql.',
     inputSchema: object({
       resultId: { type: 'string', description: 'From the resultId field of an earlier result. Pass this or sql, not both.' },
       sql: { type: 'string', description: 'A read-only query to run and chart. Pass this or resultId, not both.' },
       type: {
         type: 'string',
-        enum: ['time-series', 'correlation', 'distribution', 'categorical', 'join-graph'],
+        // The three forms the translator can actually build from a result. The
+        // `ChartType` union has two more — `distribution` and `join-graph` —
+        // that `specForType` has no case for, so naming either is refused
+        // whatever the data. Offering a model a value that cannot succeed on
+        // any result is the aspirational description D74 warns about, so they
+        // are not offered. `create_chart` still accepts them as *valid* enum
+        // members; this list is what a caller is told to choose from.
+        enum: ['time-series', 'correlation', 'categorical'],
         description: 'Optional: ask for a specific form. Omit to let the translator choose. A form the result cannot support is refused with the ones it can.',
       },
       spec: {
