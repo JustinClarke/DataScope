@@ -25,8 +25,15 @@ Not part of the app build. Two kinds:
   top-VRAM candidate (~2037MB) under a raised 2GB WebLLM download budget, directly comparable to
   Probe 4's 7/8 Nano result. No `responseConstraint` equivalent exists in WebLLM, so this uses
   the app's own fence/prose `extractSql` regex instead of JSON-schema-constrained decoding.
-  **Still not run** — needs a real WebGPU Chrome tab; see the experiment doc's verdict for why
-  this is now the single highest-priority open item.
+  **Run — 8/8 execution-verified correct**, on the real MLC/WebGPU build. Needed a load retry
+  loop (large multi-shard download can drop mid-transfer), `<think>` stripped from output before
+  extraction (Qwen3 is a reasoning model), and `max_tokens: 2048` (512 truncated some answers
+  mid-thought) — see the experiment doc for detail.
+- **`4table-webllm-probe.html`** — Probe 9. Same 4-table schema/questions/gold SQL as
+  `ollama4TableProbe.ts` (Probe 7, 24/24 via Ollama), run against `Qwen3-1.7B-q4f16_1-MLC` over
+  WebLLM in-tab — the real-build counterpart to Probe 7, and the harder fixture Probe 5 didn't
+  cover. Carries over all three of Probe 5's fixes (load retry, `<think>` stripping, 2048
+  `max_tokens`) from the start. Not yet run.
 
 ## Running
 
@@ -48,12 +55,15 @@ Then open, in a real Chrome (desktop) tab:
 http://localhost:8080/eval/claude/16-light-model-sql-ceiling/flat-schema-probe.html
 http://localhost:8080/eval/claude/16-light-model-sql-ceiling/4table-schema-probe.html
 http://localhost:8080/eval/claude/16-light-model-sql-ceiling/flat-schema-webllm-probe.html
+http://localhost:8080/eval/claude/16-light-model-sql-ceiling/4table-webllm-probe.html
 ```
 
 Click "Run probe". Results render in-page and can be copied as JSON via the button next to it.
-`flat-schema-webllm-probe.html` needs a WebGPU-capable browser/GPU and downloads ~1.2-1.4GB of
-model shards on first run (cached in Cache Storage after); this can take several minutes on a
-slow connection.
+`flat-schema-webllm-probe.html` and `4table-webllm-probe.html` need a WebGPU-capable browser/GPU
+and download ~900MB-1GB of model shards on first run (cached in Cache Storage after, shared
+between the two pages since they load the same model); this can take several minutes on a slow
+connection, and the load button retries automatically (up to 10 attempts) if a shard drops
+mid-download.
 
 If `LanguageModel` isn't found for the Nano probes, check
 `chrome://flags/#prompt-api-for-gemini-nano` or your Chrome version's current API surface — this

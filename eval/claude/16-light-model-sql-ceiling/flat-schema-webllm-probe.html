@@ -77,8 +77,12 @@ const SQL_INSTRUCTION =
 // module resolution into src/ as a browser global, and duplicating one regex is cheaper
 // than wiring a build step into a throwaway probe harness.
 function extractSql(text) {
-  const fence = text.match(/```(?:sql|duckdb)?\s*([\s\S]*?)```/i);
-  const candidate = (fence ? fence[1] : text).trim().split(';')[0].trim();
+  // Qwen3 is a reasoning model and wraps chain-of-thought in <think>...</think> by
+  // default; toolLadder.ts's regex (this probe's baseline) has no such model in its
+  // test matrix today, so this strip is probe-local, not a mirror of production code.
+  const stripped = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  const fence = stripped.match(/```(?:sql|duckdb)?\s*([\s\S]*?)```/i);
+  const candidate = (fence ? fence[1] : stripped).trim().split(';')[0].trim();
   return /^\(*\s*(select|with)\b/i.test(candidate) ? candidate : null;
 }
 
@@ -163,7 +167,7 @@ async function runOne(engine, conn, item) {
         { role: 'user', content: `${SCHEMA_TEXT}\n\nQuestion: ${item.q}\n\n${SQL_INSTRUCTION}` },
       ],
       temperature: 0,
-      max_tokens: 512,
+      max_tokens: 2048,
     });
     text = result.choices[0]?.message?.content ?? '';
   } catch (e) {
@@ -224,15 +228,26 @@ document.getElementById('run').addEventListener('click', async () => {
   runBtn.disabled = true;
 
   document.getElementById('status').textContent = `Loading ${MODEL_ID} (first run downloads and caches shards; this can take a while)...`;
+  // Cache.add() can drop mid-download on a flaky connection; addToCache() checks
+  // cache.match() before re-fetching, so each retry only needs the shards that
+  // failed last time, not the whole download.
+  const MAX_LOAD_ATTEMPTS = 10;
   let engine;
-  try {
-    engine = await CreateMLCEngine(MODEL_ID, {
-      initProgressCallback: (report) => log(`[load] ${report.text}`),
-    });
-  } catch (e) {
-    log('Engine failed to load: ' + e);
-    runBtn.disabled = false;
-    return;
+  for (let attempt = 1; attempt <= MAX_LOAD_ATTEMPTS; attempt++) {
+    try {
+      engine = await CreateMLCEngine(MODEL_ID, {
+        initProgressCallback: (report) => log(`[load] ${report.text}`),
+      });
+      break;
+    } catch (e) {
+      log(`Load attempt ${attempt}/${MAX_LOAD_ATTEMPTS} failed: ${e}`);
+      if (attempt === MAX_LOAD_ATTEMPTS) {
+        log('Giving up after max attempts.');
+        runBtn.disabled = false;
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 1500));
+    }
   }
   log('Engine ready.');
 

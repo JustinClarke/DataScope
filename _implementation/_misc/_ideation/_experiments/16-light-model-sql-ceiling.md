@@ -38,6 +38,24 @@ quantization) clears it stably, a smaller one (0.5B) hits it stably. See Probes 
 the actual MLC/WebGPU build, is still unrun and is now the one result standing between this and a
 real reversal of the governing finding.
 
+**Update (2026-08-07): Probe 5 has run — 8/8 execution-verified correct on the actual MLC/WebGPU
+build.** The Ollama-proxy caveat above is now resolved: `Qwen3-1.7B-q4f16_1-MLC`, loaded through
+real WebLLM/WebGPU in-tab (not a quantization proxy), clears the flat-schema fixture cleanly. Two
+real, model-specific issues surfaced getting a clean run — a download-reliability finding relevant
+to the "raise the budget to 2GB" question, and a `<think>`-block extraction gap since Qwen3 is a
+reasoning model and no prior model in this document was — both detailed in Probe 5 below. This is
+still the flat-schema fixture, not the 4-table one Probe 7 cleared via Ollama; the 4-table WebLLM
+retest is the next open item.
+
+**Update (2026-08-07, same day, part 2): the governing finding at the top of this doc is reversed
+for this model.** Probe 9 extended Probe 5's fix set to the 4-table schema — the fixture the
+opening paragraph above says every small local model fails — and scored **8/8 execution-verified
+correct**, on the real WebGPU/MLC build, no proxy. Both named failure classes from the opening
+paragraph (hallucinated column placement, wrong aggregation grain across a join) are cleared. The
+opening paragraph's "every small local model tested... fails the same class of bug" no longer
+describes `Qwen3-1.7B`; it still accurately describes every other model in this document (the
+current 1.5B pin, Nano, and `Qwen2.5-Coder-0.5B`). See Probe 9 and the verdict below.
+
 **Relation to this folder's other experiments.** 01–13 (see [`README.md`](README.md)) attack
 dataset-*narration* fabrication (F1–F3) under the ADR-010 synthesis seam — a different mechanism
 and a different rubric. This experiment is closer in spirit to 13/14/15: it asks how much a small
@@ -214,7 +232,7 @@ converted for WebLLM.
 That made it the obvious next candidate to retest for real — Probe 1's read on it was informal
 (Ollama proxy, syntactic-only, N=1). Probes 5 and 6 retest it properly.
 
-## Probe 5 — Qwen3-1.7B over WebLLM, flat schema, real execution (built, not yet run)
+## Probe 5 — Qwen3-1.7B over WebLLM, flat schema, real execution
 
 Same fixture, 8 questions, and ground-truth scoring as Probe 4, with `Qwen3-1.7B-q4f16_1-MLC`
 loaded through WebLLM in-tab (`CreateMLCEngine`, main thread) instead of Nano through the Prompt
@@ -223,12 +241,44 @@ API. WebLLM has no `responseConstraint` equivalent, so this uses the app's own f
 page has no module resolution into `src/` as a browser global) rather than JSON-schema-constrained
 decoding.
 
-Harness: [`flat-schema-webllm-probe.html`](../../../../eval/claude/16-light-model-sql-ceiling/flat-schema-webllm-probe.html).
-Needs a real WebGPU-capable Chrome tab, served from the repo root (same constraints as Probes 3/4 —
-see the folder's [`README.md`](../../../../eval/claude/16-light-model-sql-ceiling/README.md)), and
-downloads ~1.2–1.4GB of model shards on first run. **Not run yet** — this is the in-browser,
-WebLLM-native counterpart to Probe 6's Ollama result below, and the one that actually measures what
-ships (MLC quantization, WebGPU), rather than the Ollama proxy.
+**Result: 8/8 execution-verified correct.** This is the first result in this document on the actual
+MLC/WebGPU build the app would ship, not the Ollama proxy — the one thing every earlier probe in
+this document had flagged as unresolved.
+
+Getting a clean run required fixing two probe-harness issues, both real findings about this model,
+not artifacts of the test:
+
+1. **Download reliability, not a config/CORS problem.** The first several attempts failed mid-download
+   with `NetworkError: Failed to execute 'add' on 'Cache': Cache.add() encountered a network error`,
+   at a different shard each time (of 30 total, ~924MB). Verified directly — curling the exact failing
+   presigned CDN URL returned a clean `200` with correct CORS headers, and WebLLM's loader already caps
+   concurrent shard downloads at 4, so this wasn't a config, CORS, or self-inflicted-parallelism issue.
+   It's simply a bigger download than the current pin (~924MB / 30 shards vs. the current pin's ~830MB
+   at roughly two-thirds the shard count) — proportionally more exposure to any transient connection
+   blip over a longer transfer window. Fixed by wrapping `CreateMLCEngine` in a bounded retry loop
+   (10 attempts, 1.5s backoff) in the probe harness; `addToCache()`'s `cache.match()` check before each
+   `cache.add()` means every retry only re-fetches shards that failed, not the whole download. **This
+   is itself a relevant data point for the "raise the WebLLM budget to 2GB" question**, independent of
+   SQL correctness: a ~50% larger download is measurably more exposed to first-run failure on a
+   real consumer connection, and the shipped app has no such retry loop today.
+2. **Qwen3 is a reasoning model; the harness wasn't ready for that.** All 8 questions initially scored
+   `no_sql_extracted` — not a model failure, an extraction bug. Every response wrapped correct SQL in a
+   `<think>...</think>` chain-of-thought block, which `extractSql` (a straight regex for a fence or a
+   bare `SELECT`/`WITH` at the very start) has never had to handle, since no model in this document's
+   test matrix before this one was a reasoning model. (Probes 6/7's Ollama runs didn't hit this because
+   Ollama's default chat template suppresses `<think>` output; WebLLM doesn't.) Fixed by stripping
+   `<think>...</think>` before matching, probe-local only — **not mirrored into `toolLadder.ts`**, since
+   the current shipped pin isn't a reasoning model and doesn't need it. If a reasoning model is ever
+   shipped, `extractSql` would need this same fix for real, not just in the probe.
+3. **512 `max_tokens` truncated 2 of 8 answers mid-`<think>` block**, before the model reached its final
+   SQL — long enough chain-of-thought that the response was cut off with no closing `</think>` tag and
+   no SQL emitted at all. Raised to 2048 in the probe; the two previously-truncated questions ("average
+   price per sale row", "category with most revenue") then answered correctly, taking ~24s and ~37s
+   respectively — the most reasoning-heavy questions in the set, consistent with hitting the ceiling
+   under the tighter budget.
+
+Harness: [`flat-schema-webllm-probe.html`](../../../../eval/claude/16-light-model-sql-ceiling/flat-schema-webllm-probe.html),
+run via a real WebGPU Chrome tab per the folder's [`README.md`](../../../../eval/claude/16-light-model-sql-ceiling/README.md).
 
 ## Probe 6 — Qwen3-1.7B over Ollama, flat schema, real execution
 
@@ -318,6 +368,49 @@ retrofit `--repeats` onto Probe 6's script (re-run as a regression check: still 
 - **N=3, not a large sample.** Stable across 3 repeats is much stronger evidence than Probe 6's
   N=1, but it is not proof against rarer failure modes.
 
+## Probe 9 — Qwen3-1.7B over WebLLM, 4-table schema, real execution
+
+The retest Probe 7's caveats pointed at directly: same 4-table schema, questions, and gold SQL as
+`ollama4TableProbe.ts` (byte-identical fixture, so results are directly comparable to Probe 7's
+24/24), run against the real MLC/WebGPU build instead of the Ollama proxy — the 4-table counterpart
+to Probe 5's flat-schema WebLLM clear. Carries forward all three fixes Probe 5 needed from the
+start: a bounded load retry loop, `<think>...</think>` stripped before SQL extraction, and
+`max_tokens: 2048`.
+
+**Result: 8/8 execution-verified correct**, including both documented failure classes — the grain
+bug (average order value: `AVG` over a `GROUP BY order_id` subquery, correctly collapsing the join's
+fan-out before averaging) and the join+`GROUP BY` hallucination (category with most revenue: joined
+`order_items`→`products` correctly, grouped on the real `category` column). This is the first result
+in this document clearing the hard fixture on the actual shipped-architecture build, not a proxy.
+
+| Question | Outcome | ms |
+| :--- | :--- | ---: |
+| Total customers | correct | 12,459 |
+| Total revenue across all orders (join + sum) | correct | 53,011 |
+| Distinct customers with an order (join) | correct | 43,036 |
+| Total quantity of the top-selling product (join + group + order + limit) | correct | 56,950 |
+| Orders from "west"-region customers (join + filter) | correct | 39,455 |
+| **Average order value** (grain bug class) | correct | 88,071 |
+| **Category with most revenue** (join+group hallucination class) | correct | 87,107 |
+| Cancelled orders (filter only) | correct | 15,702 |
+
+**Latency is the one real cost this surfaces.** 12–88 seconds per question in-browser via WebGPU —
+materially slower than the same questions via Ollama (Probe 7: not directly timed per-question in
+the same units, but qualitatively much faster) and slower than this document's flat-schema WebLLM
+numbers (Probe 5: 10–24s). The join-heavy, grain-sensitive questions (average order value, category
+revenue) took the longest, consistent with more reasoning tokens for harder questions. If this ships,
+that's a real UX tradeoff against the correctness gain — a ~90-second wait for one query is
+noticeable in an interactive analyst loop, independent of whether the answer is right.
+
+**Caveats:**
+- **N=1.** Unlike Probe 7's N=3 Ollama read, this is a single pass on the real build. The fixes
+  applied (retry loop, `<think>` stripping, token budget) are now known-necessary, not experimental,
+  so a repeat run mainly derisks flakiness in the model's answers themselves, not the harness.
+- **Latency numbers are this machine/connection only** — not a general claim about WebGPU
+  performance across hardware.
+
+Harness: [`4table-webllm-probe.html`](../../../../eval/claude/16-light-model-sql-ceiling/4table-webllm-probe.html).
+
 ## Probe 8 — Qwen2.5-Coder-0.5B-Instruct over Ollama, both schemas
 
 The other standing open item (flagged in Probe 2's cataloging, never actually run). Same harness
@@ -394,11 +487,11 @@ layered on top of a real fix to the ceiling above — not as a replacement archi
 
 ## Open questions / next probes
 
-1. **Run Probe 5.** Built, not yet executed — needs a real WebGPU Chrome tab. Now the single
-   highest-priority open item: Probes 7/8 got a real capacity gradient via Ollama, but that's still
-   a quantization proxy (Probe 1's caveat), and it's the one thing standing between "Qwen3-1.7B
-   clears the ceiling via Ollama" and "raising the WebLLM budget to 2GB actually fixes this in the
-   shipped app."
+1. ~~Run Probe 5.~~ **Done.** 8/8 execution-verified correct on the real WebGPU/MLC build — resolves
+   the Ollama-proxy caveat that had carried unresolved through Probes 1–8. New open item this
+   surfaced: a 4-table WebLLM retest (the flat schema is the easy fixture; Probe 7's 4-table clear
+   was Ollama-only) and whether the download-reliability finding (item below) needs a real fix in
+   `webllm.ts` before shipping, not just a probe-harness workaround.
 2. ~~4-table retest for Qwen3-1.7B.~~ **Done — Probe 7.** 24/24 across 3 repeats, stable, both
    documented bug classes cleared.
 3. ~~Execution-retry rung.~~ **Already shipped, not a gap.** Checked the code, not just the doc:
@@ -428,37 +521,44 @@ layered on top of a real fix to the ceiling above — not as a replacement archi
 6. **N>1 repeats.** Partially resolved for the Ollama-proxy probes: Probes 7 and 8 both ran N=3 and
    came back fully stable (no flaky questions in either), which is meaningfully stronger evidence
    than every prior single-pass result in this document. Still open for the browser-native probes
-   (3, 4, 5) — Nano and, once run, WebLLM/Qwen3-1.7B have never been repeat-tested.
+   (3, 4, 5, 9) — Nano, and WebLLM/Qwen3-1.7B on both fixtures, have never been repeat-tested.
+   Now the single highest-priority open item: Probe 9 is N=1 on the real build, the only rigor gap
+   left between "Qwen3-1.7B clears the ceiling" and "clears it reliably enough to ship."
 7. **The current 1.5B pin, real execution.** Every real-execution result in this document (Probes
-   4, 6, 7, 8) has tested a *candidate* replacement, never the model actually shipping today.
+   4, 6, 7, 8, 9) has tested a *candidate* replacement, never the model actually shipping today.
    Probe 1's read on it was syntactic-only. Worth one real-execution pass on `Qwen2.5-Coder-1.5B`
    via Ollama, if only to have a same-rigor baseline to compare 0.5B/1.7B against instead of
    Probe 1's older, weaker read.
+8. ~~4-table WebLLM retest.~~ **Done — Probe 9.** 8/8 on the real MLC/WebGPU build, both documented
+   bug classes cleared. New open item this surfaced: per-question latency (12–88s, worst on the
+   join+grain questions) is a real UX cost that hasn't been weighed against the correctness gain —
+   worth surfacing explicitly if this moves toward a candidate decision, not just a footnote here.
 
 ## Artifacts
 
 - Probe 3/4 harnesses: standalone HTML pages built in-session under the scratchpad directory
   (ephemeral, not committed — noted here only so the build notes above are reproducible, not as a
   pointer to a persisted asset).
-- Probe 5–8 harnesses: **committed**, under
+- Probe 5–9 harnesses: **committed**, under
   [`eval/claude/16-light-model-sql-ceiling/`](../../../../eval/claude/16-light-model-sql-ceiling/):
-  `flat-schema-webllm-probe.html` (Probe 5, WebLLM/Qwen3-1.7B, not yet run),
+  `flat-schema-webllm-probe.html` (Probe 5, WebLLM/Qwen3-1.7B, flat schema, 8/8),
+  `4table-webllm-probe.html` (Probe 9, WebLLM/Qwen3-1.7B, 4-table schema, 8/8),
   `ollamaFlatSchemaProbe.ts` (Probe 6, flat schema, run against both Qwen3-1.7B and
   Qwen2.5-Coder-0.5B), `ollama4TableProbe.ts` (Probes 7/8, 4-table schema, same two models), and
   `probeShared.ts` (extraction/matching/repeat-loop code shared by the two Ollama scripts,
   factored out when repeats and the 4-table fixture needed the same plumbing). Both Ollama scripts
   take `[model] [repeats]` as CLI args. Folder
   [`README.md`](../../../../eval/claude/16-light-model-sql-ceiling/README.md) documents how to run
-  the three browser harnesses (Probes 3/4/5); the Ollama scripts need `ollama serve` running and
+  the four browser harnesses (Probes 3/4/5/9); the Ollama scripts need `ollama serve` running and
   the model pulled, no browser or HTTP server required.
 - Real code change: [`toolLadder.ts:65`](../../../../src/services/toolLadder.ts) fence-regex fix
   (see "Fix landed as a byproduct" above).
 
 ## Verdict
 
-_Still not a candidate decision, but closer to one than any prior point in this doc — an
-evidence-gathering track that has now produced a real, repeat-tested capacity gradient, same
-status as [07](07-diagnostics.md)'s instruments relative to the narration-fabrication candidates._
+_Updated 2026-08-07 after Probe 9. Still not a formal candidate decision — that's a product call,
+not this doc's to make — but every technical caveat this document has carried is now resolved for
+one specific model on the real shipped architecture._
 What's established: (a) the SQL-correctness ceiling is real and reproducible, and it is
 capacity-shaped rather than a blanket property of "small local models" — `Qwen3-1.7B` clears every
 join/grain question in this document stably (Probe 7, 24/24 across 3 repeats), `Qwen2.5-Coder-0.5B`
@@ -470,8 +570,27 @@ execution-retry rung — flagged as an open item earlier in this doc — turned 
 shipped, tested, and working (`toolLadder.ts`, `webllmProvider.ts`, `webllmProvider.test.ts`); no
 new code was needed there, only a correction to this doc.
 
-**What's still not established, and is now the whole remaining question:** whether Probe 7's Ollama
-result holds on the actual MLC-quantized WebGPU build the app would ship (Probe 5, built, still not
-run) — every result in (a) above is via the Ollama proxy, the one caveat Probe 1 raised and this
-doc has carried, unresolved, through eight probes. Until Probe 5 runs, "raise the WebLLM budget to
-2GB and ship Qwen3-1.7B" is a well-evidenced hypothesis, not a verified fix.
+**Update (2026-08-07): the Ollama-proxy caveat is resolved for the flat schema.** Probe 5 ran
+`Qwen3-1.7B-q4f16_1-MLC` on the real MLC/WebGPU build and scored 8/8 execution-verified correct,
+matching Probe 7's Ollama read on the easy fixture. What's now established across the real build:
+(e) the model itself produces correct SQL reliably once two harness gaps are closed — `<think>`
+chain-of-thought stripped before extraction (Qwen3 is the first reasoning model in this document's
+matrix; `toolLadder.ts` has never needed this and doesn't need it today, since the current pin
+isn't a reasoning model), and enough `max_tokens` headroom (512 truncated 2/8 responses mid-thought;
+2048 did not); (f) the download itself is measurably more failure-prone than the current pin's —
+not a CORS/config issue (verified directly against the CDN), just a ~50%-bigger transfer with more
+exposure to transient connection drops, worth a real retry-loop fix in `webllm.ts` (not just the
+probe harness) before this ships, independent of the SQL-correctness question.
+
+**Update (2026-08-07, same day): Probe 9 closed the remaining gap — 8/8 on the 4-table schema, on
+the real WebGPU build.** `Qwen3-1.7B-q4f16_1-MLC` cleared all 8 questions, including both documented
+failure classes: the grain bug ("average order value" — collapsing the join's fan-out to per-order
+totals before averaging) and the join+`GROUP BY` hallucination ("category with most revenue" — the
+exact question every other model in this document, including Nano and the current pin's own Probe 1
+read, has gotten wrong). This is no longer a proxy result — every technical caveat this document
+carried since Probe 1 (Ollama-quantization-as-proxy, flat-schema-only) is now resolved for this
+model. Latency was materially higher than the flat schema (39–88s per question vs. 10–24s) and
+higher than Probe 7's Ollama numbers for the same questions — expected, given more reasoning tokens
+for join-heavy questions plus in-browser WebGPU vs. local Ollama, but a real UX cost to weigh
+against the correctness gain if this ships, not yet quantified against the current pin. N=1 on this
+specific build (Probe 7's N=3 stability was via Ollama, not WebGPU) — see open items above.
