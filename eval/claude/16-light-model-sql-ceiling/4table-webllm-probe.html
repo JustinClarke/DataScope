@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Qwen3-1.7B (WebLLM) — 4-table probe</title>
+<title>Qwen3-1.7B (WebLLM) — 4-table probe, N=3</title>
 <style>
   body { font-family: ui-monospace, monospace; max-width: 1040px; margin: 2rem auto; padding: 0 1rem; background:#0b0d10; color:#d8dee4; }
   h1 { font-size: 1.1rem; }
@@ -46,8 +46,11 @@ mid-transfer on a real connection; each retry only re-fetches what failed), stri
 <code>&lt;think&gt;...&lt;/think&gt;</code> before SQL extraction (Qwen3 is a reasoning model), and
 <code>max_tokens: 2048</code> (512 truncated some Probe 5 answers mid-thought — the join-heavy
 questions here are more reasoning-heavy than the flat schema's, so this matters more here, not
-less). Write-up: <a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling.md" style="color:#7ee787">experiment 16</a>.</p>
-<button id="run">Run probe</button>
+less). Write-up: <a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling.md" style="color:#7ee787">experiment 16</a>.
+Runs the question set <b>3 times</b> against the same loaded engine (Probe 9 was N=1; this closes that
+gap to match Probe 7's N=3 Ollama rigor) and reports per-question stability, same shape as the Ollama
+scripts' `runProbe()`.</p>
+<button id="run">Run probe (N=3)</button>
 <button id="copy" disabled>Copy JSON results</button>
 <div id="status">Idle. Click "Run probe".</div>
 <div id="out"></div>
@@ -249,24 +252,42 @@ async function runOne(engine, conn, item) {
   return row;
 }
 
-function renderRows(rows) {
+// rowsByRun: array of per-run row arrays, same question order each run (byQuestion below
+// groups by question text, mirroring probeShared.ts's runProbe() summary shape).
+function renderRuns(rowsByRun) {
   const out = document.getElementById('out');
-  let correct = 0;
-  let html = '<table><thead><tr><th>Question</th><th>Generated SQL</th><th>Gold</th><th>Actual</th><th>Outcome</th><th>ms</th></tr></thead><tbody>';
-  for (const r of rows) {
-    if (r.outcome === 'correct') correct++;
-    const cls = r.outcome === 'correct' ? 'ok' : 'bad';
+  const byQuestion = new Map();
+  for (const rows of rowsByRun) {
+    for (const r of rows) {
+      const list = byQuestion.get(r.question) ?? [];
+      list.push(r);
+      byQuestion.set(r.question, list);
+    }
+  }
+
+  let totalCorrect = 0;
+  let totalRuns = 0;
+  let html = '<table><thead><tr><th>Question</th><th>[correct/N]</th><th>Stability</th><th>Last SQL</th><th>Gold</th><th>Last actual</th><th>avg ms</th></tr></thead><tbody>';
+  for (const [question, rows] of byQuestion) {
+    const correct = rows.filter((r) => r.outcome === 'correct').length;
+    totalCorrect += correct;
+    totalRuns += rows.length;
+    const stable = correct === 0 || correct === rows.length;
+    const last = rows[rows.length - 1];
+    const avgMs = Math.round(rows.reduce((s, r) => s + (r.ms || 0), 0) / rows.length);
+    const cls = correct === rows.length ? 'ok' : (correct === 0 ? 'bad' : 'bad');
     html += `<tr>
-      <td>${r.question}</td>
-      <td class="sql">${(r.sql || r.raw || '(none)').toString().replace(/</g,'&lt;')}</td>
-      <td>${r.gold}</td>
-      <td>${r.actual !== undefined ? r.actual : (r.executionError || '')}</td>
-      <td class="${cls}">${r.outcome}</td>
-      <td>${r.ms}</td>
+      <td>${question}</td>
+      <td class="${cls}">${correct}/${rows.length}</td>
+      <td>${stable ? 'stable' : '<b>FLAKY</b>'}</td>
+      <td class="sql">${(last.sql || last.raw || '(none)').toString().replace(/</g,'&lt;')}</td>
+      <td>${last.gold}</td>
+      <td>${last.actual !== undefined ? last.actual : (last.executionError || '')}</td>
+      <td>${avgMs}</td>
     </tr>`;
   }
   html += '</tbody></table>';
-  html += `<div class="summary">Execution-verified correct: <b>${correct}/${rows.length}</b> (model: ${MODEL_ID})</div>`;
+  html += `<div class="summary">Execution-verified correct: <b>${totalCorrect}/${totalRuns}</b> (${byQuestion.size} questions x ${rowsByRun.length} run(s), model: ${MODEL_ID})</div>`;
   out.innerHTML = html;
 }
 
@@ -304,24 +325,29 @@ document.getElementById('run').addEventListener('click', async () => {
   await seed(conn);
   log('Seed complete: 4-table customers/products/orders/order_items fixture.');
 
-  const rows = [];
-  for (let i = 0; i < QUESTIONS.length; i++) {
-    log(`Running question ${i + 1}/${QUESTIONS.length}: ${QUESTIONS[i].q}`);
-    try {
-      const row = await runOne(engine, conn, QUESTIONS[i]);
-      rows.push(row);
-      log(`  -> ${row.outcome}`);
-    } catch (e) {
-      log(`  failed: ${e}`);
-      rows.push({ question: QUESTIONS[i].q, outcome: 'harness_error', error: String(e) });
+  const REPEATS = 3;
+  const rowsByRun = [];
+  for (let run = 1; run <= REPEATS; run++) {
+    const rows = [];
+    for (let i = 0; i < QUESTIONS.length; i++) {
+      log(`[run ${run}/${REPEATS}] question ${i + 1}/${QUESTIONS.length}: ${QUESTIONS[i].q}`);
+      try {
+        const row = await runOne(engine, conn, QUESTIONS[i]);
+        rows.push(row);
+        log(`  -> ${row.outcome}`);
+      } catch (e) {
+        log(`  failed: ${e}`);
+        rows.push({ question: QUESTIONS[i].q, outcome: 'harness_error', error: String(e) });
+      }
     }
+    rowsByRun.push(rows);
   }
 
   log('Done.');
-  renderRows(rows);
+  renderRuns(rowsByRun);
   copyBtn.disabled = false;
   copyBtn.onclick = async () => {
-    const json = JSON.stringify(rows, null, 2);
+    const json = JSON.stringify(rowsByRun, null, 2);
     try {
       await navigator.clipboard.writeText(json);
       copyBtn.textContent = 'Copied!';

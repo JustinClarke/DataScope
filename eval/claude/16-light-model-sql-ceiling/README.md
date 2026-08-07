@@ -33,7 +33,14 @@ Not part of the app build. Two kinds:
   `ollama4TableProbe.ts` (Probe 7, 24/24 via Ollama), run against `Qwen3-1.7B-q4f16_1-MLC` over
   WebLLM in-tab — the real-build counterpart to Probe 7, and the harder fixture Probe 5 didn't
   cover. Carries over all three of Probe 5's fixes (load retry, `<think>` stripping, 2048
-  `max_tokens`) from the start. Not yet run.
+  `max_tokens`) from the start. **Run — 8/8, N=1** (documented in the experiment doc). Updated
+  since to run **N=3** in-page (repeats against the same loaded engine, stability summary
+  rendered per question) — closing the N=1 gap flagged as the last rigor item; not yet re-run at
+  N=3.
+- **`one-join-webllm-probe.html`** — Probe 12. Same one-join schema (`customers`/`orders`, no
+  fan-out)/questions/gold SQL as `ollamaOneJoinProbe.ts` (Probe 10, 21/24 via Ollama), run
+  against `Qwen3-1.7B-q4f16_1-MLC` over WebLLM in-tab — the real-build counterpart to Probe 10,
+  resolving its Ollama-proxy caveat. Runs N=3 in-page from the start. Not yet run.
 
 ## Running
 
@@ -56,7 +63,13 @@ http://localhost:8080/eval/claude/16-light-model-sql-ceiling/flat-schema-probe.h
 http://localhost:8080/eval/claude/16-light-model-sql-ceiling/4table-schema-probe.html
 http://localhost:8080/eval/claude/16-light-model-sql-ceiling/flat-schema-webllm-probe.html
 http://localhost:8080/eval/claude/16-light-model-sql-ceiling/4table-webllm-probe.html
+http://localhost:8080/eval/claude/16-light-model-sql-ceiling/one-join-webllm-probe.html
 ```
+
+`4table-webllm-probe.html` and `one-join-webllm-probe.html` now run the question set **3 times**
+against the same loaded engine per click (no reload needed between runs) and render a
+per-question stability summary (stable vs. flaky, same read as the Ollama scripts' `runProbe()`)
+instead of a single pass.
 
 Click "Run probe". Results render in-page and can be copied as JSON via the button next to it.
 `flat-schema-webllm-probe.html` and `4table-webllm-probe.html` need a WebGPU-capable browser/GPU

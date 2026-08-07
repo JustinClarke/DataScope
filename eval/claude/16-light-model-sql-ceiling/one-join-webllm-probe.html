@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Qwen3-1.7B (WebLLM) — one-join probe, N=3</title>
+<style>
+  body { font-family: ui-monospace, monospace; max-width: 1040px; margin: 2rem auto; padding: 0 1rem; background:#0b0d10; color:#d8dee4; }
+  h1 { font-size: 1.1rem; }
+  button { font: inherit; padding: 0.5rem 1rem; cursor: pointer; background:#1b2027; color:#d8dee4; border:1px solid #333; border-radius:4px; }
+  button:disabled { opacity:0.5; cursor:default; }
+  #status { white-space: pre-wrap; background:#12151a; border:1px solid #262b32; padding:0.75rem; border-radius:4px; margin:1rem 0; font-size:0.85rem; max-height:220px; overflow:auto; }
+  table { border-collapse: collapse; width:100%; font-size:0.8rem; margin-top:1rem; }
+  th, td { border:1px solid #262b32; padding:0.4rem 0.5rem; text-align:left; vertical-align:top; }
+  th { background:#161a20; }
+  td.sql { max-width: 340px; white-space: pre-wrap; word-break: break-word; }
+  .ok { color:#7ee787; }
+  .bad { color:#ff7b72; }
+  .summary { margin-top:1rem; font-size:0.95rem; }
+</style>
+<!--
+  Points bare specifiers at this repo's own node_modules (already resolved for the app by
+  Vite; there is no Vite here, so a browser needs an explicit map). Nothing under this
+  directory is vendored — running this file requires `npm install` having been run at the
+  repo root and requires being served from a path where "../../../node_modules/..." resolves,
+  i.e. from eval/claude/16-light-model-sql-ceiling/ with the repo root as the server root.
+-->
+<script type="importmap">
+{
+  "imports": {
+    "apache-arrow": "../../../node_modules/apache-arrow/Arrow.dom.mjs",
+    "tslib": "../../../node_modules/tslib/tslib.es6.mjs",
+    "flatbuffers": "../../../node_modules/flatbuffers/mjs/flatbuffers.js",
+    "@mlc-ai/web-llm": "../../../node_modules/@mlc-ai/web-llm/lib/index.js"
+  }
+}
+</script>
+</head>
+<body>
+<h1>Qwen3-1.7B (WebLLM) — one-join probe (real execution, real ground truth)</h1>
+<p>Probe 12: same one-join schema (<code>customers</code>/<code>orders</code>, no fan-out), questions,
+and gold SQL as
+<a href="ollamaOneJoinProbe.ts" style="color:#7ee787">ollamaOneJoinProbe.ts</a> (Probe 10, Ollama proxy,
+21/24), run instead against <code>Qwen3-1.7B-q4f16_1-MLC</code> over WebLLM in-tab — the real
+MLC/WebGPU counterpart, resolving the Ollama-proxy caveat for this fixture the way Probe 9 did for
+the 4-table one. Carries over the three fixes Probe 5/9 needed: a bounded load retry loop (large
+multi-shard download can drop mid-transfer on a real connection; each retry only re-fetches what
+failed), stripping <code>&lt;think&gt;...&lt;/think&gt;</code> before SQL extraction (Qwen3 is a
+reasoning model), and <code>max_tokens: 2048</code>.
+Write-up: <a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling.md" style="color:#7ee787">experiment 16</a>.
+Runs the question set <b>3 times</b> against the same loaded engine and reports per-question
+stability, same shape as the Ollama scripts' `runProbe()` — directly comparable to Probe 10's Ollama
+N=3 read.</p>
+<button id="run">Run probe (N=3)</button>
+<button id="copy" disabled>Copy JSON results</button>
+<div id="status">Idle. Click "Run probe".</div>
+<div id="out"></div>
+
+<script type="module">
+import * as duckdb from '../../../node_modules/@duckdb/duckdb-wasm/dist/duckdb-browser.mjs';
+import { CreateMLCEngine } from '@mlc-ai/web-llm';
+
+const MODEL_ID = 'Qwen3-1.7B-q4f16_1-MLC';
+
+const abs = (p) => new URL(p, document.baseURI).href;
+const DUCKDB_DIST = '../../../node_modules/@duckdb/duckdb-wasm/dist/';
+const BUNDLES = {
+  mvp: { mainModule: abs(DUCKDB_DIST + 'duckdb-mvp.wasm'), mainWorker: abs(DUCKDB_DIST + 'duckdb-browser-mvp.worker.js') },
+  eh: { mainModule: abs(DUCKDB_DIST + 'duckdb-eh.wasm'), mainWorker: abs(DUCKDB_DIST + 'duckdb-browser-eh.worker.js') },
+};
+
+// Byte-identical to ollamaOneJoinProbe.ts's fixture, so results are directly comparable to Probe 10.
+const SCHEMA_TEXT = `Tables:
+customers(customer_id INTEGER, name TEXT, region TEXT, signed_up_at DATE)
+orders(order_id INTEGER, customer_id INTEGER, ordered_at DATE, status TEXT, amount DECIMAL)`;
+
+const SQL_INSTRUCTION =
+  'Reply with ONLY one DuckDB SQL SELECT statement that answers the question — ' +
+  'no explanation, no code fence commentary. DuckDB uses Postgres dialect: ' +
+  'double-quoted identifiers, LIMIT not TOP.';
+
+// Same as flat-schema-webllm-probe.html post-Probe-5: strip <think> before matching a fence
+// or bare SELECT/WITH. Qwen3 wraps correct SQL in chain-of-thought by default; toolLadder.ts's
+// real extractSql doesn't need this fix since the current shipped pin isn't a reasoning model.
+function extractSql(text) {
+  const stripped = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  const fence = stripped.match(/```(?:sql|duckdb)?\s*([\s\S]*?)```/i);
+  const candidate = (fence ? fence[1] : stripped).trim().split(';')[0].trim();
+  return /^\(*\s*(select|with)\b/i.test(candidate) ? candidate : null;
+}
+
+const QUESTIONS = [
+  { q: 'How many customers do we have in total?', gold: 'SELECT COUNT(*) FROM customers' },
+  { q: 'What is the total revenue across all orders?', gold: 'SELECT SUM(amount) FROM orders' },
+  {
+    q: 'How many orders were placed by customers in the "west" region?',
+    gold: "SELECT COUNT(*) FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE c.region = 'west'",
+  },
+  {
+    q: 'What is the average order value for customers in the "east" region?',
+    gold: "SELECT AVG(o.amount) FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE c.region = 'east'",
+  },
+  {
+    q: 'Which customer region generates the most total revenue?',
+    gold: `SELECT c.region FROM orders o JOIN customers c ON c.customer_id = o.customer_id
+      GROUP BY c.region ORDER BY SUM(o.amount) DESC LIMIT 1`,
+  },
+  {
+    q: 'How many distinct customers have placed at least one order?',
+    gold: 'SELECT COUNT(DISTINCT customer_id) FROM orders',
+  },
+  { q: 'What is the average order value across all orders?', gold: 'SELECT AVG(amount) FROM orders' },
+  { q: 'How many orders have a status of "cancelled"?', gold: "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'" },
+];
+
+function log(msg) {
+  const el = document.getElementById('status');
+  el.textContent += '\n' + msg;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function initDuckDB() {
+  const bundle = await duckdb.selectBundle(BUNDLES);
+  const worker = new Worker(bundle.mainWorker);
+  const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
+  const db = new duckdb.AsyncDuckDB(logger, worker);
+  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  const conn = await db.connect();
+  return { db, conn };
+}
+
+// Byte-identical to ollamaOneJoinProbe.ts's seed().
+async function seed(conn) {
+  await conn.query(`
+    CREATE TABLE customers AS
+    SELECT
+      i AS customer_id,
+      ('cust_' || i) AS name,
+      (['west','east','north','south'])[1 + (i % 4)] AS region,
+      DATE '2023-01-01' + ((i * 3 % 700)::INTEGER) AS signed_up_at
+    FROM range(1, 31) t(i)
+  `);
+  await conn.query(`
+    CREATE TABLE orders AS
+    SELECT
+      i AS order_id,
+      (1 + (i % 30)) AS customer_id,
+      DATE '2024-01-01' + ((i % 365)::INTEGER) AS ordered_at,
+      CASE WHEN i % 9 = 0 THEN 'cancelled' ELSE 'completed' END AS status,
+      ROUND(10 + (i * 13 % 490), 2) AS amount
+    FROM range(1, 301) t(i)
+  `);
+}
+
+async function execScalar(conn, sql) {
+  const result = await conn.query(sql);
+  const rows = result.toArray();
+  if (rows.length === 0) return null;
+  const row = rows[0].toJSON ? rows[0].toJSON() : rows[0];
+  const values = Object.values(row);
+  return values[0];
+}
+
+function valuesMatch(a, b) {
+  if (a === null || b === null) return a === b;
+  const na = Number(a), nb = Number(b);
+  if (!Number.isNaN(na) && !Number.isNaN(nb)) return Math.abs(na - nb) < 0.01;
+  return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+}
+
+async function runOne(engine, conn, item) {
+  const row = { question: item.q };
+
+  let gold;
+  try {
+    gold = await execScalar(conn, item.gold);
+  } catch (e) {
+    row.goldError = String(e);
+  }
+  row.gold = gold;
+
+  let text = '';
+  let error = null;
+  const t0 = performance.now();
+  try {
+    const result = await engine.chat.completions.create({
+      messages: [
+        { role: 'user', content: `${SCHEMA_TEXT}\n\nQuestion: ${item.q}\n\n${SQL_INSTRUCTION}` },
+      ],
+      temperature: 0,
+      max_tokens: 2048,
+    });
+    text = result.choices[0]?.message?.content ?? '';
+  } catch (e) {
+    error = String(e);
+  }
+  row.ms = Math.round(performance.now() - t0);
+
+  const sql = error ? null : extractSql(text);
+  row.raw = text;
+  row.sql = sql;
+
+  if (error) {
+    row.outcome = 'engine_error';
+    row.engineError = error;
+    return row;
+  }
+  if (!sql) {
+    row.outcome = 'no_sql_extracted';
+    return row;
+  }
+
+  try {
+    const actual = await execScalar(conn, sql);
+    row.actual = actual;
+    row.outcome = valuesMatch(actual, gold) ? 'correct' : 'wrong_value';
+  } catch (e) {
+    row.outcome = 'execution_error';
+    row.executionError = String(e);
+  }
+
+  return row;
+}
+
+// rowsByRun: array of per-run row arrays, same question order each run (byQuestion below
+// groups by question text, mirroring probeShared.ts's runProbe() summary shape).
+function renderRuns(rowsByRun) {
+  const out = document.getElementById('out');
+  const byQuestion = new Map();
+  for (const rows of rowsByRun) {
+    for (const r of rows) {
+      const list = byQuestion.get(r.question) ?? [];
+      list.push(r);
+      byQuestion.set(r.question, list);
+    }
+  }
+
+  let totalCorrect = 0;
+  let totalRuns = 0;
+  let html = '<table><thead><tr><th>Question</th><th>[correct/N]</th><th>Stability</th><th>Last SQL</th><th>Gold</th><th>Last actual</th><th>avg ms</th></tr></thead><tbody>';
+  for (const [question, rows] of byQuestion) {
+    const correct = rows.filter((r) => r.outcome === 'correct').length;
+    totalCorrect += correct;
+    totalRuns += rows.length;
+    const stable = correct === 0 || correct === rows.length;
+    const last = rows[rows.length - 1];
+    const avgMs = Math.round(rows.reduce((s, r) => s + (r.ms || 0), 0) / rows.length);
+    const cls = correct === rows.length ? 'ok' : (correct === 0 ? 'bad' : 'bad');
+    html += `<tr>
+      <td>${question}</td>
+      <td class="${cls}">${correct}/${rows.length}</td>
+      <td>${stable ? 'stable' : '<b>FLAKY</b>'}</td>
+      <td class="sql">${(last.sql || last.raw || '(none)').toString().replace(/</g,'&lt;')}</td>
+      <td>${last.gold}</td>
+      <td>${last.actual !== undefined ? last.actual : (last.executionError || '')}</td>
+      <td>${avgMs}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  html += `<div class="summary">Execution-verified correct: <b>${totalCorrect}/${totalRuns}</b> (${byQuestion.size} questions x ${rowsByRun.length} run(s), model: ${MODEL_ID})</div>`;
+  out.innerHTML = html;
+}
+
+document.getElementById('run').addEventListener('click', async () => {
+  const runBtn = document.getElementById('run');
+  const copyBtn = document.getElementById('copy');
+  runBtn.disabled = true;
+
+  document.getElementById('status').textContent = `Loading ${MODEL_ID} (first run downloads and caches shards; this can take a while)...`;
+  // Cache.add() can drop mid-download on a flaky connection; addToCache() checks
+  // cache.match() before re-fetching, so each retry only needs the shards that
+  // failed last time, not the whole download. Same fix as Probe 5.
+  const MAX_LOAD_ATTEMPTS = 10;
+  let engine;
+  for (let attempt = 1; attempt <= MAX_LOAD_ATTEMPTS; attempt++) {
+    try {
+      engine = await CreateMLCEngine(MODEL_ID, {
+        initProgressCallback: (report) => log(`[load] ${report.text}`),
+      });
+      break;
+    } catch (e) {
+      log(`Load attempt ${attempt}/${MAX_LOAD_ATTEMPTS} failed: ${e}`);
+      if (attempt === MAX_LOAD_ATTEMPTS) {
+        log('Giving up after max attempts.');
+        runBtn.disabled = false;
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  }
+  log('Engine ready.');
+
+  log('Booting DuckDB-WASM and seeding fixture data...');
+  const { conn } = await initDuckDB();
+  await seed(conn);
+  log('Seed complete: one-join customers/orders fixture.');
+
+  const REPEATS = 3;
+  const rowsByRun = [];
+  for (let run = 1; run <= REPEATS; run++) {
+    const rows = [];
+    for (let i = 0; i < QUESTIONS.length; i++) {
+      log(`[run ${run}/${REPEATS}] question ${i + 1}/${QUESTIONS.length}: ${QUESTIONS[i].q}`);
+      try {
+        const row = await runOne(engine, conn, QUESTIONS[i]);
+        rows.push(row);
+        log(`  -> ${row.outcome}`);
+      } catch (e) {
+        log(`  failed: ${e}`);
+        rows.push({ question: QUESTIONS[i].q, outcome: 'harness_error', error: String(e) });
+      }
+    }
+    rowsByRun.push(rows);
+  }
+
+  log('Done.');
+  renderRuns(rowsByRun);
+  copyBtn.disabled = false;
+  copyBtn.onclick = async () => {
+    const json = JSON.stringify(rowsByRun, null, 2);
+    try {
+      await navigator.clipboard.writeText(json);
+      copyBtn.textContent = 'Copied!';
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = json;
+      ta.style.position = 'fixed';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyBtn.textContent = ok ? 'Copied!' : 'Copy failed — see console';
+      if (!ok) console.error('Clipboard copy failed:', e);
+    }
+    setTimeout(() => { copyBtn.textContent = 'Copy JSON results'; }, 1500);
+  };
+  runBtn.disabled = false;
+});
+</script>
+</body>
+</html>

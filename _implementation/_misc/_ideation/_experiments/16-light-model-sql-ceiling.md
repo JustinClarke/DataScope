@@ -411,6 +411,16 @@ noticeable in an interactive analyst loop, independent of whether the answer is 
 
 Harness: [`4table-webllm-probe.html`](../../../../eval/claude/16-light-model-sql-ceiling/4table-webllm-probe.html).
 
+**Update (2026-08-07): re-run at N=3 on the real WebGPU build — 24/24, fully stable.** The harness
+was extended to run the question set 3 times against the same loaded engine and report
+per-question stability, closing the N=1 gap flagged as the last open rigor item. Every one of the
+8 questions passed all 3 runs, including both documented failure classes (grain, join+`GROUP BY`
+hallucination) — byte-identical stability read to Probe 7's Ollama N=3 result (24/24), now
+confirmed on the actual MLC/WebGPU build, not the proxy. Latency stayed in the same range as the
+original N=1 run (avg 14–83s/question across the 3 repeats; join+grain questions still the
+slowest). This was the single highest-priority open item in this document; it's now closed for
+the 4-table schema. Only the one-join schema (Probe 10/12) still needs its WebGPU N=3 confirmation.
+
 ## Probe 8 — Qwen2.5-Coder-0.5B-Instruct over Ollama, both schemas
 
 The other standing open item (flagged in Probe 2's cataloging, never actually run). Same harness
@@ -441,6 +451,331 @@ attempt fixes any of these four is untested here (see the retry-rung note below)
 
 Harness: same `ollama4TableProbe.ts`/`ollamaFlatSchemaProbe.ts`, `qwen2.5-coder:0.5b` as the
 model argument.
+
+---
+
+## Probe 10 — one-join schema (customers/orders, no fan-out), real execution, N=3, two models
+
+Open item #4, finally run: the step between the flat schema (0 joins) and the 4-table schema
+(a fan-out join via `order_items`) that's more representative of what real DataScope datasets
+look like than jumping straight to 4-way joins. Two tables, `customers` and `orders`, with
+`amount` denormalized directly onto `orders` — deliberately **no fan-out** (unlike the 4-table
+schema's `order_items`), to isolate whether a single join *by itself* is enough to break a
+model that's fine at 0 joins, independent of the grain-collapsing problem Probes 1/3/4/7
+documented. 8 questions, 4 requiring the join (filter, avg-with-filter, group/order/limit) and
+4 not (mirroring Probe 7/8's mix ratio), real execution against headless Node DuckDB, N=3,
+same two models as Probes 7/8 for a direct capacity-gradient comparison.
+
+**Qwen3-1.7B: 21/24, stable.** All 4 join questions passed every run. The one failure, stable
+across all 3 runs, is a **new bug class not seen anywhere else in this document**: `SELECT
+COUNT(DISTINCT customer_id) FROM customers INNER JOIN orders ON customers.customer_id =
+orders.customer_id` — a DuckDB binder error, `Ambiguous reference to column name
+"customer_id"`, because the model never qualified the column despite it existing on both
+sides of the join. Notably this is a *simpler* bug than the grain/hallucination classes this
+model has otherwise cleared (Probes 7/9) — it doesn't require reasoning about aggregation
+semantics at all, just consistent qualification once a join is added, and it happened on the
+one question where the join added nothing (no filter, no grouping — the join was pure noise
+relative to what the query needed). Latency: 8–16s/question, in line with Probe 7's Ollama
+numbers.
+
+**Qwen2.5-Coder-0.5B: 15/24, stable.** All 4 non-join questions passed every run; all 3
+join-requiring questions that reference `region` (a `customers`-only column) failed every
+run, plus the join produced by the "region" bug class is different from the 4-table doc's
+join failures — twice it skipped the join entirely and queried `region` directly against
+`orders` (`Referenced column "region" not found in FROM clause!`), and once it did add the
+join but then referenced the wrong side's alias for the joined-in column
+(`Table "T2" does not have a column named "region"` — `T2` was `orders`, `region` lives on
+`T1`/`customers`). This reproduces Probe 8's finding (all failures are DuckDB execution
+errors, not silent wrong values, so the shipped retry rung has something to trigger on) on a
+schema half the size of the 4-table one — the model isn't only failing at fan-out/grain, it's
+failing at **join presence and side-tracking at all**, once any join exists. The one
+join-adjacent question it got right (`COUNT(DISTINCT customer_id) FROM orders`, no join
+needed since `customer_id` already lives on `orders`) is really a no-join question in
+disguise, consistent with that read. Latency: 0.26–1.4s/question (first-call warm-up aside),
+consistent with Probe 8's numbers.
+
+**What this settles:** the doc's "4-table failures are about fan-out/grain" framing was
+incomplete. Qwen2.5-Coder-0.5B doesn't make it to fan-out — it fails at the *presence of a
+join at all*, on a schema with no grain problem to solve. Qwen3-1.7B, by contrast, handles
+every join-reasoning question here cleanly and only trips on a narrower, join-adjacent
+qualification bug that the 4-table probes never surfaced (because Probes 7/9's 4-table schema
+uses no naturally-colliding column names in a query where the join added nothing). Net: the
+capacity gradient from Probes 7/8 holds at one join too, but the *specific* one-join failure
+mode for 1.7B (ambiguous-column qualification, not grain or hallucination) is new information,
+not a repeat of the doc's existing bug taxonomy.
+
+**Caveats:**
+- **N=3, not the N=1 that most of this document's Nano/WebLLM results carry**, but still not
+  a large sample.
+- **Ollama, not the MLC/WebGPU build** — same standing caveat as every other Ollama-run probe
+  here for 1.7B specifically (Probe 9 already resolved this for the 4-table schema; this
+  fixture hasn't had a WebLLM retest).
+- **Schema-specific column-collision setup.** The `customer_id` ambiguity bug for 1.7B is
+  conditional on the join key sharing a name across tables with no alias qualification
+  required by the question — a schema where join keys are named uniquely (e.g.
+  `orders.customer_id` vs. some `customers.id`) might not surface it at all. Worth noting
+  before treating this as a general "1.7B can't do joins" finding — it can, on 7 of 8
+  questions here and all 24/24 of Probe 7's harder 4-table joins; this is a narrower,
+  real, but schema-shape-dependent miss.
+
+Harness: [`ollamaOneJoinProbe.ts`](../../../../eval/claude/16-light-model-sql-ceiling/ollamaOneJoinProbe.ts),
+run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollamaOneJoinProbe.ts [model] [repeats]`.
+
+## Probe 12 — Qwen3-1.7B over WebLLM, one-join schema, real execution, N=3
+
+The WebGPU counterpart to Probe 10, the way Probe 9 was to Probe 7 — same one-join fixture,
+questions, and gold SQL as `ollamaOneJoinProbe.ts`, run against `Qwen3-1.7B-q4f16_1-MLC` over
+real WebLLM/WebGPU in-tab, N=3 from the start (the harness was built after Probe 9/11 already
+established the value of repeat-testing on the real build, so this skipped the N=1-then-retest
+step Probes 5/9 needed).
+
+**Result: 24/24, fully stable — every question passed all 3 runs, including the one Probe 10
+got wrong via Ollama.** Probe 10's stable failure was `SELECT COUNT(DISTINCT customer_id) FROM
+customers INNER JOIN orders ON customers.customer_id = orders.customer_id` — a binder error
+from an unqualified column after an unnecessary join. On the real WebGPU build the model didn't
+make that mistake at all: it answered with `SELECT COUNT(DISTINCT customer_id) FROM orders`,
+no join, which is both simpler and correct (Probe 11 already showed the Ollama version
+*self-corrects* this same failure via the shipped retry rung — this shows the WebGPU build
+doesn't need to, because it doesn't produce the ambiguous query in the first place). Whether
+that's genuine model behavior divergence between Ollama's `Q4_K_M` and MLC's `q4f16_1`
+quantization, or just this fixture's temp-0 determinism landing on a different (also valid)
+plan, isn't distinguishable from a single N=3 run — but it's a second, independent way this
+question now resolves correctly, on top of Probe 11's confirmed retry-recovery path.
+
+Latency: 12–65s/question, in the same range as Probe 9's 4-table numbers (join+group questions
+still the slowest — "which region generates the most revenue" averaged 41.6s).
+
+**This closes the last open rigor gap in this document.** Every fixture built here (flat,
+4-table, one-join) now has an N≥3 execution-verified clean result on the real MLC/WebGPU build
+for the candidate model, not just the Ollama proxy.
+
+Harness: [`one-join-webllm-probe.html`](../../../../eval/claude/16-light-model-sql-ceiling/one-join-webllm-probe.html).
+
+---
+
+## Probe 11 — does the shipped retry rung actually fix Probe 10's failures?
+
+`toolLadder.ts`'s `ladderRung()` already returns to the `sql` rung on any execution error, and
+`webllmProvider.ts`'s `toChatMessages()` already feeds the DuckDB error back verbatim — this
+was confirmed as shipped code in an earlier open item, not assumed. What was never tested is
+whether a model actually *uses* that feedback to self-correct. This replays the exact retry
+shape (first SQL as an assistant turn, the real DuckDB error as a user turn, `SQL_INSTRUCTION`
+again) against Probe 10's two stable failures, N=3 each.
+
+**Qwen3-1.7B: 3/3 recovered.** Given `Ambiguous reference to column name "customer_id"`, every
+retry re-emitted the same query with both instances of `customer_id` qualified
+(`COUNT(DISTINCT customers.customer_id)`) and got the correct answer. The retry rung fully
+closes this bug for the model that's actually the shipping candidate — this failure mode
+needs no additional fix beyond what's already in `toolLadder.ts`/`webllmProvider.ts`.
+
+**Qwen2.5-Coder-0.5B: 0/3 recovered.** Given `Referenced column "region" not found in FROM
+clause!` with the candidate bindings listed, the model re-emitted the *exact same* incorrect
+SQL verbatim on all 3 retries — it didn't add the join at all, just repeated the query that
+already failed. Not relevant to the shipping decision (0.5B isn't the candidate), but it's a
+sharper data point on the capacity gradient: 1.7B doesn't just produce correct SQL more often
+than 0.5B, it can *use* execution feedback to repair a wrong query, and 0.5B — at least for
+this failure — cannot.
+
+**Bottom line for "how do we fix this":** for the candidate model, it's already fixed. No new
+product code needed — the retry rung shipped before this document existed and handles exactly
+this class of error for Qwen3-1.7B. The one thing this doesn't cover is Probe 3/4's grain-error
+class (wrong-but-executing SQL, nothing for the retry to trigger on) — but that's a pre-existing
+gap already noted in this document, not something Probe 10/11 changes.
+
+Harness: [`ollamaRetryProbe.ts`](../../../../eval/claude/16-light-model-sql-ceiling/ollamaRetryProbe.ts),
+run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollamaRetryProbe.ts [model] [repeats]`.
+
+---
+
+## Probe 13 — the current 1.5B pin and Qwen3-0.6B, same rigor, all three fixtures
+
+Closes open item #7 (never tested the model actually shipping today at this rigor) and answers
+a second question the doc hadn't asked yet: is there a candidate that gets some of 1.7B's
+correctness gain **without** raising the WebLLM download budget at all? `Qwen3-0.6B-q4f16_1-MLC`
+(1403MB VRAM, confirmed real in Probe 2's catalog check) is the obvious candidate — same
+architecture/reasoning family as 1.7B, smaller. Both run via the Ollama proxy (same standing
+caveat as every other Ollama probe here), same harnesses (`ollamaFlatSchemaProbe.ts`,
+`ollama4TableProbe.ts`, `ollamaOneJoinProbe.ts`), N=3 where completed.
+
+**`qwen2.5-coder:1.5b` (current shipped pin):**
+
+| Fixture | Result |
+| :--- | :--- |
+| Flat schema | **24/24 stable** |
+| One-join schema | **24/24 stable** — the pin handles a single join fine when there's no fan-out to collapse |
+| 4-table schema | **18/24** — 2 of 8 questions fail all 3 runs, stably |
+
+The two stable 4-table failures are the doc's exact governing bug taxonomy:
+
+- **Top-selling product** (aggregate-in-`WHERE`, execution error): `SELECT SUM(quantity) FROM
+  order_items WHERE product_id = (SELECT product_id FROM products ORDER BY SUM(quantity) DESC
+  LIMIT 1)` — aggregate inside `WHERE`, a DuckDB binder error. Same shape as Probe 8's
+  `Qwen2.5-Coder-0.5B` failure on the identical question.
+- **Average order value** (grain error, silently wrong): `SELECT AVG(T1.price * T2.quantity)
+  ... FROM products AS T1 INNER JOIN order_items AS T2 ... INNER JOIN orders AS T3 ...` —
+  averages per line item, not per order. Gold `818.74`, returned `272.91`. This is the doc's
+  original governing bug, reproduced exactly, in the model that's actually shipping today.
+
+**`qwen3:0.6b`:**
+
+| Fixture | Result |
+| :--- | :--- |
+| Flat schema | **24/24 stable** |
+| 4-table schema | **not completed — real reliability finding, not a correctness one** |
+| One-join schema | not run (moot, see below) |
+
+The 4-table run was killed after being stuck for 10+ minutes on a single question ("average
+order value" — the hardest reasoning question in the set) with the Ollama process alive and the
+model loaded, not crashed. Root cause: neither `probeShared.ts` nor `toolLadder.ts`/
+`webllmProvider.ts` sets `num_predict`/`max_tokens` on this call path, and `Qwen3-0.6B` is a
+reasoning model — on a question that requires genuine multi-step reasoning (collapsing a join's
+fan-out before averaging), unbounded generation can run for a very long time before emitting
+final SQL or exhausting Ollama's default 4096-token context. This reproduced on a second,
+fully isolated attempt (no concurrent Ollama load), so it isn't a resource-contention artifact of
+this session running two probes at once (confirmed separately: two concurrent Ollama calls did
+cause a similar-looking stall, but that stall was distinguishable and resolved once isolated —
+this one didn't). Probe 5 already found the same class of problem for `Qwen3-1.7B` on WebLLM
+(512 `max_tokens` truncated 2/8 answers) and fixed it there with `max_tokens: 2048`; this probe
+didn't carry that fix over, and given the hang was on the hardest question in the set (not a
+truncation, an actual unbounded stall), a bounded budget might convert "unbounded hang" into
+"truncated wrong answer" rather than a full fix.
+
+**What this settles:** the current 1.5B pin already clears the easy and medium fixtures (flat,
+one-join) stably and only fails the two hard 4-table questions this document has always flagged
+as the ceiling — it is not broken across the board, it has the same two-bug ceiling every
+smaller-than-1.7B model in this document has. `Qwen3-0.6B` is not a free correctness win at
+zero download cost: it inherits 1.7B's reasoning-model architecture (and therefore its
+`<think>`-block/token-budget needs) without inheriting a harness or ladder that accounts for
+that, and on the one question that most needs bounded reasoning, that gap surfaced as an
+unbounded stall rather than a fast wrong answer. Untested whether a properly token-capped
+`Qwen3-0.6B` would clear the 4-table fixture — that's the natural follow-up if this candidate is
+revisited, not resolved here.
+
+Harness: same `ollamaFlatSchemaProbe.ts`/`ollama4TableProbe.ts`/`ollamaOneJoinProbe.ts`,
+`qwen2.5-coder:1.5b` and `qwen3:0.6b` as the model argument.
+
+---
+
+## Probe 14 — nested/compound grain (double- and triple-hop aggregation), real execution, N=3
+
+The first of four candidate "break 1.7B" directions raised after Probe 12 closed the last rigor
+gap (see item 11 below for the other three: deeper join chains, ambiguous NL questions, messier
+data). Every fixture through Probe 13 stacked at most one aggregation level (`order_items` → order,
+or `order_items`+`orders` → customer); this probe stacks two, and one question stacks three, on the
+exact same 4-table schema and seed data as `ollama4TableProbe.ts` (Probes 7/8/13) for direct
+comparability — only the questions changed. 8 questions: 2 controls carried over verbatim (a
+trivial count, and Probe 7's known-cleared single-hop grain question), 5 double-hop questions
+varying the inner/outer aggregate (`SUM`→`AVG`, `COUNT`→`AVG`, `COUNT DISTINCT`→`AVG`, `SUM`→`MAX`,
+and one combining a `WHERE` filter with the double hop), and one deliberate triple-hop "reach"
+question — "the average, across customers, of each customer's own average order value" (line-item
+→ order via `SUM`, order → customer via `AVG`, customer → overall via `AVG`). `qwen3:1.7b`,
+temperature 0, N=3.
+
+| Question | Hops | Run 1 | Run 2 | Run 3 |
+| :--- | :--- | :--- | :--- | :--- |
+| Total customers | 0 (control) | correct | correct | correct |
+| Average order value | 1 (control) | correct | correct | correct |
+| Average total spent per customer | 2 | correct | correct | correct |
+| Average orders per customer | 2 | correct | correct | correct |
+| **Highest total any single customer has spent** | 2 | **execution_error** | **execution_error** | **execution_error** |
+| Average distinct products per order | 2 | correct | correct | correct |
+| **Average total spent per customer, west region only** | 2 + filter | **execution_error** | **execution_error** | **execution_error** |
+| **Average of each customer's average order value** | 3 | **execution_error** | **execution_error** | **execution_error** |
+
+**15/24, stable across 3 repeats — the same 3 of 8 questions fail, byte-identical SQL and error
+every run (temp-0 determinism).** This is the first fixture in this document where `Qwen3-1.7B`
+does not clear 24/24 — every earlier fixture (flat, one-join, 4-table, all confirmed N≥3 on both
+Ollama and the real WebGPU build) had.
+
+**The failures are not new grain-reasoning mistakes.** In every failing query the "aggregate, then
+aggregate again" structure is conceptually right — a `GROUP BY`-then-outer-aggregate CTE is present
+and shaped correctly. What breaks is identifier hygiene under the added structural complexity, and
+it's the doc's already-known bug shapes recurring, not a new one:
+
+- **Highest-spend question:** `SUM(product.price * order_items.quantity)` — `product` (singular)
+  instead of `products`. A hallucinated/typo'd table alias; DuckDB's binder catches it
+  (`Referenced table "product" not found!`). Not seen in this document in this exact shape before
+  (prior hallucinations put a real column on the wrong real table; this typos the table name
+  itself), but it's the same family as the doc's column-misattribution class.
+- **West-region and triple-hop questions:** both hit `Ambiguous reference to column name
+  "customer_id"` — **Probe 10's exact bug**, recurring. It fires under the same condition Probe 10
+  identified: whenever both `orders` and `customers` are joined *and* the inner `GROUP BY`
+  references the unqualified `customer_id` that exists on both. The "average total spent per
+  customer" question joins `orders`+`order_items`+`products` but never joins `customers`, and
+  passed cleanly — consistent with that being the actual trigger condition, not "customer"
+  appearing in the question.
+
+**This narrows what "nested grain breaks 1.7B" actually means.** The hypothesis going in was that
+stacking aggregation levels would itself be the hard part; what actually broke is that added
+structural complexity (more tables in play, more subquery scaffolding) gives more surface area for
+the model's two pre-existing weak spots (identifier typos, ambiguous-column qualification after a
+join) to fire — not that the double/triple-hop aggregation logic itself is unreliable. Every
+question that reached a clean join graph got the double-hop math right.
+
+**Relation to the shipped retry rung.** All three failures are hard DuckDB execution errors, not
+silently-wrong values — the class the doc's execution-retry rung (`toolLadder.ts`) can trigger on.
+Probe 11 already showed `Qwen3-1.7B` recovers the identical ambiguous-`customer_id` error 3/3 via
+that exact retry shape, so the west-region and triple-hop failures are plausibly already
+self-healing in the shipped ladder — untested here, since this probe (like 6–10/13) calls the model
+directly, not through the retry-capable provider. The hallucinated-table-alias failure is a new
+error shape for the retry rung to prove itself against; also untested.
+
+**Caveats:**
+- **Ollama, not the MLC/WebGPU build** — same standing caveat every fixture here carried before its
+  WebLLM retest (Probes 5/9/12 resolved it for flat/4-table/one-join respectively; this fixture
+  hasn't had one).
+- **N=3**, same as this document's other stability reads — stable across 3 repeats, not proof
+  against rarer failure modes.
+- **Whether the retry rung actually recovers these three failures is untested**, not assumed — see
+  above.
+
+Harness: [`ollamaNestedGrainProbe.ts`](../../../../eval/claude/16-light-model-sql-ceiling/ollamaNestedGrainProbe.ts),
+run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollamaNestedGrainProbe.ts qwen3:1.7b 3`.
+
+---
+
+## Idea — tiered routing: 1.5B first, escalate to 1.7B on a hard question
+
+Raised as an alternative to a flat model swap: keep the 1.5B pin's zero-extra-download default
+and only pay for 1.7B (and its ~2GB budget, its 12–88s latency) when the question actually needs
+it. Whether this is buildable splits cleanly along Probe 13's two failure classes — one is a
+cheap wire-up, the other needs a different mechanism entirely.
+
+**Execution-error class (aggregate-in-`WHERE`, wrong-table joins) — buildable, cheap.** These
+already surface as a real DuckDB error, and the retry rung that catches them already exists and
+is already wired up (`toolLadder.ts`'s `ladderRung()` returns to `sql` on any `'error'` outcome;
+`webllmProvider.ts` feeds the error back verbatim). Escalating instead of retrying same-model is a
+small change to that same rung: on the first execution error, load/call 1.7B instead of re-asking
+1.5B. Probe 11 already showed 1.7B *can* self-correct this exact bug class from an error message
+(3/3 recovered on the one-join ambiguous-column case); this would be using that same recovery
+path, just triggered by a 1.5B failure instead of a 1.7B one. No new detection logic needed — the
+DuckDB error *is* the detection signal.
+
+**Grain-error class (silently wrong, executes cleanly) — not buildable this way.** This is the
+one Probe 13's 1.5B run reproduced exactly (`AVG` over line items, not per-order totals — gold
+818.74, returned 272.91, no error). Nothing about the model's own output signals it's wrong: the
+query runs, returns a plausible-looking number, and 1.5B is not less *confident* about a wrong
+grain than a right one — there's no uncertainty signal to escalate on, self-reported or otherwise.
+Detecting "this question is hard" has to happen **before** generation, from something other than
+the small model's own output.
+
+The candidate mechanism for that: a **deterministic, model-independent pre-check on schema
+shape**, not on the question text or the model's behavior. DataScope already has the join graph
+for a dataset; the grain bug specifically requires (a) an aggregate function (`SUM`/`AVG`/`COUNT`)
+(b) applied across a join where the aggregated table is on the "many" side of a one-to-many
+relationship relative to the grain the question is actually asking about. That's answerable from
+the schema graph and a lightweight parse of the NL question's aggregation verb, independent of
+which model would generate the SQL — route straight to 1.7B (or inject an explicit
+grain-collapsing instruction) whenever that shape is detected, regardless of what 1.5B would have
+said. **Untested and unbuilt** — this is a design sketch, not a probed result; the open item is
+whether such a pre-check can be made precise enough to avoid over-escalating on questions that
+merely *look* join-heavy but aren't actually grain-sensitive (e.g. Probe 10's one-join fixture,
+where 1.5B/1.7B both handled the join cleanly because there was no fan-out to collapse).
+
+**Net:** a tiered 1.5B→1.7B router is real for the error-class half (small change to existing
+code, one probed data point already supporting it) but not for the grain-class half without a new,
+separate schema-shape classifier that doesn't yet exist. Not pursued further in this document —
+the next probes below stay focused on 1.7B's own ceiling rather than routing design.
 
 ---
 
@@ -508,48 +843,79 @@ layered on top of a real fix to the ceiling above — not as a replacement archi
    grain class), so the shipped retry rung has something to trigger on for exactly that model —
    whether it actually recovers on the second attempt is untested here and would need a probe that
    runs the *provider*, not just single-shot Ollama calls, to observe.
-4. **One-join ceiling test.** Still open. Real DataScope datasets won't be pre-flattened the way
-   Probe 4's fixture was, and Probes 7/8 jumped straight to 4 tables. Step from zero joins to
-   exactly one join (2 tables) to find the actual breakpoint between "flat" (8/8 for every model
-   tested so far except one Nano miss) and "4-table" (now bimodal by model size per Probes 7/8) —
-   the number that matters most for real uploaded datasets, which are rarely fully denormalized but
-   also rarely 4-way-joined for a single question.
+4. ~~One-join ceiling test.~~ **Done — Probe 10.** Qwen3-1.7B: 21/24, all join-reasoning
+   questions correct, one stable failure on a new bug class (unqualified `customer_id` after a
+   join, a binder error, not grain/hallucination). Qwen2.5-Coder-0.5B: 15/24, fails every
+   join-requiring question, not just the fan-out ones — the model doesn't reach grain problems
+   because it fails at join presence/side-tracking first. Confirms the capacity gradient holds
+   at one join, but the specific failure modes at this schema size are new information, not a
+   repeat of the 4-table taxonomy.
 5. ~~`Qwen2.5-Coder-0.5B-Instruct`~~ **Done — Probe 8.** 8/8 flat, stable 12/24 on 4-table (exactly
    the 4 join questions fail every run). Confirms the capacity-ceiling read, doesn't move the
    candidate decision on its own — the current 1.5B pin sits between 0.5B and 1.7B untested at this
    rigor (Probe 1's read on the 1.5B pin was syntactic-only).
-6. **N>1 repeats.** Partially resolved for the Ollama-proxy probes: Probes 7 and 8 both ran N=3 and
-   came back fully stable (no flaky questions in either), which is meaningfully stronger evidence
-   than every prior single-pass result in this document. Still open for the browser-native probes
-   (3, 4, 5, 9) — Nano, and WebLLM/Qwen3-1.7B on both fixtures, have never been repeat-tested.
-   Now the single highest-priority open item: Probe 9 is N=1 on the real build, the only rigor gap
-   left between "Qwen3-1.7B clears the ceiling" and "clears it reliably enough to ship."
-7. **The current 1.5B pin, real execution.** Every real-execution result in this document (Probes
-   4, 6, 7, 8, 9) has tested a *candidate* replacement, never the model actually shipping today.
-   Probe 1's read on it was syntactic-only. Worth one real-execution pass on `Qwen2.5-Coder-1.5B`
-   via Ollama, if only to have a same-rigor baseline to compare 0.5B/1.7B against instead of
-   Probe 1's older, weaker read.
+6. ~~N>1 repeats on the real WebGPU build, all fixtures.~~ **Done.** `4table-webllm-probe.html`:
+   24/24, fully stable (matches Probe 7's Ollama N=3 exactly). `one-join-webllm-probe.html`
+   (Probe 12): 24/24, fully stable — including the one question Probe 10 failed via Ollama
+   (resolved two independent ways: Probe 11 showed the Ollama version self-corrects it via the
+   shipped retry rung; Probe 12 shows the WebGPU build doesn't produce the failing query at all).
+   Every fixture in this document now has an N≥3 execution-verified clean result on the real
+   MLC/WebGPU build, not just the Ollama proxy. This was the last open rigor gap.
+7. ~~The current 1.5B pin, real execution.~~ **Done — Probe 13.** 24/24 flat, 24/24 one-join,
+   18/24 4-table (fails the same two questions — aggregate-in-`WHERE`, averaging grain — that
+   define this doc's governing bug taxonomy). The pin is not broadly broken; it has the same
+   ceiling every sub-1.7B model here has. Also tried `Qwen3-0.6B` as a no-budget-increase
+   alternative to 1.7B: flat schema clean, but the 4-table run stalled indefinitely on the
+   hardest reasoning question — an unbounded-generation reliability gap (no `max_tokens` cap on
+   this code path, and it's a reasoning model), not a correctness result. New open item this
+   surfaces: whether a token-capped `Qwen3-0.6B` would clear 4-table, untested.
 8. ~~4-table WebLLM retest.~~ **Done — Probe 9.** 8/8 on the real MLC/WebGPU build, both documented
    bug classes cleared. New open item this surfaced: per-question latency (12–88s, worst on the
    join+grain questions) is a real UX cost that hasn't been weighed against the correctness gain —
    worth surfacing explicitly if this moves toward a candidate decision, not just a footnote here.
+9. **Tiered routing: 1.5B first, escalate to 1.7B only on a hard question.** Design sketch only
+   (see "Idea — tiered routing" above), not built or probed. The execution-error half is a small
+   change to the already-shipped retry rung (escalate model instead of same-model retry) and has
+   one supporting data point already (Probe 11's 3/3 recovery). The grain-error half needs a new
+   schema-shape pre-check (join graph + aggregation-verb parse, independent of any model's output)
+   that doesn't exist yet and would need its own precision/recall testing against fixtures like
+   Probe 10's one-join schema (join present, no grain risk — must not over-escalate on those).
+   Deliberately not pursued further here; next probes stay focused on 1.7B's own ceiling.
+10. **Nested/compound grain.** **Done — Probe 14.** 15/24, stable — the first fixture this model
+    doesn't clear 24/24. All three failures are the doc's known execution-error bug shapes
+    (a hallucinated/typo'd table alias, and Probe 10's ambiguous-`customer_id`-after-a-join)
+    recurring under added structural complexity, not new grain-reasoning failures — every question
+    that reached a clean join graph got the double/triple-hop math right. New open items this
+    surfaces: (a) whether the shipped retry rung recovers these three failures the way Probe 11
+    showed it recovers Probe 10's — untested; (b) a WebGPU retest, the standing pattern for every
+    other fixture in this document.
+11. **Three other candidate directions for finding 1.7B's ceiling, not yet run:** deeper join
+    chains (5–6 tables, or a join-of-joins — past the current max of 3-way joins via
+    `order_items`); ambiguous/underspecified NL questions (every question in this document so far
+    has one unambiguous gold answer); larger row counts / messier data (nulls, duplicate names,
+    mixed types — current fixtures are clean synthetic data).
 
 ## Artifacts
 
 - Probe 3/4 harnesses: standalone HTML pages built in-session under the scratchpad directory
   (ephemeral, not committed — noted here only so the build notes above are reproducible, not as a
   pointer to a persisted asset).
-- Probe 5–9 harnesses: **committed**, under
+- Probe 5–14 harnesses: **committed**, under
   [`eval/claude/16-light-model-sql-ceiling/`](../../../../eval/claude/16-light-model-sql-ceiling/):
-  `flat-schema-webllm-probe.html` (Probe 5, WebLLM/Qwen3-1.7B, flat schema, 8/8),
-  `4table-webllm-probe.html` (Probe 9, WebLLM/Qwen3-1.7B, 4-table schema, 8/8),
+  `flat-schema-webllm-probe.html` (Probe 5, WebLLM/Qwen3-1.7B, flat schema, N=1, 8/8),
+  `4table-webllm-probe.html` (Probe 9, WebLLM/Qwen3-1.7B, 4-table schema, now N=3, 24/24 stable),
+  `one-join-webllm-probe.html` (Probe 12, WebLLM/Qwen3-1.7B, one-join schema, N=3, 24/24 stable),
   `ollamaFlatSchemaProbe.ts` (Probe 6, flat schema, run against both Qwen3-1.7B and
-  Qwen2.5-Coder-0.5B), `ollama4TableProbe.ts` (Probes 7/8, 4-table schema, same two models), and
-  `probeShared.ts` (extraction/matching/repeat-loop code shared by the two Ollama scripts,
-  factored out when repeats and the 4-table fixture needed the same plumbing). Both Ollama scripts
-  take `[model] [repeats]` as CLI args. Folder
+  Qwen2.5-Coder-0.5B), `ollama4TableProbe.ts` (Probes 7/8, 4-table schema, same two models),
+  `ollamaOneJoinProbe.ts` (Probe 10, one-join schema, same two models),
+  `ollamaRetryProbe.ts` (Probe 11, replays the shipped ladder's exact retry shape against
+  Probe 10's two stable failures), `ollamaNestedGrainProbe.ts` (Probe 14, nested/compound grain,
+  same 4-table schema/seed as Probes 7/8, Qwen3-1.7B only so far, 15/24 stable), and
+  `probeShared.ts` (extraction/matching/repeat-loop code shared by the Ollama scripts). The Ollama
+  scripts take `[model] [repeats]` as CLI args (`[model]` only for `ollamaRetryProbe.ts`, which has
+  one seeded case per model). Folder
   [`README.md`](../../../../eval/claude/16-light-model-sql-ceiling/README.md) documents how to run
-  the four browser harnesses (Probes 3/4/5/9); the Ollama scripts need `ollama serve` running and
+  the browser harnesses (Probes 3/4/5/9/12); the Ollama scripts need `ollama serve` running and
   the model pulled, no browser or HTTP server required.
 - Real code change: [`toolLadder.ts:65`](../../../../src/services/toolLadder.ts) fence-regex fix
   (see "Fix landed as a byproduct" above).
@@ -594,3 +960,56 @@ higher than Probe 7's Ollama numbers for the same questions — expected, given 
 for join-heavy questions plus in-browser WebGPU vs. local Ollama, but a real UX cost to weigh
 against the correctness gain if this ships, not yet quantified against the current pin. N=1 on this
 specific build (Probe 7's N=3 stability was via Ollama, not WebGPU) — see open items above.
+
+**Update (2026-08-07, part 4): every remaining rigor gap is now closed.** Three things happened
+in sequence: Probe 10 ran the one-join schema — the step between flat and 4-table that's most
+representative of real DataScope datasets — via Ollama, N=3, and found a new-but-narrow failure
+(21/24: `Qwen3-1.7B` clears every join-reasoning question but trips on an unqualified-column
+binder error on one question where the join added nothing). Probe 11 asked "how do we fix this"
+literally, by replaying the shipped ladder's exact retry shape against that failure — no new
+product code was needed; `toolLadder.ts`'s existing execution-retry rung, already shipped, already
+tested, made the model self-correct 3/3. Probe 12 then re-ran the one-join schema on the real
+WebGPU build at N=3 and got 24/24 — the failure didn't even recur, independent of the retry path.
+In parallel, `4table-webllm-probe.html` was re-run at N=3 on the real build: 24/24, matching Probe
+7's Ollama read exactly.
+
+**Net effect:** every fixture this document has built (flat, one-join, 4-table) now has an N≥3
+execution-verified clean result for `Qwen3-1.7B-q4f16_1-MLC` on the real shipped MLC/WebGPU
+architecture, not a proxy. The one bug this rigor pass surfaced that the earlier N=1 runs missed
+(one-join's column-ambiguity case) turned out to be already self-healing via code that shipped
+before this document existed. What remains genuinely open is unchanged from before this pass: the
+grain-error class (wrong-but-executing SQL, nothing for the retry to trigger on — still a real,
+unfixed gap), and the latency-vs-correctness product tradeoff (12–88s/question) — not technical
+unknowns anymore, just open decisions.
+
+**Update (2026-08-07, part 5): Probe 13 closes item 7 and answers "is there a cheaper option than
+1.7B."** The current 1.5B pin, tested at the same rigor as everything else for the first time,
+turns out to already clear two of the three fixtures stably (flat 24/24, one-join 24/24) and only
+fails the two hard 4-table questions this document has always used to define the ceiling
+(aggregate-in-`WHERE`, averaging grain) — it is not broken across the board, it is exactly as
+capacity-limited as the doc's model predicts for something under 1.7B. `Qwen3-0.6B`, tried as a
+no-download-increase alternative, is **not** a safe substitute as tested: it stalled indefinitely
+on the hardest 4-table question rather than answering it, a reasoning-model/unbounded-generation
+gap this document already knows how to fix (Probe 5's `max_tokens: 2048`) but that fix was never
+applied here, so this result is a reliability gap, not a correctness verdict, on 0.6B.
+
+**Update (2026-08-07, part 6): the clean sweep is over — Probe 14 finds the first fixture
+`Qwen3-1.7B` doesn't clear.** Every fixture through Probe 13 (flat, one-join, 4-table) had scored
+24/24 for this model at N≥3. Probe 14 tested a different axis than any prior probe — two or three
+aggregation levels stacked instead of more joins, on the same 4-table schema/data as Probes 7/8/13
+— and scored **15/24, stable across 3 repeats**: the same 3 of 8 questions fail, byte-identical SQL
+and error every run. This is not the grain-error class the doc originally worried about (silently
+wrong, nothing for a retry to catch) — every failure is a hard DuckDB execution error, and the
+underlying double/triple-hop aggregation logic is shaped correctly in every failing query. What
+breaks is identifier hygiene under added structural complexity: one hallucinated/typo'd table alias
+(`product` for `products`, a new sub-shape of the doc's column-misattribution class), and two
+recurrences of Probe 10's exact ambiguous-`customer_id`-after-a-join bug. Probe 11 already showed
+the shipped retry rung recovers that ambiguous-column error 3/3 for this model, so two of the three
+failures are plausibly already self-healing in the real ladder — untested directly here, since this
+probe calls the model outside the retry-capable provider, same as Probes 6–10/13. **Net: the
+capacity ceiling this document has tracked since Probe 7 is not "1.7B can't do nested aggregation"
+— it's the same two known weak spots (identifier typos, join-column ambiguity) getting more surface
+area to fire on as query structure grows, largely still error-shaped and therefore still
+retry-catchable.** Still open: whether this holds on the real WebGPU build (untested for this
+fixture), and whether the retry rung actually closes these three specific failures (plausible from
+Probe 11, not directly confirmed).
