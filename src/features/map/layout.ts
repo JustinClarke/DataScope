@@ -8,10 +8,13 @@
 // FK-heavy children land left and referenced dimensions land right, edges
 // flowing left to right. A second barycenter pass reorders each column so
 // connected nodes line up, reducing connector crossings.
-import type { FkEdge } from '../../lib/relationshipInference';
+import type { FkEdge } from "../../lib/relationshipInference";
 
 /** Longest-path layering. A self-reference or FK cycle is guarded, not an error — it terminates with a finite depth rather than looping. */
-export function computeColumns(tableNames: string[], edges: FkEdge[]): string[][] {
+export function computeColumns(
+  tableNames: string[],
+  edges: FkEdge[],
+): string[][] {
   const parentsOf = new Map<string, string[]>();
   for (const name of tableNames) parentsOf.set(name, []);
   for (const edge of edges) {
@@ -34,7 +37,10 @@ export function computeColumns(tableNames: string[], edges: FkEdge[]): string[][
   }
   for (const name of tableNames) longestPath(name, new Set());
 
-  const maxDepth = tableNames.reduce((max, name) => Math.max(max, depth.get(name) ?? 0), 0);
+  const maxDepth = tableNames.reduce(
+    (max, name) => Math.max(max, depth.get(name) ?? 0),
+    0,
+  );
   const columns: string[][] = Array.from({ length: maxDepth + 1 }, () => []);
   for (const name of tableNames) {
     columns[maxDepth - (depth.get(name) ?? 0)].push(name);
@@ -52,7 +58,8 @@ export function computeColumns(tableNames: string[], edges: FkEdge[]): string[][
  */
 export function orderColumns(columns: string[][], edges: FkEdge[]): string[][] {
   const adjacency = new Map<string, string[]>();
-  for (const column of columns) for (const name of column) adjacency.set(name, []);
+  for (const column of columns)
+    for (const name of column) adjacency.set(name, []);
   for (const edge of edges) {
     adjacency.get(edge.childTable)?.push(edge.parentTable);
     adjacency.get(edge.parentTable)?.push(edge.childTable);
@@ -62,7 +69,8 @@ export function orderColumns(columns: string[][], edges: FkEdge[]): string[][] {
 
   function snapshotIndex(): Map<string, number> {
     const index = new Map<string, number>();
-    for (const column of ordered) column.forEach((name, i) => index.set(name, i));
+    for (const column of ordered)
+      column.forEach((name, i) => index.set(name, i));
     return index;
   }
 
@@ -71,7 +79,10 @@ export function orderColumns(columns: string[][], edges: FkEdge[]): string[][] {
       .map((neighbor) => index.get(neighbor))
       .filter((position): position is number => position !== undefined);
     if (neighborPositions.length === 0) return index.get(name) ?? 0;
-    return neighborPositions.reduce((sum, position) => sum + position, 0) / neighborPositions.length;
+    return (
+      neighborPositions.reduce((sum, position) => sum + position, 0) /
+      neighborPositions.length
+    );
   }
 
   function pass(order: number[]): void {
@@ -93,6 +104,9 @@ export function orderColumns(columns: string[][], edges: FkEdge[]): string[][] {
 }
 
 /** The full layout: layering then reordering. The single entry point `DatasetMap`/`Erd` call. */
-export function layoutColumns(tableNames: string[], edges: FkEdge[]): string[][] {
+export function layoutColumns(
+  tableNames: string[],
+  edges: FkEdge[],
+): string[][] {
   return orderColumns(computeColumns(tableNames, edges), edges);
 }

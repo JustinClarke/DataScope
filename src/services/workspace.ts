@@ -6,18 +6,27 @@
 // 07c's, and reconciling this report against it (restored / recoverable /
 // lost) is 07d's. Anything here that populated the rail would be a second,
 // provisional path 07d would then have to replace.
-import { detectFormat, isFormatRejection, readerCall } from '../features/ingestion/formatPolicy';
-import { quoteIdentifier, quoteLiteral } from './ingestion';
-import { readStagedManifest, readStagedBytes, clearStagingStorage, disposeStagingWorker } from './opfsStaging';
-import { SETTINGS_STORAGE_KEY } from '../stores/settings';
+import {
+  detectFormat,
+  isFormatRejection,
+  readerCall,
+} from "../features/ingestion/formatPolicy";
+import { quoteIdentifier, quoteLiteral } from "./ingestion";
+import {
+  readStagedManifest,
+  readStagedBytes,
+  clearStagingStorage,
+  disposeStagingWorker,
+} from "./opfsStaging";
+import { SETTINGS_STORAGE_KEY } from "../stores/settings";
 
-type EngineModule = typeof import('../workers/duckdb.worker');
+type EngineModule = typeof import("../workers/duckdb.worker");
 
 export interface RestoredTable {
   tableName: string;
   /** Carried through so 07d can check it against the persisted registry entry — a mismatch is *lost*, not *restored*. */
   fileHash?: string;
-  outcome: 'restored' | 'failed';
+  outcome: "restored" | "failed";
   /** Why it failed, when it did — an evicted staging file, an unreadable source, a `CREATE TABLE` that didn't take. */
   reason?: string;
 }
@@ -36,15 +45,20 @@ export interface RestoreReport {
 export async function restoreStagedTables(): Promise<RestoreReport> {
   const start = performance.now();
   const manifest = await readStagedManifest();
-  if (manifest.length === 0) return { tables: [], durationMs: performance.now() - start };
+  if (manifest.length === 0)
+    return { tables: [], durationMs: performance.now() - start };
 
-  const engine: EngineModule = await import('../workers/duckdb.worker');
+  const engine: EngineModule = await import("../workers/duckdb.worker");
   const tables: RestoredTable[] = [];
 
   for (const staged of manifest) {
     const format = detectFormat(staged.fileName);
     if (isFormatRejection(format)) {
-      tables.push({ ...restoreKey(staged), outcome: 'failed', reason: format.message });
+      tables.push({
+        ...restoreKey(staged),
+        outcome: "failed",
+        reason: format.message,
+      });
       continue;
     }
 
@@ -52,10 +66,10 @@ export async function restoreStagedTables(): Promise<RestoreReport> {
     if (bytes === null) {
       tables.push({
         ...restoreKey(staged),
-        outcome: 'failed',
+        outcome: "failed",
         // OPFS is evictable — `persist()` is denied on both engines as
         // measured (ADR-011), so this is an ordinary outcome.
-        reason: 'The stored copy of this table is no longer on disk.',
+        reason: "The stored copy of this table is no longer on disk.",
       });
       continue;
     }
@@ -68,11 +82,11 @@ export async function restoreStagedTables(): Promise<RestoreReport> {
           quoteLiteral(staged.fileName),
         )}`,
       );
-      tables.push({ ...restoreKey(staged), outcome: 'restored' });
+      tables.push({ ...restoreKey(staged), outcome: "restored" });
     } catch (error) {
       tables.push({
         ...restoreKey(staged),
-        outcome: 'failed',
+        outcome: "failed",
         reason: error instanceof Error ? error.message : String(error),
       });
     }
@@ -87,7 +101,11 @@ function restoreKey(staged: { tableName: string; fileHash?: string }) {
 
 /** Bytes this origin currently has on disk, for the Clear control to show. Null when the browser won't say. */
 export async function estimateWorkspaceBytes(): Promise<number | null> {
-  if (typeof navigator === 'undefined' || typeof navigator.storage?.estimate !== 'function') return null;
+  if (
+    typeof navigator === "undefined" ||
+    typeof navigator.storage?.estimate !== "function"
+  )
+    return null;
   const estimate = await navigator.storage.estimate();
   return estimate.usage ?? null;
 }
@@ -99,11 +117,16 @@ export async function estimateWorkspaceBytes(): Promise<number | null> {
  * bytes that are gone.
  */
 function clearRegistryKeys(): void {
-  if (typeof localStorage === 'undefined') return;
+  if (typeof localStorage === "undefined") return;
   const doomed: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key !== null && key.startsWith('datascope-') && key !== SETTINGS_STORAGE_KEY) doomed.push(key);
+    if (
+      key !== null &&
+      key.startsWith("datascope-") &&
+      key !== SETTINGS_STORAGE_KEY
+    )
+      doomed.push(key);
   }
   for (const key of doomed) localStorage.removeItem(key);
 }
@@ -116,8 +139,10 @@ function clearRegistryKeys(): void {
  * page reloads into a true cold app. The naive order produces exactly the
  * half-clear — metadata pointing at deleted bytes — that scope call 2 forbids.
  */
-export async function clearWorkspaceData(reload: () => void = () => window.location.reload()): Promise<void> {
-  const engine: EngineModule = await import('../workers/duckdb.worker');
+export async function clearWorkspaceData(
+  reload: () => void = () => window.location.reload(),
+): Promise<void> {
+  const engine: EngineModule = await import("../workers/duckdb.worker");
   await engine.resetEngine();
   await clearStagingStorage();
   disposeStagingWorker();

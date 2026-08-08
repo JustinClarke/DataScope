@@ -22,14 +22,20 @@ import type {
   SemanticType,
   TableRegistryEntry,
   ThreadConfig,
-} from '../types';
-import type { SidebarModule } from '../stores/ui';
-import type { InsightCandidate, InsightRuleId, TableInsights } from './insights';
-import { scoreOf } from './insights';
+} from "../types";
+import type { SidebarModule } from "../stores/ui";
+import type {
+  InsightCandidate,
+  InsightRuleId,
+  TableInsights,
+} from "./insights";
+import { scoreOf } from "./insights";
 
 type ClassifiedTable = TableRegistryEntry & { columns: ClassifiedColumn[] };
 
-function hasClassifiedColumns(table: TableRegistryEntry): table is ClassifiedTable {
+function hasClassifiedColumns(
+  table: TableRegistryEntry,
+): table is ClassifiedTable {
   return Array.isArray(table.columns) && table.columns.length > 0;
 }
 
@@ -39,7 +45,9 @@ function hasClassifiedColumns(table: TableRegistryEntry): table is ClassifiedTab
  * arrays are table-qualified (`tableName.columnName`) only when two or more
  * tables contribute columns, and bare (`columnName`) otherwise.
  */
-export function evaluateCapabilities(tables: TableRegistryEntry[]): DataCapabilities {
+export function evaluateCapabilities(
+  tables: TableRegistryEntry[],
+): DataCapabilities {
   const classifiedTables = tables.filter(hasClassifiedColumns);
 
   // A name only needs its table prefix when another table could carry the same
@@ -56,7 +64,9 @@ export function evaluateCapabilities(tables: TableRegistryEntry[]): DataCapabili
 
   for (const table of classifiedTables) {
     for (const column of table.columns) {
-      const reference = qualify ? `${table.tableName}.${column.name}` : column.name;
+      const reference = qualify
+        ? `${table.tableName}.${column.name}`
+        : column.name;
       refsByType[column.semanticType].push(reference);
     }
   }
@@ -76,7 +86,9 @@ export function evaluateCapabilities(tables: TableRegistryEntry[]): DataCapabili
 
     canDoKMeans: numeric.length >= 2,
     canDoRegression: numeric.length >= 2,
-    canDoClassification: categorical.length >= 1 && (numeric.length >= 1 || categorical.length >= 2),
+    canDoClassification:
+      categorical.length >= 1 &&
+      (numeric.length >= 1 || categorical.length >= 2),
     canDoNLP: textual.length >= 1,
 
     numericColumns: numeric,
@@ -130,31 +142,43 @@ interface RuleRoute {
 // profile-again loop D68a exists to kill. A candidate whose rule has no route
 // is skipped; when none clear the floor, generic capability routing takes over.
 const RULE_ROUTES: Partial<Record<InsightRuleId, RuleRoute>> = {
-  'change-point': {
-    module: 'charts',
-    tab: 'time-series',
+  "change-point": {
+    module: "charts",
+    tab: "time-series",
     legal: (c) => c.canDoTimeSeries,
-    verb: ([date, quant]) => (date && quant ? `Chart ${quant} over ${date}` : 'Chart the trend over time'),
+    verb: ([date, quant]) =>
+      date && quant
+        ? `Chart ${quant} over ${date}`
+        : "Chart the trend over time",
   },
   leakage: {
-    module: 'correlation',
+    module: "correlation",
     legal: (c) => c.canDoCorrelation,
-    verb: ([a, b]) => (a && b ? `Compare ${a} and ${b} in the correlation view` : 'Open the correlation matrix'),
+    verb: ([a, b]) =>
+      a && b
+        ? `Compare ${a} and ${b} in the correlation view`
+        : "Open the correlation matrix",
   },
   concentration: {
-    module: 'charts',
-    tab: 'categorical',
+    module: "charts",
+    tab: "categorical",
     legal: (c) => c.canDoCategoricalBreakdown,
-    verb: ([cat, quant]) => (cat && quant ? `Break down ${quant} by ${cat}` : 'Break down the totals by category'),
+    verb: ([cat, quant]) =>
+      cat && quant
+        ? `Break down ${quant} by ${cat}`
+        : "Break down the totals by category",
   },
-  'outlier-group': {
-    module: 'charts',
-    tab: 'categorical',
+  "outlier-group": {
+    module: "charts",
+    tab: "categorical",
     legal: (c) => c.canDoCategoricalBreakdown,
-    verb: ([cat, quant]) => (cat && quant ? `Compare ${quant} across ${cat} groups` : 'Compare the group averages'),
+    verb: ([cat, quant]) =>
+      cat && quant
+        ? `Compare ${quant} across ${cat} groups`
+        : "Compare the group averages",
   },
   duplicates: {
-    module: 'sql',
+    module: "sql",
     legal: () => true,
     verb: (_columns, tableName) => `Find the duplicate rows in ${tableName}`,
   },
@@ -171,19 +195,26 @@ function insightColumns(candidate: InsightCandidate): string[] {
   const prefix = `${candidate.rule}:`;
   if (!candidate.id.startsWith(prefix)) return [];
   const rest = candidate.id.slice(prefix.length);
-  return rest.length > 0 ? rest.split(':') : [];
+  return rest.length > 0 ? rest.split(":") : [];
 }
 
-function insightAction(ti: TableInsights, candidate: InsightCandidate, route: RuleRoute): RankedAction {
+function insightAction(
+  ti: TableInsights,
+  candidate: InsightCandidate,
+  route: RuleRoute,
+): RankedAction {
   const columns = insightColumns(candidate);
   const { table } = ti;
-  const prefilledConfig: Record<string, unknown> = { tableName: table.tableName, columns };
+  const prefilledConfig: Record<string, unknown> = {
+    tableName: table.tableName,
+    columns,
+  };
   // The SQL playground has no column-selector UI to seed — its prefill is the
   // statement itself. `candidate.sql` is already the exact query that
   // produced this finding (the `duplicates` rule today, the only rule routed
   // to 'sql'), so reusing it opens the editor on the real answer rather than
   // guessing at a template.
-  if (route.module === 'sql') prefilledConfig.sql = candidate.sql;
+  if (route.module === "sql") prefilledConfig.sql = candidate.sql;
   const prefill: ThreadConfig = { module: route.module, prefilledConfig };
   // The description is already honesty-guarded at the source (a statistic, never
   // a conclusion), so it is the fact statement verbatim.
@@ -191,8 +222,8 @@ function insightAction(ti: TableInsights, candidate: InsightCandidate, route: Ru
     statement: candidate.description,
     sql: candidate.sql,
     snapshot: table.createdAt,
-    confidence: table.sampled ? 'medium' : 'high',
-    provenance: 'insight-rule',
+    confidence: table.sampled ? "medium" : "high",
+    provenance: "insight-rule",
   };
   return {
     verb: route.verb(columns, table.tableName),
@@ -205,8 +236,18 @@ function insightAction(ti: TableInsights, candidate: InsightCandidate, route: Ru
 }
 
 /** A structural fact read off the schema/registry rather than queried — never a manufactured finding. */
-export function schemaFact(statement: string, snapshot: string, sampled: boolean): FactRef {
-  return { statement, sql: '', snapshot, confidence: sampled ? 'medium' : 'high', provenance: 'schema' };
+export function schemaFact(
+  statement: string,
+  snapshot: string,
+  sampled: boolean,
+): FactRef {
+  return {
+    statement,
+    sql: "",
+    snapshot,
+    confidence: sampled ? "medium" : "high",
+    provenance: "schema",
+  };
 }
 
 function genericAction(
@@ -216,7 +257,14 @@ function genericAction(
   tab?: string,
   prefilledConfig: Record<string, unknown> = {},
 ): RankedAction {
-  return { verb, module, tab, prefill: { module, prefilledConfig }, evidence, score: 0 };
+  return {
+    verb,
+    module,
+    tab,
+    prefill: { module, prefilledConfig },
+    evidence,
+    score: 0,
+  };
 }
 
 /**
@@ -236,12 +284,20 @@ function resolveGenericPrefill(
 ): { tableName: string; columns: string[] } | null {
   if (refs.length === 0) return null;
   const tableNames = new Set(
-    refs.map((ref) => (ref.includes('.') ? ref.slice(0, ref.indexOf('.')) : classifiedTables.length === 1 ? classifiedTables[0].tableName : null)),
+    refs.map((ref) =>
+      ref.includes(".")
+        ? ref.slice(0, ref.indexOf("."))
+        : classifiedTables.length === 1
+          ? classifiedTables[0].tableName
+          : null,
+    ),
   );
   if (tableNames.size !== 1) return null;
   const [tableName] = tableNames;
   if (!tableName) return null;
-  const columns = refs.map((ref) => (ref.includes('.') ? ref.slice(ref.indexOf('.') + 1) : ref));
+  const columns = refs.map((ref) =>
+    ref.includes(".") ? ref.slice(ref.indexOf(".") + 1) : ref,
+  );
   return { tableName, columns };
 }
 
@@ -251,9 +307,15 @@ function resolveGenericPrefill(
  * finding. These fill the band when insight-driven actions are thin (or absent
  * on a boring dataset), and the profile route is the always-available floor.
  */
-function genericActions(tables: TableRegistryEntry[], caps: DataCapabilities): RankedAction[] {
+function genericActions(
+  tables: TableRegistryEntry[],
+  caps: DataCapabilities,
+): RankedAction[] {
   const classifiedTables = tables.filter(hasClassifiedColumns);
-  const snapshot = tables.reduce((latest, t) => (t.createdAt > latest ? t.createdAt : latest), tables[0]?.createdAt ?? '');
+  const snapshot = tables.reduce(
+    (latest, t) => (t.createdAt > latest ? t.createdAt : latest),
+    tables[0]?.createdAt ?? "",
+  );
   const sampled = tables.some((t) => t.sampled);
   const actions: RankedAction[] = [];
 
@@ -266,7 +328,7 @@ function genericActions(tables: TableRegistryEntry[], caps: DataCapabilities): R
     const n = caps.numericColumns.length;
     actions.push(
       genericAction(
-        'correlation',
+        "correlation",
         `Explore the correlation matrix on the ${n} numeric columns`,
         schemaFact(`This dataset has ${n} numeric columns.`, snapshot, sampled),
       ),
@@ -275,49 +337,77 @@ function genericActions(tables: TableRegistryEntry[], caps: DataCapabilities): R
   if (caps.canDoTimeSeries) {
     const [date] = caps.dateColumns;
     const [quant] = caps.numericColumns;
-    const prefill = resolveGenericPrefill(classifiedTables, [date, quant].filter((c): c is string => Boolean(c)));
+    const prefill = resolveGenericPrefill(
+      classifiedTables,
+      [date, quant].filter((c): c is string => Boolean(c)),
+    );
     actions.push(
       genericAction(
-        'charts',
-        date && quant ? `Chart ${quant} over ${date}` : 'Chart a measure over time',
-        schemaFact(`This dataset has a time axis and ${caps.numericColumns.length} numeric columns.`, snapshot, sampled),
-        'time-series',
+        "charts",
+        date && quant
+          ? `Chart ${quant} over ${date}`
+          : "Chart a measure over time",
+        schemaFact(
+          `This dataset has a time axis and ${caps.numericColumns.length} numeric columns.`,
+          snapshot,
+          sampled,
+        ),
+        "time-series",
         prefill ?? {},
       ),
     );
   }
   if (caps.canDoCategoricalBreakdown) {
     const [cat] = caps.categoricalColumns;
-    const prefill = resolveGenericPrefill(classifiedTables, [cat].filter((c): c is string => Boolean(c)));
+    const prefill = resolveGenericPrefill(
+      classifiedTables,
+      [cat].filter((c): c is string => Boolean(c)),
+    );
     actions.push(
       genericAction(
-        'charts',
-        cat ? `Break down the data by ${cat}` : 'Break down the data by category',
-        schemaFact(`This dataset has ${caps.categoricalColumns.length} categorical columns.`, snapshot, sampled),
-        'categorical',
+        "charts",
+        cat
+          ? `Break down the data by ${cat}`
+          : "Break down the data by category",
+        schemaFact(
+          `This dataset has ${caps.categoricalColumns.length} categorical columns.`,
+          snapshot,
+          sampled,
+        ),
+        "categorical",
         prefill ?? {},
       ),
     );
   }
   if (caps.canDoDistribution) {
     const [quant] = caps.numericColumns;
-    const prefill = resolveGenericPrefill(classifiedTables, [quant].filter((c): c is string => Boolean(c)));
+    const prefill = resolveGenericPrefill(
+      classifiedTables,
+      [quant].filter((c): c is string => Boolean(c)),
+    );
     actions.push(
       genericAction(
-        'charts',
-        quant ? `Inspect the distribution of ${quant}` : 'Inspect the distribution of the numeric columns',
-        schemaFact(`This dataset has ${caps.numericColumns.length} numeric columns.`, snapshot, sampled),
-        'distribution',
+        "charts",
+        quant
+          ? `Inspect the distribution of ${quant}`
+          : "Inspect the distribution of the numeric columns",
+        schemaFact(
+          `This dataset has ${caps.numericColumns.length} numeric columns.`,
+          snapshot,
+          sampled,
+        ),
+        "distribution",
         prefill ?? {},
       ),
     );
   }
 
-  const largest = [...tables].sort((a, b) => b.rowCount - a.rowCount)[0] ?? null;
+  const largest =
+    [...tables].sort((a, b) => b.rowCount - a.rowCount)[0] ?? null;
   if (largest) {
     actions.push(
       genericAction(
-        'profile',
+        "profile",
         `Profile ${largest.tableName}`,
         schemaFact(
           `${largest.tableName} has ${largest.rowCount.toLocaleString()} rows and ${largest.columnCount} columns.`,
@@ -340,7 +430,10 @@ function genericActions(tables: TableRegistryEntry[], caps: DataCapabilities): R
  * A thin profile (no rule clears the floor) degrades to that honest routing
  * rather than a manufactured finding. Pure and deterministic.
  */
-export function rankNextActions(tables: TableRegistryEntry[], insights: TableInsights[]): RankedAction[] {
+export function rankNextActions(
+  tables: TableRegistryEntry[],
+  insights: TableInsights[],
+): RankedAction[] {
   if (tables.length === 0) return [];
   const caps = evaluateCapabilities(tables);
 
@@ -356,7 +449,7 @@ export function rankNextActions(tables: TableRegistryEntry[], insights: TableIns
     if (scoreOf(candidate) < INTEREST_FLOOR) break; // sorted desc — nothing below clears it
     const route = RULE_ROUTES[candidate.rule];
     if (!route || !route.legal(caps)) continue; // a note-only rule (no route) is not a next move
-    const key = `${route.module}:${insightColumns(candidate).join(',')}`;
+    const key = `${route.module}:${insightColumns(candidate).join(",")}`;
     if (seen.has(key)) continue;
     seen.add(key);
     actions.push(insightAction(ti, candidate, route));
@@ -365,7 +458,8 @@ export function rankNextActions(tables: TableRegistryEntry[], insights: TableIns
   // Keyed by module+tab, not module alone — 'charts' now covers three sub-types
   // (time-series/distribution/categorical, D68d), so a time-series insight
   // action must not block the distribution/categorical generic fallbacks.
-  const destinationKey = (a: RankedAction) => (a.tab ? `${a.module}:${a.tab}` : a.module);
+  const destinationKey = (a: RankedAction) =>
+    a.tab ? `${a.module}:${a.tab}` : a.module;
   const usedDestinations = new Set(actions.map(destinationKey));
   for (const generic of genericActions(tables, caps)) {
     if (actions.length >= RANKED_ACTIONS_CAP) break;

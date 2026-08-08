@@ -3,18 +3,18 @@
 // (timing, row count, error, retry number) inline, plus any stage-1 typo
 // correction and the stage-6 chart recommendation. This is the auditability
 // surface — a user can always reconstruct what ran and why it was retried.
-import { Cpu } from 'lucide-react';
-import type { AITurn, SqlAttempt, ChartRecommendation } from '../../types';
-import { useSettingsStore } from '../../stores/settings';
-import { useByokKeyStore } from '../../stores/byokKey';
-import { useWebLLMStore } from '../../stores/webllm';
-import { WEBLLM_DOWNLOAD_SIZE } from '../../services/webllm';
-import { RunSqlButton } from '../sql/RunSqlButton';
-import { AutoChartPanel } from '../sql/AutoChartPanel';
-import { KpiCard } from '../../components/charts/KpiCard';
+import { Cpu } from "lucide-react";
+import type { AITurn, SqlAttempt, ChartRecommendation } from "../../types";
+import { useSettingsStore } from "../../stores/settings";
+import { useByokKeyStore } from "../../stores/byokKey";
+import { useWebLLMStore } from "../../stores/webllm";
+import { WEBLLM_DOWNLOAD_SIZE } from "../../services/webllm";
+import { RunSqlButton } from "../sql/RunSqlButton";
+import { AutoChartPanel } from "../sql/AutoChartPanel";
+import { KpiCard } from "../../components/charts/KpiCard";
 
 function hasWebGPU(): boolean {
-  return typeof navigator !== 'undefined' && 'gpu' in navigator;
+  return typeof navigator !== "undefined" && "gpu" in navigator;
 }
 
 /**
@@ -31,9 +31,9 @@ function QuotaExhaustedOffer() {
   const webllmStatus = useWebLLMStore((s) => s.status);
 
   // quota-exhausted only fires with no BYOK key (§11.2); still guard the rest.
-  if (byokKey !== null || !hasWebGPU() || webllmStatus === 'ready') return null;
+  if (byokKey !== null || !hasWebGPU() || webllmStatus === "ready") return null;
 
-  if (webllmStatus === 'downloading' || webllmStatus === 'warming') {
+  if (webllmStatus === "downloading" || webllmStatus === "warming") {
     return (
       <p className="text-xs text-(--color-fg-muted)" role="status">
         The local model is downloading — it'll take over once ready.
@@ -44,12 +44,17 @@ function QuotaExhaustedOffer() {
   return (
     <div className="flex items-center justify-between gap-3 rounded border border-(--color-border) px-3 py-2">
       <p className="flex items-center gap-2 text-xs text-(--color-fg-muted)">
-        <Cpu size={14} aria-hidden="true" className="shrink-0 text-(--color-ai-2)" />
-        Switch to the local model? A one-time {WEBLLM_DOWNLOAD_SIZE} download, then zero-egress.
+        <Cpu
+          size={14}
+          aria-hidden="true"
+          className="shrink-0 text-(--color-ai-2)"
+        />
+        Switch to the local model? A one-time {WEBLLM_DOWNLOAD_SIZE} download,
+        then zero-egress.
       </p>
       <button
         type="button"
-        onClick={() => setConsent('accepted')}
+        onClick={() => setConsent("accepted")}
         className="shrink-0 rounded-lg bg-(--color-ai) px-3 py-1 text-xs text-(--color-ai-ink)"
       >
         Download
@@ -58,11 +63,15 @@ function QuotaExhaustedOffer() {
   );
 }
 
-function CorrectionNote({ corrections }: { corrections: NonNullable<AITurn['corrections']> }) {
+function CorrectionNote({
+  corrections,
+}: {
+  corrections: NonNullable<AITurn["corrections"]>;
+}) {
   if (corrections.length === 0) return null;
   return (
     <p className="text-xs text-(--color-fg-muted)">
-      Read {corrections.map((c) => `“${c.from}” as “${c.to}”`).join(', ')}.
+      Read {corrections.map((c) => `“${c.from}” as “${c.to}”`).join(", ")}.
     </p>
   );
 }
@@ -75,7 +84,8 @@ function CorrectionNote({ corrections }: { corrections: NonNullable<AITurn['corr
 function OllamaOverflowNote() {
   return (
     <p className="text-xs text-(--color-fg-muted)">
-      The shared free budget ran out mid-turn — this answer finished on your local Ollama endpoint.
+      The shared free budget ran out mid-turn — this answer finished on your
+      local Ollama endpoint.
     </p>
   );
 }
@@ -86,29 +96,40 @@ function OllamaOverflowNote() {
 // untouched — a person reads the SQL and clicks; nothing here lets a model
 // cause execution.
 function AttemptView({ attempt }: { attempt: SqlAttempt }) {
-  const ok = attempt.status === 'ok';
+  const ok = attempt.status === "ok";
   // A4: an analyst turn's second call is not necessarily a retry — it may be a
   // follow-up query, or a page read whose `sql` is the query that produced the
   // result rather than a new one. The label says which rather than guessing.
-  const label = attempt.op === 'read_result' ? 'Read more rows of' : 'Suggested SQL';
+  const label =
+    attempt.op === "read_result" ? "Read more rows of" : "Suggested SQL";
   return (
     <div className="flex flex-col gap-1 rounded border border-(--color-ai)/20 bg-(--color-ai-soft) p-2">
       <div className="flex items-center justify-between text-xs text-(--color-fg-muted)">
-        <span>{label}{attempt.attempt > 1 ? ` · call ${attempt.attempt}` : ''}</span>
+        <span>
+          {label}
+          {attempt.attempt > 1 ? ` · call ${attempt.attempt}` : ""}
+        </span>
         <div className="flex items-center gap-3">
-          <span className={ok ? 'text-(--color-ai-2)' : 'text-(--color-error)'}>
+          <span className={ok ? "text-(--color-ai-2)" : "text-(--color-error)"}>
             {ok
               ? `✓ ${attempt.rowCount?.toLocaleString()} rows · ${Math.round(attempt.executionTimeMs)} ms`
-              : '✗ failed'}
+              : "✗ failed"}
           </span>
           <RunSqlButton sql={attempt.sql} />
         </div>
       </div>
-      <pre className="overflow-x-auto rounded bg-(--color-border)/40 p-2 font-mono text-xs text-(--color-fg)">{attempt.sql}</pre>
-      {!ok && attempt.error && <p className="font-mono text-xs text-(--color-error)">{attempt.error}</p>}
+      <pre className="overflow-x-auto rounded bg-(--color-border)/40 p-2 font-mono text-xs text-(--color-fg)">
+        {attempt.sql}
+      </pre>
+      {!ok && attempt.error && (
+        <p className="font-mono text-xs text-(--color-error)">
+          {attempt.error}
+        </p>
+      )}
       {attempt.sampledRows && (
         <p className="text-xs text-(--color-fg-muted)">
-          Repair included up to 3 real sample rows — metadata-only repair was off for this retry.
+          Repair included up to 3 real sample rows — metadata-only repair was
+          off for this retry.
         </p>
       )}
       {attempt.lint?.map((f) => (
@@ -121,8 +142,9 @@ function AttemptView({ attempt }: { attempt: SqlAttempt }) {
 }
 
 function chartLabel(chart: ChartRecommendation): string | null {
-  if (chart.kind === 'chart') return `Chart · ${chart.spec.type}: ${chart.spec.xField} × ${chart.spec.yFields.join(', ')}`;
-  if (chart.kind === 'kpi') return `${chart.label}: ${chart.value}`;
+  if (chart.kind === "chart")
+    return `Chart · ${chart.spec.type}: ${chart.spec.xField} × ${chart.spec.yFields.join(", ")}`;
+  if (chart.kind === "kpi") return `${chart.label}: ${chart.value}`;
   return null;
 }
 
@@ -136,20 +158,25 @@ function chartLabel(chart: ChartRecommendation): string | null {
 function TurnChart({ turn }: { turn: AITurn }) {
   const { chart, chartResult } = turn;
   if (!chart) return null;
-  if (chart.kind === 'kpi') return <KpiCard label={chart.label} value={chart.value} />;
+  if (chart.kind === "kpi")
+    return <KpiCard label={chart.label} value={chart.value} />;
 
   const label = chartLabel(chart);
-  if (chart.kind !== 'chart' || !chartResult || chartResult.rows.length === 0) {
-    return label ? <p className="text-xs font-medium text-(--color-ai-2)">{label}</p> : null;
+  if (chart.kind !== "chart" || !chartResult || chartResult.rows.length === 0) {
+    return label ? (
+      <p className="text-xs font-medium text-(--color-ai-2)">{label}</p>
+    ) : null;
   }
   return <AutoChartPanel result={chartResult} spec={chart.spec} />;
 }
 
 export function AITurnView({ turn }: { turn: AITurn }) {
-  if (turn.role === 'user') {
+  if (turn.role === "user") {
     return (
       <div className="flex justify-end">
-        <p className="max-w-[80%] rounded-lg bg-(--color-elev) px-3 py-2 text-sm text-(--color-fg)">{turn.content}</p>
+        <p className="max-w-[80%] rounded-lg bg-(--color-elev) px-3 py-2 text-sm text-(--color-fg)">
+          {turn.content}
+        </p>
       </div>
     );
   }
@@ -160,12 +187,18 @@ export function AITurnView({ turn }: { turn: AITurn }) {
         ✦ Copilot
       </div>
       {turn.corrections && <CorrectionNote corrections={turn.corrections} />}
-      {turn.attempts?.map((a) => <AttemptView key={a.attempt} attempt={a} />)}
-      {turn.content && <p className="text-sm text-(--color-fg)">{turn.content}</p>}
+      {turn.attempts?.map((a) => (
+        <AttemptView key={a.attempt} attempt={a} />
+      ))}
+      {turn.content && (
+        <p className="text-sm text-(--color-fg)">{turn.content}</p>
+      )}
       <TurnChart turn={turn} />
       {turn.servedByOllamaOverflow && <OllamaOverflowNote />}
       {turn.error && (
-        <p className="rounded border border-(--color-error)/40 bg-(--color-error)/10 px-3 py-2 text-sm text-(--color-error)">{turn.error}</p>
+        <p className="rounded border border-(--color-error)/40 bg-(--color-error)/10 px-3 py-2 text-sm text-(--color-error)">
+          {turn.error}
+        </p>
       )}
       {turn.quotaExhausted && <QuotaExhaustedOffer />}
     </div>

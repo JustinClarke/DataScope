@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
-import type { ClassifiedColumn, SemanticType } from '../types';
-import { useDatasetsStore } from '../stores/datasets';
+import { useCallback } from "react";
+import type { ClassifiedColumn, SemanticType } from "../types";
+import { useDatasetsStore } from "../stores/datasets";
 
 export interface UseSchemaClassifier {
   /** Classified columns for the table, or `undefined` until classification has run. */
@@ -27,7 +27,9 @@ export function useSchemaClassifier(tableId?: string): UseSchemaClassifier {
   const reclassify = useCallback(
     (columnName: string, semanticType: SemanticType) => {
       if (!tableId) return;
-      useDatasetsStore.getState().reclassifyColumn(tableId, columnName, semanticType);
+      useDatasetsStore
+        .getState()
+        .reclassifyColumn(tableId, columnName, semanticType);
     },
     [tableId],
   );

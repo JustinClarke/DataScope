@@ -1,12 +1,14 @@
-import type * as arrow from 'apache-arrow';
-import { DataType, util } from 'apache-arrow';
-import type { QueryResult } from '../types';
+import type * as arrow from "apache-arrow";
+import { DataType, util } from "apache-arrow";
+import type { QueryResult } from "../types";
 
 const MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
 const MIN_SAFE = BigInt(Number.MIN_SAFE_INTEGER);
 
 function bigintToCell(value: bigint): number | string {
-  return value <= MAX_SAFE && value >= MIN_SAFE ? Number(value) : value.toString();
+  return value <= MAX_SAFE && value >= MIN_SAFE
+    ? Number(value)
+    : value.toString();
 }
 
 /**
@@ -21,7 +23,10 @@ function bigintToCell(value: bigint): number | string {
  * `scale` (found on the Arrow field, not the value) must divide it back down
  * first (`util.bigNumToNumber`'s own scale-aware path).
  */
-function bigNumToCell(value: Uint32Array, type: arrow.DataType | undefined): number | string {
+function bigNumToCell(
+  value: Uint32Array,
+  type: arrow.DataType | undefined,
+): number | string {
   // `DataType.isDecimal` compares Arrow's own `typeId`, not class identity.
   // `type instanceof Decimal` is the obvious spelling and it is wrong here:
   // apache-arrow ships dual ESM/CJS builds, so a DuckDB result carrying a
@@ -36,12 +41,14 @@ function bigNumToCell(value: Uint32Array, type: arrow.DataType | undefined): num
     );
   }
   return bigintToCell(
-    util.bigNumToBigInt(value as unknown as Parameters<typeof util.bigNumToBigInt>[0]),
+    util.bigNumToBigInt(
+      value as unknown as Parameters<typeof util.bigNumToBigInt>[0],
+    ),
   );
 }
 
 export function normalizeCell(value: unknown, type?: arrow.DataType): unknown {
-  if (typeof value === 'bigint') return bigintToCell(value);
+  if (typeof value === "bigint") return bigintToCell(value);
   if (value instanceof Uint32Array) return bigNumToCell(value, type);
   return value;
 }
@@ -51,7 +58,10 @@ export function normalizeCell(value: unknown, type?: arrow.DataType): unknown {
  * downstream module reads. Read column-major (Arrow's native layout) and emit
  * row-major so callers never touch Arrow types directly.
  */
-export function tableToQueryResult(table: arrow.Table, executionTimeMs: number): QueryResult {
+export function tableToQueryResult(
+  table: arrow.Table,
+  executionTimeMs: number,
+): QueryResult {
   const fields = table.schema.fields;
   const columnNames = fields.map((field) => field.name);
   const columnTypes = fields.map((field) => String(field.type));

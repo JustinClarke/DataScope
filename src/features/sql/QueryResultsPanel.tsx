@@ -1,12 +1,16 @@
-import { useState } from 'react';
-import { Download } from 'lucide-react';
-import { useQuerySession, useQueryStore, type QuerySessionId } from '../../stores/query';
-import { useDatasetsStore } from '../../stores/datasets';
-import { classifyStatement } from '../../lib/statementClass';
-import { downloadTable } from '../../services/export';
-import { ResultsGrid } from './ResultsGrid';
-import { RunSqlButton } from './RunSqlButton';
-import { AutoChartPanel } from './AutoChartPanel';
+import { useState } from "react";
+import { Download } from "lucide-react";
+import {
+  useQuerySession,
+  useQueryStore,
+  type QuerySessionId,
+} from "../../stores/query";
+import { useDatasetsStore } from "../../stores/datasets";
+import { classifyStatement } from "../../lib/statementClass";
+import { downloadTable } from "../../services/export";
+import { ResultsGrid } from "./ResultsGrid";
+import { RunSqlButton } from "./RunSqlButton";
+import { AutoChartPanel } from "./AutoChartPanel";
 
 /**
  * "What a query produced" — one rendering, shared by the console, Pivot and
@@ -23,7 +27,13 @@ import { AutoChartPanel } from './AutoChartPanel';
  * only exists because there is a result to show. A full-height query tab has
  * the room, so it keeps the chart it inherited.
  */
-export function QueryOutput({ sessionId, showChart = true }: { sessionId: QuerySessionId; showChart?: boolean }) {
+export function QueryOutput({
+  sessionId,
+  showChart = true,
+}: {
+  sessionId: QuerySessionId;
+  showChart?: boolean;
+}) {
   const { status, result, error, sql, lastRunSql } = useQuerySession(sessionId);
   const tables = useDatasetsStore((state) => state.tables);
   const [exportingDerived, setExportingDerived] = useState(false);
@@ -32,13 +42,15 @@ export function QueryOutput({ sessionId, showChart = true }: { sessionId: QueryS
   // edited after a run, and every decision below is about the result.
   const ranSql = lastRunSql || sql;
   const lastRunInfo = classifyStatement(ranSql);
-  const lastRunWasQuery = lastRunInfo.class === 'query';
+  const lastRunWasQuery = lastRunInfo.class === "query";
   // A CTAS that just succeeded gets a Parquet shortcut right on the Results
   // header (§12.2 "wherever a table is") — found by name in the registry
   // rather than threaded through QueryResult, since every derived table
   // already lands there the moment `runTransform` registers it.
   const derivedTable =
-    status === 'success' && lastRunInfo.class === 'ctas' && lastRunInfo.ctasTable
+    status === "success" &&
+    lastRunInfo.class === "ctas" &&
+    lastRunInfo.ctasTable
       ? tables.find((t) => t.tableName === lastRunInfo.ctasTable)
       : undefined;
 
@@ -46,7 +58,7 @@ export function QueryOutput({ sessionId, showChart = true }: { sessionId: QueryS
     if (!derivedTable || exportingDerived) return;
     setExportingDerived(true);
     try {
-      await downloadTable(derivedTable, 'parquet');
+      await downloadTable(derivedTable, "parquet");
     } finally {
       setExportingDerived(false);
     }
@@ -65,19 +77,32 @@ export function QueryOutput({ sessionId, showChart = true }: { sessionId: QueryS
               title={`Download "${derivedTable.tableName}" as Parquet`}
               className="flex items-center gap-1 rounded border border-(--color-border) px-2 py-1 text-xs font-medium text-(--color-fg) disabled:opacity-50"
             >
-              <Download size={12} aria-hidden="true" /> {exportingDerived ? 'Preparing…' : 'Download Parquet'}
+              <Download size={12} aria-hidden="true" />{" "}
+              {exportingDerived ? "Preparing…" : "Download Parquet"}
             </button>
           )}
         </div>
-        <ResultsGrid sessionId={sessionId} status={status} result={result} error={error} sql={ranSql} />
+        <ResultsGrid
+          sessionId={sessionId}
+          status={status}
+          result={result}
+          error={error}
+          sql={ranSql}
+        />
       </div>
 
-      {showChart && status === 'success' && result && result.rowCount > 0 && lastRunWasQuery && (
-        <div>
-          <h3 className="mb-2 text-sm font-medium text-(--color-fg)">Chart</h3>
-          <AutoChartPanel result={result} sql={ranSql} />
-        </div>
-      )}
+      {showChart &&
+        status === "success" &&
+        result &&
+        result.rowCount > 0 &&
+        lastRunWasQuery && (
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-(--color-fg)">
+              Chart
+            </h3>
+            <AutoChartPanel result={result} sql={ranSql} />
+          </div>
+        )}
     </div>
   );
 }
@@ -97,7 +122,9 @@ export function QueryHistory() {
   return (
     <div>
       {history.length === 0 ? (
-        <p className="text-sm text-(--color-fg-muted)">No statements run yet this session.</p>
+        <p className="text-sm text-(--color-fg-muted)">
+          No statements run yet this session.
+        </p>
       ) : (
         <ul className="flex flex-col gap-1 font-mono text-xs">
           {history.map((entry) => (
@@ -105,10 +132,20 @@ export function QueryHistory() {
               key={entry.id}
               className="flex items-center justify-between gap-3 rounded border border-(--color-border) px-2 py-1"
             >
-              <span className="truncate text-(--color-fg-muted)">{entry.sql}</span>
+              <span className="truncate text-(--color-fg-muted)">
+                {entry.sql}
+              </span>
               <div className="flex shrink-0 items-center gap-3">
-                <span className={entry.error ? 'text-(--color-error)' : 'text-(--color-fg-muted)'}>
-                  {entry.error ? 'error' : `${entry.result?.executionTimeMs.toFixed(0)} ms`}
+                <span
+                  className={
+                    entry.error
+                      ? "text-(--color-error)"
+                      : "text-(--color-fg-muted)"
+                  }
+                >
+                  {entry.error
+                    ? "error"
+                    : `${entry.result?.executionTimeMs.toFixed(0)} ms`}
                 </span>
                 {/* Re-runs through the same path as every other surface — no history-specific execution (S4). */}
                 <RunSqlButton sql={entry.sql} />

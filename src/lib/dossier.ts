@@ -2,13 +2,18 @@
 // Pure data-shaping only: turns already-computed profile/classification/
 // insight output into a ViewSpec (D55). No engine calls happen here — the
 // service layer (services/dossier.ts) gathers the raw inputs first.
-import type { DatasetVerdict, FactRef, TableRegistryEntry, ViewSpec } from '../types';
-import type { DateRangeStats } from './columnStats';
-import type { InsightCandidate, TableInsights } from './insights';
-import type { FkEdge } from './relationshipInference';
-import { scoreOf } from './insights';
-import { INTEREST_FLOOR, rankNextActions, schemaFact } from './capabilities';
-import { VIEWSPEC_VERSION } from './viewspec';
+import type {
+  DatasetVerdict,
+  FactRef,
+  TableRegistryEntry,
+  ViewSpec,
+} from "../types";
+import type { DateRangeStats } from "./columnStats";
+import type { InsightCandidate, TableInsights } from "./insights";
+import type { FkEdge } from "./relationshipInference";
+import { scoreOf } from "./insights";
+import { INTEREST_FLOOR, rankNextActions, schemaFact } from "./capabilities";
+import { VIEWSPEC_VERSION } from "./viewspec";
 
 export type { TableInsights };
 
@@ -32,7 +37,10 @@ export interface SharedColumnRef {
  * direction computed independently so a table naming another twice (two
  * shared columns) still gets one line per column, not per table.
  */
-export function sharedColumnsFor(table: TableRegistryEntry, allTables: TableRegistryEntry[]): SharedColumnRef[] {
+export function sharedColumnsFor(
+  table: TableRegistryEntry,
+  allTables: TableRegistryEntry[],
+): SharedColumnRef[] {
   if (!table.columns) return [];
   const others = allTables.filter((t) => t.id !== table.id);
   const refs: SharedColumnRef[] = [];
@@ -47,12 +55,18 @@ export function sharedColumnsFor(table: TableRegistryEntry, allTables: TableRegi
 }
 
 export function keyColumnsFor(table: TableRegistryEntry): string[] {
-  return (table.columns ?? []).filter((c) => c.semanticType === 'Identifier').map((c) => c.name);
+  return (table.columns ?? [])
+    .filter((c) => c.semanticType === "Identifier")
+    .map((c) => c.name);
 }
 
 // ---- Quality headline — positives-only, above the fold ----
 
-const QUALITY_RULES: InsightCandidate['rule'][] = ['duplicates', 'null-pattern', 'leakage'];
+const QUALITY_RULES: InsightCandidate["rule"][] = [
+  "duplicates",
+  "null-pattern",
+  "leakage",
+];
 const QUALITY_HEADLINE_CAP = 3;
 
 /**
@@ -64,8 +78,12 @@ const QUALITY_HEADLINE_CAP = 3;
  * issues found" (the same silence-over-false-clean rule D46 states for
  * sensitive columns applies to any quality all-clear claim).
  */
-export function buildQualityHeadlineItems(tableInsights: TableInsights[]): string[] {
-  const candidates = tableInsights.flatMap((ti) => ti.insights.filter((i) => QUALITY_RULES.includes(i.rule)));
+export function buildQualityHeadlineItems(
+  tableInsights: TableInsights[],
+): string[] {
+  const candidates = tableInsights.flatMap((ti) =>
+    ti.insights.filter((i) => QUALITY_RULES.includes(i.rule)),
+  );
   return [...candidates]
     .sort((a, b) => scoreOf(b) - scoreOf(a))
     .slice(0, QUALITY_HEADLINE_CAP)
@@ -86,11 +104,13 @@ const TOP_INSIGHTS_CAP = 10;
 export interface DossierInsightRow {
   tableName: string;
   description: string;
-  rule: InsightCandidate['rule'];
+  rule: InsightCandidate["rule"];
   sql: string;
 }
 
-export function buildTopInsightRows(tableInsights: TableInsights[]): DossierInsightRow[] {
+export function buildTopInsightRows(
+  tableInsights: TableInsights[],
+): DossierInsightRow[] {
   const all = tableInsights.flatMap((ti) =>
     ti.insights.map((insight) => ({ ti, insight })),
   );
@@ -130,7 +150,10 @@ function totalBytes(tables: TableRegistryEntry[]): number {
 const VERDICT_ACTIONS_CAP = 3;
 
 function latestSnapshot(tables: TableRegistryEntry[]): string {
-  return tables.reduce((latest, t) => (t.createdAt > latest ? t.createdAt : latest), tables[0]?.createdAt ?? '');
+  return tables.reduce(
+    (latest, t) => (t.createdAt > latest ? t.createdAt : latest),
+    tables[0]?.createdAt ?? "",
+  );
 }
 
 /**
@@ -150,34 +173,41 @@ function latestSnapshot(tables: TableRegistryEntry[]): string {
  * score, a quality-risk rule (duplicates / null-pattern / leakage) wins — the
  * D23 trust gate.
  */
-export function selectHeadlineFact(tables: TableRegistryEntry[], tableInsights: TableInsights[]): FactRef {
+export function selectHeadlineFact(
+  tables: TableRegistryEntry[],
+  tableInsights: TableInsights[],
+): FactRef {
   const snapshot = latestSnapshot(tables);
   const sampled = tables.some((t) => t.sampled);
 
   const candidates = tableInsights
     .flatMap((ti) => ti.insights.map((insight) => ({ ti, insight })))
-    .filter((c) => c.insight.rule !== 'id-exclusion');
-  const topScore = candidates.reduce((max, c) => Math.max(max, scoreOf(c.insight)), 0);
+    .filter((c) => c.insight.rule !== "id-exclusion");
+  const topScore = candidates.reduce(
+    (max, c) => Math.max(max, scoreOf(c.insight)),
+    0,
+  );
 
   if (candidates.length === 0 || topScore < INTEREST_FLOOR) {
     const tableCount = tables.length;
     const rows = totalRows(tables);
     return schemaFact(
-      `${tableCount} table${tableCount === 1 ? '' : 's'} · ${rows.toLocaleString()} rows · no single dominant finding — here's the structure.`,
+      `${tableCount} table${tableCount === 1 ? "" : "s"} · ${rows.toLocaleString()} rows · no single dominant finding — here's the structure.`,
       snapshot,
       sampled,
     );
   }
 
   const atTop = candidates.filter((c) => scoreOf(c.insight) === topScore);
-  const winner = atTop.find((c) => QUALITY_RULES.includes(c.insight.rule)) ?? atTop[0];
+  const winner =
+    atTop.find((c) => QUALITY_RULES.includes(c.insight.rule)) ?? atTop[0];
 
   return {
     statement: winner.insight.description,
     sql: winner.insight.sql,
     snapshot: winner.ti.table.createdAt,
-    confidence: winner.ti.table.sampled ? 'medium' : 'high',
-    provenance: 'insight-rule',
+    confidence: winner.ti.table.sampled ? "medium" : "high",
+    provenance: "insight-rule",
   };
 }
 
@@ -188,16 +218,22 @@ export function selectHeadlineFact(tables: TableRegistryEntry[], tableInsights: 
  * rather than guessing which one is the real key.
  */
 function describeGrain(table: TableRegistryEntry | null): string {
-  if (!table) return 'No tables loaded.';
+  if (!table) return "No tables loaded.";
   const ids = keyColumnsFor(table);
   if (ids.length === 1) return `${table.tableName}: one row per ${ids[0]}`;
   return `${table.tableName}: ${table.rowCount.toLocaleString()} rows`;
 }
 
 /** The largest table's own date-coverage span, or the first available one if it has none. */
-function describeTimeSpan(timeCoverage: TimeCoverageRow[], grainTable: TableRegistryEntry | null): string | undefined {
+function describeTimeSpan(
+  timeCoverage: TimeCoverageRow[],
+  grainTable: TableRegistryEntry | null,
+): string | undefined {
   if (timeCoverage.length === 0) return undefined;
-  const row = (grainTable && timeCoverage.find((r) => r.tableName === grainTable.tableName)) ?? timeCoverage[0];
+  const row =
+    (grainTable &&
+      timeCoverage.find((r) => r.tableName === grainTable.tableName)) ??
+    timeCoverage[0];
   return `${row.range.earliest} – ${row.range.latest}`;
 }
 
@@ -209,7 +245,8 @@ function describeTimeSpan(timeCoverage: TimeCoverageRow[], grainTable: TableRegi
  * this shape directly.
  */
 export function buildDatasetVerdict(input: DossierInput): DatasetVerdict {
-  const { datasetLabel, tables, tableInsights, timeCoverage, profiledAt } = input;
+  const { datasetLabel, tables, tableInsights, timeCoverage, profiledAt } =
+    input;
   const grainTable = largestTable(tables);
 
   return {
@@ -223,7 +260,10 @@ export function buildDatasetVerdict(input: DossierInput): DatasetVerdict {
     headlineFact: selectHeadlineFact(tables, tableInsights),
     grain: describeGrain(grainTable),
     timeSpan: describeTimeSpan(timeCoverage, grainTable),
-    actions: rankNextActions(tables, tableInsights).slice(0, VERDICT_ACTIONS_CAP),
+    actions: rankNextActions(tables, tableInsights).slice(
+      0,
+      VERDICT_ACTIONS_CAP,
+    ),
   };
 }
 
@@ -247,9 +287,9 @@ export function buildDossierViewSpec(input: DossierInput): ViewSpec {
   const hasGraph = Array.isArray(relationships) && relationships.length > 0;
   const verdict = buildDatasetVerdict(input);
 
-  const panels: ViewSpec['panels'] = [
+  const panels: ViewSpec["panels"] = [
     {
-      componentId: 'identity-band',
+      componentId: "identity-band",
       tier: 1,
       props: {
         ...verdict.identity,
@@ -258,7 +298,7 @@ export function buildDossierViewSpec(input: DossierInput): ViewSpec {
       },
     },
     {
-      componentId: 'verdict',
+      componentId: "verdict",
       tier: 1,
       props: {
         headlineFact: verdict.headlineFact,
@@ -269,17 +309,20 @@ export function buildDossierViewSpec(input: DossierInput): ViewSpec {
 
   if (hasGraph) {
     panels.push({
-      componentId: 'hero-join-graph',
+      componentId: "hero-join-graph",
       tier: 2,
       props: {
-        nodes: tables.map((t) => ({ tableName: t.tableName, rowCount: t.rowCount })),
+        nodes: tables.map((t) => ({
+          tableName: t.tableName,
+          rowCount: t.rowCount,
+        })),
         edges: relationships,
       },
     });
   }
 
   panels.push({
-    componentId: 'hero-table-grid',
+    componentId: "hero-table-grid",
     tier: 2,
     props: {
       tables: tables.map((t) => ({
@@ -294,21 +337,29 @@ export function buildDossierViewSpec(input: DossierInput): ViewSpec {
   });
 
   panels.push({
-    componentId: 'table-strip',
+    componentId: "table-strip",
     tier: 2,
     props: {
-      tables: tables.map((t) => ({ id: t.id, tableName: t.tableName, rowCount: t.rowCount })),
+      tables: tables.map((t) => ({
+        id: t.id,
+        tableName: t.tableName,
+        rowCount: t.rowCount,
+      })),
     },
   });
 
   const qualityItems = buildQualityHeadlineItems(tableInsights);
   if (qualityItems.length > 0) {
-    panels.push({ componentId: 'quality-headline', tier: 2, props: { items: qualityItems } });
+    panels.push({
+      componentId: "quality-headline",
+      tier: 2,
+      props: { items: qualityItems },
+    });
   }
 
   if (timeCoverage.length > 0) {
     panels.push({
-      componentId: 'time-coverage',
+      componentId: "time-coverage",
       tier: 2,
       props: {
         rows: timeCoverage.map((row) => ({
@@ -324,7 +375,11 @@ export function buildDossierViewSpec(input: DossierInput): ViewSpec {
 
   const topInsights = buildTopInsightRows(tableInsights);
   if (topInsights.length > 0) {
-    panels.push({ componentId: 'top-insights', tier: 3, props: { insights: topInsights } });
+    panels.push({
+      componentId: "top-insights",
+      tier: 3,
+      props: { insights: topInsights },
+    });
   }
 
   // No `sensitive-columns` panel in v0 (D46) — the detector is v0.5; omitting
@@ -334,7 +389,9 @@ export function buildDossierViewSpec(input: DossierInput): ViewSpec {
   return { viewspecVersion: VIEWSPEC_VERSION, panels };
 }
 
-export function largestTable(tables: TableRegistryEntry[]): TableRegistryEntry | null {
+export function largestTable(
+  tables: TableRegistryEntry[],
+): TableRegistryEntry | null {
   if (tables.length === 0) return null;
   return [...tables].sort((a, b) => b.rowCount - a.rowCount)[0];
 }

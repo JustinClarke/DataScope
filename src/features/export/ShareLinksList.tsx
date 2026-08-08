@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
-import { useSettingsStore } from '../../stores/settings';
-import { deleteShare } from '../../services/export';
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
+import { useSettingsStore } from "../../stores/settings";
+import { deleteShare } from "../../services/export";
 
 /**
  * "Links I created" (§12.3) — the local record of share links this browser
@@ -35,23 +35,33 @@ export function ShareLinksList() {
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">Your share links</h2>
+      <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">
+        Your share links
+      </h2>
       <ul className="flex flex-col gap-2">
         {shareLinks.map((link) => {
-          const expiresAt = new Date(new Date(link.createdAt).getTime() + link.ttlSeconds * 1000);
+          const expiresAt = new Date(
+            new Date(link.createdAt).getTime() + link.ttlSeconds * 1000,
+          );
           return (
             <li
               key={link.token}
               className="flex items-center justify-between rounded-lg border border-(--color-border) px-4 py-2"
             >
               <div>
-                <span className="font-medium text-(--color-fg)">{link.label}</span>
+                <span className="font-medium text-(--color-fg)">
+                  {link.label}
+                </span>
                 <span className="ml-2 text-sm text-(--color-fg-muted)">
-                  {link.kind === 'full-dataset' ? 'full dataset' : 'structure only'} · expires{' '}
-                  {expiresAt.toLocaleDateString()}
+                  {link.kind === "full-dataset"
+                    ? "full dataset"
+                    : "structure only"}{" "}
+                  · expires {expiresAt.toLocaleDateString()}
                 </span>
                 {failedToken === link.token && (
-                  <span className="ml-2 text-sm text-(--color-error)">couldn't delete — try again</span>
+                  <span className="ml-2 text-sm text-(--color-error)">
+                    couldn't delete — try again
+                  </span>
                 )}
               </div>
               <button

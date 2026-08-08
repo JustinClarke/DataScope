@@ -3,8 +3,8 @@
 // group-summary builder is shared with services/insights.ts's concentration +
 // outlier-group rules (§10 Module 1) — one implementation of "aggregate a
 // quantitative column by a categorical one," not two.
-import { quoteIdentifier } from '../services/ingestion';
-import type { QueryResult } from '../types';
+import { quoteIdentifier } from "../services/ingestion";
+import type { QueryResult } from "../types";
 
 export interface FrequencyRow {
   category: string;
@@ -18,7 +18,11 @@ export interface FrequencyRow {
 const DEFAULT_FREQUENCY_LIMIT = 50;
 
 /** Frequency bar chart's query (§10 Module 6) — one categorical column, sorted descending by count. Also the donut view's source data: the caller lumps the tail locally via `lumpTail` rather than re-querying. */
-export function buildFrequencySql(tableName: string, column: string, limit = DEFAULT_FREQUENCY_LIMIT): string {
+export function buildFrequencySql(
+  tableName: string,
+  column: string,
+  limit = DEFAULT_FREQUENCY_LIMIT,
+): string {
   const col = quoteIdentifier(column);
   return (
     `SELECT ${col} AS category, COUNT(*) AS count\n` +
@@ -28,7 +32,10 @@ export function buildFrequencySql(tableName: string, column: string, limit = DEF
 }
 
 export function parseFrequency(result: QueryResult): FrequencyRow[] {
-  return result.rows.map((row) => ({ category: String(row[0]), count: Number(row[1] ?? 0) }));
+  return result.rows.map((row) => ({
+    category: String(row[0]),
+    count: Number(row[1] ?? 0),
+  }));
 }
 
 /**
@@ -38,12 +45,15 @@ export function parseFrequency(result: QueryResult): FrequencyRow[] {
  * assumed already sorted descending (`buildFrequencySql`'s own `ORDER BY`);
  * a no-op when there's nothing to lump.
  */
-export function lumpTail(rows: FrequencyRow[], maxSlices: number): FrequencyRow[] {
+export function lumpTail(
+  rows: FrequencyRow[],
+  maxSlices: number,
+): FrequencyRow[] {
   if (rows.length <= maxSlices) return rows;
   const head = rows.slice(0, maxSlices - 1);
   const tail = rows.slice(maxSlices - 1);
   const otherCount = tail.reduce((sum, r) => sum + r.count, 0);
-  return [...head, { category: 'Other', count: otherCount }];
+  return [...head, { category: "Other", count: otherCount }];
 }
 
 export interface CategorySummaryRow {
@@ -61,7 +71,11 @@ export interface CategorySummaryRow {
  * outlier-group probe reuses it unchanged (same `grp`/`total`/`mean`/`rows`
  * shape it already depended on).
  */
-export function buildCategorySummarySql(tableName: string, catColumn: string, quantColumn: string): string {
+export function buildCategorySummarySql(
+  tableName: string,
+  catColumn: string,
+  quantColumn: string,
+): string {
   const cat = quoteIdentifier(catColumn);
   const quant = quoteIdentifier(quantColumn);
   return (
@@ -70,7 +84,9 @@ export function buildCategorySummarySql(tableName: string, catColumn: string, qu
   );
 }
 
-export function parseCategorySummary(result: QueryResult): CategorySummaryRow[] {
+export function parseCategorySummary(
+  result: QueryResult,
+): CategorySummaryRow[] {
   return result.rows.map((row) => ({
     grp: String(row[0]),
     total: Number(row[1] ?? 0),

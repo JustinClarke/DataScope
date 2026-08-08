@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { chartSeries } from '../../../lib/chartPalette';
+import { useEffect, useRef } from "react";
+import { chartSeries } from "../../../lib/chartPalette";
 
 export interface ScatterPoint {
   x: number;
@@ -52,7 +52,7 @@ export function CanvasScatter({ points, xLabel, yLabel }: CanvasScatterProps) {
     canvas.style.width = `${width}px`;
     canvas.style.height = `${HEIGHT}px`;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, width, HEIGHT);
@@ -64,18 +64,21 @@ export function CanvasScatter({ points, xLabel, yLabel }: CanvasScatterProps) {
     const plotWidth = width - PADDING.left - PADDING.right;
     const plotHeight = HEIGHT - PADDING.top - PADDING.bottom;
 
-    const toPx = (x: number) => PADDING.left + ((x - xMin) / (xMax - xMin)) * plotWidth;
-    const toPy = (y: number) => PADDING.top + plotHeight - ((y - yMin) / (yMax - yMin)) * plotHeight;
+    const toPx = (x: number) =>
+      PADDING.left + ((x - xMin) / (xMax - xMin)) * plotWidth;
+    const toPy = (y: number) =>
+      PADDING.top + plotHeight - ((y - yMin) / (yMax - yMin)) * plotHeight;
 
     // Canvas 2D can't resolve CSS custom properties directly — read the
     // computed values so axes/labels/points still match the active light/dark
     // theme, falling back to the register's own resolved literals
     // (`lib/chartPalette.ts`) where the computed style is unavailable.
     const computed = getComputedStyle(container);
-    const read = (token: string, fallback: string) => computed.getPropertyValue(token).trim() || fallback;
-    const axisColor = read('--color-border', 'oklch(100% 0 0 / 0.1)');
-    const labelColor = read('--color-fg-muted', 'oklch(65.9% 0.002 248)');
-    const pointColor = read('--chart-1', chartSeries()[0]);
+    const read = (token: string, fallback: string) =>
+      computed.getPropertyValue(token).trim() || fallback;
+    const axisColor = read("--color-border", "oklch(100% 0 0 / 0.1)");
+    const labelColor = read("--color-fg-muted", "oklch(65.9% 0.002 248)");
+    const pointColor = read("--chart-1", chartSeries()[0]);
 
     // Axes
     ctx.strokeStyle = axisColor;
@@ -98,8 +101,8 @@ export function CanvasScatter({ points, xLabel, yLabel }: CanvasScatterProps) {
 
     // Axis labels + min/max ticks
     ctx.fillStyle = labelColor;
-    ctx.font = '11px system-ui, sans-serif';
-    ctx.textAlign = 'center';
+    ctx.font = "11px system-ui, sans-serif";
+    ctx.textAlign = "center";
     ctx.fillText(xLabel, PADDING.left + plotWidth / 2, HEIGHT - 6);
     ctx.fillText(xMin.toFixed(1), PADDING.left, HEIGHT - 18);
     ctx.fillText(xMax.toFixed(1), PADDING.left + plotWidth, HEIGHT - 18);
@@ -109,14 +112,18 @@ export function CanvasScatter({ points, xLabel, yLabel }: CanvasScatterProps) {
     ctx.rotate(-Math.PI / 2);
     ctx.fillText(yLabel, 0, 0);
     ctx.restore();
-    ctx.textAlign = 'right';
+    ctx.textAlign = "right";
     ctx.fillText(yMax.toFixed(1), PADDING.left - 6, PADDING.top + 4);
     ctx.fillText(yMin.toFixed(1), PADDING.left - 6, PADDING.top + plotHeight);
   }, [points, xLabel, yLabel]);
 
   return (
     <div ref={containerRef} className="w-full" data-testid="canvas-scatter">
-      <canvas ref={canvasRef} role="img" aria-label={`Scatter plot of ${yLabel} vs ${xLabel}, ${points.length.toLocaleString()} points`} />
+      <canvas
+        ref={canvasRef}
+        role="img"
+        aria-label={`Scatter plot of ${yLabel} vs ${xLabel}, ${points.length.toLocaleString()} points`}
+      />
     </div>
   );
 }

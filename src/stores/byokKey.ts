@@ -4,7 +4,7 @@
 // starts empty and no raw key can survive a tab close. "Remember my key"
 // (server-side vault) is a separate opt-in the vault service owns
 // (build/09-edge/03-vault) — this store never grows that capability itself.
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface ByokKeyState {
   key: string | null;

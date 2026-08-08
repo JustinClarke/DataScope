@@ -8,33 +8,41 @@
 // no DOM-applying code anywhere in this codebase yet, and §13.3 marks the
 // Settings tab itself as candidate scope, not a W7 commitment. The settings
 // gear itself moved to `TitleBar` (V2, scope call 2).
-import { useDatasetsStore, type WorkerStatus } from '../../stores/datasets';
-import { useQueryStore, useQuerySession, type QueryStatus } from '../../stores/query';
-import { useSettingsStore } from '../../stores/settings';
-import { usePauseSignalStore } from '../../stores/pauseSignal';
-import { formatBytes } from '../../lib/formatBytes';
+import { useDatasetsStore, type WorkerStatus } from "../../stores/datasets";
+import {
+  useQueryStore,
+  useQuerySession,
+  type QueryStatus,
+} from "../../stores/query";
+import { useSettingsStore } from "../../stores/settings";
+import { usePauseSignalStore } from "../../stores/pauseSignal";
+import { formatBytes } from "../../lib/formatBytes";
 
 function getWorkerStatusText(status: WorkerStatus): string {
   switch (status) {
-    case 'idle':
-      return 'Idle';
-    case 'loading':
-      return 'Loading';
-    case 'compiling':
-      return 'Compiling';
-    case 'ready':
-      return 'Ready';
-    case 'error':
-      return 'Error';
+    case "idle":
+      return "Idle";
+    case "loading":
+      return "Loading";
+    case "compiling":
+      return "Compiling";
+    case "ready":
+      return "Ready";
+    case "error":
+      return "Error";
     default:
-      return 'Unknown';
+      return "Unknown";
   }
 }
 
-function getQueryTimeText(status: QueryStatus, executionTimeMs?: number): string {
-  if (status === 'running') return 'query running…';
-  if (status === 'success' && executionTimeMs !== undefined) return `query ${executionTimeMs.toFixed(0)} ms`;
-  return 'query — ms';
+function getQueryTimeText(
+  status: QueryStatus,
+  executionTimeMs?: number,
+): string {
+  if (status === "running") return "query running…";
+  if (status === "success" && executionTimeMs !== undefined)
+    return `query ${executionTimeMs.toFixed(0)} ms`;
+  return "query — ms";
 }
 
 export function StatusBar() {
@@ -45,13 +53,14 @@ export function StatusBar() {
   // query tabs all able to run, "the console's" would be the wrong answer the
   // moment a tab runs.
   const lastRunSession = useQueryStore((state) => state.lastRunSession);
-  const { status: queryStatus, result: queryResult } = useQuerySession(lastRunSession);
+  const { status: queryStatus, result: queryResult } =
+    useQuerySession(lastRunSession);
   const lastPaused = usePauseSignalStore((state) => state.lastPaused);
 
   const totalRows = tables.reduce((sum, t) => sum + t.rowCount, 0);
   const totalMemoryBytes = tables.reduce((sum, t) => sum + t.memoryBytes, 0);
-  const cloudPosture = aiMode === 'cloud';
-  const postureColor = cloudPosture ? 'var(--color-active)' : 'var(--color-ok)';
+  const cloudPosture = aiMode === "cloud";
+  const postureColor = cloudPosture ? "var(--color-active)" : "var(--color-ok)";
 
   return (
     <div
@@ -60,18 +69,26 @@ export function StatusBar() {
     >
       <span
         className="flex items-center gap-1.5 text-(--color-ink-2)"
-        title={cloudPosture ? 'AI questions may leave your browser' : 'Nothing leaves your browser'}
+        title={
+          cloudPosture
+            ? "AI questions may leave your browser"
+            : "Nothing leaves your browser"
+        }
       >
         <span
           aria-hidden="true"
           className="h-[7px] w-[7px] rounded-full"
-          style={{ background: postureColor, boxShadow: `0 0 0 3px color-mix(in oklab, ${postureColor} 20%, transparent)` }}
+          style={{
+            background: postureColor,
+            boxShadow: `0 0 0 3px color-mix(in oklab, ${postureColor} 20%, transparent)`,
+          }}
         />
-        {cloudPosture ? 'may leave your browser' : 'nothing leaves'}
+        {cloudPosture ? "may leave your browser" : "nothing leaves"}
       </span>
       <span>Engine: {getWorkerStatusText(workerStatus)}</span>
       <span>
-        {tables.length} table{tables.length !== 1 ? 's' : ''} × {totalRows.toLocaleString()} rows
+        {tables.length} table{tables.length !== 1 ? "s" : ""} ×{" "}
+        {totalRows.toLocaleString()} rows
       </span>
       <span>{formatBytes(totalMemoryBytes)}</span>
       <span>{getQueryTimeText(queryStatus, queryResult?.executionTimeMs)}</span>

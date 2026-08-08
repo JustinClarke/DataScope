@@ -9,17 +9,17 @@ import {
   decideSizeTier,
   refusalMessage,
   type SizeTier,
-} from '../features/ingestion/aggregateSize';
-import { estimateHeadroomExceeded } from '../lib/memoryHeadroom';
-import { fetchViaRelay, type RelayFetchOptions } from './relayClient';
+} from "../features/ingestion/aggregateSize";
+import { estimateHeadroomExceeded } from "../lib/memoryHeadroom";
+import { fetchViaRelay, type RelayFetchOptions } from "./relayClient";
 
 export type ApiFetchErrorCode =
-  | 'invalid-url'
-  | 'cors-suspected'
-  | 'http-error'
-  | 'invalid-json'
-  | 'too-large'
-  | 'timeout';
+  | "invalid-url"
+  | "cors-suspected"
+  | "http-error"
+  | "invalid-json"
+  | "too-large"
+  | "timeout";
 
 export class ApiFetchError extends Error {
   readonly code: ApiFetchErrorCode;
@@ -58,10 +58,13 @@ function validateUrl(rawUrl: string): string {
   try {
     url = new URL(rawUrl);
   } catch {
-    throw new ApiFetchError('invalid-url', `"${rawUrl}" isn't a valid URL.`);
+    throw new ApiFetchError("invalid-url", `"${rawUrl}" isn't a valid URL.`);
   }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new ApiFetchError('invalid-url', 'Only http:// and https:// URLs are supported.');
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new ApiFetchError(
+      "invalid-url",
+      "Only http:// and https:// URLs are supported.",
+    );
   }
   return url.toString();
 }
@@ -75,23 +78,30 @@ function validateUrl(rawUrl: string): string {
 // manual "load more pages" fallback for that case is named in the leaf doc
 // as an open scope gap, not built here.
 function nextPageUrl(response: Response): string | null {
-  const link = response.headers.get('link');
+  const link = response.headers.get("link");
   if (!link) return null;
   const next = link
-    .split(',')
+    .split(",")
     .map((part) => part.trim())
     .find((part) => /rel="next"/.test(part));
   return next?.match(/^<([^>]+)>/)?.[1] ?? null;
 }
 
-async function fetchOnePage(url: string, fetchImpl: typeof fetch, timeoutMs: number): Promise<Response> {
+async function fetchOnePage(
+  url: string,
+  fetchImpl: typeof fetch,
+  timeoutMs: number,
+): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetchImpl(url, { signal: controller.signal });
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new ApiFetchError('timeout', `Request to ${url} timed out after ${timeoutMs / 1000}s.`);
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiFetchError(
+        "timeout",
+        `Request to ${url} timed out after ${timeoutMs / 1000}s.`,
+      );
     }
     // fetch() rejects with an opaque TypeError for CORS failures, DNS
     // failures, and offline networks alike — the Fetch API deliberately
@@ -102,7 +112,7 @@ async function fetchOnePage(url: string, fetchImpl: typeof fetch, timeoutMs: num
     // surfaces as a typed, distinguishable error rather than a silent retry —
     // the seam Tier 2 plugs into once it lands.
     throw new ApiFetchError(
-      'cors-suspected',
+      "cors-suspected",
       "Couldn't reach this URL directly — it may be blocking cross-origin requests.",
     );
   } finally {
@@ -120,7 +130,8 @@ async function fetchOnePage(url: string, fetchImpl: typeof fetch, timeoutMs: num
 async function accumulatePages(
   firstUrl: string,
   maxPages: number,
-  onProgress: ((pagesFetched: number, bytesAccumulated: number) => void) | undefined,
+  onProgress:
+    ((pagesFetched: number, bytesAccumulated: number) => void) | undefined,
   fetchPage: (url: string) => Promise<Response>,
 ): Promise<ApiFetchResult> {
   let currentUrl: string | null = firstUrl;
@@ -129,12 +140,15 @@ async function accumulatePages(
   let firstPageBytes: ArrayBuffer | null = null;
   let pagesFetched = 0;
   let bytesAccumulated = 0;
-  let tier: SizeTier = 'full';
+  let tier: SizeTier = "full";
 
   while (currentUrl && pagesFetched < maxPages) {
     const response = await fetchPage(currentUrl);
     if (!response.ok) {
-      throw new ApiFetchError('http-error', `The API returned ${response.status} ${response.statusText}`.trim());
+      throw new ApiFetchError(
+        "http-error",
+        `The API returned ${response.status} ${response.statusText}`.trim(),
+      );
     }
 
     const raw = await response.arrayBuffer();
@@ -142,16 +156,22 @@ async function accumulatePages(
     pagesFetched += 1;
     onProgress?.(pagesFetched, bytesAccumulated);
 
-    tier = decideSizeTier(bytesAccumulated, estimateHeadroomExceeded(bytesAccumulated));
-    if (tier === 'refuse') {
-      throw new ApiFetchError('too-large', refusalMessage(bytesAccumulated));
+    tier = decideSizeTier(
+      bytesAccumulated,
+      estimateHeadroomExceeded(bytesAccumulated),
+    );
+    if (tier === "refuse") {
+      throw new ApiFetchError("too-large", refusalMessage(bytesAccumulated));
     }
 
     let parsed: unknown;
     try {
       parsed = JSON.parse(new TextDecoder().decode(raw));
     } catch {
-      throw new ApiFetchError('invalid-json', `The response from ${currentUrl} wasn't valid JSON.`);
+      throw new ApiFetchError(
+        "invalid-json",
+        `The response from ${currentUrl} wasn't valid JSON.`,
+      );
     }
 
     if (pagesFetched === 1) firstPageBytes = raw;
@@ -166,7 +186,8 @@ async function accumulatePages(
     // Stop paginating early once the response has already crossed into
     // sampled/refuse territory — no reason to keep fetching pages that will
     // just be discarded past the SAMPLE_ROW_LIMIT cutoff.
-    currentUrl = tier === 'full' || tier === 'warn' ? nextPageUrl(response) : null;
+    currentUrl =
+      tier === "full" || tier === "warn" ? nextPageUrl(response) : null;
   }
 
   const buffer =
@@ -184,12 +205,17 @@ async function accumulatePages(
  * response's raw bytes pass through unchanged (no parse/reserialize
  * round-trip); a multi-page response is merged into one JSON array.
  */
-export async function fetchApiSource(rawUrl: string, options: ApiFetchOptions = {}): Promise<ApiFetchResult> {
+export async function fetchApiSource(
+  rawUrl: string,
+  options: ApiFetchOptions = {},
+): Promise<ApiFetchResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const maxPages = options.maxPages ?? MAX_PAGES;
   const timeoutMs = options.timeoutMs ?? API_FETCH_TIMEOUT_MS;
   const firstUrl = validateUrl(rawUrl);
-  return accumulatePages(firstUrl, maxPages, options.onProgress, (url) => fetchOnePage(url, fetchImpl, timeoutMs));
+  return accumulatePages(firstUrl, maxPages, options.onProgress, (url) =>
+    fetchOnePage(url, fetchImpl, timeoutMs),
+  );
 }
 
 export interface RelayApiFetchOptions extends RelayFetchOptions {
@@ -224,13 +250,17 @@ export async function fetchApiSourceViaRelay(
   const maxPages = options.maxPages ?? MAX_PAGES;
   const firstUrl = validateUrl(rawUrl);
   return accumulatePages(firstUrl, maxPages, options.onProgress, (url) =>
-    fetchViaRelay(url, sessionId, { fetchImpl: options.fetchImpl, endpoint: options.endpoint, timeoutMs: options.timeoutMs }),
+    fetchViaRelay(url, sessionId, {
+      fetchImpl: options.fetchImpl,
+      endpoint: options.endpoint,
+      timeoutMs: options.timeoutMs,
+    }),
   );
 }
 
 /** Derives a table name from a URL's last path segment, falling back to the hostname for a root/query-only URL. */
 export function tableNameFromUrl(rawUrl: string): string {
   const url = new URL(rawUrl);
-  const segments = url.pathname.split('/').filter(Boolean);
+  const segments = url.pathname.split("/").filter(Boolean);
   return segments.at(-1) ?? url.hostname;
 }

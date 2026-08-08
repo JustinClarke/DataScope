@@ -1,4 +1,4 @@
-import type { ColumnProfile, QueryResult } from '../types';
+import type { ColumnProfile, QueryResult } from "../types";
 
 /**
  * DuckDB's `SUMMARIZE` casts `min`/`max`/`avg`/`std` to VARCHAR for every
@@ -25,18 +25,19 @@ function toNullableNumber(value: unknown): number | null {
 export function parseSummarizeResult(result: QueryResult): ColumnProfile[] {
   const columnIndex = (name: string): number => {
     const index = result.columnNames.indexOf(name);
-    if (index === -1) throw new Error(`SUMMARIZE result is missing expected column "${name}".`);
+    if (index === -1)
+      throw new Error(`SUMMARIZE result is missing expected column "${name}".`);
     return index;
   };
 
-  const nameIdx = columnIndex('column_name');
-  const typeIdx = columnIndex('column_type');
-  const minIdx = columnIndex('min');
-  const maxIdx = columnIndex('max');
-  const uniqueIdx = columnIndex('approx_unique');
-  const avgIdx = columnIndex('avg');
-  const stdIdx = columnIndex('std');
-  const nullPctIdx = columnIndex('null_percentage');
+  const nameIdx = columnIndex("column_name");
+  const typeIdx = columnIndex("column_type");
+  const minIdx = columnIndex("min");
+  const maxIdx = columnIndex("max");
+  const uniqueIdx = columnIndex("approx_unique");
+  const avgIdx = columnIndex("avg");
+  const stdIdx = columnIndex("std");
+  const nullPctIdx = columnIndex("null_percentage");
 
   return result.rows.map((row) => ({
     name: String(row[nameIdx]),

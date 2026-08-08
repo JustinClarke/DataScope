@@ -1,6 +1,6 @@
-import { X } from 'lucide-react';
-import type { SkippedFile } from '../../services/ingestion';
-import { summarizeBatch } from './summarize';
+import { X } from "lucide-react";
+import type { SkippedFile } from "../../services/ingestion";
+import { summarizeBatch } from "./summarize";
 
 interface SummaryToastProps {
   ingestedCount: number;
@@ -8,7 +8,11 @@ interface SummaryToastProps {
   onDismiss: () => void;
 }
 
-export function SummaryToast({ ingestedCount, skipped, onDismiss }: SummaryToastProps) {
+export function SummaryToast({
+  ingestedCount,
+  skipped,
+  onDismiss,
+}: SummaryToastProps) {
   return (
     <div
       role="status"

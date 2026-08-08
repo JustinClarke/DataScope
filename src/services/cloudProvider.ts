@@ -18,9 +18,14 @@ import type {
   ByokCredential,
   RoutingMode,
   WireProviderTurn,
-} from '../../edge/protocol';
-import type { AIProvider, AITool, ProviderMessage, ProviderTurn } from '../types';
-import { ProviderQuotaExhaustedError } from './aiProvider';
+} from "../../edge/protocol";
+import type {
+  AIProvider,
+  AITool,
+  ProviderMessage,
+  ProviderTurn,
+} from "../types";
+import { ProviderQuotaExhaustedError } from "./aiProvider";
 
 export interface CloudProviderConfig {
   /** The router endpoint. When absent, cloud mode stays "not connected" (resolveProvider's `.provider` is null). */
@@ -45,14 +50,16 @@ export interface CloudProviderConfig {
  * local / retry tomorrow" state, distinct from a transport failure.
  */
 const QUOTA_CODES: ReadonlySet<AiRouterErrorCode> = new Set([
-  'quota-exhausted',
-  'pool-exhausted',
-  'paused',
+  "quota-exhausted",
+  "pool-exhausted",
+  "paused",
 ]);
 
-function toWireMessage(m: ProviderMessage): AiRouterRequest['messages'][number] {
+function toWireMessage(
+  m: ProviderMessage,
+): AiRouterRequest["messages"][number] {
   // Structurally identical to the wire shape; the annotation is the contract.
-  return m as AiRouterRequest['messages'][number];
+  return m as AiRouterRequest["messages"][number];
 }
 
 /**
@@ -63,8 +70,10 @@ function toWireMessage(m: ProviderMessage): AiRouterRequest['messages'][number] 
  * phase exists to remove. So the skew is named instead.
  */
 function readWireTurn(turn: WireProviderTurn): ProviderTurn {
-  if (!Array.isArray(turn?.calls) || typeof turn?.text !== 'string') {
-    throw new Error('cloud router returned a pre-A4 turn shape — redeploy the edge Worker.');
+  if (!Array.isArray(turn?.calls) || typeof turn?.text !== "string") {
+    throw new Error(
+      "cloud router returned a pre-A4 turn shape — redeploy the edge Worker.",
+    );
   }
   return { text: turn.text, calls: turn.calls };
 }
@@ -80,8 +89,8 @@ async function readError(response: Response): Promise<never> {
   if (code !== undefined && QUOTA_CODES.has(code as AiRouterErrorCode)) {
     throw new ProviderQuotaExhaustedError();
   }
-  if (code === 'timeout') {
-    throw new DOMException('AI provider timed out', 'TimeoutError');
+  if (code === "timeout") {
+    throw new DOMException("AI provider timed out", "TimeoutError");
   }
   // rate-limited, bad-request, or an unknown code: a plain transport failure the
   // loop renders as "couldn't reach the provider."
@@ -94,17 +103,17 @@ async function readStream(
   onToken: ((text: string) => void) | undefined,
 ): Promise<ProviderTurn> {
   const reader = response.body?.getReader();
-  if (reader === undefined) throw new Error('cloud router stream: empty body');
+  if (reader === undefined) throw new Error("cloud router stream: empty body");
   const decoder = new TextDecoder();
-  let buffer = '';
+  let buffer = "";
   let turn: WireProviderTurn | null = null;
 
   const handle = (data: string): void => {
-    if (data === '[DONE]') return;
+    if (data === "[DONE]") return;
     const event = JSON.parse(data) as
-      | { type: 'delta'; text: string }
-      | { type: 'done'; turn: WireProviderTurn };
-    if (event.type === 'delta') onToken?.(event.text);
+      | { type: "delta"; text: string }
+      | { type: "done"; turn: WireProviderTurn };
+    if (event.type === "delta") onToken?.(event.text);
     else turn = event.turn;
   };
 
@@ -114,14 +123,14 @@ async function readStream(
     buffer += decoder.decode(value, { stream: true });
     // SSE frames are separated by a blank line.
     let sep: number;
-    while ((sep = buffer.indexOf('\n\n')) !== -1) {
+    while ((sep = buffer.indexOf("\n\n")) !== -1) {
       const frame = buffer.slice(0, sep);
       buffer = buffer.slice(sep + 2);
-      const line = frame.split('\n').find((l) => l.startsWith('data:'));
+      const line = frame.split("\n").find((l) => l.startsWith("data:"));
       if (line !== undefined) handle(line.slice(5).trim());
     }
   }
-  if (turn === null) throw new Error('cloud router stream: no final turn');
+  if (turn === null) throw new Error("cloud router stream: no final turn");
   return readWireTurn(turn);
 }
 
@@ -137,8 +146,12 @@ export function createCloudProvider(config: CloudProviderConfig): AIProvider {
   let attempt = 0;
 
   return {
-    id: 'cloud-edge',
-    async complete(messages: ProviderMessage[], tools: AITool[], options): Promise<ProviderTurn> {
+    id: "cloud-edge",
+    async complete(
+      messages: ProviderMessage[],
+      tools: AITool[],
+      options,
+    ): Promise<ProviderTurn> {
       attempt += 1;
       const request: AiRouterRequest = {
         sessionId: config.sessionId,
@@ -150,15 +163,15 @@ export function createCloudProvider(config: CloudProviderConfig): AIProvider {
         attempt,
       };
       const response = await doFetch(config.endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        method: "POST",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(request),
         signal: options?.signal,
       });
 
       if (!response.ok) return readError(response);
 
-      if (response.headers.get('content-type')?.includes('text/event-stream')) {
+      if (response.headers.get("content-type")?.includes("text/event-stream")) {
         return readStream(response, config.onToken);
       }
       const body = (await response.json()) as AiRouterResponse;

@@ -1,0 +1,2 @@
+{"model":"qwen3:4b","arm":"A4","questionId":"W3","rep":0,"error":"ollama response is missing token counts (prompt_eval_count/eval_count)","timestamp":"2026-08-08T19:00:56.753Z"}
+{"model":"qwen3:4b","arm":"A4","questionId":"W3","rep":1,"error":"ollama response is missing token counts (prompt_eval_count/eval_count)","timestamp":"2026-08-08T19:01:12.253Z"}

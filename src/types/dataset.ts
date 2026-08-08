@@ -1,10 +1,10 @@
-import type { ClassifiedColumn, ColumnProfile } from './schema';
+import type { ClassifiedColumn, ColumnProfile } from "./schema";
 
 /** One ingestion event — a dropped file, folder, API fetch, or bundled sample (§7.5). */
 export interface Dataset {
   id: string;
   name: string;
-  sourceType: 'file' | 'folder' | 'api' | 'sample' | 'derived' | 'shared';
+  sourceType: "file" | "folder" | "api" | "sample" | "derived" | "shared";
   /** Table names this ingestion registered — one for a single file, several for a folder drop. */
   tableNames: string[];
   ingestedAt: string;
@@ -21,7 +21,7 @@ export interface TableRegistryEntry {
   id: string;
   tableName: string;
   datasetId: string;
-  origin: 'file' | 'derived' | 'api' | 'sample' | 'shared';
+  origin: "file" | "derived" | "api" | "sample" | "shared";
   /**
    * What the object actually is in DuckDB (A3, §11.5). Absent means `'table'` —
    * every entry written before views existed is one, and a default here beats
@@ -29,7 +29,7 @@ export interface TableRegistryEntry {
    * A `'view'` is always `origin: 'derived'`: it stores no rows, so its
    * `memoryBytes` is 0 and its `generatingSql` is the whole of it.
    */
-  kind?: 'table' | 'view';
+  kind?: "table" | "view";
   rowCount: number;
   columnCount: number;
   memoryBytes: number;

@@ -4,18 +4,21 @@
 // and the fold record superseded the old blocking Act-2 gate in favor of mode
 // switches living inside the assembled shell (W7). Viewer mode is W8 scope, not
 // scaffold scope.
-import type { WorkerStatus } from '../stores/datasets';
+import type { WorkerStatus } from "../stores/datasets";
 
-export type WorkbenchAct = 'act0' | 'act1' | 'shell';
+export type WorkbenchAct = "act0" | "act1" | "shell";
 
 export interface WorkbenchSession {
   hasDatasets: boolean;
   workerStatus: WorkerStatus;
 }
 
-const INGEST_IN_PROGRESS: ReadonlySet<WorkerStatus> = new Set(['loading', 'compiling']);
+const INGEST_IN_PROGRESS: ReadonlySet<WorkerStatus> = new Set([
+  "loading",
+  "compiling",
+]);
 
 export function selectWorkbenchAct(session: WorkbenchSession): WorkbenchAct {
-  if (session.hasDatasets) return 'shell';
-  return INGEST_IN_PROGRESS.has(session.workerStatus) ? 'act1' : 'act0';
+  if (session.hasDatasets) return "shell";
+  return INGEST_IN_PROGRESS.has(session.workerStatus) ? "act1" : "act0";
 }

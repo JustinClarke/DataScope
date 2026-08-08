@@ -9,17 +9,17 @@
 // No manual ERD/Blueprint toggle: face selection is structural on table
 // count, matching the hallmark mock's two faces without duplicating the
 // mock's own standalone demo toggle.
-import { useDatasetsStore } from '../../stores/datasets';
-import { useSelectionStore } from '../../stores/selection';
-import { useEducationalPanel } from '../../app/useEducationalPanel';
-import { openDestination } from '../../services/navigation';
-import { useDatasetBaseline } from '../profiling/dossier/useDatasetBaseline';
-import { DatasetDossier } from '../profiling/dossier/DatasetDossier';
-import { Erd } from './Erd';
-import { VerdictBand } from './VerdictBand';
-import { OptionsStrip } from './OptionsStrip';
-import { SynthesisPanel } from './SynthesisPanel';
-import type { Dataset, TableRegistryEntry } from '../../types';
+import { useDatasetsStore } from "../../stores/datasets";
+import { useSelectionStore } from "../../stores/selection";
+import { useEducationalPanel } from "../../app/useEducationalPanel";
+import { openDestination } from "../../services/navigation";
+import { useDatasetBaseline } from "../profiling/dossier/useDatasetBaseline";
+import { DatasetDossier } from "../profiling/dossier/DatasetDossier";
+import { Erd } from "./Erd";
+import { VerdictBand } from "./VerdictBand";
+import { OptionsStrip } from "./OptionsStrip";
+import { SynthesisPanel } from "./SynthesisPanel";
+import type { Dataset, TableRegistryEntry } from "../../types";
 
 function SingleTableBlueprint({ tableId }: { tableId: string }) {
   const { setContent } = useEducationalPanel();
@@ -37,25 +37,39 @@ function SingleTableBlueprint({ tableId }: { tableId: string }) {
 
   return (
     <DatasetDossier
-      onOpenTable={(id) => openDestination('profile', id)}
+      onOpenTable={(id) => openDestination("profile", id)}
       onNavigate={openDestination}
       onShowSql={handleShowSql}
-      onSkipToData={() => openDestination('profile', tableId)}
+      onSkipToData={() => openDestination("profile", tableId)}
     />
   );
 }
 
-function MultiTableMap({ tables, datasets }: { tables: TableRegistryEntry[]; datasets: Dataset[] }) {
+function MultiTableMap({
+  tables,
+  datasets,
+}: {
+  tables: TableRegistryEntry[];
+  datasets: Dataset[];
+}) {
   const selectedTableId = useSelectionStore((state) => state.selectedTableId);
   const selectTable = useSelectionStore((state) => state.selectTable);
   const selectedEdgeId = useSelectionStore((state) => state.selectedEdgeId);
   const selectEdge = useSelectionStore((state) => state.selectEdge);
   const selectColumn = useSelectionStore((state) => state.selectColumn);
-  const { tableInsights, edges, baseline, tailored, paused, headlineFact } = useDatasetBaseline(tables, datasets);
+  const { tableInsights, edges, baseline, tailored, paused, headlineFact } =
+    useDatasetBaseline(tables, datasets);
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto" data-testid="dataset-map-multi">
-      <OptionsStrip tables={tables} tableInsights={tableInsights} selectedTableId={selectedTableId} />
+    <div
+      className="flex h-full flex-col overflow-y-auto"
+      data-testid="dataset-map-multi"
+    >
+      <OptionsStrip
+        tables={tables}
+        tableInsights={tableInsights}
+        selectedTableId={selectedTableId}
+      />
       <VerdictBand
         tables={tables}
         datasets={datasets}
@@ -94,7 +108,9 @@ export function DatasetMap() {
     return tables.length === 1 ? (
       <SingleTableBlueprint tableId={tables[0].id} />
     ) : (
-      <p className="text-center text-(--color-fg-muted)">Drop a dataset to get started.</p>
+      <p className="text-center text-(--color-fg-muted)">
+        Drop a dataset to get started.
+      </p>
     );
   }
 

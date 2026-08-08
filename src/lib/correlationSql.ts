@@ -4,24 +4,31 @@
 // projections, never one query per pair). Shared with services/insights.ts's
 // leakage-flag rule (§10 Module 1) — one implementation of "batch every
 // numeric pair into a single query", not two.
-import { quoteIdentifier } from '../services/ingestion';
-import type { QueryResult } from '../types';
+import { quoteIdentifier } from "../services/ingestion";
+import type { QueryResult } from "../types";
 
 /** Every unordered pair of column names, `i < j`, in input order — the fixed order both the SQL projections and the parser below index against. */
 export function correlationPairs(columns: string[]): Array<[string, string]> {
   const pairs: Array<[string, string]> = [];
   for (let i = 0; i < columns.length; i++) {
-    for (let j = i + 1; j < columns.length; j++) pairs.push([columns[i], columns[j]]);
+    for (let j = i + 1; j < columns.length; j++)
+      pairs.push([columns[i], columns[j]]);
   }
   return pairs;
 }
 
 /** One row, one `corr(a, b)` column per pair — batched so an n-column matrix costs one query, not n·(n-1)/2. */
-export function buildCorrelationMatrixSql(table: string, columns: string[]): string {
+export function buildCorrelationMatrixSql(
+  table: string,
+  columns: string[],
+): string {
   const pairs = correlationPairs(columns);
   const projections = pairs
-    .map(([a, b], i) => `corr(${quoteIdentifier(a)}, ${quoteIdentifier(b)}) AS c${i}`)
-    .join(', ');
+    .map(
+      ([a, b], i) =>
+        `corr(${quoteIdentifier(a)}, ${quoteIdentifier(b)}) AS c${i}`,
+    )
+    .join(", ");
   return `SELECT ${projections}\nFROM ${quoteIdentifier(table)}`;
 }
 
@@ -32,10 +39,14 @@ export interface CorrelationMatrix {
 }
 
 /** `buildCorrelationMatrixSql`'s single result row → a symmetric matrix keyed by column index. */
-export function parseCorrelationMatrix(result: QueryResult, columns: string[]): CorrelationMatrix {
+export function parseCorrelationMatrix(
+  result: QueryResult,
+  columns: string[],
+): CorrelationMatrix {
   const n = columns.length;
-  const values: Array<Array<number | null>> = Array.from({ length: n }, (_, i) =>
-    Array.from({ length: n }, (_, j) => (i === j ? 1 : null)),
+  const values: Array<Array<number | null>> = Array.from(
+    { length: n },
+    (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : null)),
   );
 
   const row = result.rows[0] ?? [];
@@ -53,7 +64,11 @@ export function parseCorrelationMatrix(result: QueryResult, columns: string[]): 
 }
 
 /** A raw two-column `SELECT` for the drill-through scatter — both columns non-null, so every plotted point has both coordinates. */
-export function buildScatterSql(table: string, columnA: string, columnB: string): string {
+export function buildScatterSql(
+  table: string,
+  columnA: string,
+  columnB: string,
+): string {
   const a = quoteIdentifier(columnA);
   const b = quoteIdentifier(columnB);
   return `SELECT ${a}, ${b}\nFROM ${quoteIdentifier(table)}\nWHERE ${a} IS NOT NULL AND ${b} IS NOT NULL`;

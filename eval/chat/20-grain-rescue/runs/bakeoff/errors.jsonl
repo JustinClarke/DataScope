@@ -1,0 +1,4 @@
+{"model":"qwen3:4b","arm":"A4","questionId":"W3","rep":0,"error":"ollama response is missing token counts (prompt_eval_count/eval_count)","timestamp":"2026-08-08T16:48:22.636Z"}
+{"model":"qwen3:4b","arm":"A4","questionId":"W3","rep":1,"error":"ollama response is missing token counts (prompt_eval_count/eval_count)","timestamp":"2026-08-08T16:48:34.773Z"}
+{"model":"qwen2.5-coder:1.5b","arm":"A0","questionId":"C2","rep":0,"error":"The operation was aborted due to timeout","timestamp":"2026-08-08T17:44:03.760Z"}
+{"model":"qwen2.5-coder:1.5b","arm":"A0","questionId":"C2","rep":1,"error":"The operation was aborted due to timeout","timestamp":"2026-08-08T17:48:03.763Z"}

@@ -51,18 +51,18 @@ import type {
   SqlAttempt,
   TableRegistryEntry,
   ChartRecommendation,
-} from '../types';
-import type { FkEdge } from '../lib/relationshipInference';
-import type { AnalystCore } from '../lib/analyst/core';
-import type { AnalystMcpSession } from '../lib/analyst/mcp/connect';
-import { isOpError, type OpOutcome, type OpResult } from '../lib/analyst/types';
-import { opError } from '../lib/analyst/errors';
-import { ProviderQuotaExhaustedError } from './aiProvider';
-import { SQL_TOOL } from './toolLadder';
-import { normalizeQuestion } from '../lib/inputNormalizer';
-import { pruneSchema } from '../lib/schemaPrune';
-import { lintSql } from '../lib/sqlLint';
-import { recommendChart as defaultRecommendChart } from '../lib/chartMapper';
+} from "../types";
+import type { FkEdge } from "../lib/relationshipInference";
+import type { AnalystCore } from "../lib/analyst/core";
+import type { AnalystMcpSession } from "../lib/analyst/mcp/connect";
+import { isOpError, type OpOutcome, type OpResult } from "../lib/analyst/types";
+import { opError } from "../lib/analyst/errors";
+import { ProviderQuotaExhaustedError } from "./aiProvider";
+import { SQL_TOOL } from "./toolLadder";
+import { normalizeQuestion } from "../lib/inputNormalizer";
+import { pruneSchema } from "../lib/schemaPrune";
+import { lintSql } from "../lib/sqlLint";
+import { recommendChart as defaultRecommendChart } from "../lib/chartMapper";
 
 // ── Ceilings, re-derived for an analyst loop (A4 defect v) ─────────────────
 //
@@ -117,14 +117,14 @@ const DEFAULT_TIMEOUT_MS = 30_000;
  * are kept in sync, but because there is only one of them (`lib/analyst/toolSchemas.ts`).
  */
 const SYSTEM_INSTRUCTIONS =
-  'You answer the user’s question about their data using only the tables below. You have a ' +
-  'catalog of operations that compute over the dataset — inspect it, and choose what to call. ' +
+  "You answer the user’s question about their data using only the tables below. You have a " +
+  "catalog of operations that compute over the dataset — inspect it, and choose what to call. " +
   'DuckDB uses Postgres-dialect SQL: quote identifiers with "double quotes" (never backticks), ' +
-  'use LIMIT (never TOP), and use || or CONCAT for strings. Call as many operations as the ' +
-  'question needs — you may compute, read the rows, and compute again. Every result reports its ' +
-  'true rowCount; when a result is not complete, call read_result with its resultId and ' +
-  'nextOffset to see the rest. Failures come back structured, with a hint — correct and retry. ' +
-  'When you have what you need, reply in plain language with no tool call.';
+  "use LIMIT (never TOP), and use || or CONCAT for strings. Call as many operations as the " +
+  "question needs — you may compute, read the rows, and compute again. Every result reports its " +
+  "true rowCount; when a result is not complete, call read_result with its resultId and " +
+  "nextOffset to see the rest. Failures come back structured, with a hint — correct and retry. " +
+  "When you have what you need, reply in plain language with no tool call.";
 
 export interface AskAIDeps {
   provider: AIProvider;
@@ -188,10 +188,10 @@ function buildVocabulary(tables: TableRegistryEntry[]): string[] {
   return [...vocab];
 }
 
-function newTurn(partial: Omit<AITurn, 'id' | 'createdAt' | 'role'>): AITurn {
+function newTurn(partial: Omit<AITurn, "id" | "createdAt" | "role">): AITurn {
   return {
     id: crypto.randomUUID(),
-    role: 'assistant',
+    role: "assistant",
     createdAt: new Date().toISOString(),
     ...partial,
   };
@@ -207,14 +207,14 @@ async function completeWithTimeout(
 ) {
   const controller = new AbortController();
   const onAbort = () => controller.abort();
-  callerSignal?.addEventListener('abort', onAbort, { once: true });
+  callerSignal?.addEventListener("abort", onAbort, { once: true });
   let timer: ReturnType<typeof setTimeout>;
   // Detection is the race, not the provider's abort handling: whether or not the
   // provider forwards the abort reason, the timeout branch fires deterministically.
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       controller.abort();
-      reject(new DOMException('Provider timed out', 'TimeoutError'));
+      reject(new DOMException("Provider timed out", "TimeoutError"));
     }, timeoutMs);
   });
   try {
@@ -224,7 +224,7 @@ async function completeWithTimeout(
     ]);
   } finally {
     clearTimeout(timer!);
-    callerSignal?.removeEventListener('abort', onAbort);
+    callerSignal?.removeEventListener("abort", onAbort);
   }
 }
 
@@ -241,14 +241,16 @@ function toQueryResult(result: OpResult): QueryResult {
 
 function callSql(call: ProviderToolCall): string | null {
   const input = call.input as { sql?: unknown } | null;
-  return input && typeof input.sql === 'string' ? input.sql : null;
+  return input && typeof input.sql === "string" ? input.sql : null;
 }
 
 /** Apply the loop's prompt-sized preview default, unless the model named a size itself. */
 function withPreviewDefault(input: unknown): unknown {
-  if (input === null || typeof input !== 'object') return input;
+  if (input === null || typeof input !== "object") return input;
   const params = input as { limit?: unknown };
-  return params.limit === undefined ? { ...params, limit: DEFAULT_TOOL_PREVIEW_ROWS } : params;
+  return params.limit === undefined
+    ? { ...params, limit: DEFAULT_TOOL_PREVIEW_ROWS }
+    : params;
 }
 
 /**
@@ -258,8 +260,20 @@ function withPreviewDefault(input: unknown): unknown {
  * no provider): those surface as a turn with a clean `error`. Re-throws only on
  * caller cancellation (AbortError), which is control flow, not an error.
  */
-export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITurn> {
-  const { provider, overflowProvider, overflowBaseUrl, tables, edges = [], core, session, signal } = deps;
+export async function askAI(
+  rawQuestion: string,
+  deps: AskAIDeps,
+): Promise<AITurn> {
+  const {
+    provider,
+    overflowProvider,
+    overflowBaseUrl,
+    tables,
+    edges = [],
+    core,
+    session,
+    signal,
+  } = deps;
   const recommendChart = deps.recommendChart ?? defaultRecommendChart;
   const timeoutMs = deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const metadataOnlyRepair = deps.metadataOnlyRepair ?? true;
@@ -269,12 +283,19 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
   let usedOverflow = false;
 
   // Stage 1 — normalize; Stage 2 — prune.
-  const { text: question, corrections } = normalizeQuestion(rawQuestion, buildVocabulary(tables));
-  const { prompt: schemaPrompt, includedTables } = pruneSchema(question, tables, edges);
+  const { text: question, corrections } = normalizeQuestion(
+    rawQuestion,
+    buildVocabulary(tables),
+  );
+  const { prompt: schemaPrompt, includedTables } = pruneSchema(
+    question,
+    tables,
+    edges,
+  );
 
   const messages: ProviderMessage[] = [
-    { role: 'system', content: `${SYSTEM_INSTRUCTIONS}\n\n${schemaPrompt}` },
-    { role: 'user', content: question },
+    { role: "system", content: `${SYSTEM_INSTRUCTIONS}\n\n${schemaPrompt}` },
+    { role: "user", content: question },
   ];
 
   const attempts: SqlAttempt[] = [];
@@ -287,20 +308,28 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
    * turn; this is the model saying which result was worth drawing and how — a
    * spec already validated against that result by the operation itself.
    */
-  let requestedChart: { chart: ChartRecommendation; result: QueryResult } | null = null;
+  let requestedChart: {
+    chart: ChartRecommendation;
+    result: QueryResult;
+  } | null = null;
   // Every materialization this turn informed the answer, so compaction retains
   // them ahead of merely recent ones (D74h) — marked once the turn actually
   // produces a statement, which is the thing they informed.
   const resultIds = new Set<string>();
 
   const fail = (message: string, opts?: { quotaExhausted?: boolean }): AITurn =>
-    newTurn({ content: '', error: message, attempts, corrections, ...opts });
+    newTurn({ content: "", error: message, attempts, corrections, ...opts });
 
   const answer = (content: string): AITurn => {
     for (const id of resultIds) core.noteContribution(id);
     const charted =
       requestedChart ??
-      (lastResult ? { chart: recommendChart(lastResult.result, lastResult.sql), result: lastResult.result } : null);
+      (lastResult
+        ? {
+            chart: recommendChart(lastResult.result, lastResult.sql),
+            result: lastResult.result,
+          }
+        : null);
     return newTurn({
       content,
       attempts,
@@ -321,13 +350,22 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
     call: ProviderToolCall,
     toolNames: Set<string>,
   ): Promise<{ outcome: OpOutcome; content: string }> => {
-    const plain = (outcome: OpOutcome) => ({ outcome, content: JSON.stringify(outcome) });
+    const plain = (outcome: OpOutcome) => ({
+      outcome,
+      content: JSON.stringify(outcome),
+    });
 
     // Not a second source of truth — `toolNames` is what the server just
     // declared. Checking here only saves a round trip on a hallucinated name;
     // the core would refuse it identically, with the same mechanical hint.
     if (!toolNames.has(call.name)) {
-      return plain(opError('invalid_argument', `No tool named ${call.name}.`, [...toolNames].join(', ')));
+      return plain(
+        opError(
+          "invalid_argument",
+          `No tool named ${call.name}.`,
+          [...toolNames].join(", "),
+        ),
+      );
     }
 
     // Stage 4 — dialect lint, before the engine is touched. A blocking fault is
@@ -335,33 +373,49 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
     // hint, in the same sense as the core's own hints.
     if (call.name === SQL_TOOL) {
       const sql = callSql(call);
-      if (sql === null) return plain(opError('invalid_argument', 'run_sql requires a string "sql" argument.'));
+      if (sql === null)
+        return plain(
+          opError(
+            "invalid_argument",
+            'run_sql requires a string "sql" argument.',
+          ),
+        );
       const lint = lintSql(sql);
       if (!lint.ok) {
         const blocking = lint.findings.filter((f) => f.blocking);
-        const messages = blocking.map((f) => f.message).join(' ');
+        const messages = blocking.map((f) => f.message).join(" ");
         attempts.push({
           attempt: attempts.length + 1,
           op: SQL_TOOL,
           sql,
-          status: 'error',
+          status: "error",
           executionTimeMs: 0,
           error: messages,
           lint: lint.findings,
         });
-        return plain(opError('sql_error', messages, blocking.map((f) => f.rule).join(', ')));
+        return plain(
+          opError(
+            "sql_error",
+            messages,
+            blocking.map((f) => f.rule).join(", "),
+          ),
+        );
       }
     }
 
-    const outcome = await session.call(call.name, withPreviewDefault(call.input), { signal });
+    const outcome = await session.call(
+      call.name,
+      withPreviewDefault(call.input),
+      { signal },
+    );
 
     if (isOpError(outcome)) {
-      const sql = call.name === SQL_TOOL ? (callSql(call) ?? '') : '';
+      const sql = call.name === SQL_TOOL ? (callSql(call) ?? "") : "";
       const record: SqlAttempt = {
         attempt: attempts.length + 1,
         op: call.name,
         sql,
-        status: 'error',
+        status: "error",
         executionTimeMs: 0,
         error: outcome.message,
       };
@@ -374,7 +428,11 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
       let sample: OpResult | null = null;
       const terminal = consecutiveFailures + 1 >= MAX_CONSECUTIVE_FAILURES;
       if (!metadataOnlyRepair && !terminal && includedTables.length > 0) {
-        const sampled = await core.call('sample_rows', { table: includedTables[0], limit: 3 }, { signal });
+        const sampled = await core.call(
+          "sample_rows",
+          { table: includedTables[0], limit: 3 },
+          { signal },
+        );
         if (!isOpError(sampled)) sample = sampled;
       }
       if (sample) record.sampledRows = true;
@@ -399,16 +457,18 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
     attempts.push({
       attempt: attempts.length + 1,
       op: call.name,
-      sql: outcome.sql ?? '',
-      status: 'ok',
+      sql: outcome.sql ?? "",
+      status: "ok",
       executionTimeMs: outcome.elapsedMs,
       rowCount: outcome.rowCount,
     });
     if (outcome.resultId !== null) resultIds.add(outcome.resultId);
-    if (outcome.sql !== null) lastResult = { sql: outcome.sql, result: toQueryResult(outcome) };
+    if (outcome.sql !== null)
+      lastResult = { sql: outcome.sql, result: toQueryResult(outcome) };
     // The operation carries the spec it validated; nothing here re-derives one.
     // Last call wins — a model that charts twice meant the second.
-    if (outcome.chart) requestedChart = { chart: outcome.chart, result: toQueryResult(outcome) };
+    if (outcome.chart)
+      requestedChart = { chart: outcome.chart, result: toQueryResult(outcome) };
     return plain(outcome);
   };
 
@@ -427,17 +487,36 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
   const toolNames = new Set(tools.map((tool) => tool.name));
 
   try {
-    for (let providerCalls = 0; providerCalls < MAX_PROVIDER_CALLS; providerCalls++) {
+    for (
+      let providerCalls = 0;
+      providerCalls < MAX_PROVIDER_CALLS;
+      providerCalls++
+    ) {
       let turn;
       try {
-        turn = await completeWithTimeout(activeProvider, messages, tools, signal, timeoutMs);
+        turn = await completeWithTimeout(
+          activeProvider,
+          messages,
+          tools,
+          signal,
+          timeoutMs,
+        );
       } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError' && signal?.aborted) throw error;
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError" &&
+          signal?.aborted
+        )
+          throw error;
         // Shared free budget spent or the router's kill-switch flipped (§11.2, §23.5).
         // With a D3 overflow provider (2026-07-23) and no swap made yet, retry this
         // same iteration on it instead of failing the turn — the swap then persists
         // for every remaining round-trip.
-        if (error instanceof ProviderQuotaExhaustedError && overflowProvider !== undefined && !usedOverflow) {
+        if (
+          error instanceof ProviderQuotaExhaustedError &&
+          overflowProvider !== undefined &&
+          !usedOverflow
+        ) {
           activeProvider = overflowProvider;
           usedOverflow = true;
           providerCalls--;
@@ -447,28 +526,30 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
         // never folded into the generic "could not be reached" message, since the
         // fix here is specific (check the endpoint, or stop overflowing to it).
         if (usedOverflow) {
-          const where = overflowBaseUrl ? ` (${overflowBaseUrl})` : '';
+          const where = overflowBaseUrl ? ` (${overflowBaseUrl})` : "";
           return fail(
             `The shared free budget ran out and your local Ollama endpoint${where} could not be reached either. Check that Ollama is running, or switch routing to "Prefer my key".`,
           );
         }
-        if (error instanceof DOMException && error.name === 'TimeoutError') {
-          return fail('The AI provider timed out. Try again, or switch modes.');
+        if (error instanceof DOMException && error.name === "TimeoutError") {
+          return fail("The AI provider timed out. Try again, or switch modes.");
         }
         if (error instanceof ProviderQuotaExhaustedError) {
           return fail(
-            'The free AI budget is used up for today. Bring your own key, switch to the local model, or retry tomorrow.',
+            "The free AI budget is used up for today. Bring your own key, switch to the local model, or retry tomorrow.",
             { quotaExhausted: true },
           );
         }
-        return fail('The AI provider could not be reached. Check your connection or mode and try again.');
+        return fail(
+          "The AI provider could not be reached. Check your connection or mode and try again.",
+        );
       }
 
       // The assistant message is appended **verbatim before** anything executes,
       // so the conversation the model sees next contains exactly what it said —
       // prose included — followed by one correlated result per call.
       messages.push({
-        role: 'assistant',
+        role: "assistant",
         content: turn.text,
         ...(turn.calls.length > 0 ? { toolCalls: turn.calls } : {}),
       });
@@ -480,16 +561,20 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
       for (const call of turn.calls) {
         toolCallCount += 1;
         if (toolCallCount > MAX_TOOL_CALLS) {
-          return fail(`The AI ran ${MAX_TOOL_CALLS} operations without reaching an answer.`);
+          return fail(
+            `The AI ran ${MAX_TOOL_CALLS} operations without reaching an answer.`,
+          );
         }
 
         const { outcome, content } = await runCall(call, toolNames);
-        messages.push({ role: 'tool', toolCallId: call.id, content });
+        messages.push({ role: "tool", toolCallId: call.id, content });
 
         if (isOpError(outcome)) {
           consecutiveFailures += 1;
           if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-            return fail(`The query failed ${MAX_CONSECUTIVE_FAILURES} times in a row. Last error: ${outcome.message}`);
+            return fail(
+              `The query failed ${MAX_CONSECUTIVE_FAILURES} times in a row. Last error: ${outcome.message}`,
+            );
           }
         } else {
           consecutiveFailures = 0;
@@ -497,11 +582,16 @@ export async function askAI(rawQuestion: string, deps: AskAIDeps): Promise<AITur
       }
     }
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw error;
-    return fail(error instanceof Error ? error.message : 'The AI pipeline hit an unexpected error.');
+    if (error instanceof DOMException && error.name === "AbortError")
+      throw error;
+    return fail(
+      error instanceof Error
+        ? error.message
+        : "The AI pipeline hit an unexpected error.",
+    );
   }
 
   // Provider-call ceiling reached without an answer: return what ran, if anything.
-  if (lastResult) return answer('Here are the results of the last query.');
-  return fail('The AI did not produce an answer.');
+  if (lastResult) return answer("Here are the results of the last query.");
+  return fail("The AI did not produce an answer.");
 }

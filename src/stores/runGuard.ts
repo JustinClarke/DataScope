@@ -4,9 +4,9 @@
 // execute SQL. It is a store rather than component state because the two halves
 // are in different trees now — a run action can originate anywhere in the app,
 // while the modal is mounted once in `WorkbenchShell`.
-import { create } from 'zustand';
-import type { StatementInfo } from '../lib/statementClass';
-import { CONSOLE_SESSION, type QuerySessionId } from './query';
+import { create } from "zustand";
+import type { StatementInfo } from "../lib/statementClass";
+import { CONSOLE_SESSION, type QuerySessionId } from "./query";
 
 interface RunGuardState {
   /** The statement held between Run and execution, awaiting the user's call. */

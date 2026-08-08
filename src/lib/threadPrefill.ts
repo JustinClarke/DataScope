@@ -8,15 +8,20 @@ export type ModulePrefill = Record<string, unknown> | null;
 
 export function prefillTableName(prefill: ModulePrefill): string | null {
   const value = prefill?.tableName;
-  return typeof value === 'string' ? value : null;
+  return typeof value === "string" ? value : null;
 }
 
 export function prefillColumns(prefill: ModulePrefill): string[] {
   const value = prefill?.columns;
-  return Array.isArray(value) ? value.filter((c): c is string => typeof c === 'string') : [];
+  return Array.isArray(value)
+    ? value.filter((c): c is string => typeof c === "string")
+    : [];
 }
 
-export function prefillString(prefill: ModulePrefill, key: string): string | null {
+export function prefillString(
+  prefill: ModulePrefill,
+  key: string,
+): string | null {
   const value = prefill?.[key];
-  return typeof value === 'string' ? value : null;
+  return typeof value === "string" ? value : null;
 }

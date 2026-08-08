@@ -5,14 +5,20 @@
 // warm in-browser WebLLM engine (zero egress), localhost Ollama, and the cloud
 // edge router — resolved as a ladder, so a mode always gets the most private
 // backend that can actually serve it right now.
-import type { AIMode, AIProvider, ProviderMessage, ProviderTurn, AITool } from '../types';
-import { createOllamaProvider, isOllamaEndpoint } from './ollamaProvider';
-import { createCloudProvider, type CloudProviderConfig } from './cloudProvider';
-import { createWebLLMProvider } from './webllmProvider';
-import { isWebLLMServing } from './webllm';
-import { useByokKeyStore } from '../stores/byokKey';
-import { useVaultStore } from '../stores/vault';
-import { useSettingsStore, type BYOKPreference } from '../stores/settings';
+import type {
+  AIMode,
+  AIProvider,
+  ProviderMessage,
+  ProviderTurn,
+  AITool,
+} from "../types";
+import { createOllamaProvider, isOllamaEndpoint } from "./ollamaProvider";
+import { createCloudProvider, type CloudProviderConfig } from "./cloudProvider";
+import { createWebLLMProvider } from "./webllmProvider";
+import { isWebLLMServing } from "./webllm";
+import { useByokKeyStore } from "../stores/byokKey";
+import { useVaultStore } from "../stores/vault";
+import { useSettingsStore, type BYOKPreference } from "../stores/settings";
 
 /**
  * Thrown by a cloud/edge provider when the shared free Workers-AI budget is
@@ -24,9 +30,9 @@ import { useSettingsStore, type BYOKPreference } from '../stores/settings';
  * copy lives with the pipeline.
  */
 export class ProviderQuotaExhaustedError extends Error {
-  constructor(message = 'The shared free AI budget is exhausted for today.') {
+  constructor(message = "The shared free AI budget is exhausted for today.") {
     super(message);
-    this.name = 'ProviderQuotaExhaustedError';
+    this.name = "ProviderQuotaExhaustedError";
   }
 }
 
@@ -36,7 +42,10 @@ export class ProviderQuotaExhaustedError extends Error {
  * Records the messages/tools it was handed so tests can assert the loop fed the
  * error trace and lint hints back on retry.
  */
-export function createScriptedProvider(script: ProviderTurn[], id = 'mock'): AIProvider & {
+export function createScriptedProvider(
+  script: ProviderTurn[],
+  id = "mock",
+): AIProvider & {
   calls: Array<{ messages: ProviderMessage[]; tools: AITool[] }>;
 } {
   let index = 0;
@@ -45,12 +54,17 @@ export function createScriptedProvider(script: ProviderTurn[], id = 'mock'): AIP
     id,
     calls,
     complete(messages, tools, options) {
-      if (options?.signal?.aborted) return Promise.reject(new DOMException('Aborted', 'AbortError'));
+      if (options?.signal?.aborted)
+        return Promise.reject(new DOMException("Aborted", "AbortError"));
       calls.push({ messages: structuredClone(messages), tools });
       const turn = script[index];
       index += 1;
       if (turn === undefined) {
-        return Promise.reject(new Error('scripted provider exhausted: the loop asked for more turns than scripted'));
+        return Promise.reject(
+          new Error(
+            "scripted provider exhausted: the loop asked for more turns than scripted",
+          ),
+        );
       }
       return Promise.resolve(turn);
     },
@@ -118,24 +132,37 @@ export function resolveProvider(
   cloudConfig?: CloudProviderConfig,
   context: ProviderContext = {},
 ): { provider: AIProvider | null; overflowProvider?: AIProvider } {
-  if (mode === 'local-only') return { provider: null };
+  if (mode === "local-only") return { provider: null };
   const webllmReady = context.webllmReady ?? isWebLLMServing();
 
-  if (mode === 'local-model') return { provider: webllmReady ? createWebLLMProvider() : null };
+  if (mode === "local-model")
+    return { provider: webllmReady ? createWebLLMProvider() : null };
 
   // mode === 'cloud' (labeled "API" in the UI).
   const byokValue = context.byokValue ?? useByokKeyStore.getState().key;
   const vaultRef = context.vaultRef ?? useVaultStore.getState().ref;
-  if (webllmReady && byokValue === null && vaultRef === null) return { provider: createWebLLMProvider() };
+  if (webllmReady && byokValue === null && vaultRef === null)
+    return { provider: createWebLLMProvider() };
   if (byokValue !== null && isOllamaEndpoint(byokValue)) {
     const ollama = createOllamaProvider({ baseUrl: byokValue });
-    const byokPreference = context.byokPreference ?? useSettingsStore.getState().byokPreference;
-    const byokRoutingTouched = context.byokRoutingTouched ?? useSettingsStore.getState().byokRoutingTouched;
-    if (byokRoutingTouched && byokPreference === 'free-tier-first' && cloudConfig !== undefined) {
-      return { provider: createCloudProvider(cloudConfig), overflowProvider: ollama };
+    const byokPreference =
+      context.byokPreference ?? useSettingsStore.getState().byokPreference;
+    const byokRoutingTouched =
+      context.byokRoutingTouched ??
+      useSettingsStore.getState().byokRoutingTouched;
+    if (
+      byokRoutingTouched &&
+      byokPreference === "free-tier-first" &&
+      cloudConfig !== undefined
+    ) {
+      return {
+        provider: createCloudProvider(cloudConfig),
+        overflowProvider: ollama,
+      };
     }
     return { provider: ollama };
   }
-  if (cloudConfig !== undefined) return { provider: createCloudProvider(cloudConfig) };
+  if (cloudConfig !== undefined)
+    return { provider: createCloudProvider(cloudConfig) };
   return { provider: null };
 }

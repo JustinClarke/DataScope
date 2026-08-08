@@ -8,12 +8,12 @@
 // (refuse vs. evict) are a memory measurement — `00-synthesis-and-limits-
 // probe.md`'s Probe B — and "until it reports, no ceiling is written into a
 // leaf doc." When it does, this is the one function that changes.
-import { useTabsStore } from '../stores/tabs';
-import { useQueryStore, getSession, CONSOLE_SESSION } from '../stores/query';
-import { cancelQuery } from './sql';
-import { requestRun } from './runPath';
-import { TAB_KIND, type TabSpec } from '../types/tabs';
-import type { QueryResult } from '../types';
+import { useTabsStore } from "../stores/tabs";
+import { useQueryStore, getSession, CONSOLE_SESSION } from "../stores/query";
+import { cancelQuery } from "./sql";
+import { requestRun } from "./runPath";
+import { TAB_KIND, type TabSpec } from "../types/tabs";
+import type { QueryResult } from "../types";
 
 interface OpenQueryTabOptions {
   /** Seeds the tab's editor. Absent for an empty tab. */
@@ -31,14 +31,21 @@ interface OpenQueryTabOptions {
 let nextQueryNumber = 0;
 
 /** The single creation path for both producers. Returns the new tab's id. */
-export function openQueryTab({ sql, name, autoRun, result, resultSql }: OpenQueryTabOptions = {}): string {
+export function openQueryTab({
+  sql,
+  name,
+  autoRun,
+  result,
+  resultSql,
+}: OpenQueryTabOptions = {}): string {
   const label = name ?? `Query ${++nextQueryNumber}`;
   // `TAB_KIND.query === 'artifact'`, so `openTab` never dedupes this — two
   // pins of the same SQL are two keepers, deliberately.
-  const tabId = useTabsStore.getState().openTab('query', label);
+  const tabId = useTabsStore.getState().openTab("query", label);
 
   if (sql) useQueryStore.getState().setSql(tabId, sql);
-  if (result) useQueryStore.getState().adoptResult(tabId, result, resultSql ?? sql ?? '');
+  if (result)
+    useQueryStore.getState().adoptResult(tabId, result, resultSql ?? sql ?? "");
   // Never `runInConsole` — that is the console's entry, and routing a tab's own
   // run through it would defeat the independence the tab exists for.
   if (autoRun && sql) requestRun(sql, tabId);
@@ -68,7 +75,7 @@ export function pinConsoleQuery(): string | null {
  * made worse by the one gesture a user makes to relieve it.
  */
 export function closeQueryTab(tab: TabSpec): void {
-  if (TAB_KIND[tab.type] === 'artifact') {
+  if (TAB_KIND[tab.type] === "artifact") {
     cancelQuery(tab.id);
     useQueryStore.getState().dropSession(tab.id);
   }

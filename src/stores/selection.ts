@@ -5,12 +5,12 @@
 // reason W2 left column/map-edge slots to their first reader rather than
 // inventing a single unified selection value up front. `lastSelectionKind`
 // says which slot is current, for the inspector (W7) to render.
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-export type SelectionKind = 'table' | 'column' | 'edge';
+export type SelectionKind = "table" | "column" | "edge";
 
-export const SELECTION_STORAGE_KEY = 'datascope-selection';
+export const SELECTION_STORAGE_KEY = "datascope-selection";
 
 /** The 07c whitelist: all four fields — 07d reconciles them against tables that actually came back. */
 interface PersistedSelectionState {
@@ -39,11 +39,22 @@ export const useSelectionStore = create<SelectionState>()(
       selectedColumn: null,
       selectedEdgeId: null,
       lastSelectionKind: null,
-      selectTable: (tableId) => set({ selectedTableId: tableId, lastSelectionKind: 'table' }),
-      selectColumn: (tableId, column) => set({ selectedColumn: { tableId, column }, lastSelectionKind: 'column' }),
-      selectEdge: (edgeId) => set({ selectedEdgeId: edgeId, lastSelectionKind: 'edge' }),
+      selectTable: (tableId) =>
+        set({ selectedTableId: tableId, lastSelectionKind: "table" }),
+      selectColumn: (tableId, column) =>
+        set({
+          selectedColumn: { tableId, column },
+          lastSelectionKind: "column",
+        }),
+      selectEdge: (edgeId) =>
+        set({ selectedEdgeId: edgeId, lastSelectionKind: "edge" }),
       clearSelection: () =>
-        set({ selectedTableId: null, selectedColumn: null, selectedEdgeId: null, lastSelectionKind: null }),
+        set({
+          selectedTableId: null,
+          selectedColumn: null,
+          selectedEdgeId: null,
+          lastSelectionKind: null,
+        }),
     }),
     {
       name: SELECTION_STORAGE_KEY,
@@ -58,7 +69,12 @@ export const useSelectionStore = create<SelectionState>()(
       migrate: (persisted, version): PersistedSelectionState =>
         version === SELECTION_PERSIST_VERSION
           ? (persisted as PersistedSelectionState)
-          : { selectedTableId: null, selectedColumn: null, selectedEdgeId: null, lastSelectionKind: null },
+          : {
+              selectedTableId: null,
+              selectedColumn: null,
+              selectedEdgeId: null,
+              lastSelectionKind: null,
+            },
     },
   ),
 );

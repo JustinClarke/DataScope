@@ -1,10 +1,10 @@
 // Three user-selectable AI modes (D2, §5.1) — all ship; first-run chooser, no silent default.
-import type { ChartRecommendation } from './chart';
-import type { QueryResult } from './query';
-import type { LintFinding } from '../lib/sqlLint';
-import type { NormalizationCorrection } from '../lib/inputNormalizer';
+import type { ChartRecommendation } from "./chart";
+import type { QueryResult } from "./query";
+import type { LintFinding } from "../lib/sqlLint";
+import type { NormalizationCorrection } from "../lib/inputNormalizer";
 
-export type AIMode = 'local-only' | 'local-model' | 'cloud';
+export type AIMode = "local-only" | "local-model" | "cloud";
 
 /**
  * One execution of generated SQL inside a turn's tool-use loop (§11.1 stage 5).
@@ -24,7 +24,7 @@ export interface SqlAttempt {
   op?: string;
   /** The exact SQL sent to the engine — the "suggested SQL" surfaced in the transcript. */
   sql: string;
-  status: 'ok' | 'error';
+  status: "ok" | "error";
   executionTimeMs: number;
   /** Present on success — the true row count (§ result cap reports the real total). */
   rowCount?: number;
@@ -43,7 +43,7 @@ export interface SqlAttempt {
 
 export interface AITurn {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   createdAt: string;
   /** Assistant turns: the per-attempt SQL execution log (§11.1 transcript auditability). */
@@ -69,7 +69,7 @@ export interface AITurn {
 export interface AISession {
   mode: AIMode;
   /** D3 toggle: route to the user's own key first, or overflow to it after the free tier. */
-  byokPreference: 'prefer-key' | 'free-tier-first';
+  byokPreference: "prefer-key" | "free-tier-first";
   /** Against the per-session daily Workers-AI quota (§11.2). */
   turnsUsedToday: number;
   transcript: AITurn[];
@@ -105,10 +105,10 @@ export interface ProviderToolCall {
  * said, followed by one correlated `tool` message per call.
  */
 export type ProviderMessage =
-  | { role: 'system'; content: string }
-  | { role: 'user'; content: string }
-  | { role: 'assistant'; content: string; toolCalls?: ProviderToolCall[] }
-  | { role: 'tool'; toolCallId: string; content: string };
+  | { role: "system"; content: string }
+  | { role: "user"; content: string }
+  | { role: "assistant"; content: string; toolCalls?: ProviderToolCall[] }
+  | { role: "tool"; toolCallId: string; content: string };
 
 /**
  * One provider round-trip.

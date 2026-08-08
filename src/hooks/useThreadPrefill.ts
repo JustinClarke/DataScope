@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useUIStore } from '../stores/ui';
-import type { ModulePrefill } from '../lib/threadPrefill';
+import { useEffect, useState } from "react";
+import { useUIStore } from "../stores/ui";
+import type { ModulePrefill } from "../lib/threadPrefill";
 
 /**
  * Reads a `RankedAction`'s `ThreadConfig.prefilledConfig` (D68e) exactly once

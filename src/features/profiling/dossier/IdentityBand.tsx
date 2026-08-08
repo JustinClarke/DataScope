@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Copy, Download, FileCode } from 'lucide-react';
-import { formatBytes } from '../../../lib/formatBytes';
+import { useState } from "react";
+import { Copy, Download, FileCode } from "lucide-react";
+import { formatBytes } from "../../../lib/formatBytes";
 
 export interface IdentityBandProps {
   datasetLabel: string;
@@ -31,12 +31,16 @@ export function IdentityBand({
   onExportReport,
   onExportHtml,
   onCopyForAI,
-}: IdentityBandProps & { onExportReport: () => void; onExportHtml: () => void; onCopyForAI: () => void }) {
+}: IdentityBandProps & {
+  onExportReport: () => void;
+  onExportHtml: () => void;
+  onCopyForAI: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   const profiledDate = new Date(profiledAt).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 
   const handleCopy = () => {
@@ -49,10 +53,12 @@ export function IdentityBand({
     <div className="flex flex-col gap-1 border-b border-(--color-border) pb-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-baseline gap-3">
-          <h2 className="text-lg font-semibold text-(--color-fg)">{datasetLabel}</h2>
+          <h2 className="text-lg font-semibold text-(--color-fg)">
+            {datasetLabel}
+          </h2>
           <span className="font-mono text-sm text-(--color-fg-muted)">
-            {tableCount} table{tableCount === 1 ? '' : 's'} · {totalRows.toLocaleString()} rows ·{' '}
-            {formatBytes(totalBytes)}
+            {tableCount} table{tableCount === 1 ? "" : "s"} ·{" "}
+            {totalRows.toLocaleString()} rows · {formatBytes(totalBytes)}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -62,7 +68,7 @@ export function IdentityBand({
             className="flex items-center gap-1.5 rounded border border-(--color-border) px-3 py-1.5 text-sm text-(--color-fg) transition-colors hover:bg-(--color-border)/40"
           >
             <Copy size={14} aria-hidden="true" />
-            {copied ? 'Copied' : 'Copy for AI'}
+            {copied ? "Copied" : "Copy for AI"}
           </button>
           <button
             type="button"
@@ -84,9 +90,11 @@ export function IdentityBand({
       </div>
       <p className="text-xs text-(--color-fg-muted)">
         {grain}
-        {timeSpan ? ` · ${timeSpan}` : ''}
+        {timeSpan ? ` · ${timeSpan}` : ""}
       </p>
-      <p className="text-xs text-(--color-fg-muted)">Profiled {profiledDate} · from your machine, nothing uploaded</p>
+      <p className="text-xs text-(--color-fg-muted)">
+        Profiled {profiledDate} · from your machine, nothing uploaded
+      </p>
     </div>
   );
 }

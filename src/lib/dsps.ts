@@ -7,10 +7,10 @@
 // three renderers; this module owns the spec contract layered on top of it:
 // the version, the fact-provenance/snapshot vocabulary, the file-hash used in
 // a snapshot label, and the compatibility-aware reader.
-import { passesPhrasingGuard } from './producerValidators';
+import { passesPhrasingGuard } from "./producerValidators";
 
 /** Current DSPS major.minor.patch (D37). Bump the major on any breaking change. */
-export const DSPS_VERSION = '1.0.0';
+export const DSPS_VERSION = "1.0.0";
 
 /**
  * D45's fact-provenance vocabulary, specific to DSPS: was a fact computed this
@@ -21,7 +21,8 @@ export const DSPS_VERSION = '1.0.0';
  * values are format-reserved for user-asserted/carried facts, not yet produced
  * by any module.
  */
-export type DspsProvenance = 'derived-this-run' | 'user-asserted' | 'carried-unverified';
+export type DspsProvenance =
+  "derived-this-run" | "user-asserted" | "carried-unverified";
 
 /**
  * D45's snapshot label: when a fact was computed, and — when the source is a
@@ -42,24 +43,29 @@ export async function hashBytesHex(bytes: Uint8Array): Promise<string> {
   // includes SharedArrayBuffer), narrower than SubtleCrypto's BufferSource —
   // an arbitrary caller-supplied Uint8Array is never actually
   // SharedArrayBuffer-backed here, only TS's generic typing is imprecise.
-  const digest = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const digest = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 /** The "computed as of {snapshot}" label text (D45) — never "verified", never permanence-worded. */
 export function formatSnapshotLabel(snapshot: DspsSnapshot): string {
   const date = new Date(snapshot.date).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
-  return snapshot.fileHash ? `computed as of ${date} (file sha256:${snapshot.fileHash.slice(0, 12)}…)` : `computed as of ${date}`;
+  return snapshot.fileHash
+    ? `computed as of ${date} (file sha256:${snapshot.fileHash.slice(0, 12)}…)`
+    : `computed as of ${date}`;
 }
 
 /** D45's honesty guard, reused verbatim from the Verdict seam (ADR-010) — "verified" and permanence/invariant wording are banned in a fact label. */
 export const passesFactWordingGuard = passesPhrasingGuard;
 
-export type DspsParseResult<T> = { ok: true; doc: T } | { ok: false; seenVersion: string };
+export type DspsParseResult<T> =
+  { ok: true; doc: T } | { ok: false; seenVersion: string };
 
 function majorOf(version: string): string | null {
   const match = /^(\d+)\.\d+\.\d+$/.exec(version);
@@ -75,14 +81,16 @@ function majorOf(version: string): string | null {
  * A missing/malformed `dspsVersion` is reported as `'unversioned'` rather than
  * thrown — "surfaces, never fails opaquely" per D37.
  */
-export function parseDsps<T extends { dspsVersion?: unknown; tables?: unknown }>(json: unknown): DspsParseResult<T> {
-  if (typeof json !== 'object' || json === null) {
-    return { ok: false, seenVersion: 'unversioned' };
+export function parseDsps<
+  T extends { dspsVersion?: unknown; tables?: unknown },
+>(json: unknown): DspsParseResult<T> {
+  if (typeof json !== "object" || json === null) {
+    return { ok: false, seenVersion: "unversioned" };
   }
   const candidate = json as T;
   const version = candidate.dspsVersion;
-  if (typeof version !== 'string') {
-    return { ok: false, seenVersion: 'unversioned' };
+  if (typeof version !== "string") {
+    return { ok: false, seenVersion: "unversioned" };
   }
   const seenMajor = majorOf(version);
   const currentMajor = majorOf(DSPS_VERSION);

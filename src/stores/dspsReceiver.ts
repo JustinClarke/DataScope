@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import type { StructureReport } from '../lib/structureReport';
+import { create } from "zustand";
+import type { StructureReport } from "../lib/structureReport";
 
 /**
  * The universal `.dsps` receiver's render state (D62) — a dropped/opened

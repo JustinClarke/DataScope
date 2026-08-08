@@ -1,11 +1,13 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import type { ChartSpec, QueryResult } from '../../../types';
-import { runChartQuery } from '../../../services/charts';
-import { buildScatterSql } from '../../../lib/correlationSql';
-import { CanvasScatter } from './CanvasScatter';
-import { GeneratedSql } from './GeneratedSql';
+import { lazy, Suspense, useEffect, useState } from "react";
+import type { ChartSpec, QueryResult } from "../../../types";
+import { runChartQuery } from "../../../services/charts";
+import { buildScatterSql } from "../../../lib/correlationSql";
+import { CanvasScatter } from "./CanvasScatter";
+import { GeneratedSql } from "./GeneratedSql";
 
-const ChartRenderer = lazy(() => import('../../../components/charts/ChartRenderer'));
+const ChartRenderer = lazy(
+  () => import("../../../components/charts/ChartRenderer"),
+);
 
 /** §15: beyond this many points, SVG scatter (one DOM node per point) gets janky — switch to canvas. */
 export const CANVAS_POINT_THRESHOLD = 10_000;
@@ -17,7 +19,11 @@ interface ScatterDrillThroughProps {
 }
 
 /** The cell-click target: a real scatter of the two clicked columns, degrading to canvas past the SVG-jank point (§10 Module 4, §15). */
-export function ScatterDrillThrough({ table, columnA, columnB }: ScatterDrillThroughProps) {
+export function ScatterDrillThrough({
+  table,
+  columnA,
+  columnB,
+}: ScatterDrillThroughProps) {
   const sql = buildScatterSql(table, columnA, columnB);
   const [result, setResult] = useState<QueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +39,12 @@ export function ScatterDrillThrough({ table, columnA, columnB }: ScatterDrillThr
         if (!cancelled) setResult(r);
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not run the scatter query.');
+        if (!cancelled)
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not run the scatter query.",
+          );
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -52,7 +63,11 @@ export function ScatterDrillThrough({ table, columnA, columnB }: ScatterDrillThr
   }
   if (error) return <p className="text-sm text-(--color-error)">{error}</p>;
   if (!result || result.rows.length === 0) {
-    return <p className="text-sm text-(--color-fg-muted)">No rows with both values present.</p>;
+    return (
+      <p className="text-sm text-(--color-fg-muted)">
+        No rows with both values present.
+      </p>
+    );
   }
 
   const useCanvas = result.rows.length > CANVAS_POINT_THRESHOLD;
@@ -61,7 +76,10 @@ export function ScatterDrillThrough({ table, columnA, columnB }: ScatterDrillThr
     <div className="flex flex-col gap-3">
       {useCanvas ? (
         <CanvasScatter
-          points={result.rows.map((row) => ({ x: Number(row[0]), y: Number(row[1]) }))}
+          points={result.rows.map((row) => ({
+            x: Number(row[0]),
+            y: Number(row[1]),
+          }))}
           xLabel={columnA}
           yLabel={columnB}
         />
@@ -77,7 +95,7 @@ export function ScatterDrillThrough({ table, columnA, columnB }: ScatterDrillThr
             result={result}
             spec={
               {
-                type: 'correlation',
+                type: "correlation",
                 title: `${columnB} vs ${columnA}`,
                 xField: columnA,
                 yFields: [columnB],

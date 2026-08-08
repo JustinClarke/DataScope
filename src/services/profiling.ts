@@ -5,72 +5,89 @@
 // than routing through sql.ts's single-in-flight query store: a table's cards
 // fire many small concurrent queries, one (or two) per column, which would
 // otherwise fight over that store's "one query panel" state machine.
-import type { ClassifiedColumn } from '../types';
-import * as stats from '../lib/columnStats';
+import type { ClassifiedColumn } from "../types";
+import * as stats from "../lib/columnStats";
 
-type EngineModule = typeof import('../workers/duckdb.worker');
+type EngineModule = typeof import("../workers/duckdb.worker");
 let engineModule: Promise<EngineModule> | null = null;
 function loadEngine(): Promise<EngineModule> {
-  if (!engineModule) engineModule = import('../workers/duckdb.worker');
+  if (!engineModule) engineModule = import("../workers/duckdb.worker");
   return engineModule;
 }
 
 export type ColumnCardStats =
   | {
-      kind: 'Quantitative';
+      kind: "Quantitative";
       median: number | null;
       medianSql: string;
       histogram: stats.HistogramBucket[] | null;
       histogramSql: string | null;
     }
-  | { kind: 'Categorical'; topValues: stats.ValueFrequency[]; sql: string }
-  | { kind: 'Temporal'; range: stats.DateRangeStats | null; sql: string }
+  | { kind: "Categorical"; topValues: stats.ValueFrequency[]; sql: string }
+  | { kind: "Temporal"; range: stats.DateRangeStats | null; sql: string }
   | {
-      kind: 'Textual';
+      kind: "Textual";
       avgWordCount: number | null;
       wordCountSql: string;
       samplePreview: string[];
       sampleSql: string;
     }
-  | { kind: 'Identifier' };
+  | { kind: "Identifier" };
 
-async function loadColumnStats(engine: EngineModule, tableName: string, column: ClassifiedColumn): Promise<ColumnCardStats> {
+async function loadColumnStats(
+  engine: EngineModule,
+  tableName: string,
+  column: ClassifiedColumn,
+): Promise<ColumnCardStats> {
   switch (column.semanticType) {
-    case 'Quantitative': {
+    case "Quantitative": {
       const min = Number(column.min);
       const max = Number(column.max);
       const medianSql = stats.buildMedianSql(tableName, column.name);
-      const histogramSql = stats.buildHistogramSql(tableName, column.name, min, max);
+      const histogramSql = stats.buildHistogramSql(
+        tableName,
+        column.name,
+        min,
+        max,
+      );
       const [medianResult, histogramResult] = await Promise.all([
         engine.duckDBEngine.execute(medianSql),
-        histogramSql ? engine.duckDBEngine.execute(histogramSql) : Promise.resolve(null),
+        histogramSql
+          ? engine.duckDBEngine.execute(histogramSql)
+          : Promise.resolve(null),
       ]);
       return {
-        kind: 'Quantitative',
+        kind: "Quantitative",
         median: stats.parseMedian(medianResult),
         medianSql,
-        histogram: histogramResult ? stats.parseHistogram(histogramResult, min, max) : null,
+        histogram: histogramResult
+          ? stats.parseHistogram(histogramResult, min, max)
+          : null,
         histogramSql,
       };
     }
-    case 'Categorical': {
+    case "Categorical": {
       const sql = stats.buildTopValuesSql(tableName, column.name);
       const result = await engine.duckDBEngine.execute(sql);
-      return { kind: 'Categorical', topValues: stats.parseTopValues(result), sql };
+      return {
+        kind: "Categorical",
+        topValues: stats.parseTopValues(result),
+        sql,
+      };
     }
-    case 'Temporal': {
+    case "Temporal": {
       // A bare TIME column (time-of-day, no calendar date) can't be CAST to
       // DATE — DuckDB has no such cast — so buildDateRangeSql's query would
       // always error for it. Skip the query rather than run one guaranteed
       // to fail.
-      if (column.physicalType.toUpperCase() === 'TIME') {
-        return { kind: 'Temporal', range: null, sql: '' };
+      if (column.physicalType.toUpperCase() === "TIME") {
+        return { kind: "Temporal", range: null, sql: "" };
       }
       const sql = stats.buildDateRangeSql(tableName, column.name);
       const result = await engine.duckDBEngine.execute(sql);
-      return { kind: 'Temporal', range: stats.parseDateRange(result), sql };
+      return { kind: "Temporal", range: stats.parseDateRange(result), sql };
     }
-    case 'Textual': {
+    case "Textual": {
       const wordCountSql = stats.buildWordCountSql(tableName, column.name);
       const sampleSql = stats.buildSamplePreviewSql(tableName, column.name);
       const [wordResult, sampleResult] = await Promise.all([
@@ -78,17 +95,17 @@ async function loadColumnStats(engine: EngineModule, tableName: string, column: 
         engine.duckDBEngine.execute(sampleSql),
       ]);
       return {
-        kind: 'Textual',
+        kind: "Textual",
         avgWordCount: stats.parseWordCount(wordResult),
         wordCountSql,
         samplePreview: stats.parseSamplePreview(sampleResult),
         sampleSql,
       };
     }
-    case 'Identifier':
+    case "Identifier":
       // No supplemental query — an identifier's card is just its badge + null
       // bar + the exclusion note the insight feed's ID-exclusion rule states.
-      return { kind: 'Identifier' };
+      return { kind: "Identifier" };
   }
 }
 
@@ -104,7 +121,13 @@ export async function loadTableCardStats(
 ): Promise<Record<string, ColumnCardStats>> {
   const engine = await loadEngine();
   const entries = await Promise.all(
-    columns.map(async (column) => [column.name, await loadColumnStats(engine, tableName, column)] as const),
+    columns.map(
+      async (column) =>
+        [
+          column.name,
+          await loadColumnStats(engine, tableName, column),
+        ] as const,
+    ),
   );
   return Object.fromEntries(entries);
 }

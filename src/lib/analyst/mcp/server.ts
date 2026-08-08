@@ -22,14 +22,17 @@
 // distinction is load-bearing for D74's loop rule: tools stay available after a
 // failure and the model recovers on an ordinary turn. A JSON-RPC error is a
 // transport-level fault and some hosts tear the turn down on one.
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import type { AnalystCore } from '../core';
-import { ANALYST_TOOLS } from '../toolSchemas';
-import { isOpError, type OpOutcome } from '../types';
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import type { AnalystCore } from "../core";
+import { ANALYST_TOOLS } from "../toolSchemas";
+import { isOpError, type OpOutcome } from "../types";
 
-export const ANALYST_SERVER_NAME = 'datascope-analyst';
-export const ANALYST_SERVER_VERSION = '0.71.0';
+export const ANALYST_SERVER_NAME = "datascope-analyst";
+export const ANALYST_SERVER_VERSION = "0.71.0";
 
 /**
  * Sent once at initialize. Mechanics and boundaries only — deliberately not a
@@ -39,12 +42,12 @@ export const ANALYST_SERVER_VERSION = '0.71.0';
  * would be an instruction the app never wrote.
  */
 export const ANALYST_INSTRUCTIONS =
-  'DataScope computes over a dataset already loaded in the user\'s session. ' +
-  'Operations return the exact SQL that produced them, so anything computed here ' +
-  'can be shown to the user, re-run and edited. Results larger than the inline ' +
-  'preview carry a resultId and are paged with read_result. Failures come back as ' +
-  'a structured result with ok:false, a code and a mechanical hint; the tools stay ' +
-  'available and you can correct and retry.';
+  "DataScope computes over a dataset already loaded in the user's session. " +
+  "Operations return the exact SQL that produced them, so anything computed here " +
+  "can be shown to the user, re-run and edited. Results larger than the inline " +
+  "preview carry a resultId and are paged with read_result. Failures come back as " +
+  "a structured result with ok:false, a code and a mechanical hint; the tools stay " +
+  "available and you can correct and retry.";
 
 /**
  * Serialize an outcome for the `content` block.
@@ -70,7 +73,7 @@ export function createAnalystMcpServer(core: AnalystCore): Server {
       name: tool.name,
       title: tool.title,
       description: tool.description,
-      inputSchema: tool.inputSchema as { type: 'object' },
+      inputSchema: tool.inputSchema as { type: "object" },
     })),
   }));
 
@@ -80,12 +83,16 @@ export function createAnalystMcpServer(core: AnalystCore): Server {
     // boundary — the core already turns an abort into a `cancelled` OpError and
     // stops the query. A4 defect iv was a dropped signal one layer up; not
     // re-introducing it here is an A5 exit criterion.
-    const outcome = await core.invoke(request.params.name, request.params.arguments ?? {}, {
-      signal: extra.signal,
-    });
+    const outcome = await core.invoke(
+      request.params.name,
+      request.params.arguments ?? {},
+      {
+        signal: extra.signal,
+      },
+    );
 
     return {
-      content: [{ type: 'text' as const, text: textOf(outcome) }],
+      content: [{ type: "text" as const, text: textOf(outcome) }],
       structuredContent: outcome as unknown as Record<string, unknown>,
       ...(isOpError(outcome) ? { isError: true } : {}),
     };

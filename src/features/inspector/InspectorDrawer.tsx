@@ -30,13 +30,17 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
   type RefObject,
-} from 'react';
-import { ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
-import { useDrawerStore, DRAWER_MIN_HEIGHT, SPLIT_MIN_DRAWER_WIDTH } from '../../stores/drawer';
-import { useSelectionStore } from '../../stores/selection';
-import { useQuerySession, CONSOLE_SESSION } from '../../stores/query';
-import { DrawerInfo } from './DrawerInfo';
-import { SqlModule } from '../sql/SqlModule';
+} from "react";
+import { ChevronDown, ChevronUp, Maximize2, Minimize2 } from "lucide-react";
+import {
+  useDrawerStore,
+  DRAWER_MIN_HEIGHT,
+  SPLIT_MIN_DRAWER_WIDTH,
+} from "../../stores/drawer";
+import { useSelectionStore } from "../../stores/selection";
+import { useQuerySession, CONSOLE_SESSION } from "../../stores/query";
+import { DrawerInfo } from "./DrawerInfo";
+import { SqlModule } from "../sql/SqlModule";
 
 /** Room left for the title bar, dock and status bar when the drawer is dragged to its tallest — and, since S6.5, when it is expanded. */
 const CHROME_RESERVE = 140;
@@ -54,17 +58,20 @@ function useDrawerResize() {
       downEvent.preventDefault();
       const startY = downEvent.clientY;
       const startHeight = height;
-      const max = Math.max(DRAWER_MIN_HEIGHT, window.innerHeight - CHROME_RESERVE);
+      const max = Math.max(
+        DRAWER_MIN_HEIGHT,
+        window.innerHeight - CHROME_RESERVE,
+      );
       const onMouseMove = (moveEvent: MouseEvent) => {
         const next = startHeight - (moveEvent.clientY - startY);
         setHeight(Math.min(max, Math.max(DRAWER_MIN_HEIGHT, next)));
       };
       const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
       };
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
     },
     [height, setHeight],
   );
@@ -76,7 +83,10 @@ function useDrawerResize() {
  * the user chose does not. Info leads the row and trails the column, hence the
  * two directions.
  */
-function useSplitResize(containerRef: RefObject<HTMLDivElement | null>, stacked: boolean) {
+function useSplitResize(
+  containerRef: RefObject<HTMLDivElement | null>,
+  stacked: boolean,
+) {
   const setInfoRatio = useDrawerStore((state) => state.setInfoRatio);
 
   return useCallback(
@@ -92,11 +102,11 @@ function useSplitResize(containerRef: RefObject<HTMLDivElement | null>, stacked:
         if (Number.isFinite(ratio)) setInfoRatio(ratio);
       };
       const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
       };
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
     },
     [containerRef, setInfoRatio, stacked],
   );
@@ -120,8 +130,8 @@ function useIsNarrow(ref: RefObject<HTMLDivElement | null>): boolean {
       setNarrow(width > 0 && width < SPLIT_MIN_DRAWER_WIDTH);
     };
     measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, [ref]);
 
   return narrow;
@@ -134,7 +144,9 @@ function useIsNarrow(ref: RefObject<HTMLDivElement | null>): boolean {
  * the store doesn't count as a click.
  */
 function useSelectionOpensInfo() {
-  const lastSelectionKind = useSelectionStore((state) => state.lastSelectionKind);
+  const lastSelectionKind = useSelectionStore(
+    (state) => state.lastSelectionKind,
+  );
   const selectedTableId = useSelectionStore((state) => state.selectedTableId);
   const selectedColumn = useSelectionStore((state) => state.selectedColumn);
   const selectedEdgeId = useSelectionStore((state) => state.selectedEdgeId);
@@ -147,7 +159,13 @@ function useSelectionOpensInfo() {
       return;
     }
     openInfo();
-  }, [lastSelectionKind, selectedTableId, selectedColumn, selectedEdgeId, openInfo]);
+  }, [
+    lastSelectionKind,
+    selectedTableId,
+    selectedColumn,
+    selectedEdgeId,
+    openInfo,
+  ]);
 }
 
 /** Marks Info's header briefly when a selection lands in it — no motion, no toast, no focus steal. */
@@ -177,19 +195,31 @@ function useInfoMark(): boolean {
  * replacing it, setting `'running'` again in the same tick.
  */
 function useHasInfoContent(): boolean {
-  const lastSelectionKind = useSelectionStore((state) => state.lastSelectionKind);
+  const lastSelectionKind = useSelectionStore(
+    (state) => state.lastSelectionKind,
+  );
   const { status } = useQuerySession(CONSOLE_SESSION);
-  return lastSelectionKind !== null || status !== 'idle';
+  return lastSelectionKind !== null || status !== "idle";
 }
 
 /** Each pane names itself; the strip above them carries only the drawer's own controls. */
-function PaneHeader({ label, marked = false, testId }: { label: string; marked?: boolean; testId?: string }) {
+function PaneHeader({
+  label,
+  marked = false,
+  testId,
+}: {
+  label: string;
+  marked?: boolean;
+  testId?: string;
+}) {
   return (
     <div
       data-testid={testId}
       data-marked={marked}
       className={`shrink-0 border-b px-3 py-1 font-mono text-[length:var(--text-xs)] ${
-        marked ? 'border-(--color-active) text-(--color-active)' : 'border-(--color-rule-2) text-(--color-ink-3)'
+        marked
+          ? "border-(--color-active) text-(--color-active)"
+          : "border-(--color-rule-2) text-(--color-ink-3)"
       }`}
     >
       {label}
@@ -257,29 +287,61 @@ export function InspectorDrawer() {
         />
       )}
       <div className="flex shrink-0 items-center justify-between border-b border-(--color-rule-2) bg-(--color-chrome)">
-        <span className="px-3 py-1.5 font-mono text-[length:var(--text-xs)] text-(--color-ink-3)">Inspector</span>
+        <span className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[length:var(--text-xs)] text-(--color-ink-3)">
+          Inspector
+          {!open && hasInfoContent && (
+            <span
+              aria-label="Inspector has content"
+              className="inline-block h-[6px] w-[6px] rounded-full bg-(--color-active)"
+              style={{
+                boxShadow:
+                  "0 0 6px color-mix(in oklch, var(--color-active) 50%, transparent)",
+              }}
+            />
+          )}
+        </span>
         <div className="flex items-center gap-1 px-2">
           <button
             type="button"
-            aria-label={expanded ? 'Restore drawer height' : 'Expand drawer to full height'}
+            aria-label={
+              expanded
+                ? "Restore drawer height"
+                : "Expand drawer to full height"
+            }
             title={
               expanded
-                ? 'Restore the drawer and sit the panes side by side'
-                : 'Expand the drawer and stack Info beneath the editor'
+                ? "Restore the drawer and sit the panes side by side"
+                : "Expand the drawer and stack Info beneath the editor"
             }
             onClick={() => setExpanded(!expanded)}
             className="rounded-(--radius-xs) p-1 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink)"
           >
-            {expanded ? <Minimize2 size={12} aria-hidden="true" /> : <Maximize2 size={12} aria-hidden="true" />}
+            {expanded ? (
+              <Minimize2 size={12} aria-hidden="true" />
+            ) : (
+              <Maximize2 size={12} aria-hidden="true" />
+            )}
           </button>
           <button
             type="button"
-            aria-label={open ? 'Collapse drawer — any selection reopens it' : 'Open drawer'}
-            title={open ? 'Collapse the drawer. Selecting a table, column or relationship reopens it.' : 'Open drawer'}
+            aria-label={
+              open
+                ? "Collapse drawer — any selection reopens it"
+                : "Open drawer"
+            }
+            title={
+              open
+                ? "Collapse the drawer. Selecting a table, column or relationship reopens it."
+                : "Open drawer"
+            }
             onClick={() => setOpen(!open)}
             className="rounded-(--radius-xs) p-1 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink)"
           >
-            {open ? <ChevronDown size={12} aria-hidden="true" /> : <ChevronUp size={12} aria-hidden="true" />}
+            {open ? (
+              <ChevronDown size={12} aria-hidden="true" />
+            ) : (
+              <ChevronUp size={12} aria-hidden="true" />
+            )}
           </button>
         </div>
       </div>
@@ -295,7 +357,7 @@ export function InspectorDrawer() {
         ref={splitRef}
         hidden={!open}
         data-split={hasInfoContent}
-        className={`flex min-h-0 flex-1 overflow-hidden ${stacked ? 'flex-col-reverse' : 'flex-row'}`}
+        className={`flex min-h-0 flex-1 overflow-hidden ${stacked ? "flex-col-reverse" : "flex-row"}`}
       >
         {hasInfoContent && (
           <>
@@ -304,7 +366,11 @@ export function InspectorDrawer() {
               className="flex min-h-0 min-w-0 flex-col"
               style={{ flexGrow: infoRatio, flexBasis: 0 }}
             >
-              <PaneHeader label="Info" marked={infoMarked} testId="drawer-info-header" />
+              <PaneHeader
+                label="Info"
+                marked={infoMarked}
+                testId="drawer-info-header"
+              />
               {/* Unmounted by a collapse, unlike the editor: that is what makes
                   the collapse-to-header-strip contract mean anything. */}
               {open && <DrawerInfo />}
@@ -312,14 +378,14 @@ export function InspectorDrawer() {
 
             <div
               role="separator"
-              aria-orientation={stacked ? 'horizontal' : 'vertical'}
+              aria-orientation={stacked ? "horizontal" : "vertical"}
               aria-label="Resize info panel"
               aria-valuenow={Math.round(infoRatio * 100)}
               aria-valuemin={30}
               aria-valuemax={70}
               onMouseDown={onSplitMouseDown}
               className={`shrink-0 bg-(--color-rule-2) hover:bg-(--color-active)/40 active:bg-(--color-active)/60 ${
-                stacked ? 'h-1 cursor-row-resize' : 'w-1 cursor-col-resize'
+                stacked ? "h-1 cursor-row-resize" : "w-1 cursor-col-resize"
               }`}
             />
           </>

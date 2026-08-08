@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 // A hand-narrowed import graph (core editor + just the SQL Monarch
 // tokenizer, skipping the other ~70 basic-language contributions and the
 // TypeScript/JSON/CSS/HTML language services) was measured against this bare
@@ -9,14 +9,18 @@ import { useEffect, useRef } from 'react';
 // import is kept for that reason: same cost, less code, no risk of the
 // narrow path silently missing something the full editor needs (ADR-004
 // spike evidence).
-import * as monaco from 'monaco-editor';
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import { useDatasetsStore } from '../../stores/datasets';
-import { useQueryStore, getSession, type QuerySessionId } from '../../stores/query';
-import { buildCompletionItems } from './completionProvider';
-import { ensureMonacoTheme, MONACO_THEME_ID } from './monacoTheme';
-import { consolePlaceholder } from './editorPlaceholder';
-import { formatSql } from './sqlFormatting';
+import * as monaco from "monaco-editor";
+import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+import { useDatasetsStore } from "../../stores/datasets";
+import {
+  useQueryStore,
+  getSession,
+  type QuerySessionId,
+} from "../../stores/query";
+import { buildCompletionItems } from "./completionProvider";
+import { ensureMonacoTheme, MONACO_THEME_ID } from "./monacoTheme";
+import { consolePlaceholder } from "./editorPlaceholder";
+import { formatSql } from "./sqlFormatting";
 
 // Self-hosted (same-origin) worker, matching the rest of the app's ADR-001
 // same-origin-asset convention rather than Monaco's CDN-loader default. Only
@@ -38,11 +42,16 @@ function ensureCompletionProvider(): void {
   if (completionProviderRegistered) return;
   completionProviderRegistered = true;
 
-  monaco.languages.registerCompletionItemProvider('sql', {
-    triggerCharacters: ['.', ' '],
+  monaco.languages.registerCompletionItemProvider("sql", {
+    triggerCharacters: [".", " "],
     provideCompletionItems(model, position) {
       const word = model.getWordUntilPosition(position);
-      const range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
+      const range = new monaco.Range(
+        position.lineNumber,
+        word.startColumn,
+        position.lineNumber,
+        word.endColumn,
+      );
 
       // Read the registry fresh on every trigger (not captured at mount time)
       // so a table added, dropped, or derived mid-session is reflected on the
@@ -54,7 +63,7 @@ function ensureCompletionProvider(): void {
         suggestions: items.map((item) => ({
           label: item.label,
           kind:
-            item.kind === 'table'
+            item.kind === "table"
               ? monaco.languages.CompletionItemKind.Struct
               : monaco.languages.CompletionItemKind.Field,
           detail: item.detail,
@@ -77,16 +86,18 @@ function ensureSqlLanguageFeatures(): void {
   if (languageFeaturesRegistered) return;
   languageFeaturesRegistered = true;
 
-  monaco.languages.setLanguageConfiguration('sql', {
+  monaco.languages.setLanguageConfiguration("sql", {
     indentationRules: {
       increaseIndentPattern: /\([^)]*$/,
       decreaseIndentPattern: /^\s*\)/,
     },
   });
 
-  monaco.languages.registerDocumentFormattingEditProvider('sql', {
+  monaco.languages.registerDocumentFormattingEditProvider("sql", {
     provideDocumentFormattingEdits(model) {
-      return [{ range: model.getFullModelRange(), text: formatSql(model.getValue()) }];
+      return [
+        { range: model.getFullModelRange(), text: formatSql(model.getValue()) },
+      ];
     },
   });
 }
@@ -105,7 +116,11 @@ interface MonacoWrapperProps {
  * imports) only ever loads behind `React.lazy` (see `LazySqlEditor.tsx`), so it
  * must not be imported from anything reachable at startup.
  */
-export default function MonacoWrapper({ sessionId, onRunQuery, fillHeight = false }: MonacoWrapperProps) {
+export default function MonacoWrapper({
+  sessionId,
+  onRunQuery,
+  fillHeight = false,
+}: MonacoWrapperProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Ref indirection so the Ctrl/Cmd+Enter action (bound once, at editor
   // creation) always calls the latest `onRunQuery` without recreating the
@@ -126,13 +141,13 @@ export default function MonacoWrapper({ sessionId, onRunQuery, fillHeight = fals
 
     const editor = monaco.editor.create(containerRef.current, {
       value: getSession(sessionId).sql,
-      language: 'sql',
+      language: "sql",
       theme: MONACO_THEME_ID,
       automaticLayout: true,
       minimap: { enabled: false },
       fontSize: 13,
       scrollBeyondLastLine: false,
-      autoIndent: 'full',
+      autoIndent: "full",
       formatOnPaste: true,
     });
 
@@ -150,8 +165,10 @@ export default function MonacoWrapper({ sessionId, onRunQuery, fillHeight = fals
                 range: new monaco.Range(1, 1, 1, 1),
                 options: {
                   after: {
-                    content: consolePlaceholder(useDatasetsStore.getState().tables),
-                    inlineClassName: 'sql-editor-placeholder',
+                    content: consolePlaceholder(
+                      useDatasetsStore.getState().tables,
+                    ),
+                    inlineClassName: "sql-editor-placeholder",
                   },
                 },
               },
@@ -166,8 +183,8 @@ export default function MonacoWrapper({ sessionId, onRunQuery, fillHeight = fals
     });
 
     const runAction = editor.addAction({
-      id: 'datascope.sql.runQuery',
-      label: 'Run Query',
+      id: "datascope.sql.runQuery",
+      label: "Run Query",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => onRunQueryRef.current(),
     });
@@ -179,7 +196,11 @@ export default function MonacoWrapper({ sessionId, onRunQuery, fillHeight = fals
     const unsubscribe = useQueryStore.subscribe((state, prevState) => {
       const next = state.sessions[sessionId]?.sql;
       const previous = prevState.sessions[sessionId]?.sql;
-      if (next !== undefined && next !== previous && next !== editor.getValue()) {
+      if (
+        next !== undefined &&
+        next !== previous &&
+        next !== editor.getValue()
+      ) {
         editor.setValue(next);
       }
     });
@@ -195,7 +216,7 @@ export default function MonacoWrapper({ sessionId, onRunQuery, fillHeight = fals
   return (
     <div
       ref={containerRef}
-      className={`w-full overflow-hidden rounded-lg border border-(--color-border) ${fillHeight ? 'h-full' : 'h-64'}`}
+      className={`w-full overflow-hidden rounded-lg border border-(--color-border) ${fillHeight ? "h-full" : "h-64"}`}
       data-testid="monaco-container"
     />
   );

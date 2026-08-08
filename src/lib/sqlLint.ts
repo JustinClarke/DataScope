@@ -11,7 +11,7 @@
 // A parse failure degrades to "checks skipped", never a rejection — the stage-5
 // execute-fail-retry loop remains the real correctness gate, so a parser gap can
 // never silently block a valid DuckDB query the Postgres grammar doesn't model.
-import { parse } from 'pgsql-ast-parser';
+import { parse } from "pgsql-ast-parser";
 
 export interface LintFinding {
   /** Stable machine tag for the mistake class, e.g. 'backtick-identifier'. */
@@ -34,27 +34,31 @@ export interface LintResult {
 // strftime/strptime/date_part/current_date instead. A model trained on mixed SQL
 // reaches for these; each throws in DuckDB, so they are blocking.
 const FOREIGN_DATE_FUNCTIONS: Record<string, string> = {
-  getdate: 'current_timestamp (or now())',
-  sysdate: 'current_timestamp',
-  curdate: 'current_date',
-  date_format: 'strftime(...)',
-  str_to_date: 'strptime(...)',
-  datepart: 'date_part(...)',
+  getdate: "current_timestamp (or now())",
+  sysdate: "current_timestamp",
+  curdate: "current_date",
+  date_format: "strftime(...)",
+  str_to_date: "strptime(...)",
+  datepart: "date_part(...)",
 };
 
 /** Collect every function name called anywhere in a parsed statement, lowercased. */
 function collectCalledFunctions(statements: unknown): string[] {
   const names: string[] = [];
   const walk = (node: unknown): void => {
-    if (node === null || typeof node !== 'object') return;
+    if (node === null || typeof node !== "object") return;
     if (Array.isArray(node)) {
       for (const child of node) walk(child);
       return;
     }
     const record = node as Record<string, unknown>;
-    if (record.type === 'call' && record.function && typeof record.function === 'object') {
+    if (
+      record.type === "call" &&
+      record.function &&
+      typeof record.function === "object"
+    ) {
       const fn = record.function as { name?: unknown };
-      if (typeof fn.name === 'string') names.push(fn.name.toLowerCase());
+      if (typeof fn.name === "string") names.push(fn.name.toLowerCase());
     }
     for (const value of Object.values(record)) walk(value);
   };
@@ -73,15 +77,17 @@ export function lintSql(sql: string): LintResult {
   // the Postgres parser would throw on them, so the AST walk below would miss them.
   if (/`/.test(sql)) {
     findings.push({
-      rule: 'backtick-identifier',
-      message: 'Backtick-quoted identifiers are MySQL syntax; DuckDB quotes identifiers with "double quotes".',
+      rule: "backtick-identifier",
+      message:
+        'Backtick-quoted identifiers are MySQL syntax; DuckDB quotes identifiers with "double quotes".',
       blocking: false,
     });
   }
   if (/\bTOP\s+\d+/i.test(sql)) {
     findings.push({
-      rule: 'top-clause',
-      message: '`TOP n` is not valid in DuckDB; use `LIMIT n` at the end of the query.',
+      rule: "top-clause",
+      message:
+        "`TOP n` is not valid in DuckDB; use `LIMIT n` at the end of the query.",
       blocking: true,
     });
   }
@@ -94,16 +100,17 @@ export function lintSql(sql: string): LintResult {
     for (const [fn, replacement] of Object.entries(FOREIGN_DATE_FUNCTIONS)) {
       if (called.has(fn)) {
         findings.push({
-          rule: 'foreign-date-function',
+          rule: "foreign-date-function",
           message: `\`${fn}(...)\` is not a DuckDB function; use ${replacement}.`,
           blocking: true,
         });
       }
     }
-    if (called.has('concat')) {
+    if (called.has("concat")) {
       findings.push({
-        rule: 'concat-operator',
-        message: 'DuckDB supports `CONCAT`, but the `||` operator is the idiomatic string concatenation.',
+        rule: "concat-operator",
+        message:
+          "DuckDB supports `CONCAT`, but the `||` operator is the idiomatic string concatenation.",
         blocking: false,
       });
     }

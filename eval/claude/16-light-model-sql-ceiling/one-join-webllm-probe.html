@@ -46,7 +46,7 @@ the 4-table one. Carries over the three fixes Probe 5/9 needed: a bounded load r
 multi-shard download can drop mid-transfer on a real connection; each retry only re-fetches what
 failed), stripping <code>&lt;think&gt;...&lt;/think&gt;</code> before SQL extraction (Qwen3 is a
 reasoning model), and <code>max_tokens: 2048</code>.
-Write-up: <a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling.md" style="color:#7ee787">experiment 16</a>.
+Write-up: <a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling/README.md" style="color:#7ee787">experiment 16</a>.
 Runs the question set <b>3 times</b> against the same loaded engine and reports per-question
 stability, same shape as the Ollama scripts' `runProbe()` — directly comparable to Probe 10's Ollama
 N=3 read.</p>

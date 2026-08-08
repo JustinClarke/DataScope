@@ -8,10 +8,10 @@
 // This is the concrete DSPS document (D31/D37) — `dsps.ts` layers the version
 // contract, the fact-provenance/snapshot vocabulary, and the compatibility-
 // aware reader on top of the shape built here.
-import type { TableRegistryEntry } from '../types';
-import type { TableInsights } from './dossier';
-import type { FkEdge } from './relationshipInference';
-import { DSPS_VERSION, type DspsProvenance, type DspsSnapshot } from './dsps';
+import type { TableRegistryEntry } from "../types";
+import type { TableInsights } from "./dossier";
+import type { FkEdge } from "./relationshipInference";
+import { DSPS_VERSION, type DspsProvenance, type DspsSnapshot } from "./dsps";
 
 export interface StructureReportColumn {
   name: string;
@@ -44,7 +44,7 @@ export interface StructureReportRelationship {
   childColumn: string;
   parentTable: string;
   parentColumn: string;
-  confidence: 'confident' | 'candidate';
+  confidence: "confident" | "candidate";
   containment: number;
   evidence: string;
 }
@@ -91,7 +91,7 @@ export function buildStructureReport(
         tableName: ti.table.tableName,
         rule: insight.rule,
         description: insight.description,
-        provenance: 'derived-this-run' as const,
+        provenance: "derived-this-run" as const,
         snapshot: { date: generatedAt, fileHash: ti.table.fileHash ?? null },
       })),
     ),
@@ -127,16 +127,24 @@ export function redactColumnNames(report: StructureReport): StructureReport {
     ...report,
     tables: report.tables.map((table) => ({
       ...table,
-      columns: table.columns.map((column, index) => ({ ...column, name: `column_${index + 1}` })),
+      columns: table.columns.map((column, index) => ({
+        ...column,
+        name: `column_${index + 1}`,
+      })),
     })),
   };
 }
 
 /** Triggers a browser download of the report as formatted JSON. DOM-only — kept separate from the pure builder above so that stays unit-testable without jsdom. */
-export function downloadStructureReport(report: StructureReport, filename = 'datascope-structure-report.json'): void {
-  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+export function downloadStructureReport(
+  report: StructureReport,
+  filename = "datascope-structure-report.json",
+): void {
+  const blob = new Blob([JSON.stringify(report, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
+  const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
   anchor.click();

@@ -11,4 +11,5 @@
 // defaults on.
 const RAW = import.meta.env.VITE_JOIN_GRAPH as string | undefined;
 
-export const JOIN_GRAPH_ENABLED: boolean = RAW === undefined ? true : RAW !== 'false' && RAW !== '0';
+export const JOIN_GRAPH_ENABLED: boolean =
+  RAW === undefined ? true : RAW !== "false" && RAW !== "0";

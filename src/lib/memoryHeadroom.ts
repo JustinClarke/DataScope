@@ -25,8 +25,10 @@ export interface MemorySignals {
 }
 
 export function readMemorySignals(): MemorySignals {
-  const memory = (performance as Performance & { memory?: ChromeMemoryInfo }).memory;
-  const deviceMemoryGB = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null;
+  const memory = (performance as Performance & { memory?: ChromeMemoryInfo })
+    .memory;
+  const deviceMemoryGB =
+    (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null;
   return {
     usedJSHeapSize: memory?.usedJSHeapSize ?? null,
     jsHeapSizeLimit: memory?.jsHeapSizeLimit ?? null,
@@ -58,7 +60,11 @@ const DEVICE_MEMORY_REFERENCE_GB = 8; // navigator.deviceMemory's own reported c
 function budgetBytes(signals: MemorySignals): number | null {
   if (signals.jsHeapSizeLimit != null) return signals.jsHeapSizeLimit;
   if (signals.deviceMemoryGB != null) {
-    return Math.min(TAB_MEMORY_CEILING_BYTES, (signals.deviceMemoryGB / DEVICE_MEMORY_REFERENCE_GB) * TAB_MEMORY_CEILING_BYTES);
+    return Math.min(
+      TAB_MEMORY_CEILING_BYTES,
+      (signals.deviceMemoryGB / DEVICE_MEMORY_REFERENCE_GB) *
+        TAB_MEMORY_CEILING_BYTES,
+    );
   }
   return null;
 }
@@ -70,7 +76,10 @@ function budgetBytes(signals: MemorySignals): number | null {
  * (Safari, Firefox — neither API exists) never forces a downgrade on a
  * guess; it returns `false`, the same as "can't tell."
  */
-export function headroomExceeded(predictedBytes: number, signals: MemorySignals): boolean {
+export function headroomExceeded(
+  predictedBytes: number,
+  signals: MemorySignals,
+): boolean {
   const budget = budgetBytes(signals);
   if (budget == null) return false;
   const used = signals.usedJSHeapSize ?? 0;
@@ -79,5 +88,8 @@ export function headroomExceeded(predictedBytes: number, signals: MemorySignals)
 
 /** Convenience wrapper reading live browser signals — thin, untested. */
 export function estimateHeadroomExceeded(fileBytes: number): boolean {
-  return headroomExceeded(estimatedFootprintBytes(fileBytes), readMemorySignals());
+  return headroomExceeded(
+    estimatedFootprintBytes(fileBytes),
+    readMemorySignals(),
+  );
 }

@@ -8,8 +8,8 @@
 // (UPDATE/DELETE/ALTER/DROP — gated on whether its target is a source
 // table), and anything else (runs unwrapped, untouched by this layer).
 
-export type StatementClass = 'query' | 'ctas' | 'cview' | 'mutation' | 'other';
-export type MutationKind = 'update' | 'delete' | 'alter' | 'drop';
+export type StatementClass = "query" | "ctas" | "cview" | "mutation" | "other";
+export type MutationKind = "update" | "delete" | "alter" | "drop";
 
 export interface StatementInfo {
   class: StatementClass;
@@ -44,62 +44,117 @@ interface TargetMatch {
 
 function matchTarget(sql: string, pattern: RegExp): TargetMatch | null {
   const match = sql.match(pattern);
-  if (!match || match.index === undefined || match[1] === undefined) return null;
+  if (!match || match.index === undefined || match[1] === undefined)
+    return null;
   const start = match.index + match[0].lastIndexOf(match[1]);
-  return { target: unquoteIdentifier(match[1]), range: [start, start + match[1].length] };
+  return {
+    target: unquoteIdentifier(match[1]),
+    range: [start, start + match[1].length],
+  };
 }
 
 export function classifyStatement(rawSql: string): StatementInfo {
-  const sql = rawSql.trim().replace(/;\s*$/, '');
+  const sql = rawSql.trim().replace(/;\s*$/, "");
 
-  if (/^(select|with)\b/i.test(sql)) return { class: 'query', sql };
+  if (/^(select|with)\b/i.test(sql)) return { class: "query", sql };
 
-  const ctas = sql.match(new RegExp(`^create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?(${IDENT_SRC})\\s+as\\b`, 'i'));
-  if (ctas) return { class: 'ctas', sql, ctasTable: unquoteIdentifier(ctas[1]) };
+  const ctas = sql.match(
+    new RegExp(
+      `^create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?(${IDENT_SRC})\\s+as\\b`,
+      "i",
+    ),
+  );
+  if (ctas)
+    return { class: "ctas", sql, ctasTable: unquoteIdentifier(ctas[1]) };
 
   const cview = sql.match(
-    new RegExp(`^create\\s+(?:or\\s+replace\\s+)?view\\s+(?:if\\s+not\\s+exists\\s+)?(${IDENT_SRC})\\s+as\\b`, 'i'),
+    new RegExp(
+      `^create\\s+(?:or\\s+replace\\s+)?view\\s+(?:if\\s+not\\s+exists\\s+)?(${IDENT_SRC})\\s+as\\b`,
+      "i",
+    ),
   );
-  if (cview) return { class: 'cview', sql, viewName: unquoteIdentifier(cview[1]) };
+  if (cview)
+    return { class: "cview", sql, viewName: unquoteIdentifier(cview[1]) };
 
-  const update = matchTarget(sql, new RegExp(`^update\\s+(${IDENT_SRC})`, 'i'));
+  const update = matchTarget(sql, new RegExp(`^update\\s+(${IDENT_SRC})`, "i"));
   if (update) {
-    return { class: 'mutation', sql, mutationKind: 'update', mutationTarget: update.target, mutationTargetRange: update.range };
+    return {
+      class: "mutation",
+      sql,
+      mutationKind: "update",
+      mutationTarget: update.target,
+      mutationTargetRange: update.range,
+    };
   }
 
-  const del = matchTarget(sql, new RegExp(`^delete\\s+from\\s+(${IDENT_SRC})`, 'i'));
+  const del = matchTarget(
+    sql,
+    new RegExp(`^delete\\s+from\\s+(${IDENT_SRC})`, "i"),
+  );
   if (del) {
-    return { class: 'mutation', sql, mutationKind: 'delete', mutationTarget: del.target, mutationTargetRange: del.range };
+    return {
+      class: "mutation",
+      sql,
+      mutationKind: "delete",
+      mutationTarget: del.target,
+      mutationTargetRange: del.range,
+    };
   }
 
-  const alter = matchTarget(sql, new RegExp(`^alter\\s+table\\s+(?:if\\s+exists\\s+)?(${IDENT_SRC})`, 'i'));
+  const alter = matchTarget(
+    sql,
+    new RegExp(`^alter\\s+table\\s+(?:if\\s+exists\\s+)?(${IDENT_SRC})`, "i"),
+  );
   if (alter) {
-    return { class: 'mutation', sql, mutationKind: 'alter', mutationTarget: alter.target, mutationTargetRange: alter.range };
+    return {
+      class: "mutation",
+      sql,
+      mutationKind: "alter",
+      mutationTarget: alter.target,
+      mutationTargetRange: alter.range,
+    };
   }
 
-  const drop = matchTarget(sql, new RegExp(`^drop\\s+table\\s+(?:if\\s+exists\\s+)?(${IDENT_SRC})`, 'i'));
+  const drop = matchTarget(
+    sql,
+    new RegExp(`^drop\\s+table\\s+(?:if\\s+exists\\s+)?(${IDENT_SRC})`, "i"),
+  );
   if (drop) {
-    return { class: 'mutation', sql, mutationKind: 'drop', mutationTarget: drop.target, mutationTargetRange: drop.range };
+    return {
+      class: "mutation",
+      sql,
+      mutationKind: "drop",
+      mutationTarget: drop.target,
+      mutationTargetRange: drop.range,
+    };
   }
 
-  const dropView = matchTarget(sql, new RegExp(`^drop\\s+view\\s+(?:if\\s+exists\\s+)?(${IDENT_SRC})`, 'i'));
+  const dropView = matchTarget(
+    sql,
+    new RegExp(`^drop\\s+view\\s+(?:if\\s+exists\\s+)?(${IDENT_SRC})`, "i"),
+  );
   if (dropView) {
     return {
-      class: 'mutation',
+      class: "mutation",
       sql,
-      mutationKind: 'drop',
+      mutationKind: "drop",
       mutationTarget: dropView.target,
       mutationTargetRange: dropView.range,
       mutationTargetIsView: true,
     };
   }
 
-  return { class: 'other', sql };
+  return { class: "other", sql };
 }
 
 /** Rewrites a mutation's target identifier in place — used to redirect a guarded mutation from a source table onto its materialized clone. */
-export function redirectMutationTarget(info: StatementInfo, newTarget: string): string {
+export function redirectMutationTarget(
+  info: StatementInfo,
+  newTarget: string,
+): string {
   if (!info.mutationTargetRange) return info.sql;
   const [start, end] = info.mutationTargetRange;
-  return info.sql.slice(0, start) + quoteIdentifier(newTarget) + info.sql.slice(end);
+  return (
+    info.sql.slice(0, start) + quoteIdentifier(newTarget) + info.sql.slice(end)
+  );
 }

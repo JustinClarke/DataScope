@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import type { DataCapabilities } from '../types';
-import { useDatasetsStore } from '../stores/datasets';
-import { evaluateCapabilities } from '../lib/capabilities';
+import { useMemo } from "react";
+import type { DataCapabilities } from "../types";
+import { useDatasetsStore } from "../stores/datasets";
+import { evaluateCapabilities } from "../lib/capabilities";
 
 /**
  * Reads the registered tables from the store and derives the current analysis

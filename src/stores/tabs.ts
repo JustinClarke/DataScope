@@ -5,12 +5,12 @@
 // preservation itself is a rendering contract (`WorkbenchShell.tsx` renders
 // every open tab, hiding inactive ones) — this store just never drops a tab
 // from `tabs[]` on its own, which is what makes that possible.
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import { TAB_KIND, type TabSpec, type TabType } from '../types/tabs';
-import type { ThreadConfig } from '../types/actions';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { TAB_KIND, type TabSpec, type TabType } from "../types/tabs";
+import type { ThreadConfig } from "../types/actions";
 
-export const TABS_STORAGE_KEY = 'datascope-tabs';
+export const TABS_STORAGE_KEY = "datascope-tabs";
 
 /** The 07c whitelist: the open tab list and which one is active — nothing else. */
 interface PersistedTabsState {
@@ -54,8 +54,10 @@ export const useTabsStore = create<TabsState>()(
       tabs: [],
       activeTabId: null,
       openTab: (type, subject, initializer = null, _artifactSpec) => {
-        if (TAB_KIND[type] === 'singleton') {
-          const existing = get().tabs.find((tab) => tab.type === type && tab.subject === subject);
+        if (TAB_KIND[type] === "singleton") {
+          const existing = get().tabs.find(
+            (tab) => tab.type === type && tab.subject === subject,
+          );
           if (existing) {
             set({ activeTabId: existing.id });
             return existing.id;
@@ -70,19 +72,28 @@ export const useTabsStore = create<TabsState>()(
         set((state) => {
           const tabs = state.tabs.filter((tab) => tab.id !== id);
           const activeTabId =
-            state.activeTabId === id ? (tabs[tabs.length - 1]?.id ?? null) : state.activeTabId;
+            state.activeTabId === id
+              ? (tabs[tabs.length - 1]?.id ?? null)
+              : state.activeTabId;
           return { tabs, activeTabId };
         }),
       setActiveTab: (id) =>
-        set((state) => (state.tabs.some((tab) => tab.id === id) ? { activeTabId: id } : state)),
+        set((state) =>
+          state.tabs.some((tab) => tab.id === id) ? { activeTabId: id } : state,
+        ),
     }),
     {
       name: TABS_STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
       version: TABS_PERSIST_VERSION,
-      partialize: (state): PersistedTabsState => ({ tabs: state.tabs, activeTabId: state.activeTabId }),
+      partialize: (state): PersistedTabsState => ({
+        tabs: state.tabs,
+        activeTabId: state.activeTabId,
+      }),
       migrate: (persisted, version): PersistedTabsState =>
-        version === TABS_PERSIST_VERSION ? (persisted as PersistedTabsState) : { tabs: [], activeTabId: null },
+        version === TABS_PERSIST_VERSION
+          ? (persisted as PersistedTabsState)
+          : { tabs: [], activeTabId: null },
       // Restored tabs carry ids like `tab-3` minted by a previous `nextTabId`
       // counter, which always restarts at 0 on a fresh load. Without this, the
       // next `openTab` after a restore could mint an id already sitting in the

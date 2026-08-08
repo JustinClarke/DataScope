@@ -1,9 +1,18 @@
-import { useState, type ReactNode } from 'react';
-import { AlertCircle, Calendar, ChevronDown, ChevronRight, Hash, Key, Link as LinkIcon, Type as TypeIcon } from 'lucide-react';
-import type { ClassifiedColumn, SemanticType } from '../../types';
-import type { ColumnCardStats } from '../../services/profiling';
-import { Tooltip } from '../../components/Tooltip';
-import { RunSqlButton } from '../sql/RunSqlButton';
+import { useState, type ReactNode } from "react";
+import {
+  AlertCircle,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Hash,
+  Key,
+  Link as LinkIcon,
+  Type as TypeIcon,
+} from "lucide-react";
+import type { ClassifiedColumn, SemanticType } from "../../types";
+import type { ColumnCardStats } from "../../services/profiling";
+import { Tooltip } from "../../components/Tooltip";
+import { RunSqlButton } from "../sql/RunSqlButton";
 
 // Semantic type is carried by the label text, not by hue (V6a). The four-colour
 // encoding this replaced spent two reserved registers on data — purple on
@@ -49,7 +58,7 @@ function NullCountBadge({ count }: { count: number }) {
 
 /** `total <= 0` covers a 0-row table — SUMMARIZE has no percentage to report there either (see `ColumnProfile.nullPercentage`). */
 function pctOf(n: number, total: number, decimals = 1): string {
-  if (!Number.isFinite(total) || total <= 0) return '—';
+  if (!Number.isFinite(total) || total <= 0) return "—";
   return `${((n / total) * 100).toFixed(decimals)}%`;
 }
 
@@ -67,11 +76,16 @@ function StatBox({
 }) {
   return (
     <div
-      className={`flex items-center justify-between gap-2 rounded-(--radius-sm) border px-3 py-2 ${warn ? 'border-(--color-warn)/30' : 'border-(--color-border)'}`}
+      className={`flex items-center justify-between gap-2 rounded-(--radius-sm) border px-3 py-2 ${warn ? "border-(--color-warn)/30" : "border-(--color-border)"}`}
     >
-      <span className={`text-xs ${warn ? 'text-(--color-warn)' : 'text-(--color-fg-muted)'}`}>{label}</span>
+      <span
+        className={`text-xs ${warn ? "text-(--color-warn)" : "text-(--color-fg-muted)"}`}
+      >
+        {label}
+      </span>
       <span className="font-mono text-sm text-(--color-fg)">
-        {value} <span className="text-xs text-(--color-fg-muted)">{`(${percentage})`}</span>
+        {value}{" "}
+        <span className="text-xs text-(--color-fg-muted)">{`(${percentage})`}</span>
       </span>
     </div>
   );
@@ -80,16 +94,25 @@ function StatBox({
 function DistributionBox({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2 rounded-(--radius-sm) border border-(--color-border) px-3 py-2.5">
-      <span className="text-xs text-(--color-fg-muted)">Distribution Preview</span>
+      <span className="text-xs text-(--color-fg-muted)">
+        Distribution Preview
+      </span>
       {children}
     </div>
   );
 }
 
-function Histogram({ buckets }: { buckets: { rangeStart: number; rangeEnd: number; count: number }[] }) {
+function Histogram({
+  buckets,
+}: {
+  buckets: { rangeStart: number; rangeEnd: number; count: number }[];
+}) {
   const max = Math.max(1, ...buckets.map((b) => b.count));
   return (
-    <div className="flex h-10 items-end gap-0.5" aria-label="Value distribution histogram">
+    <div
+      className="flex h-10 items-end gap-0.5"
+      aria-label="Value distribution histogram"
+    >
       {buckets.map((bucket, i) => (
         <div
           key={i}
@@ -112,7 +135,8 @@ function StatRow({ label, value }: { label: string; value: string }) {
 }
 
 function fmtNum(value: number | null | undefined): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+  if (value === null || value === undefined || !Number.isFinite(value))
+    return "—";
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
@@ -137,7 +161,15 @@ interface ColumnCardProps {
 // Run is the journey the app could not make before. Pairing them here rather
 // than at the four call sites keeps every stats block consistent by
 // construction.
-function SqlButton({ label, sql, onShowSql }: { label: string; sql: string; onShowSql: (label: string, sql: string) => void }) {
+function SqlButton({
+  label,
+  sql,
+  onShowSql,
+}: {
+  label: string;
+  sql: string;
+  onShowSql: (label: string, sql: string) => void;
+}) {
   return (
     <span className="flex items-center gap-3">
       <button
@@ -176,7 +208,8 @@ export function ColumnCard({
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const nullPct = column.nullPercentage;
-  const nullCount = nullPct === null ? 0 : Math.round((nullPct / 100) * rowCount);
+  const nullCount =
+    nullPct === null ? 0 : Math.round((nullPct / 100) * rowCount);
 
   // `compact` (the rail's disclosure, TableList) navigates away entirely on select — jumping
   // to the Profile tab — so a click there reveals first and only selects on a second, deliberate
@@ -198,17 +231,17 @@ export function ColumnCard({
 
   return (
     <div
-      className={`flex flex-col gap-2 rounded-(--radius-sm) border border-transparent px-3 py-2.5 ${selected ? 'bg-(--color-elev) shadow-[inset_2px_0_0_var(--color-active)]' : ''}`}
+      className={`flex flex-col gap-2 rounded-(--radius-sm) border border-transparent px-3 py-2.5 ${selected ? "bg-(--color-elev) shadow-[inset_2px_0_0_var(--color-active)]" : ""}`}
     >
       <div
-        className={`flex items-center justify-between gap-2 rounded-(--radius-xs) ${onSelect ? 'cursor-pointer outline-none focus-visible:bg-(--color-elev)' : ''}`}
-        role={onSelect ? 'button' : undefined}
+        className={`flex items-center justify-between gap-2 rounded-(--radius-xs) ${onSelect ? "cursor-pointer outline-none focus-visible:bg-(--color-elev)" : ""}`}
+        role={onSelect ? "button" : undefined}
         tabIndex={onSelect ? 0 : undefined}
         onClick={onSelect ? handleRowClick : undefined}
         onKeyDown={
           onSelect
             ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   handleRowClick();
                 }
@@ -223,23 +256,42 @@ export function ColumnCard({
               e.stopPropagation();
               setExpanded((v) => !v);
             }}
-            aria-label={`${expanded ? 'Collapse' : 'Expand'} ${column.name}`}
+            aria-label={`${expanded ? "Collapse" : "Expand"} ${column.name}`}
             aria-expanded={expanded}
             className="shrink-0 rounded p-0.5 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink-2)"
           >
-            {expanded ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+            {expanded ? (
+              <ChevronDown size={14} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={14} aria-hidden="true" />
+            )}
           </button>
-          {column.semanticType === 'Identifier' ? (
-            <Key size={13} aria-hidden="true" className="shrink-0 text-(--color-pk)" />
+          {column.semanticType === "Identifier" ? (
+            <Key
+              size={13}
+              aria-hidden="true"
+              className="shrink-0 text-(--color-pk)"
+            />
           ) : (
-            isForeignKey && <LinkIcon size={13} aria-hidden="true" className="shrink-0 text-(--color-fk)" />
+            isForeignKey && (
+              <LinkIcon
+                size={13}
+                aria-hidden="true"
+                className="shrink-0 text-(--color-fk)"
+              />
+            )
           )}
-          <span className="truncate font-mono text-sm text-(--color-fg)" title={column.name}>
+          <span
+            className="truncate font-mono text-sm text-(--color-fg)"
+            title={column.name}
+          >
             {column.name}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {nullPct !== null && nullPct > 0 && <NullCountBadge count={nullCount} />}
+          {nullPct !== null && nullPct > 0 && (
+            <NullCountBadge count={nullCount} />
+          )}
           <PhysicalTypeBadge physicalType={column.physicalType} />
         </div>
       </div>
@@ -250,13 +302,21 @@ export function ColumnCard({
             <TypeBadge type={column.semanticType} />
             {column.classificationReason && (
               <Tooltip content={column.classificationReason}>
-                <span className="text-xs text-(--color-fg-muted) underline decoration-dotted">why?</span>
+                <span className="text-xs text-(--color-fg-muted) underline decoration-dotted">
+                  why?
+                </span>
               </Tooltip>
             )}
           </div>
 
-          <div className={`grid grid-cols-1 items-start gap-3 ${compact ? '' : 'sm:grid-cols-2'}`}>
-            <div className={compact ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-2'}>
+          <div
+            className={`grid grid-cols-1 items-start gap-3 ${compact ? "" : "sm:grid-cols-2"}`}
+          >
+            <div
+              className={
+                compact ? "flex flex-col gap-2" : "grid grid-cols-2 gap-2"
+              }
+            >
               <StatBox
                 label="Unique Values"
                 value={column.cardinality.toLocaleString()}
@@ -265,14 +325,14 @@ export function ColumnCard({
               <StatBox
                 label="Missing values"
                 value={nullCount.toLocaleString()}
-                percentage={nullPct === null ? '—' : `${nullPct.toFixed(1)}%`}
+                percentage={nullPct === null ? "—" : `${nullPct.toFixed(1)}%`}
                 warn={nullCount > 0}
               />
             </div>
 
             <DistributionBox>
-              {column.semanticType === 'Quantitative' &&
-                (stats?.kind === 'Quantitative' ? (
+              {column.semanticType === "Quantitative" &&
+                (stats?.kind === "Quantitative" ? (
                   <div className="flex flex-col gap-2">
                     <StatRow label="min" value={fmtNum(Number(column.min))} />
                     <StatRow label="max" value={fmtNum(Number(column.max))} />
@@ -280,21 +340,33 @@ export function ColumnCard({
                     <StatRow label="median" value={fmtNum(stats.median)} />
                     <StatRow label="std dev" value={fmtNum(column.stdDev)} />
                     {stats.histogram && <Histogram buckets={stats.histogram} />}
-                    <SqlButton label={`${column.name} — descriptive statistics`} sql={stats.medianSql} onShowSql={onShowSql} />
+                    <SqlButton
+                      label={`${column.name} — descriptive statistics`}
+                      sql={stats.medianSql}
+                      onShowSql={onShowSql}
+                    />
                   </div>
                 ) : (
                   <p className="text-sm text-(--color-fg-muted)">Loading…</p>
                 ))}
 
-              {column.semanticType === 'Categorical' &&
-                (stats?.kind === 'Categorical' ? (
+              {column.semanticType === "Categorical" &&
+                (stats?.kind === "Categorical" ? (
                   <div className="flex flex-col gap-1">
                     {stats.topValues.length === 0 ? (
-                      <p className="text-sm text-(--color-fg-muted)">No values.</p>
+                      <p className="text-sm text-(--color-fg-muted)">
+                        No values.
+                      </p>
                     ) : (
                       stats.topValues.map((v) => (
-                        <div key={v.value} className="flex items-center gap-2 text-sm">
-                          <span className="w-24 shrink-0 truncate text-(--color-fg-muted)" title={v.value}>
+                        <div
+                          key={v.value}
+                          className="flex items-center gap-2 text-sm"
+                        >
+                          <span
+                            className="w-24 shrink-0 truncate text-(--color-fg-muted)"
+                            title={v.value}
+                          >
                             {v.value}
                           </span>
                           <div className="h-3 flex-1 overflow-hidden rounded bg-(--color-border)">
@@ -309,54 +381,85 @@ export function ColumnCard({
                         </div>
                       ))
                     )}
-                    <SqlButton label={`${column.name} — value frequencies`} sql={stats.sql} onShowSql={onShowSql} />
+                    <SqlButton
+                      label={`${column.name} — value frequencies`}
+                      sql={stats.sql}
+                      onShowSql={onShowSql}
+                    />
                   </div>
                 ) : (
                   <p className="text-sm text-(--color-fg-muted)">Loading…</p>
                 ))}
 
-              {column.semanticType === 'Temporal' &&
-                (stats?.kind === 'Temporal' ? (
+              {column.semanticType === "Temporal" &&
+                (stats?.kind === "Temporal" ? (
                   <div className="flex flex-col gap-2">
                     {stats.range ? (
                       <>
-                        <StatRow label="earliest" value={stats.range.earliest} />
+                        <StatRow
+                          label="earliest"
+                          value={stats.range.earliest}
+                        />
                         <StatRow label="latest" value={stats.range.latest} />
-                        <p className="text-sm text-(--color-fg-muted)">{stats.range.gapDescription}</p>
+                        <p className="text-sm text-(--color-fg-muted)">
+                          {stats.range.gapDescription}
+                        </p>
                       </>
                     ) : (
-                      <p className="text-sm text-(--color-fg-muted)">No dates.</p>
+                      <p className="text-sm text-(--color-fg-muted)">
+                        No dates.
+                      </p>
                     )}
-                    {stats.sql && <SqlButton label={`${column.name} — date range`} sql={stats.sql} onShowSql={onShowSql} />}
+                    {stats.sql && (
+                      <SqlButton
+                        label={`${column.name} — date range`}
+                        sql={stats.sql}
+                        onShowSql={onShowSql}
+                      />
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-(--color-fg-muted)">Loading…</p>
                 ))}
 
-              {column.semanticType === 'Textual' &&
-                (stats?.kind === 'Textual' ? (
+              {column.semanticType === "Textual" &&
+                (stats?.kind === "Textual" ? (
                   <div className="flex flex-col gap-2">
-                    <StatRow label="avg word count" value={fmtNum(stats.avgWordCount)} />
+                    <StatRow
+                      label="avg word count"
+                      value={fmtNum(stats.avgWordCount)}
+                    />
                     {stats.samplePreview.length > 0 && (
                       <div className="flex flex-col gap-1">
                         {stats.samplePreview.map((sample, i) => (
-                          <p key={i} className="truncate text-sm text-(--color-fg-muted)" title={sample}>
+                          <p
+                            key={i}
+                            className="truncate text-sm text-(--color-fg-muted)"
+                            title={sample}
+                          >
                             “{sample}”
                           </p>
                         ))}
                       </div>
                     )}
-                    <SqlButton label={`${column.name} — sample preview`} sql={stats.sampleSql} onShowSql={onShowSql} />
+                    <SqlButton
+                      label={`${column.name} — sample preview`}
+                      sql={stats.sampleSql}
+                      onShowSql={onShowSql}
+                    />
                   </div>
                 ) : (
                   <p className="text-sm text-(--color-fg-muted)">Loading…</p>
                 ))}
 
-              {column.semanticType === 'Identifier' && (
+              {column.semanticType === "Identifier" && (
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm italic text-(--color-fg-muted)">Uniform or complex distribution</p>
+                  <p className="text-sm italic text-(--color-fg-muted)">
+                    Uniform or complex distribution
+                  </p>
                   <p className="text-xs text-(--color-fg-muted)">
-                    Near-unique per row — excluded from most analysis (override in the classifier above).
+                    Near-unique per row — excluded from most analysis (override
+                    in the classifier above).
                   </p>
                 </div>
               )}

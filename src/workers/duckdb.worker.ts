@@ -1,12 +1,12 @@
-import * as duckdb from '@duckdb/duckdb-wasm';
-import { Table as ArrowTable } from 'apache-arrow';
-import mvpWasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
-import mvpWorker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
-import ehWasm from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
-import ehWorker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
-import type { QueryEngine, QueryResult } from '../types';
-import { useDatasetsStore } from '../stores/datasets';
-import { tableToQueryResult } from '../lib/arrow';
+import * as duckdb from "@duckdb/duckdb-wasm";
+import { Table as ArrowTable } from "apache-arrow";
+import mvpWasm from "@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url";
+import mvpWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url";
+import ehWasm from "@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url";
+import ehWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url";
+import type { QueryEngine, QueryResult } from "../types";
+import { useDatasetsStore } from "../stores/datasets";
+import { tableToQueryResult } from "../lib/arrow";
 
 // Bundle all DuckDB assets same-origin (Vite's `?url` emits each as a hashed
 // file on our own origin). Same-origin resources satisfy
@@ -38,7 +38,7 @@ let instancePromise: Promise<EngineInstance> | null = null;
 
 async function createInstance(): Promise<EngineInstance> {
   const store = useDatasetsStore.getState();
-  store.setWorkerStatus('loading');
+  store.setWorkerStatus("loading");
 
   // selectBundle auto-degrades to the single-threaded `eh` bundle when the page
   // is not cross-origin isolated (no COOP/COEP → no SharedArrayBuffer). That is
@@ -51,14 +51,14 @@ async function createInstance(): Promise<EngineInstance> {
   // A crash *after* init (OOM abort, externally killed worker) fires here. Mark
   // a recoverable error and drop the dead singleton so the next use rebuilds a
   // fresh worker instead of awaiting a response that will never come.
-  worker.addEventListener('error', (event) => {
-    reportFatalCrash(event.message || 'DuckDB worker crashed');
+  worker.addEventListener("error", (event) => {
+    reportFatalCrash(event.message || "DuckDB worker crashed");
   });
 
-  store.setWorkerStatus('compiling');
+  store.setWorkerStatus("compiling");
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
-  store.setWorkerStatus('ready');
+  store.setWorkerStatus("ready");
   return { db, worker };
 }
 
@@ -68,7 +68,9 @@ function getInstance(): Promise<EngineInstance> {
       // A failed init must not be sticky — clear the singleton so a later
       // attempt (e.g. a retry after a transient asset-load failure) re-inits.
       instancePromise = null;
-      useDatasetsStore.getState().setWorkerStatus('error', toErrorMessage(error));
+      useDatasetsStore
+        .getState()
+        .setWorkerStatus("error", toErrorMessage(error));
       throw error;
     });
   }
@@ -76,7 +78,7 @@ function getInstance(): Promise<EngineInstance> {
 }
 
 function reportFatalCrash(message: string): void {
-  useDatasetsStore.getState().setWorkerStatus('error', message);
+  useDatasetsStore.getState().setWorkerStatus("error", message);
   void resetEngine();
 }
 
@@ -104,7 +106,7 @@ function quoteIdentifier(name: string): string {
 }
 
 function abortReason(signal: AbortSignal): unknown {
-  return signal.reason ?? new DOMException('Query cancelled', 'AbortError');
+  return signal.reason ?? new DOMException("Query cancelled", "AbortError");
 }
 
 async function execute(
@@ -130,7 +132,7 @@ async function execute(
         onAbort();
         throw abortReason(signal);
       }
-      signal.addEventListener('abort', onAbort, { once: true });
+      signal.addEventListener("abort", onAbort, { once: true });
     }
 
     const batches = await reader.readAll();
@@ -144,19 +146,27 @@ async function execute(
     if (signal?.aborted) throw abortReason(signal);
     throw error;
   } finally {
-    if (onAbort) signal?.removeEventListener('abort', onAbort);
+    if (onAbort) signal?.removeEventListener("abort", onAbort);
     await conn.close();
   }
 }
 
-async function registerFile(name: string, data: Uint8Array | File): Promise<void> {
+async function registerFile(
+  name: string,
+  data: Uint8Array | File,
+): Promise<void> {
   const { db } = await getInstance();
   if (data instanceof File) {
     // Streaming handle (the duckdb-wasm package's own documented pattern):
     // DuckDB reads the File via FileReader chunks internally as queries need
     // it, rather than us materializing the whole thing into a Uint8Array
     // first — the point of this path for large files.
-    await db.registerFileHandle(name, data, duckdb.DuckDBDataProtocol.BROWSER_FILEREADER, true);
+    await db.registerFileHandle(
+      name,
+      data,
+      duckdb.DuckDBDataProtocol.BROWSER_FILEREADER,
+      true,
+    );
   } else {
     await db.registerFileBuffer(name, data);
   }
@@ -166,9 +176,9 @@ async function summarize(tableName: string): Promise<QueryResult> {
   return execute(`SUMMARIZE ${quoteIdentifier(tableName)}`);
 }
 
-const EXPORT_COPY_OPTIONS: Record<'parquet' | 'csv', string> = {
-  parquet: '(FORMAT PARQUET)',
-  csv: '(FORMAT CSV, HEADER)',
+const EXPORT_COPY_OPTIONS: Record<"parquet" | "csv", string> = {
+  parquet: "(FORMAT PARQUET)",
+  csv: "(FORMAT CSV, HEADER)",
 };
 
 /**
@@ -177,9 +187,14 @@ const EXPORT_COPY_OPTIONS: Record<'parquet' | 'csv', string> = {
  * caller to turn into a download, then `dropFile` frees it so a session with
  * many exports doesn't leak VFS memory.
  */
-async function exportTable(tableName: string, format: 'parquet' | 'csv'): Promise<Uint8Array<ArrayBuffer>> {
+async function exportTable(
+  tableName: string,
+  format: "parquet" | "csv",
+): Promise<Uint8Array<ArrayBuffer>> {
   const vfsFile = `export_${crypto.randomUUID()}.${format}`;
-  await execute(`COPY ${quoteIdentifier(tableName)} TO '${vfsFile}' ${EXPORT_COPY_OPTIONS[format]}`);
+  await execute(
+    `COPY ${quoteIdentifier(tableName)} TO '${vfsFile}' ${EXPORT_COPY_OPTIONS[format]}`,
+  );
   const { db } = await getInstance();
   try {
     // duckdb-wasm's own typing declares a bare `Uint8Array` (ArrayBufferLike) —
@@ -192,12 +207,17 @@ async function exportTable(tableName: string, format: 'parquet' | 'csv'): Promis
 }
 
 /** The DuckDB-Wasm implementation of the engine-agnostic execution boundary. */
-export const duckDBEngine: QueryEngine = { execute, registerFile, summarize, exportTable };
+export const duckDBEngine: QueryEngine = {
+  execute,
+  registerFile,
+  summarize,
+  exportTable,
+};
 
 export function toErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return 'Unknown engine error';
+  if (typeof error === "string") return error;
+  return "Unknown engine error";
 }
 
 export function isAbortError(error: unknown): boolean {
@@ -205,6 +225,6 @@ export function isAbortError(error: unknown): boolean {
   // subclass in the browser — match both by name.
   return (
     (error instanceof DOMException || error instanceof Error) &&
-    error.name === 'AbortError'
+    error.name === "AbortError"
   );
 }

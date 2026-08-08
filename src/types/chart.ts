@@ -2,7 +2,8 @@
 // auto-chart config — one translator, one type (chartMapper.ts). ChartSpec is
 // also the atomic unit the declarative ViewSpec layer composes into panels.
 
-export type ChartType = 'time-series' | 'correlation' | 'distribution' | 'categorical' | 'join-graph';
+export type ChartType =
+  "time-series" | "correlation" | "distribution" | "categorical" | "join-graph";
 
 export interface ChartSpec {
   type: ChartType;
@@ -21,6 +22,6 @@ export interface ChartSpec {
  * names the chart module that owns their visual.
  */
 export type ChartRecommendation =
-  | { kind: 'chart'; spec: ChartSpec }
-  | { kind: 'kpi'; label: string; value: string }
-  | { kind: 'grid'; reason: string };
+  | { kind: "chart"; spec: ChartSpec }
+  | { kind: "kpi"; label: string; value: string }
+  | { kind: "grid"; reason: string };

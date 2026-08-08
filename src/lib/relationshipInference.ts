@@ -20,9 +20,9 @@
 // This module is pure: candidate generation, the SQL the evidence probes run,
 // their parsers, and the scoring are all deterministic functions. Running the
 // probes against the engine is services/relationships.ts's job.
-import type { ClassifiedColumn, TableRegistryEntry } from '../types';
+import type { ClassifiedColumn, TableRegistryEntry } from "../types";
 
-export type EdgeConfidence = 'confident' | 'candidate';
+export type EdgeConfidence = "confident" | "candidate";
 
 /** One proposed FK relationship, child column -> parent column. */
 export interface FkEdge {
@@ -47,7 +47,7 @@ export interface FkEdge {
   evidence: string;
   /** A near-tied alternative parent, when one exists — the ambiguity the trust rules require surfaced. */
   ambiguity?: { parentTable: string; parentColumn: string; scoreGap: number };
-  source: 'inferred' | 'manual';
+  source: "inferred" | "manual";
 }
 
 /** A column pair worth probing, produced before any query runs. */
@@ -63,7 +63,7 @@ export interface FkCandidate {
   comparison: ComparisonMode;
 }
 
-export type ComparisonMode = 'numeric' | 'string';
+export type ComparisonMode = "numeric" | "string";
 
 // ---- Thresholds (one frozen config, mirroring the spike's single-config rule) ----
 
@@ -89,15 +89,15 @@ export const MAX_CANDIDATES = 240;
 // ---- Name agreement ----
 
 function normalizeName(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 /** Rough singularization for table-stem matching — drops a trailing plural 's'/'es'. */
 function singularize(name: string): string {
   const n = normalizeName(name);
-  if (n.endsWith('ies') && n.length > 3) return `${n.slice(0, -3)}y`;
-  if (n.endsWith('es') && n.length > 3) return n.slice(0, -2);
-  if (n.endsWith('s') && n.length > 2) return n.slice(0, -1);
+  if (n.endsWith("ies") && n.length > 3) return `${n.slice(0, -3)}y`;
+  if (n.endsWith("es") && n.length > 3) return n.slice(0, -2);
+  if (n.endsWith("s") && n.length > 2) return n.slice(0, -1);
   return n;
 }
 
@@ -108,7 +108,11 @@ function singularize(name: string): string {
  * Stems shorter than three characters are ignored to avoid coincidental
  * substring hits.
  */
-export function nameAgrees(childColumn: string, parentTable: string, parentColumn: string): boolean {
+export function nameAgrees(
+  childColumn: string,
+  parentTable: string,
+  parentColumn: string,
+): boolean {
   const child = normalizeName(childColumn);
   if (child === normalizeName(parentColumn)) return true;
 
@@ -123,16 +127,16 @@ export function nameAgrees(childColumn: string, parentTable: string, parentColum
 
 // ---- Type compatibility ----
 
-type TypeFamily = 'int' | 'float' | 'string' | 'temporal' | 'bool' | 'other';
+type TypeFamily = "int" | "float" | "string" | "temporal" | "bool" | "other";
 
 function typeFamily(physicalType: string): TypeFamily {
   const t = physicalType.toUpperCase();
-  if (/BOOL/.test(t)) return 'bool';
-  if (/INT/.test(t)) return 'int'; // BIGINT/HUGEINT/INTEGER/SMALLINT/TINYINT/UINTEGER…
-  if (/DECIMAL|DOUBLE|FLOAT|REAL|NUMERIC/.test(t)) return 'float';
-  if (/CHAR|VARCHAR|TEXT|STRING|UUID|BLOB/.test(t)) return 'string';
-  if (/DATE|TIME|TIMESTAMP|INTERVAL/.test(t)) return 'temporal';
-  return 'other';
+  if (/BOOL/.test(t)) return "bool";
+  if (/INT/.test(t)) return "int"; // BIGINT/HUGEINT/INTEGER/SMALLINT/TINYINT/UINTEGER…
+  if (/DECIMAL|DOUBLE|FLOAT|REAL|NUMERIC/.test(t)) return "float";
+  if (/CHAR|VARCHAR|TEXT|STRING|UUID|BLOB/.test(t)) return "string";
+  if (/DATE|TIME|TIMESTAMP|INTERVAL/.test(t)) return "temporal";
+  return "other";
 }
 
 /**
@@ -142,14 +146,18 @@ function typeFamily(physicalType: string): TypeFamily {
  * and bridged numerically — this is what recovers zero-padded string-vs-int
  * keys (the spike's pre-committed loss without a normalization pass).
  */
-export function comparisonModeFor(childType: string, parentType: string): ComparisonMode | null {
+export function comparisonModeFor(
+  childType: string,
+  parentType: string,
+): ComparisonMode | null {
   const c = typeFamily(childType);
   const p = typeFamily(parentType);
-  const keyish = (f: TypeFamily) => f === 'int' || f === 'float' || f === 'string';
+  const keyish = (f: TypeFamily) =>
+    f === "int" || f === "float" || f === "string";
   if (!keyish(c) || !keyish(p)) return null;
-  if (c === 'string' && p === 'string') return 'string';
+  if (c === "string" && p === "string") return "string";
   // Any numeric on either side (or both) compares numerically after TRY_CAST.
-  return 'numeric';
+  return "numeric";
 }
 
 // ---- Candidate generation ----
@@ -165,7 +173,10 @@ function isClassified(table: TableRegistryEntry): table is ClassifiedTable {
  * classifier's exact `COUNT(DISTINCT)`, not an estimate), so key-ness can be
  * read off the profile without a query. 1.0 is a perfect key.
  */
-function keyUniquenessRatio(column: ClassifiedColumn, rowCount: number): number {
+function keyUniquenessRatio(
+  column: ClassifiedColumn,
+  rowCount: number,
+): number {
   if (rowCount === 0) return 0;
   const nonNull = rowCount * (1 - (column.nullPercentage ?? 0) / 100);
   if (nonNull <= 0) return 0;
@@ -188,12 +199,15 @@ function isNearUniqueKey(column: ClassifiedColumn, rowCount: number): boolean {
  */
 function isKeyLikeType(column: ClassifiedColumn): boolean {
   const family = typeFamily(column.physicalType);
-  if (family !== 'int' && family !== 'string') return false;
-  return column.semanticType !== 'Quantitative';
+  if (family !== "int" && family !== "string") return false;
+  return column.semanticType !== "Quantitative";
 }
 
 /** A parent-key candidate: near-unique *and* identifier-like (never a measure or a date). */
-function isParentKeyCandidate(column: ClassifiedColumn, rowCount: number): boolean {
+function isParentKeyCandidate(
+  column: ClassifiedColumn,
+  rowCount: number,
+): boolean {
   return isKeyLikeType(column) && isNearUniqueKey(column, rowCount);
 }
 
@@ -204,12 +218,16 @@ function isParentKeyCandidate(column: ClassifiedColumn, rowCount: number): boole
  * sort first and the list is capped, so a wide folder stays within the probe
  * budget while never dropping a named FK for a coincidental one.
  */
-export function generateCandidates(tables: TableRegistryEntry[]): FkCandidate[] {
+export function generateCandidates(
+  tables: TableRegistryEntry[],
+): FkCandidate[] {
   const classified = tables.filter(isClassified);
   const candidates: FkCandidate[] = [];
 
   for (const parent of classified) {
-    const parentKeys = parent.columns.filter((c) => isParentKeyCandidate(c, parent.rowCount));
+    const parentKeys = parent.columns.filter((c) =>
+      isParentKeyCandidate(c, parent.rowCount),
+    );
     if (parentKeys.length === 0) continue;
 
     for (const child of classified) {
@@ -219,10 +237,18 @@ export function generateCandidates(tables: TableRegistryEntry[]): FkCandidate[] 
         // always shares the key name). Skip it early — no query needed.
         const childIsKey = isNearUniqueKey(childCol, child.rowCount);
         for (const parentCol of parentKeys) {
-          if (child.id === parent.id && childCol.name === parentCol.name) continue; // not a self-edge on one column
-          const comparison = comparisonModeFor(childCol.physicalType, parentCol.physicalType);
+          if (child.id === parent.id && childCol.name === parentCol.name)
+            continue; // not a self-edge on one column
+          const comparison = comparisonModeFor(
+            childCol.physicalType,
+            parentCol.physicalType,
+          );
           if (!comparison) continue;
-          const nameAgreement = nameAgrees(childCol.name, parent.tableName, parentCol.name);
+          const nameAgreement = nameAgrees(
+            childCol.name,
+            parent.tableName,
+            parentCol.name,
+          );
           if (childIsKey && !nameAgreement) continue;
           candidates.push({
             childTable: child.tableName,
@@ -252,7 +278,9 @@ function quoteIdent(name: string): string {
 /** Normalized key expression for a column, per the pair's comparison mode. */
 function normExpr(column: string, mode: ComparisonMode): string {
   const col = quoteIdent(column);
-  return mode === 'numeric' ? `TRY_CAST(${col} AS DOUBLE)` : `TRIM(CAST(${col} AS VARCHAR))`;
+  return mode === "numeric"
+    ? `TRY_CAST(${col} AS DOUBLE)`
+    : `TRIM(CAST(${col} AS VARCHAR))`;
 }
 
 /**
@@ -260,7 +288,10 @@ function normExpr(column: string, mode: ComparisonMode): string {
  * distinct values does it hold? Exact `count(DISTINCT)`, never approximate.
  * Cached per (table, column) by the caller since it is child-independent.
  */
-export function buildParentKeySql(parentTable: string, parentColumn: string): string {
+export function buildParentKeySql(
+  parentTable: string,
+  parentColumn: string,
+): string {
   const col = quoteIdent(parentColumn);
   return (
     `SELECT count(*) FILTER (WHERE ${col} IS NOT NULL) AS non_null, ` +
@@ -275,10 +306,16 @@ export interface ParentKeyStats {
   uniqueness: number;
 }
 
-export function parseParentKeySql(row: Record<string, unknown> | undefined): ParentKeyStats {
+export function parseParentKeySql(
+  row: Record<string, unknown> | undefined,
+): ParentKeyStats {
   const nonNull = Number(row?.non_null ?? 0);
   const distinctCt = Number(row?.distinct_ct ?? 0);
-  return { nonNull, distinctCt, uniqueness: nonNull > 0 ? distinctCt / nonNull : 0 };
+  return {
+    nonNull,
+    distinctCt,
+    uniqueness: nonNull > 0 ? distinctCt / nonNull : 0,
+  };
 }
 
 /**
@@ -309,7 +346,9 @@ export interface ContainmentStats {
   distinctReferenced: number;
 }
 
-export function parseContainmentSql(row: Record<string, unknown> | undefined): ContainmentStats {
+export function parseContainmentSql(
+  row: Record<string, unknown> | undefined,
+): ContainmentStats {
   return {
     childNonNull: Number(row?.child_non_null ?? 0),
     childMatched: Number(row?.child_matched ?? 0),
@@ -343,28 +382,48 @@ export function scoreCandidate(
   if (keyStats.uniqueness < KEY_UNIQUENESS_MIN) return null; // parent is not a key → not an FK target
   if (containmentStats.childNonNull === 0) return null; // child column is all-null → no evidence
 
-  const containment = containmentStats.childMatched / containmentStats.childNonNull;
+  const containment =
+    containmentStats.childMatched / containmentStats.childNonNull;
   if (containment < CONTAINMENT_MIN) return null; // too little overlap to be a relationship
 
-  const coverage = keyStats.distinctCt > 0 ? containmentStats.distinctReferenced / keyStats.distinctCt : 0;
+  const coverage =
+    keyStats.distinctCt > 0
+      ? containmentStats.distinctReferenced / keyStats.distinctCt
+      : 0;
   // Structure-only candidates must reference a real share of the parent key —
   // full containment of a tiny domain inside a key's range is coincidence.
   // Name agreement is its own evidence and bypasses this.
-  if (!candidate.nameAgreement && coverage < MIN_STRUCTURE_COVERAGE) return null;
+  if (!candidate.nameAgreement && coverage < MIN_STRUCTURE_COVERAGE)
+    return null;
 
-  return { ...candidate, containment, coverage, parentKeyUniqueness: keyStats.uniqueness };
+  return {
+    ...candidate,
+    containment,
+    coverage,
+    parentKeyUniqueness: keyStats.uniqueness,
+  };
 }
 
 function tierFor(scored: ScoredCandidate): EdgeConfidence {
-  return scored.nameAgreement && scored.containment >= CONTAINMENT_SOLID ? 'confident' : 'candidate';
+  return scored.nameAgreement && scored.containment >= CONTAINMENT_SOLID
+    ? "confident"
+    : "candidate";
 }
 
-function edgeId(childTable: string, childColumn: string, parentTable: string, parentColumn: string): string {
+function edgeId(
+  childTable: string,
+  childColumn: string,
+  parentTable: string,
+  parentColumn: string,
+): string {
   return `${childTable}.${childColumn}->${parentTable}.${parentColumn}`;
 }
 
 /** The stable child-side key an override is anchored to — survives re-pointing and re-profiling. */
-export function childKeyOf(edge: { childTable: string; childColumn: string }): string {
+export function childKeyOf(edge: {
+  childTable: string;
+  childColumn: string;
+}): string {
   return `${edge.childTable}.${edge.childColumn}`;
 }
 
@@ -388,25 +447,32 @@ export function assembleEdges(scored: ScoredCandidate[]): FkEdge[] {
     // Best-scoring parent wins; a name-agreeing match outranks a bare-structure
     // one at equal containment so a coincidental dense key never displaces the
     // real named FK.
-    const ranked = [...group].sort(
-      (a, b) => rankScore(b) - rankScore(a),
-    );
+    const ranked = [...group].sort((a, b) => rankScore(b) - rankScore(a));
     const best = ranked[0];
     const runnerUp = ranked[1];
     const scored0 = tierFor(best);
 
     let evidence = `${formatPct(best.containment)} of \`${best.childTable}.${best.childColumn}\` values appear in \`${best.parentTable}.${best.parentColumn}\``;
-    let ambiguity: FkEdge['ambiguity'];
+    let ambiguity: FkEdge["ambiguity"];
     if (runnerUp) {
       const gap = rankScore(best) - rankScore(runnerUp);
       if (gap < AMBIGUITY_GAP) {
-        ambiguity = { parentTable: runnerUp.parentTable, parentColumn: runnerUp.parentColumn, scoreGap: gap };
+        ambiguity = {
+          parentTable: runnerUp.parentTable,
+          parentColumn: runnerUp.parentColumn,
+          scoreGap: gap,
+        };
         evidence += ` — near-tie with \`${runnerUp.parentTable}.${runnerUp.parentColumn}\` (${formatPct(runnerUp.containment)}), ${gap.toFixed(2)} apart`;
       }
     }
 
     edges.push({
-      id: edgeId(best.childTable, best.childColumn, best.parentTable, best.parentColumn),
+      id: edgeId(
+        best.childTable,
+        best.childColumn,
+        best.parentTable,
+        best.parentColumn,
+      ),
       childTable: best.childTable,
       childColumn: best.childColumn,
       parentTable: best.parentTable,
@@ -419,13 +485,14 @@ export function assembleEdges(scored: ScoredCandidate[]): FkEdge[] {
       confidenceScore: best.containment,
       evidence,
       ambiguity,
-      source: 'inferred',
+      source: "inferred",
     });
   }
 
   // Deterministic output order: confident first, then by containment.
   return edges.sort((a, b) => {
-    if (a.confidence !== b.confidence) return a.confidence === 'confident' ? -1 : 1;
+    if (a.confidence !== b.confidence)
+      return a.confidence === "confident" ? -1 : 1;
     return b.containment - a.containment;
   });
 }
@@ -453,9 +520,18 @@ export interface RelationshipOverrides {
   added: ManualEdge[];
 }
 
-export const EMPTY_OVERRIDES: RelationshipOverrides = { removed: [], repointed: {}, added: [] };
+export const EMPTY_OVERRIDES: RelationshipOverrides = {
+  removed: [],
+  repointed: {},
+  added: [],
+};
 
-function manualEdge(childTable: string, childColumn: string, parentTable: string, parentColumn: string): FkEdge {
+function manualEdge(
+  childTable: string,
+  childColumn: string,
+  parentTable: string,
+  parentColumn: string,
+): FkEdge {
   return {
     id: edgeId(childTable, childColumn, parentTable, parentColumn),
     childTable,
@@ -466,10 +542,10 @@ function manualEdge(childTable: string, childColumn: string, parentTable: string
     coverage: 1,
     parentKeyUniqueness: 1,
     nameAgreement: nameAgrees(childColumn, parentTable, parentColumn),
-    confidence: 'confident',
+    confidence: "confident",
     confidenceScore: 1,
-    evidence: 'Set manually',
-    source: 'manual',
+    evidence: "Set manually",
+    source: "manual",
   };
 }
 
@@ -498,7 +574,12 @@ export function applyOverrides(
     if (repoint) {
       if (!live.has(repoint.parentTable)) continue;
       result.push({
-        ...manualEdge(edge.childTable, edge.childColumn, repoint.parentTable, repoint.parentColumn),
+        ...manualEdge(
+          edge.childTable,
+          edge.childColumn,
+          repoint.parentTable,
+          repoint.parentColumn,
+        ),
         // Preserve the measured containment against the *original* target only if
         // the re-point kept it; a re-point is a user assertion, so it reads manual.
       });
@@ -514,21 +595,40 @@ export function applyOverrides(
     const [childTable, childColumn] = splitChildKey(key);
     if (!childTable || !childColumn) continue;
     if (!live.has(childTable) || !live.has(target.parentTable)) continue;
-    result.push(manualEdge(childTable, childColumn, target.parentTable, target.parentColumn));
+    result.push(
+      manualEdge(
+        childTable,
+        childColumn,
+        target.parentTable,
+        target.parentColumn,
+      ),
+    );
   }
 
   for (const edge of overrides.added) {
     if (!live.has(edge.childTable) || !live.has(edge.parentTable)) continue;
-    const id = edgeId(edge.childTable, edge.childColumn, edge.parentTable, edge.parentColumn);
+    const id = edgeId(
+      edge.childTable,
+      edge.childColumn,
+      edge.parentTable,
+      edge.parentColumn,
+    );
     if (result.some((e) => e.id === id)) continue;
-    result.push(manualEdge(edge.childTable, edge.childColumn, edge.parentTable, edge.parentColumn));
+    result.push(
+      manualEdge(
+        edge.childTable,
+        edge.childColumn,
+        edge.parentTable,
+        edge.parentColumn,
+      ),
+    );
   }
 
   return result;
 }
 
 function splitChildKey(key: string): [string | undefined, string | undefined] {
-  const dot = key.indexOf('.');
+  const dot = key.indexOf(".");
   if (dot < 0) return [undefined, undefined];
   return [key.slice(0, dot), key.slice(dot + 1)];
 }

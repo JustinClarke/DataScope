@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import { useSettingsStore } from '../../../stores/settings'
-import { useByokKeyStore } from '../../../stores/byokKey'
-import { requestSynthesis, type SynthesisUpgrade } from '../../../services/synthesis'
-import type { FactRef, RankedAction, TableRegistryEntry } from '../../../types'
+import { useEffect, useRef, useState } from "react";
+import { useSettingsStore } from "../../../stores/settings";
+import { useByokKeyStore } from "../../../stores/byokKey";
+import {
+  requestSynthesis,
+  type SynthesisUpgrade,
+} from "../../../services/synthesis";
+import type { FactRef, RankedAction, TableRegistryEntry } from "../../../types";
 
 /**
  * The D56 "tailored this view" upgrade. The deterministic Verdict paints first
@@ -19,41 +22,50 @@ export function useSynthesisUpgrade(
   tables: TableRegistryEntry[],
   baseline: { headlineFact: FactRef; actions: RankedAction[] } | null,
 ): {
-  tailored: boolean
-  paused: boolean
-  headlineFact: FactRef | null
-  actions: RankedAction[] | null
+  tailored: boolean;
+  paused: boolean;
+  headlineFact: FactRef | null;
+  actions: RankedAction[] | null;
 } {
-  const aiMode = useSettingsStore((s) => s.aiMode)
-  const routing = useSettingsStore((s) => s.byokPreference)
-  const byokKey = useByokKeyStore((s) => s.key)
-  const [upgrade, setUpgrade] = useState<SynthesisUpgrade | null>(null)
+  const aiMode = useSettingsStore((s) => s.aiMode);
+  const routing = useSettingsStore((s) => s.byokPreference);
+  const byokKey = useByokKeyStore((s) => s.key);
+  const [upgrade, setUpgrade] = useState<SynthesisUpgrade | null>(null);
   // Opaque, content-free per-session id — keys the edge limiter only.
-  const sessionId = useRef<string>(crypto.randomUUID()).current
+  const sessionId = useRef<string>(crypto.randomUUID()).current;
 
   const fingerprint = baseline
-    ? `${aiMode}|${baseline.headlineFact.statement}|${baseline.actions.map((a) => a.verb).join('|')}`
-    : null
+    ? `${aiMode}|${baseline.headlineFact.statement}|${baseline.actions.map((a) => a.verb).join("|")}`
+    : null;
 
   useEffect(() => {
-    setUpgrade(null)
-    if (baseline === null) return
-    let cancelled = false
-    void requestSynthesis({ aiMode, sessionId, tables, baseline, routing, byokKey }).then((result) => {
-      if (!cancelled) setUpgrade(result)
-    })
+    setUpgrade(null);
+    if (baseline === null) return;
+    let cancelled = false;
+    void requestSynthesis({
+      aiMode,
+      sessionId,
+      tables,
+      baseline,
+      routing,
+      byokKey,
+    }).then((result) => {
+      if (!cancelled) setUpgrade(result);
+    });
     return () => {
-      cancelled = true
-    }
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fingerprint])
+  }, [fingerprint]);
 
-  const headlineFact = upgrade?.headlineFact.source === 'ai' ? upgrade.headlineFact.value : null
-  const actions = upgrade?.actions.source === 'ai' ? upgrade.actions.value : null
+  const headlineFact =
+    upgrade?.headlineFact.source === "ai" ? upgrade.headlineFact.value : null;
+  const actions =
+    upgrade?.actions.source === "ai" ? upgrade.actions.value : null;
   return {
     tailored: headlineFact !== null || actions !== null,
     paused: upgrade?.paused === true,
     headlineFact,
     actions,
-  }
+  };
 }

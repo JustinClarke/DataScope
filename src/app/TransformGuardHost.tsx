@@ -3,9 +3,13 @@
 // calls, not to whichever component happened to raise it. Mounted once here,
 // nowhere else — a second mount would reintroduce the per-surface duplication
 // this phase removes.
-import { useRunGuardStore } from '../stores/runGuard';
-import { TransformGuardModal } from '../features/sql/TransformGuardModal';
-import { materializeGuarded, modifyAnywayGuarded, cancelGuarded } from '../services/runPath';
+import { useRunGuardStore } from "../stores/runGuard";
+import { TransformGuardModal } from "../features/sql/TransformGuardModal";
+import {
+  materializeGuarded,
+  modifyAnywayGuarded,
+  cancelGuarded,
+} from "../services/runPath";
 
 export function TransformGuardHost() {
   const pending = useRunGuardStore((state) => state.pending);

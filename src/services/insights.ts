@@ -3,19 +3,19 @@
 // rules, and ranks the total set. Same lazy-import/direct-engine pattern as
 // services/profiling.ts, for the same reason (many small concurrent queries,
 // not the SQL playground's single-query-panel store).
-import type { ClassifiedColumn } from '../types';
+import type { ClassifiedColumn } from "../types";
 import {
   buildInsightProbes,
   idExclusionCandidates,
   nullPatternCandidates,
   rankInsights,
   type InsightCandidate,
-} from '../lib/insights';
+} from "../lib/insights";
 
-type EngineModule = typeof import('../workers/duckdb.worker');
+type EngineModule = typeof import("../workers/duckdb.worker");
 let engineModule: Promise<EngineModule> | null = null;
 function loadEngine(): Promise<EngineModule> {
-  if (!engineModule) engineModule = import('../workers/duckdb.worker');
+  if (!engineModule) engineModule = import("../workers/duckdb.worker");
   return engineModule;
 }
 
@@ -24,14 +24,21 @@ export async function loadInsights(
   columns: ClassifiedColumn[],
   rowCount: number,
 ): Promise<InsightCandidate[]> {
-  const syntactic = [...nullPatternCandidates(columns, tableName), ...idExclusionCandidates(columns, tableName)];
+  const syntactic = [
+    ...nullPatternCandidates(columns, tableName),
+    ...idExclusionCandidates(columns, tableName),
+  ];
 
   const probes = buildInsightProbes(tableName, columns, rowCount);
   if (probes.length === 0) return rankInsights(syntactic);
 
   const engine = await loadEngine();
   const results = await Promise.all(
-    probes.map((probe) => engine.duckDBEngine.execute(probe.sql).then((result) => probe.describe(result))),
+    probes.map((probe) =>
+      engine.duckDBEngine
+        .execute(probe.sql)
+        .then((result) => probe.describe(result)),
+    ),
   );
 
   return rankInsights([...syntactic, ...results.flat()]);

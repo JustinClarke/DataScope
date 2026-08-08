@@ -1,6 +1,6 @@
-import { useRef, type ReactNode } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { useRef, type ReactNode } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { ChevronUp, ChevronDown } from "lucide-react";
 
 export interface DataTableColumn {
   key: string;
@@ -8,13 +8,17 @@ export interface DataTableColumn {
   sortable?: boolean;
 }
 
-export type SortDirection = 'asc' | 'desc';
+export type SortDirection = "asc" | "desc";
 
 interface DataTableProps {
   columns: DataTableColumn[];
   rowCount: number;
   getRow: (index: number) => unknown[];
-  renderCell: (value: unknown, columnIndex: number, rowIndex: number) => ReactNode;
+  renderCell: (
+    value: unknown,
+    columnIndex: number,
+    rowIndex: number,
+  ) => ReactNode;
   sortColumn?: string | null;
   sortDirection?: SortDirection;
   onSortChange?: (columnKey: string) => void;
@@ -37,11 +41,11 @@ export function DataTable({
   getRow,
   renderCell,
   sortColumn = null,
-  sortDirection = 'asc',
+  sortDirection = "asc",
   onSortChange,
   rowHeightPx = 32,
   maxHeightPx = 480,
-  emptyMessage = 'No rows.',
+  emptyMessage = "No rows.",
 }: DataTableProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
@@ -51,7 +55,7 @@ export function DataTable({
     overscan: 12,
   });
 
-  const gridTemplateColumns = columns.map(() => 'minmax(120px, 1fr)').join(' ');
+  const gridTemplateColumns = columns.map(() => "minmax(120px, 1fr)").join(" ");
 
   return (
     <div
@@ -75,11 +79,17 @@ export function DataTable({
               disabled={!column.sortable}
               onClick={() => onSortChange?.(column.key)}
               className="flex items-center gap-1 truncate whitespace-nowrap px-3 py-2 text-left text-sm font-medium text-(--color-fg) disabled:cursor-default enabled:cursor-pointer"
-              aria-sort={isSorted ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+              aria-sort={
+                isSorted
+                  ? sortDirection === "asc"
+                    ? "ascending"
+                    : "descending"
+                  : "none"
+              }
             >
               <span className="truncate">{column.label}</span>
               {isSorted &&
-                (sortDirection === 'asc' ? (
+                (sortDirection === "asc" ? (
                   <ChevronUp size={12} aria-hidden="true" />
                 ) : (
                   <ChevronDown size={12} aria-hidden="true" />
@@ -90,9 +100,13 @@ export function DataTable({
       </div>
 
       {rowCount === 0 ? (
-        <p className="px-3 py-4 text-sm text-(--color-fg-muted)">{emptyMessage}</p>
+        <p className="px-3 py-4 text-sm text-(--color-fg-muted)">
+          {emptyMessage}
+        </p>
       ) : (
-        <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+        <div
+          style={{ height: virtualizer.getTotalSize(), position: "relative" }}
+        >
           {virtualizer.getVirtualItems().map((virtualRow) => {
             const row = getRow(virtualRow.index);
             return (

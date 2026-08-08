@@ -7,7 +7,12 @@
 // the hook once and hands the result to both this band and `Erd`, so the
 // two mounting together never issues the underlying insight/relationship
 // queries twice.
-import type { Dataset, FactRef, RankedAction, TableRegistryEntry } from '../../types';
+import type {
+  Dataset,
+  FactRef,
+  RankedAction,
+  TableRegistryEntry,
+} from "../../types";
 
 interface VerdictBandProps {
   tables: TableRegistryEntry[];
@@ -19,10 +24,23 @@ interface VerdictBandProps {
   headlineFact: FactRef | null;
 }
 
-export function VerdictBand({ tables, datasets, baseline, tailored, paused, headlineFact: aiHeadline }: VerdictBandProps) {
+export function VerdictBand({
+  tables,
+  datasets,
+  baseline,
+  tailored,
+  paused,
+  headlineFact: aiHeadline,
+}: VerdictBandProps) {
   const totalRows = tables.reduce((sum, t) => sum + t.rowCount, 0);
-  const latestDataset = [...datasets].sort((a, b) => a.ingestedAt.localeCompare(b.ingestedAt)).at(-1) ?? null;
-  const datasetLabel = datasets.length > 1 ? `${datasets.length} datasets` : (latestDataset?.name ?? 'Dataset');
+  const latestDataset =
+    [...datasets]
+      .sort((a, b) => a.ingestedAt.localeCompare(b.ingestedAt))
+      .at(-1) ?? null;
+  const datasetLabel =
+    datasets.length > 1
+      ? `${datasets.length} datasets`
+      : (latestDataset?.name ?? "Dataset");
 
   const headline = aiHeadline ?? baseline?.headlineFact ?? null;
 
@@ -32,7 +50,9 @@ export function VerdictBand({ tables, datasets, baseline, tailored, paused, head
       className="flex flex-col gap-1 border-b border-(--color-border) px-4 py-3"
     >
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-(--color-fg)">{datasetLabel}</span>
+        <span className="text-sm font-semibold text-(--color-fg)">
+          {datasetLabel}
+        </span>
         <span className="font-mono text-xs text-(--color-fg-muted)">
           {tables.length} tables · {totalRows.toLocaleString()} rows
         </span>
@@ -54,7 +74,10 @@ export function VerdictBand({ tables, datasets, baseline, tailored, paused, head
         )}
       </div>
       {headline ? (
-        <p data-testid="verdict-band-headline" className="text-sm text-(--color-fg-muted)">
+        <p
+          data-testid="verdict-band-headline"
+          className="text-sm text-(--color-fg-muted)"
+        >
           {headline.statement}
         </p>
       ) : (

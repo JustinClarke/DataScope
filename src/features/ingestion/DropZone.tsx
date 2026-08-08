@@ -1,5 +1,11 @@
-import { useRef, useState, type DragEvent, type KeyboardEvent, type MouseEvent } from 'react';
-import { collectFilesFromDataTransfer } from './folderTraversal';
+import {
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
+import { collectFilesFromDataTransfer } from "./folderTraversal";
 
 interface DropZoneProps {
   onFiles: (files: File[]) => void;
@@ -33,7 +39,7 @@ export function DropZone({ onFiles, disabled = false }: DropZoneProps) {
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       openFilePicker();
     }
@@ -54,32 +60,45 @@ export function DropZone({ onFiles, disabled = false }: DropZoneProps) {
       onDrop={handleDrop}
       className={`group relative flex min-h-28 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed px-6 py-6 text-center transition-all duration-200 ${
         disabled
-          ? 'cursor-not-allowed border-(--color-rule) opacity-50'
+          ? "cursor-not-allowed border-(--color-rule) opacity-50"
           : isDragActive
-            ? 'cursor-pointer border-solid border-(--color-active) bg-(--color-active)/5'
-            : 'cursor-pointer border-(--color-rule) hover:border-(--color-active)/40 hover:bg-(--color-elev)/30'
+            ? "cursor-pointer border-solid border-(--color-active) bg-(--color-active)/5"
+            : "cursor-pointer border-(--color-rule) hover:border-(--color-active)/40 hover:bg-(--color-elev)/30"
       }`}
     >
       {/* Upload icon */}
-      <div className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${
-        isDragActive
-          ? 'bg-(--color-active)/15 text-(--color-active)'
-          : 'bg-(--color-elev) text-(--color-ink-3) group-hover:bg-(--color-active)/10 group-hover:text-(--color-active)'
-      }`}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div
+        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${
+          isDragActive
+            ? "bg-(--color-active)/15 text-(--color-active)"
+            : "bg-(--color-elev) text-(--color-ink-3) group-hover:bg-(--color-active)/10 group-hover:text-(--color-active)"
+        }`}
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
       </div>
       <div>
-        <p className={`text-[length:var(--text-base)] font-medium transition-colors ${
-          isDragActive ? 'text-(--color-active)' : 'text-(--color-ink)'
-        }`}>
-          {isDragActive ? 'Drop to analyse' : 'Drop files, a folder, or a ZIP'}
+        <p
+          className={`text-[length:var(--text-base)] font-medium transition-colors ${
+            isDragActive ? "text-(--color-active)" : "text-(--color-ink)"
+          }`}
+        >
+          {isDragActive ? "Drop to analyse" : "Drop files, a folder, or a ZIP"}
         </p>
         <p className="mt-1 text-[length:var(--text-sm)] text-(--color-ink-3)">
-          CSV, TSV, Parquet, JSON/JSONL — or click to browse,{' '}
+          CSV, TSV, Parquet, JSON/JSONL — or click to browse,{" "}
           <button
             type="button"
             disabled={disabled}
@@ -99,7 +118,7 @@ export function DropZone({ onFiles, disabled = false }: DropZoneProps) {
         disabled={disabled}
         onChange={(event) => {
           const files = Array.from(event.target.files ?? []);
-          event.target.value = '';
+          event.target.value = "";
           if (files.length > 0) onFiles(files);
         }}
       />
@@ -112,7 +131,7 @@ export function DropZone({ onFiles, disabled = false }: DropZoneProps) {
         disabled={disabled}
         onChange={(event) => {
           const files = Array.from(event.target.files ?? []);
-          event.target.value = '';
+          event.target.value = "";
           if (files.length > 0) onFiles(files);
         }}
       />

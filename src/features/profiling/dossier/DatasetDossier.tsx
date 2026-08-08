@@ -1,17 +1,24 @@
-import { SkipForward } from 'lucide-react';
-import { useDatasetsStore } from '../../../stores/datasets';
-import { buildDossierViewSpec } from '../../../lib/dossier';
-import { useDatasetBaseline } from './useDatasetBaseline';
-import { buildStructureReport, downloadStructureReport } from '../../../lib/structureReport';
-import { downloadDspsHtml } from '../../../lib/dspsHtml';
-import { buildAIContext } from '../../../lib/aiContext';
-import type { RankedAction } from '../../../types';
-import type { SidebarModule } from '../../../stores/ui';
-import { ViewSpecRenderer } from './ViewSpecRenderer';
+import { SkipForward } from "lucide-react";
+import { useDatasetsStore } from "../../../stores/datasets";
+import { buildDossierViewSpec } from "../../../lib/dossier";
+import { useDatasetBaseline } from "./useDatasetBaseline";
+import {
+  buildStructureReport,
+  downloadStructureReport,
+} from "../../../lib/structureReport";
+import { downloadDspsHtml } from "../../../lib/dspsHtml";
+import { buildAIContext } from "../../../lib/aiContext";
+import type { RankedAction } from "../../../types";
+import type { SidebarModule } from "../../../stores/ui";
+import { ViewSpecRenderer } from "./ViewSpecRenderer";
 
 interface DatasetDossierProps {
   onOpenTable: (tableId: string) => void;
-  onNavigate: (module: SidebarModule, tabId?: string | null, prefill?: Record<string, unknown> | null) => void;
+  onNavigate: (
+    module: SidebarModule,
+    tabId?: string | null,
+    prefill?: Record<string, unknown> | null,
+  ) => void;
   onShowSql: (label: string, sql: string) => void;
   /** The D68d "skip to data" escape hatch — jumps past the Blueprint to the raw data surface for the §2 second audience. */
   onSkipToData: () => void;
@@ -27,7 +34,12 @@ interface DatasetDossierProps {
  * into the hero thumbnail, the structure report, and the "Copy for AI" block;
  * with the graph cut, all three degrade to schema-only.
  */
-export function DatasetDossier({ onOpenTable, onNavigate, onShowSql, onSkipToData }: DatasetDossierProps) {
+export function DatasetDossier({
+  onOpenTable,
+  onNavigate,
+  onShowSql,
+  onSkipToData,
+}: DatasetDossierProps) {
   const tables = useDatasetsStore((state) => state.tables);
   const datasets = useDatasetsStore((state) => state.datasets);
   const {
@@ -41,15 +53,25 @@ export function DatasetDossier({ onOpenTable, onNavigate, onShowSql, onSkipToDat
   } = useDatasetBaseline(tables, datasets);
 
   if (tables.length === 0) {
-    return <p className="text-center text-(--color-fg-muted)">Drop a dataset to get started.</p>;
+    return (
+      <p className="text-center text-(--color-fg-muted)">
+        Drop a dataset to get started.
+      </p>
+    );
   }
 
   if (tableInsights === null || timeCoverage === null) {
     return <p className="text-sm text-(--color-fg-muted)">Profiling…</p>;
   }
 
-  const latestDataset = [...datasets].sort((a, b) => a.ingestedAt.localeCompare(b.ingestedAt)).at(-1) ?? null;
-  const datasetLabel = datasets.length > 1 ? `${datasets.length} datasets` : (latestDataset?.name ?? 'Dataset');
+  const latestDataset =
+    [...datasets]
+      .sort((a, b) => a.ingestedAt.localeCompare(b.ingestedAt))
+      .at(-1) ?? null;
+  const datasetLabel =
+    datasets.length > 1
+      ? `${datasets.length} datasets`
+      : (latestDataset?.name ?? "Dataset");
   const profiledAt = latestDataset?.ingestedAt ?? new Date().toISOString();
 
   const spec = buildDossierViewSpec({
@@ -70,12 +92,14 @@ export function DatasetDossier({ onOpenTable, onNavigate, onShowSql, onSkipToDat
       ? {
           ...spec,
           panels: spec.panels.map((panel) =>
-            panel.componentId === 'verdict'
+            panel.componentId === "verdict"
               ? {
                   ...panel,
                   props: {
                     ...panel.props,
-                    ...(aiHeadline !== null ? { headlineFact: aiHeadline } : {}),
+                    ...(aiHeadline !== null
+                      ? { headlineFact: aiHeadline }
+                      : {}),
                     ...(aiActions !== null ? { actions: aiActions } : {}),
                   },
                 }
@@ -106,11 +130,14 @@ export function DatasetDossier({ onOpenTable, onNavigate, onShowSql, onSkipToDat
   // modules); every other action just switches the active sidebar module.
   const handleSelectAction = (action: RankedAction) => {
     const { prefilledConfig } = action.prefill;
-    if (action.module === 'profile') {
+    if (action.module === "profile") {
       const tableName = prefilledConfig.tableName;
-      const target = typeof tableName === 'string' ? tables.find((t) => t.tableName === tableName) : undefined;
+      const target =
+        typeof tableName === "string"
+          ? tables.find((t) => t.tableName === tableName)
+          : undefined;
       if (target) {
-        onNavigate('profile', target.id, prefilledConfig);
+        onNavigate("profile", target.id, prefilledConfig);
         return;
       }
     }
@@ -125,7 +152,9 @@ export function DatasetDossier({ onOpenTable, onNavigate, onShowSql, onSkipToDat
           edge-synthesis and WebLLM upgrades layer onto it as async badges. */}
       <div className="sticky top-0 z-10 -mx-6 flex items-center justify-between gap-3 border-b border-(--color-border) bg-(--color-bg)/95 px-6 py-2 backdrop-blur">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-(--color-fg-muted)">Blueprint</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-(--color-fg-muted)">
+            Blueprint
+          </span>
           {tailored && (
             <span
               className="rounded-full bg-(--color-accent)/10 px-2 py-0.5 text-[10px] font-medium text-(--color-accent)"

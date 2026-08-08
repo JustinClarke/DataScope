@@ -4,20 +4,35 @@
 // re-merged over it), the same "persist for the session" contract the column
 // classifier's own overrides carry. Separate from the datasets store because it
 // records the user's assertions, not the engine's catalog.
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import type { RelationshipOverrides } from '../lib/relationshipInference';
-import { childKeyOf } from '../lib/relationshipInference';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { RelationshipOverrides } from "../lib/relationshipInference";
+import { childKeyOf } from "../lib/relationshipInference";
 
-export const RELATIONSHIPS_STORAGE_KEY = 'datascope-relationships';
+export const RELATIONSHIPS_STORAGE_KEY = "datascope-relationships";
 const RELATIONSHIPS_PERSIST_VERSION = 1;
 
 interface RelationshipsState extends RelationshipOverrides {
   removeEdge: (childTable: string, childColumn: string) => void;
   restoreEdge: (childTable: string, childColumn: string) => void;
-  repointEdge: (childTable: string, childColumn: string, parentTable: string, parentColumn: string) => void;
-  addEdge: (childTable: string, childColumn: string, parentTable: string, parentColumn: string) => void;
-  removeManualEdge: (childTable: string, childColumn: string, parentTable: string, parentColumn: string) => void;
+  repointEdge: (
+    childTable: string,
+    childColumn: string,
+    parentTable: string,
+    parentColumn: string,
+  ) => void;
+  addEdge: (
+    childTable: string,
+    childColumn: string,
+    parentTable: string,
+    parentColumn: string,
+  ) => void;
+  removeManualEdge: (
+    childTable: string,
+    childColumn: string,
+    parentTable: string,
+    parentColumn: string,
+  ) => void;
   clearOverrides: () => void;
 }
 
@@ -35,7 +50,9 @@ export const useRelationshipsStore = create<RelationshipsState>()(
           const repointed = { ...state.repointed };
           delete repointed[key];
           return {
-            removed: state.removed.includes(key) ? state.removed : [...state.removed, key],
+            removed: state.removed.includes(key)
+              ? state.removed
+              : [...state.removed, key],
             repointed,
           };
         }),
@@ -52,7 +69,10 @@ export const useRelationshipsStore = create<RelationshipsState>()(
           return {
             // Re-pointing an edge un-removes it — the user is asserting a target, not hiding it.
             removed: state.removed.filter((k) => k !== key),
-            repointed: { ...state.repointed, [key]: { parentTable, parentColumn } },
+            repointed: {
+              ...state.repointed,
+              [key]: { parentTable, parentColumn },
+            },
           };
         }),
 
@@ -66,7 +86,12 @@ export const useRelationshipsStore = create<RelationshipsState>()(
               e.parentColumn === parentColumn,
           );
           if (exists) return state;
-          return { added: [...state.added, { childTable, childColumn, parentTable, parentColumn }] };
+          return {
+            added: [
+              ...state.added,
+              { childTable, childColumn, parentTable, parentColumn },
+            ],
+          };
         }),
 
       removeManualEdge: (childTable, childColumn, parentTable, parentColumn) =>

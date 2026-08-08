@@ -1,4 +1,4 @@
-import type { TableRegistryEntry } from '../../types';
+import type { TableRegistryEntry } from "../../types";
 
 /**
  * What an empty console editor says (S6.7). The drawer opens on the editor
@@ -13,6 +13,6 @@ import type { TableRegistryEntry } from '../../types';
  */
 export function consolePlaceholder(tables: TableRegistryEntry[]): string {
   const first = tables[0];
-  if (!first) return 'Type a query, or ⌘Enter to run';
+  if (!first) return "Type a query, or ⌘Enter to run";
   return `Type a query, or ⌘Enter to run — try SELECT * FROM "${first.tableName}" LIMIT 100`;
 }

@@ -5,9 +5,18 @@
 // is no spread/cast path into a `TabSpec`. Model output may only ever enter
 // as a validated *inner* artifact spec (ChartSpec/ViewSpec, `producerValidators`
 // in `types/producers.ts`) — never as the envelope itself.
-import type { LucideIcon } from 'lucide-react';
-import { Table, Terminal, LayoutGrid, BarChart3, GitCompareArrows, Download, Plus, History } from 'lucide-react';
-import type { ThreadConfig } from './actions';
+import type { LucideIcon } from "lucide-react";
+import {
+  Table,
+  Terminal,
+  LayoutGrid,
+  BarChart3,
+  GitCompareArrows,
+  Download,
+  Plus,
+  History,
+} from "lucide-react";
+import type { ThreadConfig } from "./actions";
 
 /**
  * The closed tab-type registry. Adding a member is a compile-time, reviewed
@@ -29,15 +38,15 @@ import type { ThreadConfig } from './actions';
  * tab of its own. One log, never per-table, so it is a singleton like the rest.
  */
 export type TabType =
-  | 'map'
-  | 'profile'
-  | 'query'
-  | 'pivot'
-  | 'charts'
-  | 'correlation'
-  | 'export'
-  | 'ingestion'
-  | 'history';
+  | "map"
+  | "profile"
+  | "query"
+  | "pivot"
+  | "charts"
+  | "correlation"
+  | "export"
+  | "ingestion"
+  | "history";
 
 /** The app-authored envelope (D55/D71). */
 export interface TabSpec {
@@ -56,7 +65,7 @@ export interface TabSpec {
  * forces every member to be classified — the same discipline `TabType`
  * itself follows.
  */
-export type TabKind = 'singleton' | 'artifact';
+export type TabKind = "singleton" | "artifact";
 
 /**
  * `'query'` is the artifact kind's first live member (S5, D73), after eight
@@ -67,15 +76,15 @@ export type TabKind = 'singleton' | 'artifact';
  * same reasoning `'map'` already used for its fixed `MAP_TAB_SUBJECT`.
  */
 export const TAB_KIND: Record<TabType, TabKind> = {
-  map: 'singleton',
-  profile: 'singleton',
-  query: 'artifact',
-  pivot: 'singleton',
-  charts: 'singleton',
-  correlation: 'singleton',
-  export: 'singleton',
-  ingestion: 'singleton',
-  history: 'singleton',
+  map: "singleton",
+  profile: "singleton",
+  query: "artifact",
+  pivot: "singleton",
+  charts: "singleton",
+  correlation: "singleton",
+  export: "singleton",
+  ingestion: "singleton",
+  history: "singleton",
 };
 
 /**
@@ -84,18 +93,19 @@ export const TAB_KIND: Record<TabType, TabKind> = {
  * icon — the dingbat set is closed at six characters, each already carrying a
  * semantic role, not a bottomless glyph well.
  */
-export type TabGlyph = { kind: 'dingbat'; char: string } | { kind: 'icon'; Icon: LucideIcon };
+export type TabGlyph =
+  { kind: "dingbat"; char: string } | { kind: "icon"; Icon: LucideIcon };
 
 export const TAB_GLYPH: Record<TabType, TabGlyph> = {
-  map: { kind: 'dingbat', char: '◈' },
-  profile: { kind: 'icon', Icon: Table },
-  query: { kind: 'icon', Icon: Terminal },
-  pivot: { kind: 'icon', Icon: LayoutGrid },
-  charts: { kind: 'icon', Icon: BarChart3 },
-  correlation: { kind: 'icon', Icon: GitCompareArrows },
-  export: { kind: 'icon', Icon: Download },
-  ingestion: { kind: 'icon', Icon: Plus },
-  history: { kind: 'icon', Icon: History },
+  map: { kind: "dingbat", char: "◈" },
+  profile: { kind: "icon", Icon: Table },
+  query: { kind: "icon", Icon: Terminal },
+  pivot: { kind: "icon", Icon: LayoutGrid },
+  charts: { kind: "icon", Icon: BarChart3 },
+  correlation: { kind: "icon", Icon: GitCompareArrows },
+  export: { kind: "icon", Icon: Download },
+  ingestion: { kind: "icon", Icon: Plus },
+  history: { kind: "icon", Icon: History },
 };
 
 /**
@@ -104,5 +114,7 @@ export const TAB_GLYPH: Record<TabType, TabGlyph> = {
  * singleton, where the type *is* the identity — would read "query · Query 3".
  */
 export function tabLabel(tab: TabSpec): string {
-  return TAB_KIND[tab.type] === 'artifact' ? tab.subject : `${tab.type} · ${tab.subject}`;
+  return TAB_KIND[tab.type] === "artifact"
+    ? tab.subject
+    : `${tab.type} · ${tab.subject}`;
 }

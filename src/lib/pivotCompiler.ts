@@ -9,9 +9,9 @@
 // SELECT (D49: no new execution path). Top-N capping is a caller-supplied
 // value (built from `ClassifiedColumn.cardinality`, already known at
 // classification time) rather than a live discovery query.
-import { quoteIdentifier } from '../services/ingestion';
+import { quoteIdentifier } from "../services/ingestion";
 
-export type PivotAggregate = 'sum' | 'avg' | 'count' | 'min' | 'max';
+export type PivotAggregate = "sum" | "avg" | "count" | "min" | "max";
 
 export interface PivotValueField {
   field: string;
@@ -26,7 +26,7 @@ export interface PivotTopN {
 export interface PivotSort {
   /** 0-based index into `pivotOutputColumns(spec)`. */
   columnIndex: number;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
 }
 
 export interface PivotSpec {
@@ -42,15 +42,17 @@ export interface PivotSpec {
 }
 
 const AGGREGATE_SQL: Record<PivotAggregate, string> = {
-  sum: 'SUM',
-  avg: 'AVG',
-  count: 'COUNT',
-  min: 'MIN',
-  max: 'MAX',
+  sum: "SUM",
+  avg: "AVG",
+  count: "COUNT",
+  min: "MIN",
+  max: "MAX",
 };
 
 function sanitizeAliasPart(field: string): string {
-  return field.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '') || 'field';
+  return (
+    field.replace(/[^a-zA-Z0-9_]+/g, "_").replace(/^_+|_+$/g, "") || "field"
+  );
 }
 
 function groupingKeys(spec: PivotSpec): string[] {
@@ -59,7 +61,7 @@ function groupingKeys(spec: PivotSpec): string[] {
 
 /** One SQL expression per value field, e.g. `SUM("amount")`. `count` ignores the field and counts rows, matching every SQL dialect's `COUNT(*)` shape for a bare row count. */
 function valueExpression(value: PivotValueField): string {
-  if (value.aggregate === 'count') return 'COUNT(*)';
+  if (value.aggregate === "count") return "COUNT(*)";
   return `${AGGREGATE_SQL[value.aggregate]}(${quoteIdentifier(value.field)})`;
 }
 
@@ -91,7 +93,7 @@ export function pivotOutputColumns(spec: PivotSpec): string[] {
 
 /** The top-N semi-join's ranking expression — the first value field's aggregate, or a plain row count with no values to rank by. */
 function topNRankExpression(spec: PivotSpec): string {
-  return spec.values.length > 0 ? valueExpression(spec.values[0]) : 'COUNT(*)';
+  return spec.values.length > 0 ? valueExpression(spec.values[0]) : "COUNT(*)";
 }
 
 /**
@@ -103,15 +105,20 @@ function topNRankExpression(spec: PivotSpec): string {
 export function buildPivotSql(spec: PivotSpec): string {
   const keys = groupingKeys(spec);
   if (keys.length === 0 && spec.values.length === 0) {
-    throw new Error('Pivot spec is empty — place at least one field in rows, columns, or values.');
+    throw new Error(
+      "Pivot spec is empty — place at least one field in rows, columns, or values.",
+    );
   }
 
   const table = quoteIdentifier(spec.table);
   const aliases = pivotOutputColumns(spec);
 
   const keySelect = keys.map((key) => quoteIdentifier(key));
-  const valueSelect = spec.values.map((value, i) => `${valueExpression(value)} AS ${quoteIdentifier(aliases[keys.length + i])}`);
-  const selectList = [...keySelect, ...valueSelect].join(', ');
+  const valueSelect = spec.values.map(
+    (value, i) =>
+      `${valueExpression(value)} AS ${quoteIdentifier(aliases[keys.length + i])}`,
+  );
+  const selectList = [...keySelect, ...valueSelect].join(", ");
 
   const clauses = [`SELECT ${selectList}`, `FROM ${table}`];
 
@@ -124,13 +131,17 @@ export function buildPivotSql(spec: PivotSpec): string {
   }
 
   if (keys.length > 0) {
-    const groupBy = spec.subtotals ? `ROLLUP(${keySelect.join(', ')})` : keySelect.map((_, i) => `${i + 1}`).join(', ');
+    const groupBy = spec.subtotals
+      ? `ROLLUP(${keySelect.join(", ")})`
+      : keySelect.map((_, i) => `${i + 1}`).join(", ");
     clauses.push(`GROUP BY ${groupBy}`);
   }
 
   if (spec.sort) {
-    clauses.push(`ORDER BY ${spec.sort.columnIndex + 1} ${spec.sort.direction === 'asc' ? 'ASC' : 'DESC'}`);
+    clauses.push(
+      `ORDER BY ${spec.sort.columnIndex + 1} ${spec.sort.direction === "asc" ? "ASC" : "DESC"}`,
+    );
   }
 
-  return clauses.join('\n');
+  return clauses.join("\n");
 }

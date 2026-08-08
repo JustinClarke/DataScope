@@ -1,0 +1,286 @@
+{
+  "generatedAt": "2026-08-08T12:43:37.408Z",
+  "tables": {
+    "titanic": {
+      "rowCount": 891,
+      "columns": [
+        "PassengerId",
+        "Survived",
+        "Pclass",
+        "Name",
+        "Sex",
+        "Age",
+        "SibSp",
+        "Parch",
+        "Fare",
+        "Embarked"
+      ],
+      "categoricalValues": {
+        "Survived": [
+          0,
+          1
+        ],
+        "Pclass": [
+          1,
+          2,
+          3
+        ],
+        "Sex": [
+          "female",
+          "male"
+        ],
+        "SibSp": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "Parch": [
+          0,
+          1,
+          2
+        ],
+        "Embarked": [
+          "C",
+          "Q",
+          "S"
+        ]
+      },
+      "temporalRange": {}
+    },
+    "weather": {
+      "rowCount": 3650,
+      "columns": [
+        "Date",
+        "City",
+        "TempHighC",
+        "TempLowC",
+        "Humidity",
+        "WindKph"
+      ],
+      "categoricalValues": {
+        "City": [
+          "Springfield"
+        ]
+      },
+      "temporalRange": {
+        "Date": [
+          "2015-01-01",
+          "2024-12-28"
+        ]
+      }
+    },
+    "stock_prices": {
+      "rowCount": 2500,
+      "columns": [
+        "Date",
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume"
+      ],
+      "categoricalValues": {},
+      "temporalRange": {
+        "Date": [
+          "2016-01-04",
+          "2025-08-01"
+        ]
+      }
+    },
+    "product_reviews": {
+      "rowCount": 520,
+      "columns": [
+        "ReviewId",
+        "ProductId",
+        "Rating",
+        "ReviewText",
+        "ReviewDate"
+      ],
+      "categoricalValues": {
+        "Rating": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "ReviewText": [
+          "A few minor issues but overall acceptable.",
+          "Average product, matches the price point.",
+          "Broke after a week of light use, disappointed.",
+          "Does the job but nothing special.",
+          "Great value for the price, would buy again.",
+          "Not as described, considering a return.",
+          "Poor packaging led to damage in transit.",
+          "Shipping was fast and the quality exceeded expectations.",
+          "Solid build quality, no complaints so far.",
+          "Works exactly as described, very happy with this purchase."
+        ]
+      },
+      "temporalRange": {
+        "ReviewDate": [
+          "2023-01-01",
+          "2024-11-29"
+        ]
+      }
+    },
+    "customers": {
+      "rowCount": 400,
+      "columns": [
+        "customer_id",
+        "name",
+        "email",
+        "country",
+        "signup_date"
+      ],
+      "categoricalValues": {
+        "name": [
+          "Alex Chen",
+          "Alex Diaz",
+          "Alex Garcia",
+          "Alex Ivanov",
+          "Alex Kim",
+          "Alex Nguyen",
+          "Alex Patel",
+          "Alex Rossi",
+          "Casey Chen",
+          "Casey Diaz",
+          "Casey Garcia",
+          "Casey Ivanov",
+          "Casey Kim",
+          "Casey Nguyen",
+          "Casey Patel",
+          "Casey Rossi",
+          "Jamie Chen",
+          "Jamie Diaz",
+          "Jamie Garcia",
+          "Jamie Ivanov",
+          "Jamie Kim",
+          "Jamie Nguyen",
+          "Jamie Patel",
+          "Jamie Rossi",
+          "Jordan Chen",
+          "Jordan Diaz",
+          "Jordan Garcia",
+          "Jordan Ivanov",
+          "Jordan Kim",
+          "Jordan Nguyen",
+          "Jordan Patel",
+          "Jordan Rossi",
+          "Morgan Chen",
+          "Morgan Diaz",
+          "Morgan Garcia",
+          "Morgan Ivanov",
+          "Morgan Kim",
+          "Morgan Nguyen",
+          "Morgan Patel",
+          "Morgan Rossi",
+          "Riley Chen",
+          "Riley Diaz",
+          "Riley Garcia",
+          "Riley Ivanov",
+          "Riley Kim",
+          "Riley Nguyen",
+          "Riley Patel",
+          "Riley Rossi",
+          "Sam Chen",
+          "Sam Diaz",
+          "Sam Garcia",
+          "Sam Ivanov",
+          "Sam Kim",
+          "Sam Nguyen",
+          "Sam Patel",
+          "Sam Rossi",
+          "Taylor Chen",
+          "Taylor Diaz",
+          "Taylor Garcia",
+          "Taylor Ivanov",
+          "Taylor Kim",
+          "Taylor Nguyen",
+          "Taylor Patel",
+          "Taylor Rossi"
+        ],
+        "country": [
+          "AU",
+          "BR",
+          "CA",
+          "DE",
+          "FR",
+          "GB",
+          "IN",
+          "US"
+        ]
+      },
+      "temporalRange": {
+        "signup_date": [
+          "2019-01-07",
+          "2024-09-27"
+        ]
+      }
+    },
+    "products": {
+      "rowCount": 150,
+      "columns": [
+        "product_id",
+        "name",
+        "category",
+        "unit_price"
+      ],
+      "categoricalValues": {
+        "category": [
+          "Apparel",
+          "Books",
+          "Electronics",
+          "Home",
+          "Sporting Goods",
+          "Toys"
+        ]
+      },
+      "temporalRange": {}
+    },
+    "orders": {
+      "rowCount": 1400,
+      "columns": [
+        "order_id",
+        "customer_id",
+        "order_date",
+        "status"
+      ],
+      "categoricalValues": {
+        "status": [
+          "cancelled",
+          "completed",
+          "refunded",
+          "shipped"
+        ]
+      },
+      "temporalRange": {
+        "order_date": [
+          "2021-12-31",
+          "2024-12-15"
+        ]
+      }
+    },
+    "order_items": {
+      "rowCount": 3487,
+      "columns": [
+        "order_item_id",
+        "order_id",
+        "product_id",
+        "quantity",
+        "unit_price"
+      ],
+      "categoricalValues": {
+        "quantity": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "temporalRange": {}
+    }
+  }
+}

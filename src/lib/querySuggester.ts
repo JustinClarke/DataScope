@@ -9,21 +9,21 @@
 // column-type tally this needs, so it is reused one table at a time (an
 // array of one table never triggers its qualified-name behavior) rather than
 // reimplementing the same semantic-type bucketing here.
-import type { TableRegistryEntry } from '../types';
-import { evaluateCapabilities } from './capabilities';
+import type { TableRegistryEntry } from "../types";
+import { evaluateCapabilities } from "./capabilities";
 
 function quoteIdentifier(name: string): string {
   return `"${name.replace(/"/g, '""')}"`;
 }
 
 export type TemplateKind =
-  | 'categorical-numeric'
-  | 'temporal-numeric-trend'
-  | 'temporal-numeric-moving-avg'
-  | 'correlation'
-  | 'categorical-breakdown'
-  | 'textual-search'
-  | 'preview';
+  | "categorical-numeric"
+  | "temporal-numeric-trend"
+  | "temporal-numeric-moving-avg"
+  | "correlation"
+  | "categorical-breakdown"
+  | "textual-search"
+  | "preview";
 
 export interface QuerySuggestion {
   id: string;
@@ -40,7 +40,12 @@ export interface TableSuggestions {
   suggestions: QuerySuggestion[];
 }
 
-export type TaskKind = 'trend-over-time' | 'top-n-by-segment' | 'period-over-period' | 'outliers' | 'simple-cohort';
+export type TaskKind =
+  | "trend-over-time"
+  | "top-n-by-segment"
+  | "period-over-period"
+  | "outliers"
+  | "simple-cohort";
 
 export interface QueryTask {
   id: string;
@@ -57,15 +62,20 @@ export interface TableTasks {
 }
 
 const TOOLTIP: Record<TemplateKind, string> = {
-  'categorical-numeric': 'GROUP BY splits your data into buckets; AVG() and COUNT(*) summarize each bucket.',
-  'temporal-numeric-trend':
+  "categorical-numeric":
+    "GROUP BY splits your data into buckets; AVG() and COUNT(*) summarize each bucket.",
+  "temporal-numeric-trend":
     "DATE_TRUNC buckets each date into a period (here, a month); SUM() totals the numeric column within each bucket, so the row order traces a trend.",
-  'temporal-numeric-moving-avg':
-    'A window function (OVER ... ROWS BETWEEN) averages each row together with the ones before it, smoothing day-to-day noise into a trend line.',
-  correlation: 'CORR() measures how closely two numeric columns move together, from -1 (opposite) to 1 (in lockstep).',
-  'categorical-breakdown': 'GROUP BY splits your data into buckets; COUNT(*) counts rows in each one, ranked by frequency.',
-  'textual-search': 'ILIKE performs a case-insensitive text search — swap %keyword% for whatever you are looking for.',
-  preview: 'A quick look at the raw rows before writing anything more specific.',
+  "temporal-numeric-moving-avg":
+    "A window function (OVER ... ROWS BETWEEN) averages each row together with the ones before it, smoothing day-to-day noise into a trend line.",
+  correlation:
+    "CORR() measures how closely two numeric columns move together, from -1 (opposite) to 1 (in lockstep).",
+  "categorical-breakdown":
+    "GROUP BY splits your data into buckets; COUNT(*) counts rows in each one, ranked by frequency.",
+  "textual-search":
+    "ILIKE performs a case-insensitive text search — swap %keyword% for whatever you are looking for.",
+  preview:
+    "A quick look at the raw rows before writing anything more specific.",
 };
 
 /**
@@ -89,34 +99,34 @@ function templatesForTable(table: TableRegistryEntry): QuerySuggestion[] {
   if (cat && num) {
     suggestions.push({
       id: `${table.id}-categorical-numeric`,
-      kind: 'categorical-numeric',
+      kind: "categorical-numeric",
       label: `Average ${num} by ${cat}`,
       sql: `SELECT ${quoteIdentifier(cat)}, AVG(${quoteIdentifier(num)}), COUNT(*) FROM ${dataset} GROUP BY 1 ORDER BY 2 DESC`,
-      tooltip: TOOLTIP['categorical-numeric'],
+      tooltip: TOOLTIP["categorical-numeric"],
     });
   }
 
   if (date && num) {
     suggestions.push({
       id: `${table.id}-temporal-numeric-trend`,
-      kind: 'temporal-numeric-trend',
+      kind: "temporal-numeric-trend",
       label: `${num} by month`,
       sql: `SELECT DATE_TRUNC('month', ${quoteIdentifier(date)}) as period, SUM(${quoteIdentifier(num)}) FROM ${dataset} GROUP BY 1 ORDER BY 1`,
-      tooltip: TOOLTIP['temporal-numeric-trend'],
+      tooltip: TOOLTIP["temporal-numeric-trend"],
     });
     suggestions.push({
       id: `${table.id}-temporal-numeric-moving-avg`,
-      kind: 'temporal-numeric-moving-avg',
+      kind: "temporal-numeric-moving-avg",
       label: `${num} moving average`,
       sql: `SELECT ${quoteIdentifier(date)}, ${quoteIdentifier(num)}, AVG(${quoteIdentifier(num)}) OVER(ORDER BY ${quoteIdentifier(date)} ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) as moving_avg FROM ${dataset}`,
-      tooltip: TOOLTIP['temporal-numeric-moving-avg'],
+      tooltip: TOOLTIP["temporal-numeric-moving-avg"],
     });
   }
 
   if (num && num2) {
     suggestions.push({
       id: `${table.id}-correlation`,
-      kind: 'correlation',
+      kind: "correlation",
       label: `Correlation: ${num} vs ${num2}`,
       sql: `SELECT CORR(${quoteIdentifier(num)}, ${quoteIdentifier(num2)}) as correlation FROM ${dataset}`,
       tooltip: TOOLTIP.correlation,
@@ -126,27 +136,27 @@ function templatesForTable(table: TableRegistryEntry): QuerySuggestion[] {
   if (cat) {
     suggestions.push({
       id: `${table.id}-categorical-breakdown`,
-      kind: 'categorical-breakdown',
+      kind: "categorical-breakdown",
       label: `${cat} frequency`,
       sql: `SELECT ${quoteIdentifier(cat)}, COUNT(*) as freq FROM ${dataset} GROUP BY 1 ORDER BY 2 DESC LIMIT 20`,
-      tooltip: TOOLTIP['categorical-breakdown'],
+      tooltip: TOOLTIP["categorical-breakdown"],
     });
   }
 
   if (text) {
     suggestions.push({
       id: `${table.id}-textual-search`,
-      kind: 'textual-search',
+      kind: "textual-search",
       label: `Search ${text}`,
       sql: `SELECT ${quoteIdentifier(text)} FROM ${dataset} WHERE ${quoteIdentifier(text)} ILIKE '%keyword%' LIMIT 50`,
-      tooltip: TOOLTIP['textual-search'],
+      tooltip: TOOLTIP["textual-search"],
     });
   }
 
   suggestions.push({
     id: `${table.id}-preview`,
-    kind: 'preview',
-    label: 'Preview rows',
+    kind: "preview",
+    label: "Preview rows",
     sql: `SELECT * FROM ${dataset} LIMIT 100`,
     tooltip: TOOLTIP.preview,
   });
@@ -155,10 +165,16 @@ function templatesForTable(table: TableRegistryEntry): QuerySuggestion[] {
 }
 
 /** Column-shaped templates for every classified table, grouped per table. */
-export function buildTemplateSuggestions(tables: TableRegistryEntry[]): TableSuggestions[] {
+export function buildTemplateSuggestions(
+  tables: TableRegistryEntry[],
+): TableSuggestions[] {
   return tables
     .filter((table) => table.columns && table.columns.length > 0)
-    .map((table) => ({ tableId: table.id, tableName: table.tableName, suggestions: templatesForTable(table) }));
+    .map((table) => ({
+      tableId: table.id,
+      tableName: table.tableName,
+      suggestions: templatesForTable(table),
+    }));
 }
 
 /**
@@ -189,16 +205,16 @@ function tasksForTable(table: TableRegistryEntry): QueryTask[] {
 
     tasks.push({
       id: `${table.id}-trend-over-time`,
-      kind: 'trend-over-time',
-      label: 'Trend over time',
+      kind: "trend-over-time",
+      label: "Trend over time",
       description: `How has ${num} moved over time, bucketed by month?`,
       sql: `SELECT DATE_TRUNC('month', ${dateCol}) AS period, SUM(${numCol}) AS total FROM ${dataset} GROUP BY 1 ORDER BY 1`,
     });
 
     tasks.push({
       id: `${table.id}-period-over-period`,
-      kind: 'period-over-period',
-      label: 'This period vs last',
+      kind: "period-over-period",
+      label: "This period vs last",
       description: `How does the latest month's ${num} compare to the month before it?`,
       sql: `WITH by_period AS (
   SELECT DATE_TRUNC('month', ${dateCol}) AS period, SUM(${numCol}) AS total
@@ -215,12 +231,14 @@ LIMIT 2`,
 
   if (cat) {
     const catCol = quoteIdentifier(cat);
-    const metric = num ? `SUM(${quoteIdentifier(num)})` : 'COUNT(*)';
+    const metric = num ? `SUM(${quoteIdentifier(num)})` : "COUNT(*)";
     tasks.push({
       id: `${table.id}-top-n-by-segment`,
-      kind: 'top-n-by-segment',
-      label: 'Top-N by segment',
-      description: num ? `Which ${cat} values have the highest total ${num}?` : `Which ${cat} values occur most often?`,
+      kind: "top-n-by-segment",
+      label: "Top-N by segment",
+      description: num
+        ? `Which ${cat} values have the highest total ${num}?`
+        : `Which ${cat} values occur most often?`,
       sql: `SELECT ${catCol}, ${metric} AS value FROM ${dataset} GROUP BY 1 ORDER BY 2 DESC LIMIT 10`,
     });
   }
@@ -229,8 +247,8 @@ LIMIT 2`,
     const numCol = quoteIdentifier(num);
     tasks.push({
       id: `${table.id}-outliers`,
-      kind: 'outliers',
-      label: 'Outliers',
+      kind: "outliers",
+      label: "Outliers",
       description: `Which rows have a ${num} more than 3 standard deviations from the mean?`,
       sql: `WITH stats AS (
   SELECT AVG(${numCol}) AS mean, STDDEV(${numCol}) AS sd FROM ${dataset}
@@ -248,8 +266,8 @@ LIMIT 50`,
     const dateCol = quoteIdentifier(date);
     tasks.push({
       id: `${table.id}-simple-cohort`,
-      kind: 'simple-cohort',
-      label: 'Simple cohort',
+      kind: "simple-cohort",
+      label: "Simple cohort",
       description: `How many distinct ${id} first appear in each month of ${date}?`,
       sql: `SELECT DATE_TRUNC('month', ${dateCol}) AS cohort_month, COUNT(DISTINCT ${idCol}) AS cohort_size FROM ${dataset} GROUP BY 1 ORDER BY 1`,
     });
@@ -259,8 +277,14 @@ LIMIT 50`,
 }
 
 /** Guided task-shaped answers for every classified table, grouped per table. */
-export function buildTaskSuggestions(tables: TableRegistryEntry[]): TableTasks[] {
+export function buildTaskSuggestions(
+  tables: TableRegistryEntry[],
+): TableTasks[] {
   return tables
     .filter((table) => table.columns && table.columns.length > 0)
-    .map((table) => ({ tableId: table.id, tableName: table.tableName, tasks: tasksForTable(table) }));
+    .map((table) => ({
+      tableId: table.id,
+      tableName: table.tableName,
+      tasks: tasksForTable(table),
+    }));
 }

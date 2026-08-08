@@ -1,9 +1,14 @@
-import { BarChart3 } from 'lucide-react';
-import { useDatasetsStore } from '../../stores/datasets';
-import { useQueryStore, CONSOLE_SESSION } from '../../stores/query';
-import { useEducationalPanel } from '../../app/useEducationalPanel';
-import { runQuery } from '../../services/sql';
-import { buildTaskSuggestions, buildTemplateSuggestions, type QuerySuggestion, type QueryTask } from '../../lib/querySuggester';
+import { BarChart3 } from "lucide-react";
+import { useDatasetsStore } from "../../stores/datasets";
+import { useQueryStore, CONSOLE_SESSION } from "../../stores/query";
+import { useEducationalPanel } from "../../app/useEducationalPanel";
+import { runQuery } from "../../services/sql";
+import {
+  buildTaskSuggestions,
+  buildTemplateSuggestions,
+  type QuerySuggestion,
+  type QueryTask,
+} from "../../lib/querySuggester";
 
 // This list only ever renders inside the console (S5), so it writes the
 // console's session explicitly rather than relying on a default.
@@ -18,11 +23,19 @@ function runTask(sql: string): void {
   runQuery(sql, CONSOLE_SESSION).catch(() => {});
 }
 
-function TemplateCard({ suggestion, onShowTooltip }: { suggestion: QuerySuggestion; onShowTooltip: (label: string, text: string) => void }) {
+function TemplateCard({
+  suggestion,
+  onShowTooltip,
+}: {
+  suggestion: QuerySuggestion;
+  onShowTooltip: (label: string, text: string) => void;
+}) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-(--color-border) p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-(--color-fg)">{suggestion.label}</span>
+        <span className="text-sm font-medium text-(--color-fg)">
+          {suggestion.label}
+        </span>
         <div className="flex items-center gap-3 text-xs">
           <button
             type="button"
@@ -31,12 +44,18 @@ function TemplateCard({ suggestion, onShowTooltip }: { suggestion: QuerySuggesti
           >
             Why?
           </button>
-          <button type="button" onClick={() => insertSql(suggestion.sql)} className="text-(--color-accent) hover:underline">
+          <button
+            type="button"
+            onClick={() => insertSql(suggestion.sql)}
+            className="text-(--color-accent) hover:underline"
+          >
             Insert
           </button>
         </div>
       </div>
-      <pre className="overflow-x-auto rounded bg-(--color-border)/40 p-2 font-mono text-xs text-(--color-fg)">{suggestion.sql}</pre>
+      <pre className="overflow-x-auto rounded bg-(--color-border)/40 p-2 font-mono text-xs text-(--color-fg)">
+        {suggestion.sql}
+      </pre>
     </div>
   );
 }
@@ -45,9 +64,15 @@ function TaskCard({ task }: { task: QueryTask }) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-(--color-border) p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-(--color-fg)">{task.label}</span>
+        <span className="text-sm font-medium text-(--color-fg)">
+          {task.label}
+        </span>
         <div className="flex items-center gap-3 text-xs">
-          <button type="button" onClick={() => runTask(task.sql)} className="text-(--color-accent) hover:underline">
+          <button
+            type="button"
+            onClick={() => runTask(task.sql)}
+            className="text-(--color-accent) hover:underline"
+          >
             Run
           </button>
           {/* Runs the task's query so the playground's auto-chart panel below
@@ -64,7 +89,9 @@ function TaskCard({ task }: { task: QueryTask }) {
         </div>
       </div>
       <p className="text-sm text-(--color-fg-muted)">{task.description}</p>
-      <pre className="overflow-x-auto rounded bg-(--color-border)/40 p-2 font-mono text-xs text-(--color-fg)">{task.sql}</pre>
+      <pre className="overflow-x-auto rounded bg-(--color-border)/40 p-2 font-mono text-xs text-(--color-fg)">
+        {task.sql}
+      </pre>
     </div>
   );
 }
@@ -81,8 +108,12 @@ export function QuerySuggestions() {
   const tables = useDatasetsStore((state) => state.tables);
   const { setContent } = useEducationalPanel();
 
-  const templateGroups = buildTemplateSuggestions(tables).filter((group) => group.suggestions.length > 0);
-  const taskGroups = buildTaskSuggestions(tables).filter((group) => group.tasks.length > 0);
+  const templateGroups = buildTemplateSuggestions(tables).filter(
+    (group) => group.suggestions.length > 0,
+  );
+  const taskGroups = buildTaskSuggestions(tables).filter(
+    (group) => group.tasks.length > 0,
+  );
 
   if (templateGroups.length === 0 && taskGroups.length === 0) return null;
 
@@ -99,11 +130,15 @@ export function QuerySuggestions() {
     <div className="flex flex-col gap-4">
       {taskGroups.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium text-(--color-fg-muted)">Guided answers</h3>
+          <h3 className="text-sm font-medium text-(--color-fg-muted)">
+            Guided answers
+          </h3>
           {taskGroups.map((group) => (
             <div key={group.tableId} className="flex flex-col gap-2">
               {taskGroups.length > 1 && (
-                <p className="text-xs font-medium tracking-wide text-(--color-fg-muted) uppercase">{group.tableName}</p>
+                <p className="text-xs font-medium tracking-wide text-(--color-fg-muted) uppercase">
+                  {group.tableName}
+                </p>
               )}
               {group.tasks.map((task) => (
                 <TaskCard key={task.id} task={task} />
@@ -115,14 +150,22 @@ export function QuerySuggestions() {
 
       {templateGroups.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium text-(--color-fg-muted)">Suggested queries</h3>
+          <h3 className="text-sm font-medium text-(--color-fg-muted)">
+            Suggested queries
+          </h3>
           {templateGroups.map((group) => (
             <div key={group.tableId} className="flex flex-col gap-2">
               {templateGroups.length > 1 && (
-                <p className="text-xs font-medium tracking-wide text-(--color-fg-muted) uppercase">{group.tableName}</p>
+                <p className="text-xs font-medium tracking-wide text-(--color-fg-muted) uppercase">
+                  {group.tableName}
+                </p>
               )}
               {group.suggestions.map((suggestion) => (
-                <TemplateCard key={suggestion.id} suggestion={suggestion} onShowTooltip={handleShowTooltip} />
+                <TemplateCard
+                  key={suggestion.id}
+                  suggestion={suggestion}
+                  onShowTooltip={handleShowTooltip}
+                />
               ))}
             </div>
           ))}

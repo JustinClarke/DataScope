@@ -6,35 +6,45 @@
 // for a mode whose backend is still unwired (BYOK in 02-modes-byok, WebLLM in
 // v0.25), it degrades to a clear message rather than a dead input. The transcript
 // is never persisted — it is content-bearing (D41) and must not reach localStorage.
-import { useMemo, useRef, useState } from 'react';
-import { SendHorizontal, ShieldCheck, Cloud } from 'lucide-react';
-import { useAISessionStore } from '../../stores/aiSession';
-import { useDatasetsStore } from '../../stores/datasets';
-import { useInferredEdgesStore } from '../../stores/inferredEdges';
-import { useRelationshipsStore } from '../../stores/relationships';
-import { applyOverrides, type RelationshipOverrides } from '../../lib/relationshipInference';
-import { useSettingsStore } from '../../stores/settings';
-import { useByokKeyStore } from '../../stores/byokKey';
-import { useVaultStore } from '../../stores/vault';
-import { useWebLLMStore } from '../../stores/webllm';
-import { askAI } from '../../services/ai';
-import { resolveProvider } from '../../services/aiProvider';
-import { analystCore } from '../../services/analyst';
-import { analystMcpSession } from '../../services/analystMcp';
-import { isOllamaEndpoint } from '../../services/ollamaProvider';
-import type { AITurn, TableRegistryEntry } from '../../types';
-import type { CloudProviderConfig } from '../../services/cloudProvider';
-import { AITurnView } from './AITurnView';
-import { describeAIStatus, aiStatusLabel } from './aiStatusUtils';
+import { useMemo, useRef, useState } from "react";
+import { SendHorizontal, ShieldCheck, Cloud } from "lucide-react";
+import { useAISessionStore } from "../../stores/aiSession";
+import { useDatasetsStore } from "../../stores/datasets";
+import { useInferredEdgesStore } from "../../stores/inferredEdges";
+import { useRelationshipsStore } from "../../stores/relationships";
+import {
+  applyOverrides,
+  type RelationshipOverrides,
+} from "../../lib/relationshipInference";
+import { useSettingsStore } from "../../stores/settings";
+import { useByokKeyStore } from "../../stores/byokKey";
+import { useVaultStore } from "../../stores/vault";
+import { useWebLLMStore } from "../../stores/webllm";
+import { askAI } from "../../services/ai";
+import { resolveProvider } from "../../services/aiProvider";
+import { analystCore } from "../../services/analyst";
+import { analystMcpSession } from "../../services/analystMcp";
+import { isOllamaEndpoint } from "../../services/ollamaProvider";
+import type { AITurn, TableRegistryEntry } from "../../types";
+import type { CloudProviderConfig } from "../../services/cloudProvider";
+import { AITurnView } from "./AITurnView";
+import { describeAIStatus, aiStatusLabel } from "./aiStatusUtils";
 
 // The deployed edge router endpoint. Falls back to staging if unset.
-const EDGE_AI_ROUTER = (import.meta.env.VITE_EDGE_AI_ROUTER ?? 'https://datascope-edge-staging.justinclarke.workers.dev/ai-router') as string;
+const EDGE_AI_ROUTER = (import.meta.env.VITE_EDGE_AI_ROUTER ??
+  "https://datascope-edge-staging.justinclarke.workers.dev/ai-router") as string;
 
 // One opaque, content-free session id per tab — keys the router's shared limiter.
 const CLOUD_SESSION_ID = crypto.randomUUID();
 
 function assistantError(content: string): AITurn {
-  return { id: crypto.randomUUID(), role: 'assistant', content: '', createdAt: new Date().toISOString(), error: content };
+  return {
+    id: crypto.randomUUID(),
+    role: "assistant",
+    content: "",
+    createdAt: new Date().toISOString(),
+    error: content,
+  };
 }
 
 /**
@@ -51,9 +61,18 @@ function useChatEdges(tables: TableRegistryEntry[]) {
   const repointed = useRelationshipsStore((state) => state.repointed);
   const added = useRelationshipsStore((state) => state.added);
 
-  const overrides = useMemo<RelationshipOverrides>(() => ({ removed, repointed, added }), [removed, repointed, added]);
-  const liveTableNames = useMemo(() => tables.map((t) => t.tableName), [tables]);
-  return useMemo(() => applyOverrides(inferredEdges, overrides, liveTableNames), [inferredEdges, overrides, liveTableNames]);
+  const overrides = useMemo<RelationshipOverrides>(
+    () => ({ removed, repointed, added }),
+    [removed, repointed, added],
+  );
+  const liveTableNames = useMemo(
+    () => tables.map((t) => t.tableName),
+    [tables],
+  );
+  return useMemo(
+    () => applyOverrides(inferredEdges, overrides, liveTableNames),
+    [inferredEdges, overrides, liveTableNames],
+  );
 }
 
 export function AIChatModule() {
@@ -77,11 +96,11 @@ export function AIChatModule() {
   // local-model branch does too) — only API mode's WebLLM rung opts out when
   // a key or endpoint is set.
   const servedLocally =
-    webllmStatus === 'ready' &&
-    webllmConsent === 'accepted' &&
-    aiMode !== 'local-only' &&
+    webllmStatus === "ready" &&
+    webllmConsent === "accepted" &&
+    aiMode !== "local-only" &&
     aiMode !== null &&
-    (aiMode === 'local-model' || (byokKey === null && vaultRef === null));
+    (aiMode === "local-model" || (byokKey === null && vaultRef === null));
   const status = describeAIStatus({
     aiMode,
     servedLocally,
@@ -94,15 +113,15 @@ export function AIChatModule() {
     endpointConfigured: EDGE_AI_ROUTER.length > 0,
   });
 
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const submit = async () => {
     const question = draft.trim();
     if (!question || busy) return;
-    setDraft('');
-    addTurn({ role: 'user', content: question });
+    setDraft("");
+    addTurn({ role: "user", content: question });
 
     // Cloud (API mode) routes via the edge router (free tier by default, BYOK
     // when a bearer key is set). The raw key rides per-request as a stateless
@@ -121,12 +140,15 @@ export function AIChatModule() {
       routing: byokPreference,
       byok:
         byokKey !== null && !isOllamaEndpoint(byokKey)
-          ? { provider: 'openai', key: byokKey }
+          ? { provider: "openai", key: byokKey }
           : byokKey === null && vaultRef !== null && vaultSession !== null
-            ? { provider: 'openai', vaultRef, vaultSession }
+            ? { provider: "openai", vaultRef, vaultSession }
             : undefined,
     };
-    const { provider, overflowProvider } = resolveProvider(aiMode ?? "local-only", cloudConfig);
+    const { provider, overflowProvider } = resolveProvider(
+      aiMode ?? "local-only",
+      cloudConfig,
+    );
     if (!provider) {
       appendTurn(assistantError("AI chat isn’t ready in this mode yet."));
       return;
@@ -140,7 +162,8 @@ export function AIChatModule() {
       const turn = await askAI(question, {
         provider,
         overflowProvider,
-        overflowBaseUrl: overflowProvider !== undefined ? (byokKey ?? undefined) : undefined,
+        overflowBaseUrl:
+          overflowProvider !== undefined ? (byokKey ?? undefined) : undefined,
         tables,
         edges,
         // A4: the chat executes through the analyst core, not `runChartQuery`.
@@ -175,18 +198,26 @@ export function AIChatModule() {
       <div className="flex-1 space-y-4 overflow-auto">
         {transcript.length === 0 ? (
           <p className="text-sm text-(--color-fg-muted)">
-            Ask a question in plain English — DataScope writes the SQL, runs it in your browser, and shows every query it ran.
+            Ask a question in plain English — DataScope writes the SQL, runs it
+            in your browser, and shows every query it ran.
           </p>
         ) : (
           transcript.map((turn) => <AITurnView key={turn.id} turn={turn} />)
         )}
       </div>
 
-      <p className="flex items-center gap-1.5 text-xs text-(--color-fg-muted)" role="status">
-        {status.kind === 'cloud' || status.kind === 'not-connected' ? (
+      <p
+        className="flex items-center gap-1.5 text-xs text-(--color-fg-muted)"
+        role="status"
+      >
+        {status.kind === "cloud" || status.kind === "not-connected" ? (
           <Cloud size={14} aria-hidden="true" className="text-(--color-ai-2)" />
         ) : (
-          <ShieldCheck size={14} aria-hidden="true" className="text-(--color-ai-2)" />
+          <ShieldCheck
+            size={14}
+            aria-hidden="true"
+            className="text-(--color-ai-2)"
+          />
         )}
         {aiStatusLabel(status)}
       </p>
@@ -207,7 +238,7 @@ export function AIChatModule() {
         />
         <button
           type="submit"
-          disabled={busy || draft.trim() === ''}
+          disabled={busy || draft.trim() === ""}
           className="rounded-lg bg-(--color-ai) px-3 py-2 text-(--color-ai-ink) disabled:opacity-40"
           aria-label="Send"
         >

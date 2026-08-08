@@ -2,7 +2,7 @@
 // thread — model load measurably janks the main thread (frame gaps of ~500 ms),
 // so the engine is Worker-mandatory. The handler speaks WebLLM's own message
 // protocol; all lifecycle and state live client-side in services/webllm.ts.
-import { WebWorkerMLCEngineHandler } from '@mlc-ai/web-llm';
+import { WebWorkerMLCEngineHandler } from "@mlc-ai/web-llm";
 
 const handler = new WebWorkerMLCEngineHandler();
 self.onmessage = (msg: MessageEvent) => {

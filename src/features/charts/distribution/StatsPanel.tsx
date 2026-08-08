@@ -1,14 +1,20 @@
-import type { DistributionMoments } from '../../../lib/distributionSql';
+import type { DistributionMoments } from "../../../lib/distributionSql";
 
 function formatStat(value: number | null): string {
-  return value === null ? '—' : value.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  return value === null
+    ? "—"
+    : value.toLocaleString(undefined, { maximumFractionDigits: 4 });
 }
 
 function StatCell({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="flex flex-col gap-0.5 rounded border border-(--color-border) px-2.5 py-1.5">
-      <span className="text-[10px] uppercase tracking-wide text-(--color-fg-muted)">{label}</span>
-      <span className="font-mono text-sm text-(--color-fg)">{formatStat(value)}</span>
+      <span className="text-[10px] uppercase tracking-wide text-(--color-fg-muted)">
+        {label}
+      </span>
+      <span className="font-mono text-sm text-(--color-fg)">
+        {formatStat(value)}
+      </span>
     </div>
   );
 }

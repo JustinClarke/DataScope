@@ -1,5 +1,5 @@
-import type { CorrelationMatrix } from '../../../lib/correlationSql';
-import { correlationCellColor, correlationTextColor } from './correlationColor';
+import type { CorrelationMatrix } from "../../../lib/correlationSql";
+import { correlationCellColor, correlationTextColor } from "./correlationColor";
 
 interface CorrelationHeatmapProps {
   matrix: CorrelationMatrix;
@@ -13,7 +13,11 @@ interface CorrelationHeatmapProps {
  * `r = 1`, a column against itself) is shown but not clickable, since there's
  * no second variable to scatter against.
  */
-export function CorrelationHeatmap({ matrix, selectedPair, onCellClick }: CorrelationHeatmapProps) {
+export function CorrelationHeatmap({
+  matrix,
+  selectedPair,
+  onCellClick,
+}: CorrelationHeatmapProps) {
   const { columns, values } = matrix;
 
   return (
@@ -23,7 +27,11 @@ export function CorrelationHeatmap({ matrix, selectedPair, onCellClick }: Correl
           <tr>
             <th className="p-1" />
             {columns.map((col) => (
-              <th key={col} scope="col" className="p-1 font-medium text-(--color-fg-muted)">
+              <th
+                key={col}
+                scope="col"
+                className="p-1 font-medium text-(--color-fg-muted)"
+              >
                 <span className="block max-w-20 truncate" title={col}>
                   {col}
                 </span>
@@ -34,7 +42,10 @@ export function CorrelationHeatmap({ matrix, selectedPair, onCellClick }: Correl
         <tbody>
           {columns.map((rowCol, i) => (
             <tr key={rowCol}>
-              <th scope="row" className="p-1 pr-2 text-right font-medium text-(--color-fg-muted)">
+              <th
+                scope="row"
+                className="p-1 pr-2 text-right font-medium text-(--color-fg-muted)"
+              >
                 <span className="block max-w-20 truncate" title={rowCol}>
                   {rowCol}
                 </span>
@@ -60,12 +71,17 @@ export function CorrelationHeatmap({ matrix, selectedPair, onCellClick }: Correl
                       onClick={() => onCellClick(rowCol, colCol)}
                       aria-label={label}
                       title={label}
-                      style={{ backgroundColor: bg, color: correlationTextColor(bg) }}
+                      style={{
+                        backgroundColor: bg,
+                        color: correlationTextColor(bg),
+                      }}
                       className={`flex h-10 w-14 items-center justify-center font-mono text-[11px] transition-[outline] ${
-                        isDiagonal ? 'cursor-default' : 'cursor-pointer hover:outline hover:outline-2 hover:outline-(--color-accent)'
-                      } ${isSelected ? 'outline outline-2 outline-(--color-accent)' : ''}`}
+                        isDiagonal
+                          ? "cursor-default"
+                          : "cursor-pointer hover:outline hover:outline-2 hover:outline-(--color-accent)"
+                      } ${isSelected ? "outline outline-2 outline-(--color-accent)" : ""}`}
                     >
-                      {value === null ? '—' : value.toFixed(2)}
+                      {value === null ? "—" : value.toFixed(2)}
                     </button>
                   </td>
                 );

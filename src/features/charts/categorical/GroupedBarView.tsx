@@ -1,14 +1,16 @@
-import { lazy, Suspense } from 'react';
-import type { ChartSpec, QueryResult } from '../../../types';
+import { lazy, Suspense } from "react";
+import type { ChartSpec, QueryResult } from "../../../types";
 
 // The charting library rides in its own chunk, same lazy boundary TrendView/ScatterDrillThrough use.
-const ChartRenderer = lazy(() => import('../../../components/charts/ChartRenderer'));
+const ChartRenderer = lazy(
+  () => import("../../../components/charts/ChartRenderer"),
+);
 
 interface GroupedBarViewProps {
   result: QueryResult;
   catColumn: string;
   quantColumn: string;
-  aggregate: 'total' | 'mean';
+  aggregate: "total" | "mean";
 }
 
 /**
@@ -20,11 +22,16 @@ interface GroupedBarViewProps {
  * (this item's own Dependencies note) — the Sum/Average toggle just picks
  * which already-computed column feeds `yFields`.
  */
-export function GroupedBarView({ result, catColumn, quantColumn, aggregate }: GroupedBarViewProps) {
+export function GroupedBarView({
+  result,
+  catColumn,
+  quantColumn,
+  aggregate,
+}: GroupedBarViewProps) {
   const spec: ChartSpec = {
-    type: 'categorical',
-    title: `${aggregate === 'mean' ? 'Average' : 'Sum of'} ${quantColumn} by ${catColumn}`,
-    xField: 'grp',
+    type: "categorical",
+    title: `${aggregate === "mean" ? "Average" : "Sum of"} ${quantColumn} by ${catColumn}`,
+    xField: "grp",
     yFields: [aggregate],
   };
   return (

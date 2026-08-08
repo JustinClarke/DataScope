@@ -11,9 +11,18 @@ interface TransformGuardModalProps {
  * as the default/primary action — the raw mutation is still available, but
  * never on by default.
  */
-export function TransformGuardModal({ targetTable, onMaterialize, onModifyAnyway, onCancel }: TransformGuardModalProps) {
+export function TransformGuardModal({
+  targetTable,
+  onMaterialize,
+  onModifyAnyway,
+  onCancel,
+}: TransformGuardModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--color-scrim)" role="presentation" onClick={onCancel}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-(--color-scrim)"
+      role="presentation"
+      onClick={onCancel}
+    >
       <div
         role="dialog"
         aria-modal="true"
@@ -25,8 +34,9 @@ export function TransformGuardModal({ targetTable, onMaterialize, onModifyAnyway
           This edits <span className="font-mono">{targetTable}</span> directly
         </p>
         <p className="mb-4 text-sm text-(--color-fg-muted)">
-          {targetTable} is a source table — editing it in place can&rsquo;t be undone. We recommend materializing the
-          result as a new table instead, which keeps {targetTable} untouched and stays undoable.
+          {targetTable} is a source table — editing it in place can&rsquo;t be
+          undone. We recommend materializing the result as a new table instead,
+          which keeps {targetTable} untouched and stays undoable.
         </p>
         <div className="flex flex-col gap-2">
           <button
@@ -44,7 +54,11 @@ export function TransformGuardModal({ targetTable, onMaterialize, onModifyAnyway
           >
             Modify original anyway
           </button>
-          <button type="button" onClick={onCancel} className="rounded px-4 py-2 text-sm text-(--color-fg-muted)">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded px-4 py-2 text-sm text-(--color-fg-muted)"
+          >
             Cancel
           </button>
         </div>

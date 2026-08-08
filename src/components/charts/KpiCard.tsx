@@ -6,7 +6,9 @@
 export function KpiCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-(--color-border) p-8">
-      <span className="text-4xl font-semibold tracking-tight text-(--color-fg)">{value}</span>
+      <span className="text-4xl font-semibold tracking-tight text-(--color-fg)">
+        {value}
+      </span>
       <span className="text-sm text-(--color-fg-muted)">{label}</span>
     </div>
   );

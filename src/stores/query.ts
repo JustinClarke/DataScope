@@ -8,15 +8,15 @@
 // own a session (a query tab's session id *is* its tab id), while `runQuery`
 // stays the one execution path writing into whichever session it was asked for
 // — D49 is one path, not one destination.
-import { create } from 'zustand';
-import type { ChartSpec, QueryResult } from '../types';
+import { create } from "zustand";
+import type { ChartSpec, QueryResult } from "../types";
 
-export type QueryStatus = 'idle' | 'running' | 'success' | 'error';
+export type QueryStatus = "idle" | "running" | "success" | "error";
 
 /** The console's session — the app's only free-typing surface, and every default. */
-export const CONSOLE_SESSION = 'console';
+export const CONSOLE_SESSION = "console";
 /** Pivot's own results home (S5): its runs no longer land in the console's. */
-export const PIVOT_SESSION = 'pivot';
+export const PIVOT_SESSION = "pivot";
 
 export type QuerySessionId = string;
 
@@ -44,9 +44,9 @@ export interface QuerySession {
 
 /** Stable identity, so a selector for an unknown session never loops a re-render. */
 export const EMPTY_SESSION: QuerySession = {
-  sql: '',
-  lastRunSql: '',
-  status: 'idle',
+  sql: "",
+  lastRunSql: "",
+  status: "idle",
   result: null,
   error: null,
   charts: [],
@@ -74,7 +74,11 @@ interface QueryState {
    * Results are treated as immutable everywhere, so this shares the reference
    * rather than re-running or copying.
    */
-  adoptResult: (id: QuerySessionId, result: QueryResult, lastRunSql: string) => void;
+  adoptResult: (
+    id: QuerySessionId,
+    result: QueryResult,
+    lastRunSql: string,
+  ) => void;
   /**
    * Overwrites a session's loaded rows and paging handle wholesale (A2's
    * `loadMoreRows`, `services/sql.ts`) rather than trusting a caller to append
@@ -83,7 +87,12 @@ interface QueryState {
    * "replace" is the only safe operation on that transition; every page after
    * it is a genuine append onto that same stable materialization.
    */
-  setResultPage: (id: QuerySessionId, rows: unknown[][], resultId: string, nextOffset: number | null) => void;
+  setResultPage: (
+    id: QuerySessionId,
+    rows: unknown[][],
+    resultId: string,
+    nextOffset: number | null,
+  ) => void;
   addChart: (id: QuerySessionId, chart: ChartSpec) => void;
   removeChart: (id: QuerySessionId, index: number) => void;
   clearResult: (id: QuerySessionId) => void;
@@ -96,7 +105,10 @@ function patch(
   id: QuerySessionId,
   changes: Partial<QuerySession>,
 ): Record<QuerySessionId, QuerySession> {
-  return { ...state.sessions, [id]: { ...(state.sessions[id] ?? EMPTY_SESSION), ...changes } };
+  return {
+    ...state.sessions,
+    [id]: { ...(state.sessions[id] ?? EMPTY_SESSION), ...changes },
+  };
 }
 
 export const useQueryStore = create<QueryState>((set) => ({
@@ -104,21 +116,27 @@ export const useQueryStore = create<QueryState>((set) => ({
   history: [],
   lastRunSession: CONSOLE_SESSION,
 
-  setSql: (id, sql) => set((state) => ({ sessions: patch(state, id, { sql }) })),
+  setSql: (id, sql) =>
+    set((state) => ({ sessions: patch(state, id, { sql }) })),
 
   queryStarted: (id, sql) =>
     set((state) => ({
-      sessions: patch(state, id, { sql, lastRunSql: sql, status: 'running', error: null }),
+      sessions: patch(state, id, {
+        sql,
+        lastRunSql: sql,
+        status: "running",
+        error: null,
+      }),
       lastRunSession: id,
     })),
 
   querySucceeded: (id, result) =>
     set((state) => ({
-      sessions: patch(state, id, { status: 'success', result }),
+      sessions: patch(state, id, { status: "success", result }),
       history: [
         {
           id: crypto.randomUUID(),
-          sql: state.sessions[id]?.sql ?? '',
+          sql: state.sessions[id]?.sql ?? "",
           executedAt: new Date().toISOString(),
           result,
         },
@@ -128,11 +146,11 @@ export const useQueryStore = create<QueryState>((set) => ({
 
   queryFailed: (id, error) =>
     set((state) => ({
-      sessions: patch(state, id, { status: 'error', error }),
+      sessions: patch(state, id, { status: "error", error }),
       history: [
         {
           id: crypto.randomUUID(),
-          sql: state.sessions[id]?.sql ?? '',
+          sql: state.sessions[id]?.sql ?? "",
           executedAt: new Date().toISOString(),
           error,
         },
@@ -141,13 +159,24 @@ export const useQueryStore = create<QueryState>((set) => ({
     })),
 
   adoptResult: (id, result, lastRunSql) =>
-    set((state) => ({ sessions: patch(state, id, { status: 'success', result, error: null, lastRunSql }) })),
+    set((state) => ({
+      sessions: patch(state, id, {
+        status: "success",
+        result,
+        error: null,
+        lastRunSql,
+      }),
+    })),
 
   setResultPage: (id, rows, resultId, nextOffset) =>
     set((state) => {
       const current = state.sessions[id]?.result;
       if (!current) return state;
-      return { sessions: patch(state, id, { result: { ...current, rows, resultId, nextOffset } }) };
+      return {
+        sessions: patch(state, id, {
+          result: { ...current, rows, resultId, nextOffset },
+        }),
+      };
     }),
 
   addChart: (id, chart) =>
@@ -160,11 +189,16 @@ export const useQueryStore = create<QueryState>((set) => ({
   removeChart: (id, index) =>
     set((state) => ({
       sessions: patch(state, id, {
-        charts: (state.sessions[id]?.charts ?? []).filter((_, i) => i !== index),
+        charts: (state.sessions[id]?.charts ?? []).filter(
+          (_, i) => i !== index,
+        ),
       }),
     })),
 
-  clearResult: (id) => set((state) => ({ sessions: patch(state, id, { result: null, status: 'idle', error: null }) })),
+  clearResult: (id) =>
+    set((state) => ({
+      sessions: patch(state, id, { result: null, status: "idle", error: null }),
+    })),
 
   dropSession: (id) =>
     set((state) => {

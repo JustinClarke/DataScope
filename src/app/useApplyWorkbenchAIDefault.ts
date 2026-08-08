@@ -5,9 +5,12 @@
 // runs at most once per mount, and only when `aiMode` is still `null`, so an
 // explicit prior choice — including one restored from persisted settings —
 // is never overwritten.
-import { useEffect, useRef } from 'react';
-import { useSettingsStore } from '../stores/settings';
-import { isCapableDevice, recommendedWorkbenchAIMode } from './workbenchAIDefaults';
+import { useEffect, useRef } from "react";
+import { useSettingsStore } from "../stores/settings";
+import {
+  isCapableDevice,
+  recommendedWorkbenchAIMode,
+} from "./workbenchAIDefaults";
 
 export function useApplyWorkbenchAIDefault(): void {
   const applied = useRef(false);
@@ -15,6 +18,8 @@ export function useApplyWorkbenchAIDefault(): void {
     if (applied.current) return;
     applied.current = true;
     if (useSettingsStore.getState().aiMode !== null) return;
-    useSettingsStore.getState().setAIMode(recommendedWorkbenchAIMode(isCapableDevice()));
+    useSettingsStore
+      .getState()
+      .setAIMode(recommendedWorkbenchAIMode(isCapableDevice()));
   }, []);
 }

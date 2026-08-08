@@ -4,7 +4,7 @@
 // date); the signer/signature fields render an honest "not yet available"
 // state rather than a fabricated one, since D63.2 (signed `.dsps`) is its own
 // unbuilt design round.
-import type { StructureReport } from '../../lib/structureReport';
+import type { StructureReport } from "../../lib/structureReport";
 
 interface TrustChromeBandProps {
   report: StructureReport;

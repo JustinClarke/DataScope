@@ -18,7 +18,7 @@
 interface Field {
   name: string;
   /** Drives the row's mark and colour: the amber PK diamond, the purple FK dot, or neither. */
-  role?: 'pk' | 'fk';
+  role?: "pk" | "fk";
 }
 
 interface Entity {
@@ -39,16 +39,20 @@ const ROW_H = 13;
 
 const ENTITIES: Entity[] = [
   {
-    table: 'customers',
+    table: "customers",
     x: 4,
     y: 2,
-    fields: [{ name: 'id', role: 'pk' }, { name: 'email' }, { name: 'city' }],
+    fields: [{ name: "id", role: "pk" }, { name: "email" }, { name: "city" }],
   },
   {
-    table: 'orders',
+    table: "orders",
     x: 192,
     y: 16,
-    fields: [{ name: 'id', role: 'pk' }, { name: 'customer_id', role: 'fk' }, { name: 'total' }],
+    fields: [
+      { name: "id", role: "pk" },
+      { name: "customer_id", role: "fk" },
+      { name: "total" },
+    ],
   },
 ];
 
@@ -64,8 +68,8 @@ const EDGE_MID = (EDGE_FROM.x + EDGE_TO.x) / 2;
 // texture a real distribution has, and a coarser strip reads louder than the
 // entity cards it is supposed to sit under.
 const BARS = [
-  0.08, 0.19, 0.34, 0.52, 0.71, 0.88, 0.97, 1, 0.95, 0.86, 0.74, 0.62,
-  0.51, 0.42, 0.34, 0.27, 0.21, 0.16, 0.12, 0.09, 0.06, 0.04,
+  0.08, 0.19, 0.34, 0.52, 0.71, 0.88, 0.97, 1, 0.95, 0.86, 0.74, 0.62, 0.51,
+  0.42, 0.34, 0.27, 0.21, 0.16, 0.12, 0.09, 0.06, 0.04,
 ];
 const BAR_STEP = 13;
 const BAR_W = 9;
@@ -105,7 +109,7 @@ function EntityCard({ entity }: { entity: Entity }) {
         const markY = rowY + ROW_H / 2;
         return (
           <g key={field.name}>
-            {field.role === 'pk' && (
+            {field.role === "pk" && (
               <rect
                 x={entity.x + 7}
                 y={markY - 2.5}
@@ -115,13 +119,18 @@ function EntityCard({ entity }: { entity: Entity }) {
                 transform={`rotate(45 ${entity.x + 9.5} ${markY})`}
               />
             )}
-            {field.role === 'fk' && (
-              <circle cx={entity.x + 9.5} cy={markY} r={2.5} className="fill-(--color-fk)" />
+            {field.role === "fk" && (
+              <circle
+                cx={entity.x + 9.5}
+                cy={markY}
+                r={2.5}
+                className="fill-(--color-fk)"
+              />
             )}
             <text
               x={entity.x + 18}
               y={markY + 2.5}
-              className={`font-mono text-[7px] ${field.role ? 'fill-(--color-ink-2)' : 'fill-(--color-ink-3)'}`}
+              className={`font-mono text-[7px] ${field.role ? "fill-(--color-ink-2)" : "fill-(--color-ink-3)"}`}
             >
               {field.name}
             </text>
@@ -151,8 +160,18 @@ export function SpecimenPlate() {
         className="stroke-(--color-fk)"
         strokeWidth={1}
       />
-      <circle cx={EDGE_FROM.x} cy={EDGE_FROM.y} r={2} className="fill-(--color-fk)" />
-      <circle cx={EDGE_TO.x} cy={EDGE_TO.y} r={2} className="fill-(--color-fk)" />
+      <circle
+        cx={EDGE_FROM.x}
+        cy={EDGE_FROM.y}
+        r={2}
+        className="fill-(--color-fk)"
+      />
+      <circle
+        cx={EDGE_TO.x}
+        cy={EDGE_TO.y}
+        r={2}
+        className="fill-(--color-fk)"
+      />
 
       {BARS.map((value, index) => (
         <rect

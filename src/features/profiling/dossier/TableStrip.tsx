@@ -7,7 +7,10 @@ export interface TableStripProps {
  * beneath the hero regardless of which hero variant is rendering (§13.1),
  * distinct from the richer per-table cards in HeroTableGrid.
  */
-export function TableStrip({ tables, onOpenTable }: TableStripProps & { onOpenTable: (tableId: string) => void }) {
+export function TableStrip({
+  tables,
+  onOpenTable,
+}: TableStripProps & { onOpenTable: (tableId: string) => void }) {
   if (tables.length === 0) return null;
 
   return (
@@ -15,7 +18,11 @@ export function TableStrip({ tables, onOpenTable }: TableStripProps & { onOpenTa
       {tables.map((table, index) => (
         <span key={table.id} className="flex items-center gap-2">
           {index > 0 && <span aria-hidden="true">·</span>}
-          <button type="button" onClick={() => onOpenTable(table.id)} className="hover:text-(--color-accent) hover:underline">
+          <button
+            type="button"
+            onClick={() => onOpenTable(table.id)}
+            className="hover:text-(--color-accent) hover:underline"
+          >
             {table.tableName} {table.rowCount.toLocaleString()}
           </button>
         </span>

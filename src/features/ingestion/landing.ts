@@ -1,4 +1,4 @@
-import type { SidebarModule } from '../../stores/ui';
+import type { SidebarModule } from "../../stores/ui";
 
 /**
  * Where a completed ingest lands the user (§13.1, D68d/D70). The opinionated
@@ -8,5 +8,5 @@ import type { SidebarModule } from '../../stores/ui';
  * instead; the Blueprint is the default, never a wall.
  */
 export function postIngestLandingTarget(skipToData: boolean): SidebarModule {
-  return skipToData ? 'profile' : 'dossier';
+  return skipToData ? "profile" : "dossier";
 }

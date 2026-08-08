@@ -7,8 +7,11 @@
 //
 // The connection is in-process (see `lib/analyst/mcp/connect.ts`), so
 // "connecting" is object wiring and a handshake, not I/O.
-import { connectAnalystMcp, type AnalystMcpSession } from '../lib/analyst/mcp/connect';
-import { analystCore } from './analyst';
+import {
+  connectAnalystMcp,
+  type AnalystMcpSession,
+} from "../lib/analyst/mcp/connect";
+import { analystCore } from "./analyst";
 
 let session: Promise<AnalystMcpSession> | null = null;
 

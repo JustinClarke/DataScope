@@ -9,14 +9,14 @@
 //
 // Partial recovery is the normal path, not the error path: nine good tables
 // restore even when a tenth is gone, and nothing here throws.
-import type { RestoredTable, RestoreReport } from './workspace';
-import { referencesTableName, refreshTableFromSource } from './ingestion';
-import { useDatasetsStore } from '../stores/datasets';
-import { useSelectionStore } from '../stores/selection';
-import { useRehydrationStore, type TableOutcome } from '../stores/rehydration';
-import type { TableRegistryEntry } from '../types';
+import type { RestoredTable, RestoreReport } from "./workspace";
+import { referencesTableName, refreshTableFromSource } from "./ingestion";
+import { useDatasetsStore } from "../stores/datasets";
+import { useSelectionStore } from "../stores/selection";
+import { useRehydrationStore, type TableOutcome } from "../stores/rehydration";
+import type { TableRegistryEntry } from "../types";
 
-type EngineModule = typeof import('../workers/duckdb.worker');
+type EngineModule = typeof import("../workers/duckdb.worker");
 
 /**
  * Reconcile the persisted registry against what the engine really holds.
@@ -33,27 +33,39 @@ export function reconcile(
   const present = new Set(engineTableNames);
   const reports = new Map(restored.map((r) => [r.tableName, r]));
 
-  const firstPass = tables.map((table) => resolveDirect(table, present, reports));
+  const firstPass = tables.map((table) =>
+    resolveDirect(table, present, reports),
+  );
   const restoredNames = new Set(
-    firstPass.filter((o) => o.status === 'restored').map((o) => o.tableName),
+    firstPass.filter((o) => o.status === "restored").map((o) => o.tableName),
   );
 
   return firstPass.map((outcome, index) => {
     const table = tables[index];
-    if (outcome.status !== 'lost' || table.origin !== 'derived' || !table.generatingSql) return outcome;
+    if (
+      outcome.status !== "lost" ||
+      table.origin !== "derived" ||
+      !table.generatingSql
+    )
+      return outcome;
     // Its own inputs are whatever other registered tables the recorded
     // `CREATE TABLE AS` reads (§12.1) — replayable only if all of them are back.
-    const inputs = tables.filter((t) => t.id !== table.id && referencesTableName(table.generatingSql!, t.tableName));
+    const inputs = tables.filter(
+      (t) =>
+        t.id !== table.id &&
+        referencesTableName(table.generatingSql!, t.tableName),
+    );
     return inputs.every((t) => restoredNames.has(t.tableName))
       ? {
           ...outcome,
-          status: 'recoverable',
-          recovery: 'replay',
-          reason: 'Not rebuilt yet — replay the SQL that produced it.',
+          status: "recoverable",
+          recovery: "replay",
+          reason: "Not rebuilt yet — replay the SQL that produced it.",
         }
       : {
           ...outcome,
-          reason: "The tables this was built from didn't come back, so it can't be rebuilt — re-drop them first.",
+          reason:
+            "The tables this was built from didn't come back, so it can't be rebuilt — re-drop them first.",
         };
   });
 }
@@ -68,32 +80,47 @@ function resolveDirect(
 
   // Identity before presence: a table under the right name built from the wrong
   // bytes is the one case where "it's there" is the wrong answer.
-  if (table.fileHash !== undefined && report?.fileHash !== undefined && report.fileHash !== table.fileHash) {
+  if (
+    table.fileHash !== undefined &&
+    report?.fileHash !== undefined &&
+    report.fileHash !== table.fileHash
+  ) {
     return {
       ...base,
-      status: 'lost',
+      status: "lost",
       reason: `The stored copy of "${table.tableName}" no longer matches the file it came from — re-drop the file.`,
     };
   }
 
-  if (present.has(table.tableName)) return { ...base, status: 'restored', reason: null };
+  if (present.has(table.tableName))
+    return { ...base, status: "restored", reason: null };
 
   // An `api` table is a re-fetch, not a restore — and a page load must never
   // fire that request off persisted state (§5.2 as much as UX).
-  if (table.origin === 'api' && table.sourceUrl) {
-    return { ...base, status: 'recoverable', recovery: 'refetch', reason: 'Not fetched yet — refresh it from its source.' };
+  if (table.origin === "api" && table.sourceUrl) {
+    return {
+      ...base,
+      status: "recoverable",
+      recovery: "refetch",
+      reason: "Not fetched yet — refresh it from its source.",
+    };
   }
 
   if (table.sampled) {
     return {
       ...base,
-      status: 'lost',
-      reason: 'This was a sampled preview, so its rows were never stored — re-drop the file.',
+      status: "lost",
+      reason:
+        "This was a sampled preview, so its rows were never stored — re-drop the file.",
     };
   }
 
-  if (table.origin === 'shared') {
-    return { ...base, status: 'lost', reason: "A shared table isn't stored — open its link again." };
+  if (table.origin === "shared") {
+    return {
+      ...base,
+      status: "lost",
+      reason: "A shared table isn't stored — open its link again.",
+    };
   }
 
   return {
@@ -101,8 +128,10 @@ function resolveDirect(
     // OPFS is evictable by design (ADR-011 build rule 4), so the report's own
     // reason is usually the honest one; the fallback covers an entry the
     // restore never saw at all.
-    status: 'lost',
-    reason: report?.reason ?? `"${table.tableName}" wasn't stored on disk — re-drop the file.`,
+    status: "lost",
+    reason:
+      report?.reason ??
+      `"${table.tableName}" wasn't stored on disk — re-drop the file.`,
   };
 }
 
@@ -110,10 +139,12 @@ function resolveDirect(
 // latter would report every session view as lost on a refresh — and then, for a
 // derived view, offer a replay that rebuilds an object already there.
 async function listEngineTables(): Promise<string[]> {
-  const engine: EngineModule = await import('../workers/duckdb.worker');
+  const engine: EngineModule = await import("../workers/duckdb.worker");
   const [tables, views] = await Promise.all([
-    engine.duckDBEngine.execute('SELECT table_name FROM duckdb_tables()'),
-    engine.duckDBEngine.execute('SELECT view_name FROM duckdb_views() WHERE internal = false'),
+    engine.duckDBEngine.execute("SELECT table_name FROM duckdb_tables()"),
+    engine.duckDBEngine.execute(
+      "SELECT view_name FROM duckdb_views() WHERE internal = false",
+    ),
   ]);
   return [...tables.rows, ...views.rows].map((row) => String(row[0]));
 }
@@ -124,7 +155,9 @@ async function listEngineTables(): Promise<string[]> {
  * and tabs referenced tables by id, and a dangling reference to a lost table is
  * the second half of the same failure.
  */
-export async function rehydrateWorkspace(report: RestoreReport): Promise<TableOutcome[]> {
+export async function rehydrateWorkspace(
+  report: RestoreReport,
+): Promise<TableOutcome[]> {
   const tables = useDatasetsStore.getState().tables;
   if (tables.length === 0) return [];
 
@@ -142,13 +175,20 @@ export async function rehydrateWorkspace(report: RestoreReport): Promise<TableOu
  * being produced, since the edge layer only reasons about usable table names).
  */
 function degradeSelection(outcomes: TableOutcome[]): void {
-  const unusable = new Set(outcomes.filter((o) => o.status !== 'restored').map((o) => o.tableId));
+  const unusable = new Set(
+    outcomes.filter((o) => o.status !== "restored").map((o) => o.tableId),
+  );
   if (unusable.size === 0) return;
 
   const selection = useSelectionStore.getState();
   const patch: Partial<{ selectedTableId: null; selectedColumn: null }> = {};
-  if (selection.selectedTableId && unusable.has(selection.selectedTableId)) patch.selectedTableId = null;
-  if (selection.selectedColumn && unusable.has(selection.selectedColumn.tableId)) patch.selectedColumn = null;
+  if (selection.selectedTableId && unusable.has(selection.selectedTableId))
+    patch.selectedTableId = null;
+  if (
+    selection.selectedColumn &&
+    unusable.has(selection.selectedColumn.tableId)
+  )
+    patch.selectedColumn = null;
   if (Object.keys(patch).length === 0) return;
 
   useSelectionStore.setState({
@@ -165,28 +205,35 @@ function degradeSelection(outcomes: TableOutcome[]): void {
  * recorded `CREATE TABLE AS`. Resolves to whether the table is queryable now.
  */
 export async function recoverTable(tableId: string): Promise<boolean> {
-  const table = useDatasetsStore.getState().tables.find((t) => t.id === tableId);
+  const table = useDatasetsStore
+    .getState()
+    .tables.find((t) => t.id === tableId);
   const outcome = useRehydrationStore.getState().outcomes[tableId];
-  if (!table || outcome?.status !== 'recoverable') return false;
+  if (!table || outcome?.status !== "recoverable") return false;
 
   try {
-    if (outcome.recovery === 'refetch') {
+    if (outcome.recovery === "refetch") {
       await refreshTableFromSource(tableId);
     } else {
-      const engine: EngineModule = await import('../workers/duckdb.worker');
+      const engine: EngineModule = await import("../workers/duckdb.worker");
       await engine.duckDBEngine.execute(table.generatingSql!);
     }
     useRehydrationStore.getState().markRestored(tableId);
     return true;
   } catch (error) {
     // Stays recoverable — a failed recovery is a retry, not a downgrade to lost.
-    useRehydrationStore.getState().setOutcomes(
-      Object.values(useRehydrationStore.getState().outcomes).map((o) =>
-        o.tableId === tableId
-          ? { ...o, reason: error instanceof Error ? error.message : String(error) }
-          : o,
-      ),
-    );
+    useRehydrationStore
+      .getState()
+      .setOutcomes(
+        Object.values(useRehydrationStore.getState().outcomes).map((o) =>
+          o.tableId === tableId
+            ? {
+                ...o,
+                reason: error instanceof Error ? error.message : String(error),
+              }
+            : o,
+        ),
+      );
     return false;
   }
 }

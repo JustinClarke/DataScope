@@ -1,9 +1,17 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import type { FrequencyRow } from '../../../lib/categoricalSql';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import type { FrequencyRow } from "../../../lib/categoricalSql";
 
-const BAR_COLOR = 'var(--chart-1)';
-const AXIS = 'var(--color-fg-muted)';
-const GRID = 'var(--color-border)';
+const BAR_COLOR = "var(--chart-1)";
+const AXIS = "var(--color-fg-muted)";
+const GRID = "var(--color-border)";
 
 /**
  * Horizontal, sorted-descending frequency bar chart (§10 Module 6). Recharts'
@@ -16,10 +24,25 @@ export function FrequencyBar({ rows }: { rows: FrequencyRow[] }) {
   const height = Math.max(160, rows.length * 28);
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 24, bottom: 8, left: 8 }}>
+      <BarChart
+        data={rows}
+        layout="vertical"
+        margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
+      >
         <CartesianGrid stroke={GRID} strokeDasharray="3 3" horizontal={false} />
-        <XAxis type="number" tick={{ fill: AXIS, fontSize: 11 }} stroke={AXIS} allowDecimals={false} />
-        <YAxis type="category" dataKey="category" tick={{ fill: AXIS, fontSize: 11 }} stroke={AXIS} width={110} />
+        <XAxis
+          type="number"
+          tick={{ fill: AXIS, fontSize: 11 }}
+          stroke={AXIS}
+          allowDecimals={false}
+        />
+        <YAxis
+          type="category"
+          dataKey="category"
+          tick={{ fill: AXIS, fontSize: 11 }}
+          stroke={AXIS}
+          width={110}
+        />
         <Tooltip />
         <Bar dataKey="count" fill={BAR_COLOR} />
       </BarChart>

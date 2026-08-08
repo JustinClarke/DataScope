@@ -20,7 +20,7 @@ export function exceedsAggregateWarnThreshold(totalBytes: number): boolean {
 // single file's own ingest behavior, and the two are checked independently
 // (a folder can trip the aggregate banner from many small files with no
 // single file ever leaving `full`).
-export type SizeTier = 'full' | 'warn' | 'sampled' | 'refuse';
+export type SizeTier = "full" | "warn" | "sampled" | "refuse";
 
 export const SIZE_WARN_THRESHOLD_BYTES = 50 * 1024 * 1024;
 export const SIZE_SAMPLE_THRESHOLD_BYTES = 100 * 1024 * 1024;
@@ -36,12 +36,15 @@ export const SAMPLE_ROW_LIMIT = 100_000;
  * `refuse` regardless of headroom, and a file already `sampled` by size
  * doesn't need a second reason).
  */
-export function decideSizeTier(bytes: number, headroomExceeded: boolean): SizeTier {
-  if (bytes > SIZE_REFUSE_THRESHOLD_BYTES) return 'refuse';
-  if (bytes > SIZE_SAMPLE_THRESHOLD_BYTES) return 'sampled';
-  if (headroomExceeded) return 'sampled';
-  if (bytes > SIZE_WARN_THRESHOLD_BYTES) return 'warn';
-  return 'full';
+export function decideSizeTier(
+  bytes: number,
+  headroomExceeded: boolean,
+): SizeTier {
+  if (bytes > SIZE_REFUSE_THRESHOLD_BYTES) return "refuse";
+  if (bytes > SIZE_SAMPLE_THRESHOLD_BYTES) return "sampled";
+  if (headroomExceeded) return "sampled";
+  if (bytes > SIZE_WARN_THRESHOLD_BYTES) return "warn";
+  return "full";
 }
 
 /** Refusal copy for the over-the-ceiling tier, `~X MB` filled from the real file size. */

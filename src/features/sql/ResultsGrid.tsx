@@ -1,11 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Copy, Download, Loader2 } from 'lucide-react';
-import type { QueryResult } from '../../types';
-import type { QuerySessionId, QueryStatus } from '../../stores/query';
-import { DataTable, type SortDirection } from '../../components/DataTable';
-import { loadMoreRows } from '../../services/sql';
-import { formatCellText, truncateForDisplay } from './cellFormat';
-import { downloadCsv, downloadXlsx, copySql } from './resultsExport';
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Download,
+  Loader2,
+} from "lucide-react";
+import type { QueryResult } from "../../types";
+import type { QuerySessionId, QueryStatus } from "../../stores/query";
+import { DataTable, type SortDirection } from "../../components/DataTable";
+import { loadMoreRows } from "../../services/sql";
+import { formatCellText, truncateForDisplay } from "./cellFormat";
+import { downloadCsv, downloadXlsx, copySql } from "./resultsExport";
 
 interface ResultsGridProps {
   sessionId: QuerySessionId;
@@ -17,25 +23,38 @@ interface ResultsGridProps {
 
 const PAGE_SIZE = 1000;
 
-function compareCells(a: unknown, b: unknown, direction: SortDirection): number {
+function compareCells(
+  a: unknown,
+  b: unknown,
+  direction: SortDirection,
+): number {
   const aNull = a === null || a === undefined;
   const bNull = b === null || b === undefined;
   if (aNull && bNull) return 0;
   if (aNull) return 1; // NULLs sort last regardless of direction
   if (bNull) return -1;
 
-  const sign = direction === 'asc' ? 1 : -1;
-  if (typeof a === 'number' && typeof b === 'number') return (a - b) * sign;
-  if (a instanceof Date && b instanceof Date) return (a.getTime() - b.getTime()) * sign;
+  const sign = direction === "asc" ? 1 : -1;
+  if (typeof a === "number" && typeof b === "number") return (a - b) * sign;
+  if (a instanceof Date && b instanceof Date)
+    return (a.getTime() - b.getTime()) * sign;
   return String(a).localeCompare(String(b)) * sign;
 }
 
-export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGridProps) {
+export function ResultsGrid({
+  sessionId,
+  status,
+  result,
+  error,
+  sql,
+}: ResultsGridProps) {
   const [sortColumnIndex, setSortColumnIndex] = useState<number | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [page, setPage] = useState(0);
   const [expandedCell, setExpandedCell] = useState<string | null>(null);
-  const [exporting, setExporting] = useState<'csv' | 'xlsx' | 'sql' | null>(null);
+  const [exporting, setExporting] = useState<"csv" | "xlsx" | "sql" | null>(
+    null,
+  );
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   // `loadMoreRows` grows the *same* result in place — it must not look like a
@@ -52,7 +71,7 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
       return;
     }
     setSortColumnIndex(null);
-    setSortDirection('asc');
+    setSortDirection("asc");
     setPage(0);
     setExpandedCell(null);
     setLoadingMore(false);
@@ -75,10 +94,14 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
   const sortedRows = useMemo(() => {
     if (!result) return [];
     if (sortColumnIndex === null) return result.rows;
-    return result.rows.slice().sort((a, b) => compareCells(a[sortColumnIndex], b[sortColumnIndex], sortDirection));
+    return result.rows
+      .slice()
+      .sort((a, b) =>
+        compareCells(a[sortColumnIndex], b[sortColumnIndex], sortDirection),
+      );
   }, [result, sortColumnIndex, sortDirection]);
 
-  if (status === 'error' && error) {
+  if (status === "error" && error) {
     return (
       <div
         role="alert"
@@ -89,31 +112,42 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
     );
   }
 
-  if (status === 'running') {
+  if (status === "running") {
     return <p className="text-sm text-(--color-fg-muted)">Running…</p>;
   }
 
   if (!result) {
-    return <p className="text-sm text-(--color-fg-muted)">Run a query to see results here.</p>;
+    return (
+      <p className="text-sm text-(--color-fg-muted)">
+        Run a query to see results here.
+      </p>
+    );
   }
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages - 1);
-  const pageRows = sortedRows.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const pageRows = sortedRows.slice(
+    currentPage * PAGE_SIZE,
+    (currentPage + 1) * PAGE_SIZE,
+  );
   const isCapped = result.rows.length < result.rowCount;
   // `undefined` (never paged past the initial preview) and any real offset
   // both mean "more to load"; only an explicit `null` means every row is in.
   const canLoadMore = isCapped && result.nextOffset !== null;
 
-  const columns = result.columnNames.map((name, i) => ({ key: String(i), label: name, sortable: true }));
+  const columns = result.columnNames.map((name, i) => ({
+    key: String(i),
+    label: name,
+    sortable: true,
+  }));
 
   function handleSortChange(columnKey: string) {
     const index = Number(columnKey);
     if (sortColumnIndex === index) {
-      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortColumnIndex(index);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
     setPage(0);
   }
@@ -122,9 +156,9 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
     if (value === null || value === undefined) {
       return <span className="italic text-(--color-ink-3)">NULL</span>;
     }
-    const columnType = result!.columnTypes[columnIndex] ?? '';
+    const columnType = result!.columnTypes[columnIndex] ?? "";
     const text = formatCellText(value, columnType);
-    if (text === '') return null;
+    if (text === "") return null;
 
     const { display, isTruncated } = truncateForDisplay(text);
     if (!isTruncated) return <span className="min-w-0 truncate">{text}</span>;
@@ -155,12 +189,12 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
     );
   }
 
-  async function handleExport(kind: 'csv' | 'xlsx' | 'sql') {
+  async function handleExport(kind: "csv" | "xlsx" | "sql") {
     if (exporting || !result) return;
     setExporting(kind);
     try {
-      if (kind === 'csv') downloadCsv(result);
-      else if (kind === 'xlsx') await downloadXlsx(result);
+      if (kind === "csv") downloadCsv(result);
+      else if (kind === "xlsx") await downloadXlsx(result);
       else await copySql(sql);
     } finally {
       setExporting(null);
@@ -172,9 +206,10 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-xs text-(--color-fg-muted)">
-            {result.rowCount.toLocaleString()} row{result.rowCount === 1 ? '' : 's'} in{' '}
+            {result.rowCount.toLocaleString()} row
+            {result.rowCount === 1 ? "" : "s"} in{" "}
             {result.executionTimeMs.toFixed(0)} ms
-            {isCapped ? ` — ${result.rows.length.toLocaleString()} loaded` : ''}
+            {isCapped ? ` — ${result.rows.length.toLocaleString()} loaded` : ""}
           </p>
           {canLoadMore && (
             <button
@@ -184,12 +219,22 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
               data-testid="results-load-more"
               className="flex items-center gap-1 rounded border border-(--color-border) px-2 py-0.5 text-xs font-medium text-(--color-accent) disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loadingMore && <Loader2 size={12} aria-hidden="true" className="animate-spin" />}
-              {loadingMore ? 'Loading…' : 'Load more rows'}
+              {loadingMore && (
+                <Loader2
+                  size={12}
+                  aria-hidden="true"
+                  className="animate-spin"
+                />
+              )}
+              {loadingMore ? "Loading…" : "Load more rows"}
             </button>
           )}
           {loadMoreError && (
-            <span role="alert" data-testid="results-load-more-error" className="text-xs text-(--color-error)">
+            <span
+              role="alert"
+              data-testid="results-load-more-error"
+              className="text-xs text-(--color-error)"
+            >
               {loadMoreError}
             </span>
           )}
@@ -197,7 +242,7 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
         <div className="flex items-center gap-2 text-xs">
           <button
             type="button"
-            onClick={() => handleExport('csv')}
+            onClick={() => handleExport("csv")}
             disabled={exporting !== null}
             className="flex items-center gap-1 rounded border border-(--color-border) px-2 py-1 font-medium text-(--color-fg) disabled:opacity-50"
           >
@@ -205,19 +250,21 @@ export function ResultsGrid({ sessionId, status, result, error, sql }: ResultsGr
           </button>
           <button
             type="button"
-            onClick={() => handleExport('xlsx')}
+            onClick={() => handleExport("xlsx")}
             disabled={exporting !== null}
             className="flex items-center gap-1 rounded border border-(--color-border) px-2 py-1 font-medium text-(--color-fg) disabled:opacity-50"
           >
-            <Download size={12} aria-hidden="true" /> {exporting === 'xlsx' ? 'Preparing…' : 'Excel'}
+            <Download size={12} aria-hidden="true" />{" "}
+            {exporting === "xlsx" ? "Preparing…" : "Excel"}
           </button>
           <button
             type="button"
-            onClick={() => handleExport('sql')}
+            onClick={() => handleExport("sql")}
             disabled={exporting !== null}
             className="flex items-center gap-1 rounded border border-(--color-border) px-2 py-1 font-medium text-(--color-fg) disabled:opacity-50"
           >
-            <Copy size={12} aria-hidden="true" /> {exporting === 'sql' ? 'Copying…' : 'Copy SQL'}
+            <Copy size={12} aria-hidden="true" />{" "}
+            {exporting === "sql" ? "Copying…" : "Copy SQL"}
           </button>
         </div>
       </div>

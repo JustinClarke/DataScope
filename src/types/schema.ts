@@ -1,6 +1,7 @@
 // Column-level classification output — DATASCOPE.md §8.
 
-export type SemanticType = 'Temporal' | 'Quantitative' | 'Categorical' | 'Textual' | 'Identifier';
+export type SemanticType =
+  "Temporal" | "Quantitative" | "Categorical" | "Textual" | "Identifier";
 
 /**
  * Raw `SUMMARIZE` extraction (§8 step 1) — one row per column, before semantic

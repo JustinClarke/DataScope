@@ -56,15 +56,121 @@ opening paragraph's "every small local model tested... fails the same class of b
 describes `Qwen3-1.7B`; it still accurately describes every other model in this document (the
 current 1.5B pin, Nano, and `Qwen2.5-Coder-0.5B`). See Probe 9 and the verdict below.
 
-**Relation to this folder's other experiments.** 01–13 (see [`README.md`](README.md)) attack
+**Relation to this folder's other experiments.** 01–13 (see [`README.md`](../README.md)) attack
 dataset-*narration* fabrication (F1–F3) under the ADR-010 synthesis seam — a different mechanism
 and a different rubric. This experiment is closer in spirit to 13/14/15: it asks how much a small
 local model can be trusted, scoped down to one concrete mechanism —
-[`src/services/toolLadder.ts`](../../../../src/services/toolLadder.ts)'s NL-question-to-SQL step in
-the in-browser analyst loop. It does not use the README's seven-dimension rubric (R1–R7) or the
-F1–F4 fixture set; those are specific to the narration-fabrication problem. The one invariant this
-experiment does borrow is **F4's spirit**: a single passing run certifies nothing, and every result
-below is flagged as single-pass for exactly that reason.
+[`src/services/toolLadder.ts`](../../../../../src/services/toolLadder.ts)'s NL-question-to-SQL step in
+the in-browser analyst loop. It does not use the parent README's seven-dimension rubric (R1–R7) or
+the F1–F4 fixture set; those are specific to the narration-fabrication problem. The one invariant
+this experiment does borrow is **F4's spirit**: a single passing run certifies nothing, and every
+result below is flagged as single-pass for exactly that reason.
+
+---
+
+## How this experiment is organised
+
+**Restructured 2026-08-07.** This was a single flat file,
+`_experiments/16-light-model-sql-ceiling.md`, through Probe 15. It grew past 1,100 lines and 15
+probes while remaining the most promising line of work in this folder, so it became a directory:
+this file is now the **parent record** at
+`_experiments/16-light-model-sql-ceiling/README.md`, and each new line of inquiry gets its own
+sibling doc. Nothing was split out of the parent in the move — Probes 1–15 and the Verdict stay
+here verbatim, because they are one continuous argument and splitting them would create a
+mirror-maintenance burden for no reading benefit.
+
+**What goes where, from here on:**
+
+- **This file** stays the spine: the governing finding, the running probe record, the open
+  questions list, and the Verdict. Every sub-experiment's *result* lands here as a one-paragraph
+  entry in the index below plus an update to the Verdict — the parent must remain readable on its
+  own.
+- **A sibling `16x-*.md`** holds a sub-experiment's full detail: its hypothesis, its exact
+  fixture/prompt deltas, its raw per-question tables, and its own caveats. Sub-experiments are
+  lettered (`16a`, `16b`, …) rather than continuing the probe numbering, because they are
+  *interventions on the harness* — changes to what the model is served or what the host does with
+  its output — not further probes of the model's unaided ceiling. Probe numbering (16+) stays
+  reserved for the latter.
+- **Harnesses stay flat** in [`eval/claude/16-light-model-sql-ceiling/`](../../../../../eval/claude/16-light-model-sql-ceiling/),
+  deliberately not mirrored into per-sub-experiment subfolders: the scripts already share
+  `probeShared.ts` and every sub-experiment reuses an existing fixture, so a nested layout would
+  split tightly-coupled files across directories and break the run commands recorded against every
+  probe above.
+
+### Sub-experiment index
+
+Origin: all four were raised after Probe 15 established that the three Probe 14 failures are
+**identifier-hygiene** failures (a typo'd table name, an unqualified column ambiguous across a
+join), not SQL-reasoning failures — the doc's own reading is that "every question that reached a
+clean join graph got the double-hop math right." That reframes the ceiling: the model is spending
+capacity on facts the host already holds and could simply serve it. Ordered so the cheapest,
+most premise-invalidating run goes first.
+
+| # | Question it answers | Status |
+| :--- | :--- | :--- |
+| [16a](16a-production-prompt.md) | Is the ceiling real, or an artifact of the probes serving a *thinner* schema prompt than production does? Every probe here hand-writes a bare `Tables:` DDL block; the app sends `pruneSchema`'s output, which also carries row counts, semantic types, and an inferred `Relationships:` block. | **done — 12/24 (N=3), *worse* than Probe 14's 15/24 on the identical fixture** |
+| [16b](16b-semantic-labels.md) | Are the semantic-type labels net-harmful? 16a found production labels `products.price` as **`Identifier`**, and three of its four failures misplace `price`. Run the same fixture three ways — labels as-is, labels hand-corrected, labels removed — to separate "wrong labels hurt" from "labels hurt." | **done — yes, net-harmful. 9 → 12 → 15 of 21 as labels go from shipped → corrected → removed.** `stripped` scores 18/24 overall, the best result any prompt has produced on this fixture, beating Probe 14's bare block while carrying *more* context than it. The original fan-out-annotation question is **not** covered and remains open |
+| 16c | Can the failures the retry rung provably can't recover be closed **deterministically** instead — nearest-name repair for a typo'd table, schema-driven qualification for an ambiguous column, alias binding for an unbound one — with no model call at all? | not started |
+| [16d](16d-intermediate-query.md) | Does letting the model build one intermediate view per hop (`create_view`/`derive_table`, within the ladder's existing follow-up budget) beat asking for the nested query in one shot? | **started, preliminary, handed off mid-run — N=1 on Probe 14's 3 failures: 1 fixed, 2 still fail (one now silently, via a bad-but-executable join condition the scratch step didn't catch). Regression check against the 5 previously-passing questions not yet run.** |
+| [16e](16e-structured-spec.md) | Can a structured spec (host compiles SQL, model never hand-writes identifiers) express the fixture at all, before spending a model run on it? | **both gates now checked. Vocabulary/compiler gate: passed — a standalone prototype (one new parameter `as`, a BFS join-path resolver over the `FkEdge` graph) compiled all 8 fixture questions to SQL matching gold exactly, real seeded data, a rejection check caught and fixed a real resolver bug first. Model-emission gate: failed — `Qwen3-1.7B` scored 0/8 execution-correct (3/8 first-attempt schema-valid) emitting JSON calls into that same compiler via a `STEP:`/`FINAL:` protocol, driven by a stuck-repetition failure (the same invalid bare-column reference repeated verbatim across retries) that more turns doesn't fix — a sharp contrast with the same model's 24/24 via plain SQL text on this identical fixture (Probes 7/9/11), pointing at the hand-rolled JSON protocol, not model capacity, as the bottleneck. Schema-constrained decoding (untested) is the next lever, not a bigger step budget.** |
+
+16a ran before the rest because it could invalidate their premise. It did not — it confirmed it,
+and inverted the expected direction: the ceiling is not an artifact of underfeeding, because
+production's *richer* prompt scores lower than the bare block the probes had been using. 16b then
+found the specific thing doing the damage, and that removing it beats every prompt this document
+has tried.
+
+**16d was started and handed off mid-run, preliminary only — see [16d](16d-intermediate-query.md).**
+Letting the model run intermediate scratch queries against real data before finalizing (rather than
+composing one nested query in one shot) fixed one of Probe 14's three failures (a typo'd table
+alias) but not the other two, and on one of those two the failure mode got *worse*: the scratch
+query itself contained a semantically wrong but syntactically valid join condition
+(`customers.customer_id = order_items.order_id`), which DuckDB doesn't reject, so the model
+"verified" a garbage intermediate result and built a silently wrong final answer on top of it —
+where the original one-shot failure at least threw a catchable error. N=1, only tested against the
+3 known failures; the regression check against the 5 previously-passing questions was never run.
+
+**A fifth direction, raised after 16b and not yet lettered — 16e, and on this evidence the most
+promising of the set.** Every failure in this experiment except one is *identifier hygiene*: a
+typo'd table, an unqualified column, an unbound alias, an invented column. All four are properties
+of asking a model to hand-write SQL text. The app already has the alternative and does not offer it
+to this model: [`operations.ts`](../../../../../src/lib/analyst/operations.ts)'s `aggregate`
+operation takes `{ from, join?, metrics, groupBy?, where?, having? }`, and its `MetricFn` includes
+`sum_product` — "exactly two columns to multiply then sum", precisely the `price × quantity`
+shape this fixture keeps failing on. But
+[`toolLadder.ts`](../../../../../src/services/toolLadder.ts)'s rungs are
+`'sql' | 'continue-or-answer' | 'answer'`, so the light model is asked for SQL text and nothing
+else. Every probe in this document has measured the one path that requires it to hand-write
+identifiers. If the model emitted a validated spec and the *host* compiled the SQL, the host would
+qualify every column and resolve every name — making the entire clerical failure class
+unrepresentable rather than merely retry-catchable. This is the same producer/validator seam D55
+already established for ViewSpec. It would **not** fix the grain failure below, which needs
+composition (16d). The untested risk was whether a 1.7B emits schema-valid JSON reliably, and
+whether constrained decoding interacts badly with this model's `<think>` chains — cheap to probe,
+and the thing to probe first.
+
+**Update (2026-08-07): probed — 0/8, and the compiler/validator half of the thesis holds while the**
+**model-emission half does not, at least via free-text JSON.** `16eModelEmissionProbe.ts` ran
+`Qwen3-1.7B` against 16e's own compiler (`compileAndRun`, the exact code the prototype above proved
+correct) through a `STEP:`/`FINAL:` JSON protocol, up to 4 steps per question. Result: **0/8
+execution-verified correct, 3/8 first-attempt schema-valid.** The compiler caught every malformed
+spec with a specific, correct error — never a silently wrong answer from bad JSON — but the model
+did not reliably produce specs that cleared validation. The dominant failure was a stuck loop: in 5
+of 8 questions the model repeated the *identical* invalid construct (same bare unqualified column,
+same missing field) across 3–6 consecutive turns despite being told exactly what was wrong each
+time — evidence this is a temperature-0 decoding attractor, not slow convergence, so a bigger step
+budget would likely reproduce the same loop for longer rather than escape it. This is a sharp
+contrast with the same model's 24/24 stable via plain SQL text on this identical fixture (Probes
+7/9), including proven self-correction from real execution-error feedback (Probe 11: 3/3 recovered).
+That contrast points at the hand-rolled JSON protocol — invented for this experiment, not a shape the
+model has likely seen much of in training — as the bottleneck, not the model's underlying capacity or
+its comprehension of the vocabulary (which was reasonably good: correct `sum_product` and `as`-chain
+usage in several cases). The untested lever that actually follows from this: `qwen3:1.7b` advertises
+a `tools` capability in Ollama, meaning schema-constrained decoding is available and would make most
+of the observed failures (bare column, missing field, wrong `where` shape) structurally
+unrepresentable rather than merely rejected after the fact — a different kind of intervention than
+more turns. Full detail, per-question table, and caveats in [16e](16e-structured-spec.md)'s
+"Model-emission probe" section.
 
 ---
 
@@ -76,7 +182,7 @@ memory. Two hard constraints on any replacement: ≤1.5GB download, and it must 
 `@mlc-ai/web-llm`'s prebuilt model list — only MLC-converted quantized models run in WebLLM.
 
 This model does not reliably emit native structured `tool_calls`. `toolLadder.ts` works around that
-with a deterministic prose ladder ([`src/services/toolLadder.ts`](../../../../src/services/toolLadder.ts)):
+with a deterministic prose ladder ([`src/services/toolLadder.ts`](../../../../../src/services/toolLadder.ts)):
 ask for exactly one DuckDB `SELECT` statement in plain text, extract it with `extractSql()` (a regex
 over a fenced or bare `SELECT`/`WITH`), execute it, then a bounded number of continue-or-answer
 rounds (`MAX_UNSTRUCTURED_FOLLOW_UPS = 2`). The right test for any candidate model is therefore not
@@ -106,7 +212,7 @@ exactly (same base weights, different scheme), no actual DuckDB execution check.
 
 The Llama-3.2-1B "failures" above were real evidence of a harness bug, not a model bug:
 `extractSql()` only matched a `` ```sql `` or bare fence. Fixed this session —
-[`toolLadder.ts:65`](../../../../src/services/toolLadder.ts):
+[`toolLadder.ts:65`](../../../../../src/services/toolLadder.ts):
 
 ```diff
 - const fence = text.match(/```(?:sql)?\s*([\s\S]*?)```/i);
@@ -206,7 +312,7 @@ through Vite, which surfaced two build-only failure modes worth remembering if t
    `WebAssembly.compile: HTTP status code is not ok` rather than a clear 404.
 
 Neither issue exists in the real app, which already resolves both through Vite
-([`src/workers/duckdb.worker.ts`](../../../../src/workers/duckdb.worker.ts)); they're artifacts of
+([`src/workers/duckdb.worker.ts`](../../../../../src/workers/duckdb.worker.ts)); they're artifacts of
 standing up an isolated test page outside the bundler, recorded here so a future probe doesn't
 re-debug them from scratch.
 
@@ -277,8 +383,8 @@ not artifacts of the test:
    respectively — the most reasoning-heavy questions in the set, consistent with hitting the ceiling
    under the tighter budget.
 
-Harness: [`flat-schema-webllm-probe.html`](../../../../eval/claude/16-light-model-sql-ceiling/flat-schema-webllm-probe.html),
-run via a real WebGPU Chrome tab per the folder's [`README.md`](../../../../eval/claude/16-light-model-sql-ceiling/README.md).
+Harness: [`flat-schema-webllm-probe.html`](../../../../../eval/claude/16-light-model-sql-ceiling/flat-schema-webllm-probe.html),
+run via a real WebGPU Chrome tab per the folder's [`README.md`](../../../../../eval/claude/16-light-model-sql-ceiling/README.md).
 
 ## Probe 6 — Qwen3-1.7B over Ollama, flat schema, real execution
 
@@ -287,7 +393,7 @@ Ollama serves as the same kind of proxy Probe 1 used, with the caveat restated t
 weights, different quantization scheme than MLC's `q4f16_1`. Unlike Probe 1, this one actually
 executes the generated SQL and checks it against ground truth, using the headless Node DuckDB
 engine already built for the D40 eval harness
-([`eval/duckdb/duckdb.ts`](../../../../eval/duckdb/duckdb.ts)) rather than a syntactic check.
+([`eval/duckdb/duckdb.ts`](../../../../../eval/duckdb/duckdb.ts)) rather than a syntactic check.
 
 Same fixture, same 8 questions and gold SQL as Probes 4 and 5, `qwen3:1.7b` pulled via
 `ollama pull`, temperature 0, one HTTP call per question against `localhost:11434`.
@@ -309,7 +415,7 @@ got right. Per-query latency was 7–11 seconds against local Ollama, materially
 Nano (Probe 3: ~1–10s) or what WebLLM/WebGPU would be expected to deliver once quantized and
 running in-browser; not directly comparable to either.
 
-Harness: [`ollamaFlatSchemaProbe.ts`](../../../../eval/claude/16-light-model-sql-ceiling/ollamaFlatSchemaProbe.ts),
+Harness: [`ollamaFlatSchemaProbe.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/ollamaFlatSchemaProbe.ts),
 run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollamaFlatSchemaProbe.ts qwen3:1.7b`.
 
 **Caveats — this is one clean run, not a reversal:**
@@ -356,10 +462,10 @@ text. `qwen3:1.7b`, temperature 0, ground truth freshly computed against the sam
 the first result in this document where a model clears the 4-table schema at all, let alone
 stably, and it clears it on both documented failure classes (grain, join+group hallucination).
 
-Harness: [`ollama4TableProbe.ts`](../../../../eval/claude/16-light-model-sql-ceiling/ollama4TableProbe.ts),
+Harness: [`ollama4TableProbe.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/ollama4TableProbe.ts),
 run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollama4TableProbe.ts qwen3:1.7b 3`. Shares
 extraction/matching/repeat-loop code with Probe 6 via a new
-[`probeShared.ts`](../../../../eval/claude/16-light-model-sql-ceiling/probeShared.ts), which also
+[`probeShared.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/probeShared.ts), which also
 retrofit `--repeats` onto Probe 6's script (re-run as a regression check: still 8/8).
 
 **Caveats — same two as Probe 6, now the load-bearing ones:**
@@ -409,7 +515,7 @@ noticeable in an interactive analyst loop, independent of whether the answer is 
 - **Latency numbers are this machine/connection only** — not a general claim about WebGPU
   performance across hardware.
 
-Harness: [`4table-webllm-probe.html`](../../../../eval/claude/16-light-model-sql-ceiling/4table-webllm-probe.html).
+Harness: [`4table-webllm-probe.html`](../../../../../eval/claude/16-light-model-sql-ceiling/4table-webllm-probe.html).
 
 **Update (2026-08-07): re-run at N=3 on the real WebGPU build — 24/24, fully stable.** The harness
 was extended to run the question set 3 times against the same loaded engine and report
@@ -518,7 +624,7 @@ not a repeat of the doc's existing bug taxonomy.
   questions here and all 24/24 of Probe 7's harder 4-table joins; this is a narrower,
   real, but schema-shape-dependent miss.
 
-Harness: [`ollamaOneJoinProbe.ts`](../../../../eval/claude/16-light-model-sql-ceiling/ollamaOneJoinProbe.ts),
+Harness: [`ollamaOneJoinProbe.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/ollamaOneJoinProbe.ts),
 run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollamaOneJoinProbe.ts [model] [repeats]`.
 
 ## Probe 12 — Qwen3-1.7B over WebLLM, one-join schema, real execution, N=3
@@ -549,7 +655,7 @@ still the slowest — "which region generates the most revenue" averaged 41.6s).
 4-table, one-join) now has an N≥3 execution-verified clean result on the real MLC/WebGPU build
 for the candidate model, not just the Ollama proxy.
 
-Harness: [`one-join-webllm-probe.html`](../../../../eval/claude/16-light-model-sql-ceiling/one-join-webllm-probe.html).
+Harness: [`one-join-webllm-probe.html`](../../../../../eval/claude/16-light-model-sql-ceiling/one-join-webllm-probe.html).
 
 ---
 
@@ -582,7 +688,7 @@ this class of error for Qwen3-1.7B. The one thing this doesn't cover is Probe 3/
 class (wrong-but-executing SQL, nothing for the retry to trigger on) — but that's a pre-existing
 gap already noted in this document, not something Probe 10/11 changes.
 
-Harness: [`ollamaRetryProbe.ts`](../../../../eval/claude/16-light-model-sql-ceiling/ollamaRetryProbe.ts),
+Harness: [`ollamaRetryProbe.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/ollamaRetryProbe.ts),
 run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollamaRetryProbe.ts [model] [repeats]`.
 
 ---
@@ -626,8 +732,14 @@ The two stable 4-table failures are the doc's exact governing bug taxonomy:
 
 The 4-table run was killed after being stuck for 10+ minutes on a single question ("average
 order value" — the hardest reasoning question in the set) with the Ollama process alive and the
-model loaded, not crashed. Root cause: neither `probeShared.ts` nor `toolLadder.ts`/
-`webllmProvider.ts` sets `num_predict`/`max_tokens` on this call path, and `Qwen3-0.6B` is a
+model loaded, not crashed. Root cause: `probeShared.ts` sets no `num_predict`/`max_tokens` on
+this call path. (**Correction, added at Probe 15:** the parenthetical originally here also named
+`toolLadder.ts`/`webllmProvider.ts` as setting no cap at all — checked directly against the code
+while writing Probe 15's build note, and that part was wrong.
+[`webllmProvider.ts:76`](../../../../../src/services/webllmProvider.ts) does set
+`{ maxTokens: 256 }` on every rung; it was never the unbounded path this sentence implied, just a
+cap sized for the non-reasoning model that's actually shipped, not for a reasoning-model
+candidate. See open item 13 and Verdict part 7.) `Qwen3-0.6B` is a
 reasoning model — on a question that requires genuine multi-step reasoning (collapsing a join's
 fan-out before averaging), unbounded generation can run for a very long time before emitting
 final SQL or exhausting Ollama's default 4096-token context. This reproduced on a second,
@@ -729,8 +841,114 @@ error shape for the retry rung to prove itself against; also untested.
 - **Whether the retry rung actually recovers these three failures is untested**, not assumed — see
   above.
 
-Harness: [`ollamaNestedGrainProbe.ts`](../../../../eval/claude/16-light-model-sql-ceiling/ollamaNestedGrainProbe.ts),
+Harness: [`ollamaNestedGrainProbe.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/ollamaNestedGrainProbe.ts),
 run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollamaNestedGrainProbe.ts qwen3:1.7b 3`.
+
+---
+
+## Probe 15 — does the shipped retry rung recover Probe 14's three failures?
+
+The direct follow-up to Probe 14's own speculation: it guessed the retry rung "plausibly
+already self-healing" 2 of its 3 stable failures, on the strength of Probe 11's unrelated
+result, but never actually tested it. This replays Probe 11's exact retry shape — first-attempt
+SQL as an assistant turn, the real DuckDB error as a user turn, `SQL_INSTRUCTION` again — against
+all three of Probe 14's stable failures, same 4-table schema/seed, `qwen3:1.7b`, N=3 each.
+
+| Case | Bug (from Probe 14) | Recovered |
+| :--- | :--- | :--- |
+| Highest-spend question | hallucinated table alias (`product` vs `products`) | **3/3** |
+| West-region average-spend question | ambiguous `customer_id` after a join | **0/3** |
+| Triple-hop average-of-averages question | ambiguous `customer_id` after a join | **0/3** |
+
+**The hallucinated-alias case recovers cleanly, exactly like Probe 11's case.** All 3 retries
+re-emitted the corrected query (`products.price` in place of `product.price`) and got the right
+answer. No surprises here — this is a new error *shape* for the retry rung (a typo'd table name
+rather than a missing qualifier), but the mechanism handles it the same way.
+
+**Both ambiguous-`customer_id` cases fail to recover at all — a materially different result from
+Probe 11's identical bug class.** Every one of the 6 retries (3 runs × 2 cases) ends the same way:
+`no_sql_extracted (done_reason: length)`, empty `content`. This is not the model producing a bad
+answer — it's producing *no* answer, having exhausted `num_predict` (2048, the cap this probe's
+script was missing until now — see "Build note" below) mid-reasoning without ever reaching SQL.
+Reading the model's own chain-of-thought (captured via a direct, uncapped-then-capped `curl`
+replay against the west-region case's exact retry prompt, outside the probe script) shows why:
+the model correctly restates the error, correctly identifies that the subquery's `customer_id`
+"is from the customers table," then loops — "So why is it ambiguous? ... Wait, maybe the subquery
+is using customer_id from the orders table. But how? ... I'm stuck. Maybe the error is
+because..." — revisiting the same dead-end line of reasoning with near-identical phrasing rather
+than converging on "qualify both references." Uncapped, this ran past a 5-minute `curl -m 300`
+with no response at all (genuinely hung, not slow).
+
+**Doubling the token budget doesn't fix it — a real, current data point, not an assumption.**
+The same west-region retry prompt was sent again at `num_predict: 4096` (double Probe 15's
+default cap), via a direct API call replaying the exact messages `ollamaNestedGrainRetryProbe.ts`
+sends. Result: `done_reason: "length"` again, `content` still empty, `eval_count: 4096` (the full
+budget consumed), 120 seconds wall-clock. The response's `thinking` field (18,886 characters —
+on this Ollama version the reasoning trace is a separate `message.thinking` field, not an inline
+`<think>...</think>` block in `content` the way Probe 5 found on WebLLM; a harness detail, not a
+new model behavior) shows the loop is genuinely non-convergent, not just slow: partway through
+(around character 9000 of ~18,886) the model writes "I'm stuck," then spends the remaining ~10,000
+characters cycling through near-verbatim restatements of the same failed hypothesis ("I think I
+need to conclude that the error is due to... But how? ... I think I need to write the query
+again...") all the way to the budget ceiling. More tokens didn't move it closer to an answer —
+it just extended the identical unproductive loop. This is evidence against "it would converge
+given enough budget," not proof (no budget is infinite, and 8192+ was not tested), but the
+tail-end repetition is a stronger signal than a simple timeout would have been.
+
+**Why this diverges from Probe 11, despite being the identical bug class.** Probe 11 showed
+`Qwen3-1.7B` recovers this *exact* `Ambiguous reference to column name "customer_id"` error 3/3,
+on Probe 10's one-join schema. The error text, the fix (qualify both references), and the model
+are all the same here. What differs is what the model has to hold in context to find the fix:
+Probe 10's case is a two-table join with the ambiguity at the top level of the query; Probes
+14/15's failing cases require the same fix *inside a subquery* that's itself nested inside a join
+across three or four tables. Probe 15 confirms, with real retry data rather than the
+speculation Probe 14 left behind, the hypothesis raised at Probe 14 was too optimistic about:
+retry-recovery success depends on how much structural complexity surrounds the required fix, not
+just on whether the failure is in the execution-error class. An error being "catchable" by the
+retry rung and an error being *recoverable* by it turn out to be different properties.
+
+**Relation to Probe 13's `Qwen3-0.6B` stall.** Probe 13 flagged an unbounded-generation hang on
+`Qwen3-0.6B` — a smaller, more clearly under-provisioned model — on a hard first-pass question,
+with no `num_predict` cap on that code path at all. Probe 15 reproduces the same failure *shape*
+(reasoning-model, no token cap, indefinite generation) on the candidate model, `Qwen3-1.7B`, which
+has cleared every other fixture in this document stably. The trigger here isn't model size or a
+first-pass question — it's a multi-turn retry carrying a nested-query error, a narrower and more
+specific condition than Probe 13's. Both findings point at the same missing piece: nothing on
+this code path bounds generation by default, and this document has now found two independent ways
+that gap turns into a real hang rather than a slow-but-eventual answer.
+
+**Correction to Probe 14's text.** Probe 14 wrote that the retry rung "plausibly already
+self-healing" 2 of its 3 failures. That's now confirmed wrong for those two (0/3 each); it's
+confirmed right only for the third (the hallucinated-alias case, 3/3). The Verdict section below
+is updated accordingly.
+
+**Build note — the probe script itself was missing a token cap until this session.**
+`ollamaNestedGrainRetryProbe.ts`'s `askOllamaChat()` set no `num_predict`, the same gap Probe 13
+flagged in `probeShared.ts`'s Ollama call (not, it turns out, in production's `webllmProvider.ts`
+— see the correction to Probe 13 above). Fixed here: a `NUM_PREDICT` constant (CLI-overridable as
+a 4th argument, default 2048, mirroring Probe 5's WebLLM fix) is now threaded into every Ollama
+call this script makes, and `done_reason` is surfaced in the `no_sql_extracted` log line
+specifically so a future run can tell a real truncation apart from an extraction bug at a glance.
+
+**Caveats:**
+- **N=3 for all three cases, real script run, not a manual approximation** — the west-region and
+  triple-hop failures are fully stable (0/3, byte-identical `done_reason: length` outcome every
+  run), same rigor as this document's other N=3 reads.
+- **The 4096-token retest was N=1**, a single direct API call outside the probe script's repeat
+  loop — informative about the shape of the failure (genuine non-convergence, not truncation),
+  not a stability claim at that budget.
+- **8192+ token budgets remain untested.** The tail-end repetition at 4096 is suggestive that
+  more budget wouldn't help, not conclusive — a model could theoretically break out of a
+  20,000-character loop given enough room. Not pursued further here: the cost of finding out
+  (multi-minute hangs, `num_predict` values well past what a shipped product would ever wait for)
+  outweighs what the answer would change, since even a late convergence at, say, 8192 tokens would
+  still be a UX non-starter for an interactive analyst loop.
+- **Ollama, not the MLC/WebGPU build** — same standing caveat as Probe 14 itself, unresolved here.
+- **This bypasses the actual retry-capable provider**, same as Probe 11 and Probe 14 — it replays
+  the ladder's retry *shape*, not a call through `webllmProvider.ts` itself.
+
+Harness: [`ollamaNestedGrainRetryProbe.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/ollamaNestedGrainRetryProbe.ts),
+run via `npx tsx eval/claude/16-light-model-sql-ceiling/ollamaNestedGrainRetryProbe.ts [model] [repeats] [num_predict]`.
 
 ---
 
@@ -830,14 +1048,14 @@ layered on top of a real fix to the ceiling above — not as a replacement archi
 2. ~~4-table retest for Qwen3-1.7B.~~ **Done — Probe 7.** 24/24 across 3 repeats, stable, both
    documented bug classes cleared.
 3. ~~Execution-retry rung.~~ **Already shipped, not a gap.** Checked the code, not just the doc:
-   [`toolLadder.ts`](../../../../src/services/toolLadder.ts)'s `ladderRung()` already returns to
+   [`toolLadder.ts`](../../../../../src/services/toolLadder.ts)'s `ladderRung()` already returns to
    the `sql` rung whenever the last tool outcome is `'error'` (line ~108), and
-   [`webllmProvider.ts`](../../../../src/services/webllmProvider.ts)'s `toChatMessages()` already
+   [`webllmProvider.ts`](../../../../../src/services/webllmProvider.ts)'s `toChatMessages()` already
    feeds the DuckDB error text back verbatim as `"Result of running that SQL:\n${...}"` (line ~41)
    — so the model sees the real error on the retry prompt, not just a generic "try again." It's
    bounded by the turn's overall `MAX_PROVIDER_CALLS` cap (`ai.ts:87`, 24), not a separate budget,
    and it's already covered by a test:
-   [`webllmProvider.test.ts:134`](../../../../src/services/webllmProvider.test.ts) — "asks for
+   [`webllmProvider.test.ts:134`](../../../../../src/services/webllmProvider.test.ts) — "asks for
    corrected SQL after an error envelope, not an answer." Probe 8 gives this a fresh reason to
    matter: all 4 of `Qwen2.5-Coder-0.5B`'s 4-table failures are DuckDB execution errors (unlike the
    grain class), so the shipped retry rung has something to trigger on for exactly that model —
@@ -886,22 +1104,87 @@ layered on top of a real fix to the ceiling above — not as a replacement archi
     (a hallucinated/typo'd table alias, and Probe 10's ambiguous-`customer_id`-after-a-join)
     recurring under added structural complexity, not new grain-reasoning failures — every question
     that reached a clean join graph got the double/triple-hop math right. New open items this
-    surfaces: (a) whether the shipped retry rung recovers these three failures the way Probe 11
-    showed it recovers Probe 10's — untested; (b) a WebGPU retest, the standing pattern for every
-    other fixture in this document.
-11. **Three other candidate directions for finding 1.7B's ceiling, not yet run:** deeper join
+    surfaces: (a) ~~whether the shipped retry rung recovers these three failures~~ **done — Probe
+    15: only 1 of 3 (the alias case, 3/3). The two ambiguous-`customer_id` cases don't recover at
+    all (0/3 each) — the model exhausts its token budget in a non-convergent reasoning loop instead
+    of emitting SQL, confirmed not to be a simple budget shortfall (doubling the cap to 4096 just
+    extended the identical loop).** (b) a WebGPU retest, the standing pattern for every other
+    fixture in this document — still open.
+11. ~~**Are these results measured against the prompt production actually sends?**~~ **Answered —
+    [16a](16a-production-prompt.md), and the answer was no.** Every probe in this document
+    hand-writes a bare `Tables:` DDL block; `src/services/ai.ts` sends `pruneSchema()`'s output,
+    which additionally carries row counts, classifier-assigned semantic types, and an inferred
+    `Relationships:` block. Re-running Probe 14's fixture with the real production prompt (calling
+    `pruneSchema`/`classifyColumns` directly, not imitating them) scored **12/24 vs Probe 14's
+    15/24** — richer input, lower score, stable at N=3. Two things this surfaces that belong in
+    this list rather than only in 16a's write-up: **(a)** the ambiguous-`customer_id` bug is *not*
+    fixed by telling the model how the tables join — it persisted, on a different question;
+    **(b)** production's classifier labels `products.price` as **`Identifier`**
+    (`IDENTIFIER_UNIQUE_RATIO` fires on a 40-row table with 40 distinct prices), making the measure
+    column typographically identical to the key columns, and three of 16a's four failures misplace
+    `price` in some form. That is a **shipped, provider-independent prompt defect**, not a
+    local-model problem — `pruneSchema` builds the same block for the cloud router. Whether it
+    matters at cloud-model capacity is untested.
+14. ~~**Are the semantic-type labels net-harmful, or just miscalibrated?**~~ **Answered —
+    [16b](16b-semantic-labels.md): net-harmful.** Three arms on Probe 14's fixture, one variable
+    (the rendered label), N=3: shipped labels **9/21**, five labels hand-corrected **12/21**,
+    labels removed entirely **15/21**, on the 7 questions all arms could answer. Monotonic in
+    three-point steps — correcting the classifier buys back half the gap, and the other half is
+    only available by not sending the labels at all. `stripped` scores **18/24** over the full set,
+    the best any prompt has scored on this fixture, and it beats Probe 14's bare block (15/24)
+    while carrying *more* context (row counts and `Relationships:` are still present). New open
+    items this surfaces: (a), (b) and (c) below.
+15. **The `Relationships:` block may invite joins the question doesn't need.** 16a raised this as a
+    secondary hypothesis; 16b's `stripped` arm produced it cleanly. "Average distinct products per
+    order" — which passes in Probe 14, `as-is` and `corrected` — fails 0/3 under `stripped` because
+    the model joins `products` (an edge the block states unconditionally) and then trips on
+    `Ambiguous reference to column name "product_id"`. Untested as its own variable: a fourth arm
+    holding `stripped` and removing or conditionalizing the relationships block would isolate it.
+16. **A structured qualification hint, untested and cheap.** The single most common failure across
+    every probe and arm in this document is an unqualified column ambiguous across a join. The host
+    knows exactly which column names appear in more than one table in a question's pruned scope, and
+    can say so in one line. This is ~5 lines against the existing harness and targets the failure
+    class Probe 15 proved the retry rung cannot recover. Not run.
+17. **Two separable shipped changes, which should not be conflated.** (a) Tighten
+    `IDENTIFIER_UNIQUE_RATIO` so a near-unique *measure* on a small table stops reading as a key —
+    this affects every consumer of `semanticType`, not just this prompt, and 16b supports it only
+    indirectly. (b) Stop rendering `semanticType` into the NL→SQL schema prompt — this affects only
+    this prompt, and 16b supports it directly. Neither is made; both are now evidenced.
+18. **A prompt change produced a hang, not a wrong answer — for the second time in this document.**
+    Under 16b's `corrected` labels, "average orders per customer" — the *simplest* double-hop
+    question in the set, passing 3/3 everywhere else — kills the Ollama call outright
+    (`TypeError: fetch failed`), deterministically, 6 attempts across two independent runs, with the
+    questions either side completing normally. The harness sets no `num_predict`, and Probe 15
+    documented this model's non-convergent spiral when its prompt argues against the answer — the
+    corrected arm is the only one labelling `orders.customer_id` as `Identifier`, i.e. telling the
+    model the one column it needs is "not an analysis dimension." That is a hypothesis with one
+    precedent, not a finding. The diagnostic is the instrumentation Probe 15 already added to
+    `ollamaNestedGrainRetryProbe.ts` (`num_predict` + `done_reason`), applied to this single call.
+    **This is the first thing to run next session.**
+12. **Three other candidate directions for finding 1.7B's ceiling, not yet run:** deeper join
     chains (5–6 tables, or a join-of-joins — past the current max of 3-way joins via
     `order_items`); ambiguous/underspecified NL questions (every question in this document so far
     has one unambiguous gold answer); larger row counts / messier data (nulls, duplicate names,
     mixed types — current fixtures are clean synthetic data).
+13. ~~Production's token cap is real but sized for the wrong model.~~ **Superseded — the swap
+    happened.** As of this session, `src/services/webllm.ts`'s pin is `Qwen3-1.7B-q4f16_1-MLC` (not
+    the 1.5B coder this item was written against), `webllmProvider.ts:78` sends `maxTokens: 2048`
+    on every rung (Probe 5/9/12's fix, mirrored into product code), and `toolLadder.ts` now exports
+    `stripThink()`, applied before parsing/display — the `<think>`-stripping fix this item said was
+    "unmirrored" is mirrored. **This is uncommitted in the working tree, not yet a shipped commit** —
+    worth flagging so it isn't lost. Probe 15's specific spiral (ambiguous-`customer_id`-in-a-subquery
+    retry exhausting the budget with no SQL emitted) is therefore now live in the app, not just in a
+    probe script — a real ~90s hang with no visible error, not a hypothetical landmine anymore. See
+    16c (deterministic repair, so the retry rung never has to trigger on this class) and 16e
+    (structured spec, same effect via a different mechanism) for what closes it.
 
 ## Artifacts
 
 - Probe 3/4 harnesses: standalone HTML pages built in-session under the scratchpad directory
   (ephemeral, not committed — noted here only so the build notes above are reproducible, not as a
   pointer to a persisted asset).
-- Probe 5–14 harnesses: **committed**, under
-  [`eval/claude/16-light-model-sql-ceiling/`](../../../../eval/claude/16-light-model-sql-ceiling/):
+- Probe 5–15 harnesses: **committed**, under
+  [`eval/claude/16-light-model-sql-ceiling/`](../../../../../eval/claude/16-light-model-sql-ceiling/):
   `flat-schema-webllm-probe.html` (Probe 5, WebLLM/Qwen3-1.7B, flat schema, N=1, 8/8),
   `4table-webllm-probe.html` (Probe 9, WebLLM/Qwen3-1.7B, 4-table schema, now N=3, 24/24 stable),
   `one-join-webllm-probe.html` (Probe 12, WebLLM/Qwen3-1.7B, one-join schema, N=3, 24/24 stable),
@@ -910,14 +1193,32 @@ layered on top of a real fix to the ceiling above — not as a replacement archi
   `ollamaOneJoinProbe.ts` (Probe 10, one-join schema, same two models),
   `ollamaRetryProbe.ts` (Probe 11, replays the shipped ladder's exact retry shape against
   Probe 10's two stable failures), `ollamaNestedGrainProbe.ts` (Probe 14, nested/compound grain,
-  same 4-table schema/seed as Probes 7/8, Qwen3-1.7B only so far, 15/24 stable), and
-  `probeShared.ts` (extraction/matching/repeat-loop code shared by the Ollama scripts). The Ollama
-  scripts take `[model] [repeats]` as CLI args (`[model]` only for `ollamaRetryProbe.ts`, which has
-  one seeded case per model). Folder
-  [`README.md`](../../../../eval/claude/16-light-model-sql-ceiling/README.md) documents how to run
+  same 4-table schema/seed as Probes 7/8, Qwen3-1.7B only so far, 15/24 stable),
+  `ollamaNestedGrainRetryProbe.ts` (Probe 15, replays the same retry shape as
+  `ollamaRetryProbe.ts` against Probe 14's three stable failures; now takes an optional
+  `num_predict` CLI arg, default 2048), and `probeShared.ts` (extraction/matching/repeat-loop code
+  shared by the Ollama scripts). The Ollama scripts take `[model] [repeats]` as CLI args
+  (`[model]` only for `ollamaRetryProbe.ts`, which has one seeded case per model;
+  `ollamaNestedGrainRetryProbe.ts` additionally takes `[num_predict]` as a 3rd arg).
+  **Sub-experiment harnesses** live in the same flat folder:
+  [`16aProductionPromptProbe.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/16aProductionPromptProbe.ts)
+  (16a — Probe 14's fixture under production's real `pruneSchema` prompt; imports
+  `classifyColumns`/`pruneSchema` from `src/` rather than imitating their output, and takes
+  `--print-prompts` to dump the built prompt per question without calling the model), and
+  [`16bLabelAblationProbe.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/16bLabelAblationProbe.ts)
+  (16b — the same prompt three ways; `--print-prompts` dumps each arm, `--arms=as-is,corrected`
+  restricts the run, and it asserts the arms prune identically before calling the model). Two
+  shared modules keep the comparisons honest:
+  [`nestedGrainFixture.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/nestedGrainFixture.ts)
+  — Probe 14's schema block, questions, gold SQL and seed, extracted byte-for-byte so Probe 14 and
+  16a import one fixture and cannot drift — and
+  [`productionPrompt.ts`](../../../../../eval/claude/16-light-model-sql-ceiling/productionPrompt.ts)
+  — 16a's table profiling and FK edge set, extracted so 16b's control arm reproduces 16a's prompt
+  structurally rather than by copy (verified byte-identical across the extraction). Folder
+  [`README.md`](../../../../../eval/claude/16-light-model-sql-ceiling/README.md) documents how to run
   the browser harnesses (Probes 3/4/5/9/12); the Ollama scripts need `ollama serve` running and
   the model pulled, no browser or HTTP server required.
-- Real code change: [`toolLadder.ts:65`](../../../../src/services/toolLadder.ts) fence-regex fix
+- Real code change: [`toolLadder.ts:65`](../../../../../src/services/toolLadder.ts) fence-regex fix
   (see "Fix landed as a byproduct" above).
 
 ## Verdict
@@ -1013,3 +1314,84 @@ area to fire on as query structure grows, largely still error-shaped and therefo
 retry-catchable.** Still open: whether this holds on the real WebGPU build (untested for this
 fixture), and whether the retry rung actually closes these three specific failures (plausible from
 Probe 11, not directly confirmed).
+
+**Update (2026-08-07, part 7): Probe 15 tested it, and part 6's "plausibly already self-healing"
+call was wrong for two of the three failures — a correction, not a supplement.** The retry rung
+recovers the hallucinated-table-alias case cleanly (3/3), exactly like Probe 11's case. It does
+**not** recover either ambiguous-`customer_id` case (0/3 each, fully stable) — the model doesn't
+produce a wrong retry, it produces no retry at all, exhausting its token budget in a repetitive,
+non-convergent chain-of-thought instead of emitting corrected SQL. This was checked at double the
+usual token budget too (4096 vs. Probe 5's 2048 default), specifically to rule out "it would
+converge given more room": it didn't, `done_reason` was still `"length"`, and the reasoning trace
+shows the model explicitly stuck and looping through to the new, larger ceiling rather than
+trending toward an answer late. **Net effect on the doc's model of the retry rung:** an execution
+error being retry-*catchable* (the DuckDB error is real and gets fed back) is not the same property
+as being retry-*recoverable* — Probe 11 showed the identical error class recovers when the fix is
+one join away from the ambiguity; Probe 15 shows it does not reliably recover when the same fix is
+buried inside a subquery nested in a multi-table join, even though nothing about the *error text*
+changed. This narrows what "the retry rung already handles it" can be claimed for going forward:
+true for simple structural contexts, unconfirmed and now actively counter-evidenced for complex
+ones. Separately, Probe 15 surfaced a real, specific product-code finding while checking this:
+[`webllmProvider.ts:76`](../../../../../src/services/webllmProvider.ts) hardcodes `maxTokens: 256` on
+every rung, which is a non-issue for the non-reasoning 1.5B pin shipping today but would need to
+rise to at least 2048 (mirroring Probe 5/9/12, not just the `<think>`-stripping fix Probe 5 already
+flagged) before any reasoning-model candidate from this document could be promoted to that pin
+without immediately reproducing Probe 15's silent-truncation failure mode.
+
+**Update (2026-08-07, part 8): every result above was measured against a prompt the app does not
+send — and the real one is worse.** Sub-experiment [16a](16a-production-prompt.md) re-ran Probe
+14's fixture with the only change being the schema block: production's `pruneSchema()` output
+(row counts, classifier semantic types, an inferred `Relationships:` block) in place of the
+hand-written `Tables:` DDL every probe here has used. **12/24 versus Probe 14's 15/24**, stable at
+N=3, on a byte-identical fixture now shared by both scripts. Three consequences for this
+document's model of the ceiling:
+
+1. **The ceiling is not an artifact of underfeeding.** This was the cheap way that Probes 1–15
+   could have been invalidated, and it isn't — if anything they were measured under favourable
+   conditions. The remaining sub-experiments keep their premise.
+2. **"More structure" is not monotonic.** Richer schema description made this model *worse* at the
+   schema. The `Relationships:` block did not fix the ambiguous-`customer_id` bug Probe 15 proved
+   unrecoverable by retry — that bug simply moved to a different question.
+3. **A shipped, provider-independent prompt defect surfaced.**
+   [`classifier.ts`](../../../../../src/lib/classifier.ts)'s `IDENTIFIER_UNIQUE_RATIO` fires on
+   `products.price` (40 distinct values over 40 rows), so production tells the model its measure
+   column is an `Identifier` — the same label as every key column in the block. Three of 16a's
+   four failures misplace `price` (`order_items.price`, an unbound `p.price`, an invented
+   `oi.product_price`), where Probe 14 on the bare block reached `products.price` correctly and
+   failed only by typo'ing the table name. `pruneSchema` is provider-independent, so the cloud
+   router's prompt carries the same defect; whether it matters at cloud-model capacity is
+   untested. Confirming or clearing the causal link is the re-scoped 16b.
+
+**Update (2026-08-07, part 9): 16b confirmed the causal link and then overshot it — the labels are
+not miscalibrated, they are net-harmful.** Three arms on Probe 14's fixture, one variable (the
+rendered semantic-type label), everything else held from 16a, N=3. On the 7 questions every arm
+could answer: shipped labels **9/21**, five labels hand-corrected **12/21**, labels removed
+entirely **15/21** — monotonic in three-point steps. Over the full set `stripped` scores **18/24**,
+the best result any prompt has produced on this fixture, beating Probe 14's bare block (15/24)
+while carrying strictly *more* context than it (row counts and `Relationships:` are present in all
+three arms; only the label varies). What this changes in this document's model of the ceiling:
+
+1. **16a's price hypothesis is confirmed, and bounded.** Correcting `products.price` to
+   `Quantitative` eliminated two of 16a's three price-misplacement failures — the model now writes
+   `SUM(products.price * order_items.quantity)`, right table, right measure — and cleared "highest
+   total per customer" 3/3, a question that had failed in *both* Probe 14 and 16a and that nothing
+   else in this document has moved. It did not clear the west-region question, which still reaches
+   for `order_items.price`. The label is a substantial cause of the price confusion, not the whole
+   of it.
+2. **The shipped defect is the prompt design, not only the classifier threshold.** A corrected
+   classifier recovers half the gap; the other half is only available by not sending the labels at
+   all. These are two separable changes (open items 17a/17b) and this experiment supports the
+   second directly and the first only indirectly.
+3. **The ceiling is now almost entirely one reasoning failure plus a pile of clerical ones.** After
+   stripping the labels, exactly one question fails by returning a *wrong number* rather than an
+   error — the triple-hop average-of-averages, which computes `SUM(price*qty)/COUNT(*)` at item
+   grain in every arm and returns 272.9 against a gold of 818.7. Every other failure on the board,
+   across every probe and every arm, is identifier hygiene. That asymmetry is the argument for the
+   unlettered **16e** direction in the sub-experiment index: a model that emits a validated spec and
+   lets the host compile the SQL cannot commit a clerical error at all, and the app already has the
+   vocabulary (`operations.ts`'s `aggregate` / `sum_product`) but does not offer it to this model
+   (`toolLadder.ts`'s rungs are `sql | continue-or-answer | answer`).
+4. **Two new open items that are not results.** The `stripped` arm's one regression came from the
+   `Relationships:` block inviting an unnecessary join (item 15), and the `corrected` arm has a
+   question that deterministically kills the Ollama call rather than answering it (item 18) —
+   diagnosed but not resolved, and the first thing to pick up next session.

@@ -16,8 +16,8 @@
 // `consoleSignal` never persist — they are transient nudges, and a restored
 // signal would fire a pane-open animation on load for a run that happened
 // last session.
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 export const DRAWER_MIN_HEIGHT = 120;
 export const DRAWER_DEFAULT_HEIGHT = 200;
@@ -35,9 +35,10 @@ export const INFO_DEFAULT_RATIO = 0.5;
 /** Below this drawer width the panes stack rather than sitting abreast — neither is ever hidden. */
 export const SPLIT_MIN_DRAWER_WIDTH = 900;
 
-const clampRatio = (ratio: number): number => Math.min(INFO_MAX_RATIO, Math.max(INFO_MIN_RATIO, ratio));
+const clampRatio = (ratio: number): number =>
+  Math.min(INFO_MAX_RATIO, Math.max(INFO_MIN_RATIO, ratio));
 
-export const DRAWER_STORAGE_KEY = 'datascope-drawer';
+export const DRAWER_STORAGE_KEY = "datascope-drawer";
 
 /** The 07c whitelist: geometry only, never the `infoSignal`/`consoleSignal` counters. */
 interface PersistedDrawerState {
@@ -91,7 +92,8 @@ export const useDrawerStore = create<DrawerState>()(
       // `height` and `infoRatio` are untouched here and by `setOpen`, which is what
       // makes a re-open after a user collapse return the geometry they left rather
       // than the defaults.
-      openInfo: () => set((state) => ({ open: true, infoSignal: state.infoSignal + 1 })),
+      openInfo: () =>
+        set((state) => ({ open: true, infoSignal: state.infoSignal + 1 })),
       setOpen: (open) => set({ open }),
       activateConsole: () =>
         set((state) => ({
@@ -100,7 +102,8 @@ export const useDrawerStore = create<DrawerState>()(
           consoleSignal: state.consoleSignal + 1,
         })),
       setExpanded: (expanded) => set({ expanded }),
-      setHeight: (height) => set({ height: Math.max(DRAWER_MIN_HEIGHT, height) }),
+      setHeight: (height) =>
+        set({ height: Math.max(DRAWER_MIN_HEIGHT, height) }),
       setInfoRatio: (ratio) => set({ infoRatio: clampRatio(ratio) }),
     }),
     {
@@ -116,7 +119,12 @@ export const useDrawerStore = create<DrawerState>()(
       migrate: (persisted, version): PersistedDrawerState =>
         version === DRAWER_PERSIST_VERSION
           ? (persisted as PersistedDrawerState)
-          : { open: true, expanded: false, height: DRAWER_DEFAULT_HEIGHT, infoRatio: INFO_DEFAULT_RATIO },
+          : {
+              open: true,
+              expanded: false,
+              height: DRAWER_DEFAULT_HEIGHT,
+              infoRatio: INFO_DEFAULT_RATIO,
+            },
     },
   ),
 );

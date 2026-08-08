@@ -1,6 +1,6 @@
-import { zipSync } from 'fflate';
-import type { QueryResult } from '../../types';
-import { formatCellText } from './cellFormat';
+import { zipSync } from "fflate";
+import type { QueryResult } from "../../types";
+import { formatCellText } from "./cellFormat";
 
 /**
  * Hand-rolled, minimal OOXML writer — one sheet, header row + data, numeric
@@ -14,17 +14,17 @@ const XML_HEADER = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 
 function escapeXml(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 /** 1-indexed column number to spreadsheet letters: 1 -> A, 26 -> Z, 27 -> AA. */
 function columnLetters(oneIndexed: number): string {
   let n = oneIndexed;
-  let letters = '';
+  let letters = "";
   while (n > 0) {
     const remainder = (n - 1) % 26;
     letters = String.fromCharCode(65 + remainder) + letters;
@@ -41,25 +41,32 @@ function numericCell(ref: string, value: number): string {
   return `<c r="${ref}"><v>${value}</v></c>`;
 }
 
-function buildRow(rowNumber: number, values: unknown[], columnTypes: string[]): string {
+function buildRow(
+  rowNumber: number,
+  values: unknown[],
+  columnTypes: string[],
+): string {
   const cells = values.map((value, i) => {
     const ref = `${columnLetters(i + 1)}${rowNumber}`;
-    if (typeof value === 'number' && Number.isFinite(value)) return numericCell(ref, value);
-    return inlineStringCell(ref, formatCellText(value, columnTypes[i] ?? ''));
+    if (typeof value === "number" && Number.isFinite(value))
+      return numericCell(ref, value);
+    return inlineStringCell(ref, formatCellText(value, columnTypes[i] ?? ""));
   });
-  return `<row r="${rowNumber}">${cells.join('')}</row>`;
+  return `<row r="${rowNumber}">${cells.join("")}</row>`;
 }
 
 function buildSheetXml(result: QueryResult): string {
   const headerRow = buildRow(
     1,
     result.columnNames,
-    result.columnNames.map(() => 'VARCHAR'),
+    result.columnNames.map(() => "VARCHAR"),
   );
-  const dataRows = result.rows.map((row, i) => buildRow(i + 2, row, result.columnTypes));
+  const dataRows = result.rows.map((row, i) =>
+    buildRow(i + 2, row, result.columnTypes),
+  );
   return (
     `${XML_HEADER}<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
-    `<sheetData>${headerRow}${dataRows.join('')}</sheetData></worksheet>`
+    `<sheetData>${headerRow}${dataRows.join("")}</sheetData></worksheet>`
   );
 }
 
@@ -74,10 +81,10 @@ const WORKBOOK_RELS = `${XML_HEADER}<Relationships xmlns="http://schemas.openxml
 export function buildXlsx(result: QueryResult): Uint8Array<ArrayBuffer> {
   const encoder = new TextEncoder();
   return zipSync({
-    '[Content_Types].xml': encoder.encode(CONTENT_TYPES),
-    '_rels/.rels': encoder.encode(ROOT_RELS),
-    'xl/workbook.xml': encoder.encode(WORKBOOK),
-    'xl/_rels/workbook.xml.rels': encoder.encode(WORKBOOK_RELS),
-    'xl/worksheets/sheet1.xml': encoder.encode(buildSheetXml(result)),
+    "[Content_Types].xml": encoder.encode(CONTENT_TYPES),
+    "_rels/.rels": encoder.encode(ROOT_RELS),
+    "xl/workbook.xml": encoder.encode(WORKBOOK),
+    "xl/_rels/workbook.xml.rels": encoder.encode(WORKBOOK_RELS),
+    "xl/worksheets/sheet1.xml": encoder.encode(buildSheetXml(result)),
   });
 }

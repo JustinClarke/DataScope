@@ -3,19 +3,20 @@
 // every §13.0-inventory feature home (the hard W5 gate is discoverability;
 // see build/12-workbench/06-options-strip-palette.md's inventory table for
 // which are actually wired vs. disabled-with-reason at this leaf).
-import type { TableRegistryEntry } from '../types';
+import type { TableRegistryEntry } from "../types";
 
-export type WiredModule = 'pivot' | 'charts' | 'correlation' | 'export' | 'ingestion';
+export type WiredModule =
+  "pivot" | "charts" | "correlation" | "export" | "ingestion";
 
 export type PaletteAction =
-  | { kind: 'open-map' }
-  | { kind: 'open-profile'; tableId: string }
-  | { kind: 'open-module'; module: WiredModule }
+  | { kind: "open-map" }
+  | { kind: "open-profile"; tableId: string }
+  | { kind: "open-module"; module: WiredModule }
   // S5: the deleted SQL tab's entry becomes two, because there are now two SQL
   // destinations — the one shared console, and a keeper of your own.
-  | { kind: 'open-console' }
-  | { kind: 'new-query-tab' }
-  | { kind: 'unavailable' };
+  | { kind: "open-console" }
+  | { kind: "new-query-tab" }
+  | { kind: "unavailable" };
 
 export interface PaletteEntry {
   id: string;
@@ -32,11 +33,11 @@ export interface PaletteEntry {
  * two entries below, since the playground tab it named no longer exists.
  */
 const WIRED_MODULES: { id: WiredModule; label: string }[] = [
-  { id: 'pivot', label: 'Pivot builder' },
-  { id: 'charts', label: 'Charts' },
-  { id: 'correlation', label: 'Correlation matrix' },
-  { id: 'export', label: 'Export / Share' },
-  { id: 'ingestion', label: 'Add data' },
+  { id: "pivot", label: "Pivot builder" },
+  { id: "charts", label: "Charts" },
+  { id: "correlation", label: "Correlation matrix" },
+  { id: "export", label: "Export / Share" },
+  { id: "ingestion", label: "Add data" },
 ];
 
 /**
@@ -47,16 +48,37 @@ const WIRED_MODULES: { id: WiredModule; label: string }[] = [
  * only remaining member — it's the always-on right pane (W7), never a tab.
  */
 const NOT_YET_WIRED: { id: string; label: string; reason: string }[] = [
-  { id: 'ai', label: 'AI chat', reason: "Lives in the always-on right AI pane, not a tab" },
+  {
+    id: "ai",
+    label: "AI chat",
+    reason: "Lives in the always-on right AI pane, not a tab",
+  },
 ];
 
-export function buildPaletteEntries(tables: TableRegistryEntry[]): PaletteEntry[] {
+export function buildPaletteEntries(
+  tables: TableRegistryEntry[],
+): PaletteEntry[] {
   const entries: PaletteEntry[] = [
-    { id: 'map', label: 'Dataset map', enabled: true, action: { kind: 'open-map' } },
+    {
+      id: "map",
+      label: "Dataset map",
+      enabled: true,
+      action: { kind: "open-map" },
+    },
     // Both SQL destinations are nameable here: the palette is the app's only
     // cross-tab launcher (§13.3), so neither may be reachable by gesture alone.
-    { id: 'console', label: 'SQL console', enabled: true, action: { kind: 'open-console' } },
-    { id: 'query-tab', label: 'New query tab', enabled: true, action: { kind: 'new-query-tab' } },
+    {
+      id: "console",
+      label: "SQL console",
+      enabled: true,
+      action: { kind: "open-console" },
+    },
+    {
+      id: "query-tab",
+      label: "New query tab",
+      enabled: true,
+      action: { kind: "new-query-tab" },
+    },
   ];
 
   for (const table of tables) {
@@ -64,7 +86,7 @@ export function buildPaletteEntries(tables: TableRegistryEntry[]): PaletteEntry[
       id: `profile:${table.id}`,
       label: `Profile: ${table.tableName}`,
       enabled: true,
-      action: { kind: 'open-profile', tableId: table.id },
+      action: { kind: "open-profile", tableId: table.id },
     });
   }
 
@@ -73,7 +95,7 @@ export function buildPaletteEntries(tables: TableRegistryEntry[]): PaletteEntry[
       id: item.id,
       label: item.label,
       enabled: true,
-      action: { kind: 'open-module', module: item.id },
+      action: { kind: "open-module", module: item.id },
     });
   }
 
@@ -83,7 +105,7 @@ export function buildPaletteEntries(tables: TableRegistryEntry[]): PaletteEntry[
       label: item.label,
       enabled: false,
       disabledReason: item.reason,
-      action: { kind: 'unavailable' },
+      action: { kind: "unavailable" },
     });
   }
 

@@ -5,8 +5,8 @@
 // `useDatasetBaseline` stays the single fetch owner; this store only holds its
 // result. Separate from `stores/relationships.ts` (the user's override
 // assertions) — this is the engine's own inferred output, pre-override.
-import { create } from 'zustand';
-import type { FkEdge } from '../lib/relationshipInference';
+import { create } from "zustand";
+import type { FkEdge } from "../lib/relationshipInference";
 
 interface InferredEdgesState {
   edges: FkEdge[];

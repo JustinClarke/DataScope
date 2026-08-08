@@ -1,7 +1,7 @@
 # 16 — light-model SQL ceiling: probe harnesses
 
 Harnesses used for Probes 3–8 of
-[`16-light-model-sql-ceiling.md`](../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling.md).
+[`16-light-model-sql-ceiling/README.md`](../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling/README.md).
 Not part of the app build. Two kinds:
 
 - **Browser HTML pages** (Probes 3–5) test Chrome's on-device Gemini Nano

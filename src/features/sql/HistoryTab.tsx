@@ -1,10 +1,10 @@
-import { QueryHistory } from './QueryResultsPanel';
+import { QueryHistory } from "./QueryResultsPanel";
 
 /**
  * There is exactly one run log per session, so the tab has one fixed subject —
  * the same pattern `MAP_TAB_SUBJECT` follows for the dataset-wide map.
  */
-export const HISTORY_TAB_SUBJECT = 'session';
+export const HISTORY_TAB_SUBJECT = "session";
 
 /**
  * The session's run log, in a tab of its own (S6.7). Until now it was a

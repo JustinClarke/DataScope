@@ -4,7 +4,7 @@
 // result parsers, mirroring lib/profile.ts's split; services/profiling.ts
 // runs the queries these produce.
 
-import type { QueryResult } from '../types';
+import type { QueryResult } from "../types";
 
 function quoteIdentifier(name: string): string {
   return `"${name.replace(/"/g, '""')}"`;
@@ -21,7 +21,9 @@ function quoteIdentifier(name: string): string {
  */
 export function formatDateCell(value: unknown, precision: 7 | 10 = 10): string {
   const n = Number(value);
-  return Number.isFinite(n) ? new Date(n).toISOString().slice(0, precision) : String(value);
+  return Number.isFinite(n)
+    ? new Date(n).toISOString().slice(0, precision)
+    : String(value);
 }
 
 // ---- Quantitative: histogram ----
@@ -52,7 +54,8 @@ export function buildHistogramSql(
   max: number,
   binCount: number = HISTOGRAM_BUCKET_COUNT,
 ): string | null {
-  if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) return null;
+  if (!Number.isFinite(min) || !Number.isFinite(max) || min === max)
+    return null;
   const width = (max - min) / binCount;
   const col = quoteIdentifier(column);
   return (
@@ -103,14 +106,18 @@ export interface ValueFrequency {
 // aren't filtered, so a null value surfaces as its own frequency row rather
 // than silently disappearing (this is what makes a 100%-null categorical
 // column still render a sane single-row result).
-export function buildTopValuesSql(tableName: string, column: string, limit = 10): string {
+export function buildTopValuesSql(
+  tableName: string,
+  column: string,
+  limit = 10,
+): string {
   const col = quoteIdentifier(column);
   return `SELECT ${col} AS value, COUNT(*) AS freq FROM ${quoteIdentifier(tableName)} GROUP BY 1 ORDER BY 2 DESC LIMIT ${limit}`;
 }
 
 export function parseTopValues(result: QueryResult): ValueFrequency[] {
   return result.rows.map((row) => ({
-    value: row[0] === null ? '(null)' : String(row[0]),
+    value: row[0] === null ? "(null)" : String(row[0]),
     count: Number(row[1]),
   }));
 }
@@ -155,9 +162,16 @@ export function parseDateRange(result: QueryResult): DateRangeStats | null {
   const maxGap = row[2] == null ? null : Number(row[2]);
   const medianGap = row[3] == null ? null : Number(row[3]);
 
-  let gapDescription = 'No gaps detected';
-  if (maxGap != null && maxGap > 1 && (medianGap == null || maxGap > medianGap * 2)) {
-    const typical = medianGap != null ? ` (typical spacing: ${medianGap} day${medianGap === 1 ? '' : 's'})` : '';
+  let gapDescription = "No gaps detected";
+  if (
+    maxGap != null &&
+    maxGap > 1 &&
+    (medianGap == null || maxGap > medianGap * 2)
+  ) {
+    const typical =
+      medianGap != null
+        ? ` (typical spacing: ${medianGap} day${medianGap === 1 ? "" : "s"})`
+        : "";
     gapDescription = `Largest gap: ${maxGap} days${typical}`;
   }
 
@@ -184,7 +198,11 @@ export function parseWordCount(result: QueryResult): number | null {
   return value === null || value === undefined ? null : Number(value);
 }
 
-export function buildSamplePreviewSql(tableName: string, column: string, limit = 3): string {
+export function buildSamplePreviewSql(
+  tableName: string,
+  column: string,
+  limit = 3,
+): string {
   const col = quoteIdentifier(column);
   return `SELECT ${col} FROM ${quoteIdentifier(tableName)} WHERE ${col} IS NOT NULL LIMIT ${limit}`;
 }

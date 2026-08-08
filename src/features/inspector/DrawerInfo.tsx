@@ -13,18 +13,18 @@
 // *every* result this session; neither is "this result", so both are out — the
 // chart to its own `charts` tab, the log to the `history` tab this item adds.
 // What is left is the grid, with Pin to tab above it as the one obvious move.
-import { useCallback, useEffect, useRef } from 'react';
-import { Download, History, Pin } from 'lucide-react';
-import { useDrawerStore } from '../../stores/drawer';
-import { useQuerySession, CONSOLE_SESSION } from '../../stores/query';
-import { useDatasetsStore } from '../../stores/datasets';
-import { useSelectionStore } from '../../stores/selection';
-import { useTabsStore } from '../../stores/tabs';
-import { pinConsoleQuery } from '../../services/queryTabs';
-import { QueryOutput } from '../sql/QueryResultsPanel';
-import { HISTORY_TAB_SUBJECT } from '../sql/HistoryTab';
-import { downloadRecipe } from '../sql/resultsExport';
-import { Inspector } from './Inspector';
+import { useCallback, useEffect, useRef } from "react";
+import { Download, History, Pin } from "lucide-react";
+import { useDrawerStore } from "../../stores/drawer";
+import { useQuerySession, CONSOLE_SESSION } from "../../stores/query";
+import { useDatasetsStore } from "../../stores/datasets";
+import { useSelectionStore } from "../../stores/selection";
+import { useTabsStore } from "../../stores/tabs";
+import { pinConsoleQuery } from "../../services/queryTabs";
+import { QueryOutput } from "../sql/QueryResultsPanel";
+import { HISTORY_TAB_SUBJECT } from "../sql/HistoryTab";
+import { downloadRecipe } from "../sql/resultsExport";
+import { Inspector } from "./Inspector";
 
 /**
  * Above this many result rows Info offers to expand the drawer rather than
@@ -40,7 +40,12 @@ function ResultOverflowPrompt() {
   const expanded = useDrawerStore((state) => state.expanded);
   const setExpanded = useDrawerStore((state) => state.setExpanded);
 
-  if (expanded || status !== 'success' || !result || result.rows.length <= PROMPT_ABOVE_ROWS) {
+  if (
+    expanded ||
+    status !== "success" ||
+    !result ||
+    result.rows.length <= PROMPT_ABOVE_ROWS
+  ) {
     return null;
   }
 
@@ -74,7 +79,11 @@ function PinAction() {
         type="button"
         onClick={() => pinConsoleQuery()}
         disabled={!canPin}
-        title={result ? 'Keep this query and its results in their own tab' : 'Keep this query in its own tab'}
+        title={
+          result
+            ? "Keep this query and its results in their own tab"
+            : "Keep this query in its own tab"
+        }
         className="flex items-center gap-1 rounded-lg bg-(--color-accent) px-3 py-1.5 text-sm font-medium text-(--color-accent-fg) disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Pin size={14} aria-hidden="true" />
@@ -92,7 +101,9 @@ function PinAction() {
  * tab inherits by construction.
  */
 function SessionActions() {
-  const hasDerivedTables = useDatasetsStore((state) => state.tables.some((t) => t.origin === 'derived'));
+  const hasDerivedTables = useDatasetsStore((state) =>
+    state.tables.some((t) => t.origin === "derived"),
+  );
 
   const handleExportRecipe = useCallback(() => {
     downloadRecipe(useDatasetsStore.getState().tables);
@@ -105,7 +116,9 @@ function SessionActions() {
     >
       <button
         type="button"
-        onClick={() => useTabsStore.getState().openTab('history', HISTORY_TAB_SUBJECT)}
+        onClick={() =>
+          useTabsStore.getState().openTab("history", HISTORY_TAB_SUBJECT)
+        }
         title="Open this session's run log in its own tab"
         className="flex items-center gap-1 rounded-lg border border-(--color-border) px-2.5 py-1 text-xs font-medium text-(--color-fg-muted) hover:text-(--color-fg)"
       >
@@ -128,7 +141,8 @@ function SessionActions() {
 
 export function DrawerInfo() {
   const infoSignal = useDrawerStore((state) => state.infoSignal);
-  const hasSelection = useSelectionStore((state) => state.lastSelectionKind) !== null;
+  const hasSelection =
+    useSelectionStore((state) => state.lastSelectionKind) !== null;
   const scentRef = useRef<HTMLDivElement | null>(null);
 
   // A new selection replaces the strip's contents in place, with no chrome
@@ -163,7 +177,10 @@ export function DrawerInfo() {
           `ResultsGrid` truncates every cell, so a wide result in a half-width
           pane would otherwise be a wall of ellipses with no way back to a
           column. */}
-      <div data-testid="info-output-region" className="min-h-0 flex-1 overflow-auto px-3 py-2">
+      <div
+        data-testid="info-output-region"
+        className="min-h-0 flex-1 overflow-auto px-3 py-2"
+      >
         <QueryOutput sessionId={CONSOLE_SESSION} showChart={false} />
       </div>
       <SessionActions />

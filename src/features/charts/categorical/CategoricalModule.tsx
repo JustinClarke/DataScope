@@ -1,21 +1,31 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { useDatasetsStore } from '../../../stores/datasets';
-import type { ClassifiedColumn, QueryResult, TableRegistryEntry } from '../../../types';
-import { prefillColumns, prefillTableName, type ModulePrefill } from '../../../lib/threadPrefill';
-import { runChartQuery } from '../../../services/charts';
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useDatasetsStore } from "../../../stores/datasets";
+import type {
+  ClassifiedColumn,
+  QueryResult,
+  TableRegistryEntry,
+} from "../../../types";
+import {
+  prefillColumns,
+  prefillTableName,
+  type ModulePrefill,
+} from "../../../lib/threadPrefill";
+import { runChartQuery } from "../../../services/charts";
 import {
   buildCategorySummarySql,
   buildFrequencySql,
   lumpTail,
   parseFrequency,
   type FrequencyRow,
-} from '../../../lib/categoricalSql';
-import { GeneratedSql } from './GeneratedSql';
+} from "../../../lib/categoricalSql";
+import { GeneratedSql } from "./GeneratedSql";
 
 // Recharts rides in its own chunk, same lazy boundary GroupedBarView/TrendView use.
-const FrequencyBar = lazy(() => import('./FrequencyBar'));
-const Donut = lazy(() => import('./Donut'));
-const GroupedBarView = lazy(() => import('./GroupedBarView').then((m) => ({ default: m.GroupedBarView })));
+const FrequencyBar = lazy(() => import("./FrequencyBar"));
+const Donut = lazy(() => import("./Donut"));
+const GroupedBarView = lazy(() =>
+  import("./GroupedBarView").then((m) => ({ default: m.GroupedBarView })),
+);
 
 type CategoricalTable = TableRegistryEntry & { columns: ClassifiedColumn[] };
 
@@ -25,12 +35,14 @@ type CategoricalTable = TableRegistryEntry & { columns: ClassifiedColumn[] };
  * `CorrelationModule`/`DistributionModule` already use for their own table
  * lists — this module re-checks per table.
  */
-function hasCategoricalShape(table: TableRegistryEntry): table is CategoricalTable {
+function hasCategoricalShape(
+  table: TableRegistryEntry,
+): table is CategoricalTable {
   if (!Array.isArray(table.columns)) return false;
-  return table.columns.some((c) => c.semanticType === 'Categorical');
+  return table.columns.some((c) => c.semanticType === "Categorical");
 }
 
-type ViewTab = 'frequency' | 'donut' | 'grouped';
+type ViewTab = "frequency" | "donut" | "grouped";
 
 // A donut past this many real categories reads as a sliver farm, not a
 // breakdown — the tab itself is only offered under this cardinality, same
@@ -45,7 +57,9 @@ export const DONUT_MAX_SLICES = 5;
 const RUN_DEBOUNCE_MS = 300;
 
 const chartFallback = (
-  <div className="flex h-48 items-center justify-center text-sm text-(--color-fg-muted)">Loading chart…</div>
+  <div className="flex h-48 items-center justify-center text-sm text-(--color-fg-muted)">
+    Loading chart…
+  </div>
 );
 
 /**
@@ -57,41 +71,71 @@ const chartFallback = (
  * that pairing *is* the finding those two rules describe, not the frequency
  * count Frequency alone would show.
  */
-export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill }) {
+export function CategoricalModule({
+  prefill = null,
+}: {
+  prefill?: ModulePrefill;
+}) {
   const tables = useDatasetsStore((state) => state.tables);
-  const eligibleTables = useMemo(() => tables.filter(hasCategoricalShape), [tables]);
+  const eligibleTables = useMemo(
+    () => tables.filter(hasCategoricalShape),
+    [tables],
+  );
   const prefillTable = prefillTableName(prefill);
   const prefillCols = prefillColumns(prefill);
 
   const [selectedTableId, setSelectedTableId] = useState<string | null>(
     () => eligibleTables.find((t) => t.tableName === prefillTable)?.id ?? null,
   );
-  const table = eligibleTables.find((t) => t.id === selectedTableId) ?? eligibleTables[0] ?? null;
+  const table =
+    eligibleTables.find((t) => t.id === selectedTableId) ??
+    eligibleTables[0] ??
+    null;
 
   const categoricalColumns = useMemo(
-    () => (table ? table.columns.filter((c) => c.semanticType === 'Categorical') : []),
+    () =>
+      table
+        ? table.columns.filter((c) => c.semanticType === "Categorical")
+        : [],
     [table],
   );
   const numericColumns = useMemo(
-    () => (table ? table.columns.filter((c) => c.semanticType === 'Quantitative') : []),
+    () =>
+      table
+        ? table.columns.filter((c) => c.semanticType === "Quantitative")
+        : [],
     [table],
   );
 
-  const [selectedColumn, setSelectedColumn] = useState<string | null>(() => prefillCols[0] ?? null);
-  const activeColumn = categoricalColumns.find((c) => c.name === selectedColumn) ?? categoricalColumns[0] ?? null;
+  const [selectedColumn, setSelectedColumn] = useState<string | null>(
+    () => prefillCols[0] ?? null,
+  );
+  const activeColumn =
+    categoricalColumns.find((c) => c.name === selectedColumn) ??
+    categoricalColumns[0] ??
+    null;
 
-  const [selectedQuantColumn, setSelectedQuantColumn] = useState<string | null>(() => prefillCols[1] ?? null);
-  const activeQuantColumn = numericColumns.find((c) => c.name === selectedQuantColumn) ?? numericColumns[0] ?? null;
+  const [selectedQuantColumn, setSelectedQuantColumn] = useState<string | null>(
+    () => prefillCols[1] ?? null,
+  );
+  const activeQuantColumn =
+    numericColumns.find((c) => c.name === selectedQuantColumn) ??
+    numericColumns[0] ??
+    null;
 
-  const [aggregate, setAggregate] = useState<'total' | 'mean'>('mean');
-  const [tab, setTab] = useState<ViewTab>(() => (prefillCols[1] ? 'grouped' : 'frequency'));
+  const [aggregate, setAggregate] = useState<"total" | "mean">("mean");
+  const [tab, setTab] = useState<ViewTab>(() =>
+    prefillCols[1] ? "grouped" : "frequency",
+  );
 
-  const donutEligible = activeColumn !== null && activeColumn.cardinality <= DONUT_CARDINALITY_LIMIT;
+  const donutEligible =
+    activeColumn !== null &&
+    activeColumn.cardinality <= DONUT_CARDINALITY_LIMIT;
 
   const [frequencyRows, setFrequencyRows] = useState<FrequencyRow[]>([]);
-  const [frequencySql, setFrequencySql] = useState('');
+  const [frequencySql, setFrequencySql] = useState("");
   const [groupedResult, setGroupedResult] = useState<QueryResult | null>(null);
-  const [groupedSql, setGroupedSql] = useState('');
+  const [groupedSql, setGroupedSql] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -105,7 +149,11 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
       try {
         const freqSql = buildFrequencySql(table.tableName, activeColumn.name);
         const grpSql = activeQuantColumn
-          ? buildCategorySummarySql(table.tableName, activeColumn.name, activeQuantColumn.name)
+          ? buildCategorySummarySql(
+              table.tableName,
+              activeColumn.name,
+              activeQuantColumn.name,
+            )
           : null;
 
         const [freqResult, grpResult] = await Promise.all([
@@ -117,9 +165,14 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
         setFrequencyRows(parseFrequency(freqResult));
         setFrequencySql(freqSql);
         setGroupedResult(grpResult);
-        setGroupedSql(grpSql ?? '');
+        setGroupedSql(grpSql ?? "");
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not run the categorical queries.');
+        if (!cancelled)
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not run the categorical queries.",
+          );
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -135,7 +188,8 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
   if (eligibleTables.length === 0) {
     return (
       <p className="text-sm text-(--color-fg-muted)">
-        None of your tables have a categorical column — breakdown needs at least one.
+        None of your tables have a categorical column — breakdown needs at least
+        one.
       </p>
     );
   }
@@ -144,7 +198,9 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
   const donutRows = lumpTail(frequencyRows, DONUT_MAX_SLICES);
   const tabClass = (active: boolean) =>
     `px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40 ${
-      active ? 'border-b-2 border-(--color-accent) text-(--color-fg)' : 'text-(--color-fg-muted)'
+      active
+        ? "border-b-2 border-(--color-accent) text-(--color-fg)"
+        : "text-(--color-fg-muted)"
     }`;
 
   return (
@@ -189,32 +245,43 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
       </div>
 
       <div className="flex gap-1 border-b border-(--color-border) text-xs">
-        <button type="button" onClick={() => setTab('frequency')} aria-pressed={tab === 'frequency'} className={tabClass(tab === 'frequency')}>
+        <button
+          type="button"
+          onClick={() => setTab("frequency")}
+          aria-pressed={tab === "frequency"}
+          className={tabClass(tab === "frequency")}
+        >
           Frequency
         </button>
         <button
           type="button"
-          onClick={() => donutEligible && setTab('donut')}
-          aria-pressed={tab === 'donut'}
+          onClick={() => donutEligible && setTab("donut")}
+          aria-pressed={tab === "donut"}
           disabled={!donutEligible}
-          title={donutEligible ? undefined : `Too many categories for a donut (${activeColumn.cardinality})`}
-          className={tabClass(tab === 'donut')}
+          title={
+            donutEligible
+              ? undefined
+              : `Too many categories for a donut (${activeColumn.cardinality})`
+          }
+          className={tabClass(tab === "donut")}
         >
           Donut
         </button>
         <button
           type="button"
-          onClick={() => numericColumns.length > 0 && setTab('grouped')}
-          aria-pressed={tab === 'grouped'}
+          onClick={() => numericColumns.length > 0 && setTab("grouped")}
+          aria-pressed={tab === "grouped"}
           disabled={numericColumns.length === 0}
-          title={numericColumns.length > 0 ? undefined : 'Needs a numeric column'}
-          className={tabClass(tab === 'grouped')}
+          title={
+            numericColumns.length > 0 ? undefined : "Needs a numeric column"
+          }
+          className={tabClass(tab === "grouped")}
         >
           Grouped bar
         </button>
       </div>
 
-      {tab === 'grouped' && activeQuantColumn && (
+      {tab === "grouped" && activeQuantColumn && (
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <label className="flex items-center gap-1.5 text-(--color-fg-muted)">
             Measure
@@ -236,7 +303,7 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
             <select
               aria-label="Grouped bar aggregate"
               value={aggregate}
-              onChange={(e) => setAggregate(e.target.value as 'total' | 'mean')}
+              onChange={(e) => setAggregate(e.target.value as "total" | "mean")}
               className="rounded border border-(--color-border) bg-transparent px-2 py-1 text-(--color-fg)"
             >
               <option value="mean">Average</option>
@@ -247,25 +314,31 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
       )}
 
       {loading ? (
-        <div className="flex h-48 items-center justify-center text-sm text-(--color-fg-muted)">Running query…</div>
+        <div className="flex h-48 items-center justify-center text-sm text-(--color-fg-muted)">
+          Running query…
+        </div>
       ) : error ? (
         <p className="text-sm text-(--color-error)">{error}</p>
       ) : (
         <>
           <Suspense fallback={chartFallback}>
-            {tab === 'frequency' &&
+            {tab === "frequency" &&
               (frequencyRows.length > 0 ? (
                 <FrequencyBar rows={frequencyRows} />
               ) : (
-                <p className="text-sm text-(--color-fg-muted)">No values in {activeColumn.name} to chart.</p>
+                <p className="text-sm text-(--color-fg-muted)">
+                  No values in {activeColumn.name} to chart.
+                </p>
               ))}
-            {tab === 'donut' &&
+            {tab === "donut" &&
               (donutRows.length > 0 ? (
                 <Donut rows={donutRows} />
               ) : (
-                <p className="text-sm text-(--color-fg-muted)">No values in {activeColumn.name} to chart.</p>
+                <p className="text-sm text-(--color-fg-muted)">
+                  No values in {activeColumn.name} to chart.
+                </p>
               ))}
-            {tab === 'grouped' &&
+            {tab === "grouped" &&
               (groupedResult && activeQuantColumn ? (
                 <GroupedBarView
                   result={groupedResult}
@@ -274,14 +347,16 @@ export function CategoricalModule({ prefill = null }: { prefill?: ModulePrefill 
                   aggregate={aggregate}
                 />
               ) : (
-                <p className="text-sm text-(--color-fg-muted)">Pick a numeric column to group by {activeColumn.name}.</p>
+                <p className="text-sm text-(--color-fg-muted)">
+                  Pick a numeric column to group by {activeColumn.name}.
+                </p>
               ))}
           </Suspense>
 
           <div className="flex flex-col gap-3 border-t border-(--color-border) pt-4">
             <GeneratedSql
-              label={tab === 'grouped' ? 'Grouped bar' : 'Frequency'}
-              sql={tab === 'grouped' ? groupedSql : frequencySql}
+              label={tab === "grouped" ? "Grouped bar" : "Frequency"}
+              sql={tab === "grouped" ? groupedSql : frequencySql}
             />
           </div>
         </>

@@ -2,14 +2,20 @@
 // Owns everything the D58 registry contract implies (`loadDataset`/`removeDataset`/
 // `profileDataset` in services/ingestion.ts write here) — actual row data never
 // enters this store, only the catalog: names, shape, memory, and classified columns.
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import type { ClassifiedColumn, ColumnProfile, Dataset, SemanticType, TableRegistryEntry } from '../types';
-import { manualOverrideReason } from '../lib/classifier';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type {
+  ClassifiedColumn,
+  ColumnProfile,
+  Dataset,
+  SemanticType,
+  TableRegistryEntry,
+} from "../types";
+import { manualOverrideReason } from "../lib/classifier";
 
-export type WorkerStatus = 'idle' | 'loading' | 'compiling' | 'ready' | 'error';
+export type WorkerStatus = "idle" | "loading" | "compiling" | "ready" | "error";
 
-export const DATASETS_STORAGE_KEY = 'datascope-datasets';
+export const DATASETS_STORAGE_KEY = "datascope-datasets";
 
 /** The 07c whitelist: catalog metadata only, never `workerStatus`/`workerError` (a worker that doesn't exist yet at rehydration time). */
 interface PersistedDatasetsState {
@@ -28,9 +34,16 @@ interface DatasetsState {
   removeDataset: (datasetId: string) => void;
   removeTable: (tableId: string) => void;
   setTableColumns: (tableId: string, columns: ClassifiedColumn[]) => void;
-  reclassifyColumn: (tableId: string, columnName: string, semanticType: SemanticType) => void;
+  reclassifyColumn: (
+    tableId: string,
+    columnName: string,
+    semanticType: SemanticType,
+  ) => void;
   setTableProfile: (tableId: string, profile: ColumnProfile[]) => void;
-  setTableStats: (tableId: string, stats: { rowCount: number; columnCount: number; memoryBytes: number }) => void;
+  setTableStats: (
+    tableId: string,
+    stats: { rowCount: number; columnCount: number; memoryBytes: number },
+  ) => void;
   setTableRefreshMeta: (
     tableId: string,
     meta: { sampled: boolean; sampleRowLimit?: number; lastFetchedAt: string },
@@ -44,7 +57,7 @@ export const useDatasetsStore = create<DatasetsState>()(
     (set) => ({
       datasets: [],
       tables: [],
-      workerStatus: 'idle',
+      workerStatus: "idle",
       workerError: null,
 
       registerDataset: (dataset, tables) =>
@@ -69,14 +82,21 @@ export const useDatasetsStore = create<DatasetsState>()(
           if (!table) return state;
 
           const tables = state.tables.filter((t) => t.id !== tableId);
-          const hasSiblings = tables.some((t) => t.datasetId === table.datasetId);
+          const hasSiblings = tables.some(
+            (t) => t.datasetId === table.datasetId,
+          );
 
           return {
             tables,
             datasets: hasSiblings
               ? state.datasets.map((d) =>
                   d.id === table.datasetId
-                    ? { ...d, tableNames: d.tableNames.filter((name) => name !== table.tableName) }
+                    ? {
+                        ...d,
+                        tableNames: d.tableNames.filter(
+                          (name) => name !== table.tableName,
+                        ),
+                      }
                     : d,
                 )
               : state.datasets.filter((d) => d.id !== table.datasetId),
@@ -85,7 +105,9 @@ export const useDatasetsStore = create<DatasetsState>()(
 
       setTableColumns: (tableId, columns) =>
         set((state) => ({
-          tables: state.tables.map((t) => (t.id === tableId ? { ...t, columns } : t)),
+          tables: state.tables.map((t) =>
+            t.id === tableId ? { ...t, columns } : t,
+          ),
         })),
 
       // Manual override (§17 misclassification mitigation): re-classify a single
@@ -103,7 +125,12 @@ export const useDatasetsStore = create<DatasetsState>()(
                   ...t,
                   columns: t.columns.map((c) =>
                     c.name === columnName
-                      ? { ...c, semanticType, classificationReason: manualOverrideReason(semanticType) }
+                      ? {
+                          ...c,
+                          semanticType,
+                          classificationReason:
+                            manualOverrideReason(semanticType),
+                        }
                       : c,
                   ),
                 }
@@ -113,7 +140,9 @@ export const useDatasetsStore = create<DatasetsState>()(
 
       setTableProfile: (tableId, profile) =>
         set((state) => ({
-          tables: state.tables.map((t) => (t.id === tableId ? { ...t, profile } : t)),
+          tables: state.tables.map((t) =>
+            t.id === tableId ? { ...t, profile } : t,
+          ),
         })),
 
       // A mutation the transformation layer runs directly against a table
@@ -124,7 +153,9 @@ export const useDatasetsStore = create<DatasetsState>()(
       // them.
       setTableStats: (tableId, stats) =>
         set((state) => ({
-          tables: state.tables.map((t) => (t.id === tableId ? { ...t, ...stats } : t)),
+          tables: state.tables.map((t) =>
+            t.id === tableId ? { ...t, ...stats } : t,
+          ),
         })),
 
       // §7.4 "Refresh from source": the sampled/sampleRowLimit/lastFetchedAt trio
@@ -134,7 +165,9 @@ export const useDatasetsStore = create<DatasetsState>()(
       // fields those don't.
       setTableRefreshMeta: (tableId, meta) =>
         set((state) => ({
-          tables: state.tables.map((t) => (t.id === tableId ? { ...t, ...meta } : t)),
+          tables: state.tables.map((t) =>
+            t.id === tableId ? { ...t, ...meta } : t,
+          ),
         })),
 
       // Flags every derived table built on a just-refreshed source as possibly
@@ -144,17 +177,23 @@ export const useDatasetsStore = create<DatasetsState>()(
         set((state) => {
           const ids = new Set(tableIds);
           return {
-            tables: state.tables.map((t) => (ids.has(t.id) ? { ...t, stale: true } : t)),
+            tables: state.tables.map((t) =>
+              ids.has(t.id) ? { ...t, stale: true } : t,
+            ),
           };
         }),
 
-      setWorkerStatus: (status, error = null) => set({ workerStatus: status, workerError: error }),
+      setWorkerStatus: (status, error = null) =>
+        set({ workerStatus: status, workerError: error }),
     }),
     {
       name: DATASETS_STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
       version: DATASETS_PERSIST_VERSION,
-      partialize: (state): PersistedDatasetsState => ({ datasets: state.datasets, tables: state.tables }),
+      partialize: (state): PersistedDatasetsState => ({
+        datasets: state.datasets,
+        tables: state.tables,
+      }),
       migrate: (persisted, version): PersistedDatasetsState =>
         version === DATASETS_PERSIST_VERSION
           ? (persisted as PersistedDatasetsState)
@@ -165,4 +204,6 @@ export const useDatasetsStore = create<DatasetsState>()(
 
 // Sidebar table list + SQL autocomplete both scope to one dataset's tables.
 export const useTablesForDataset = (datasetId: string): TableRegistryEntry[] =>
-  useDatasetsStore((state) => state.tables.filter((t) => t.datasetId === datasetId));
+  useDatasetsStore((state) =>
+    state.tables.filter((t) => t.datasetId === datasetId),
+  );

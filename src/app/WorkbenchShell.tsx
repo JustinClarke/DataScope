@@ -2,59 +2,125 @@
 // composition root as of the W8 cutover. The explorer (W2), map/profile tabs
 // (W3/W4), Acts 0/1 (W6), and the ai-pane/inspector/status-bar regions (W7)
 // all have real content now.
-import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
-import { useDatasetsStore } from '../stores/datasets';
-import { useTabsStore } from '../stores/tabs';
-import { useDspsReceiverStore } from '../stores/dspsReceiver';
-import { TAB_GLYPH, TAB_KIND, tabLabel, type TabSpec, type TabType } from '../types/tabs';
-import { selectWorkbenchAct } from './workbenchActs';
-import { TitleBar } from './TitleBar';
-import { ViewerMode } from '../features/viewer/ViewerMode';
-import { ExplorerPanel } from '../features/explorer/ExplorerPanel';
-import { ProfileDashboard } from '../features/profiling/ProfileDashboard';
-import { DatasetMap } from '../features/map/DatasetMap';
-import { QueryTab } from '../features/sql/QueryTab';
-import { PivotModule } from '../features/sql/PivotModule';
-import { HistoryTab } from '../features/sql/HistoryTab';
-import { ChartsModule } from '../features/charts/ChartsModule';
-import { CorrelationModule } from '../features/charts/correlation/CorrelationModule';
-import { ExportModule } from '../features/export/ExportModule';
-import { CommandPalette } from '../features/palette/CommandPalette';
-import { IngestionPanel } from '../features/ingestion/IngestionPanel';
-import { AIPane } from '../features/ai/AIPane';
-import { AISettingsPanel } from '../features/ai/AISettingsPanel';
-import { WebLLMDock } from '../features/ai/WebLLMDock';
-import { InspectorDrawer } from '../features/inspector/InspectorDrawer';
-import { TransformGuardHost } from './TransformGuardHost';
-import { StatusBar } from '../features/status/StatusBar';
-import { useApplyWorkbenchAIDefault } from './useApplyWorkbenchAIDefault';
-import { EducationalPanelProvider } from './EducationalPanelContext';
-import { loadSharedDataset, IngestionError } from '../services/ingestion';
-import { closeQueryTab } from '../services/queryTabs';
-import { restoreStagedTables, type RestoreReport } from '../services/workspace';
-import { usePersistenceStore } from '../stores/persistence';
-import { rehydrateWorkspace } from '../services/rehydration';
-import { useRehydrationStore, isTableUsable } from '../stores/rehydration';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
+import {
+  Table,
+  Search,
+  ShieldCheck,
+  ChevronsLeft,
+} from "lucide-react";
+import { useDatasetsStore } from "../stores/datasets";
+import { useTabsStore } from "../stores/tabs";
+import { useDspsReceiverStore } from "../stores/dspsReceiver";
+import {
+  TAB_GLYPH,
+  TAB_KIND,
+  tabLabel,
+  type TabSpec,
+  type TabType,
+} from "../types/tabs";
+import { selectWorkbenchAct } from "./workbenchActs";
+import { TitleBar } from "./TitleBar";
+import { ViewerMode } from "../features/viewer/ViewerMode";
+import { ExplorerPanel } from "../features/explorer/ExplorerPanel";
+import { ProfileDashboard } from "../features/profiling/ProfileDashboard";
+import { DatasetMap } from "../features/map/DatasetMap";
+import { QueryTab } from "../features/sql/QueryTab";
+import { PivotModule } from "../features/sql/PivotModule";
+import { HistoryTab } from "../features/sql/HistoryTab";
+import { ChartsModule } from "../features/charts/ChartsModule";
+import { CorrelationModule } from "../features/charts/correlation/CorrelationModule";
+import { ExportModule } from "../features/export/ExportModule";
+import { CommandPalette } from "../features/palette/CommandPalette";
+import { IngestionPanel } from "../features/ingestion/IngestionPanel";
+import { AIPane } from "../features/ai/AIPane";
+import { AISettingsPanel } from "../features/ai/AISettingsPanel";
+import { WebLLMDock } from "../features/ai/WebLLMDock";
+import { InspectorDrawer } from "../features/inspector/InspectorDrawer";
+import { TransformGuardHost } from "./TransformGuardHost";
+import { StatusBar } from "../features/status/StatusBar";
+import { useApplyWorkbenchAIDefault } from "./useApplyWorkbenchAIDefault";
+import { EducationalPanelProvider } from "./EducationalPanelContext";
+import { loadSharedDataset, IngestionError } from "../services/ingestion";
+import { closeQueryTab } from "../services/queryTabs";
+import { restoreStagedTables, type RestoreReport } from "../services/workspace";
+import { usePersistenceStore } from "../stores/persistence";
+import { rehydrateWorkspace } from "../services/rehydration";
+import { useRehydrationStore, isTableUsable } from "../stores/rehydration";
+import { useLayoutStore } from "../stores/layout";
+import { useDrawerStore } from "../stores/drawer";
 
 /** The map is dataset-wide, not per-table — there is no natural per-table subject the way `'profile'` has one (W4, §13.3). Exported for the command palette's map entry (W5). */
-export const MAP_TAB_SUBJECT = 'workspace';
+export const MAP_TAB_SUBJECT = "workspace";
 
 /// ---------------------------------------------------------------------------
 // Brand lockup: Reticle-for-O (Turn 4, logo-concepts-for-datascope).
 // The SVG is vertically centred between "Sc" and "pe" via self-center.
 // ---------------------------------------------------------------------------
-function Logo({ className = '', animated = false }: { className?: string; animated?: boolean }) {
+function Logo({
+  className = "",
+  animated = false,
+}: {
+  className?: string;
+  animated?: boolean;
+}) {
   return (
-    <div className={`flex items-center font-bold leading-none tracking-[-0.035em] ${className}`}>
-      <span className={`inline-block text-(--color-ink) ${animated ? 'pre-text' : ''}`}>Data</span>
-      <span className={`inline-block text-(--color-active) ${animated ? 'pre-text' : ''}`}>Sc</span>
-      <svg viewBox="0 0 100 100" aria-hidden="true" className={`h-[0.75em] w-[0.75em] shrink-0 self-center mt-[0.18em] -mr-[0.04em] ${animated ? 'pre-reticle-group' : ''}`}>
-        <circle cx="50" cy="50" r="30" fill="none" stroke="var(--color-ink)" strokeWidth="9" />
-        <path d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96" stroke="var(--color-ink)" strokeWidth="7" strokeLinecap="round" />
-        <path d="M50 50 L50 20 A30 30 0 0 1 76 65 Z" fill="var(--color-active)" className={animated ? 'pre-slice' : ''} />
-        <circle cx="50" cy="50" r="10" fill="var(--color-fk)" className={animated ? 'pre-dot' : ''} />
+    <div
+      className={`flex items-center font-bold leading-none tracking-[-0.035em] ${className}`}
+    >
+      <span
+        className={`inline-block text-(--color-ink) ${animated ? "pre-text" : ""}`}
+      >
+        Data
+      </span>
+      <span
+        className={`inline-block text-(--color-active) ${animated ? "pre-text" : ""}`}
+      >
+        Sc
+      </span>
+      <svg
+        viewBox="0 0 100 100"
+        aria-hidden="true"
+        className={`h-[0.75em] w-[0.75em] shrink-0 self-center mt-[0.18em] -mr-[0.04em] ${animated ? "pre-reticle-group" : ""}`}
+      >
+        <circle
+          cx="50"
+          cy="50"
+          r="30"
+          fill="none"
+          stroke="var(--color-ink)"
+          strokeWidth="9"
+        />
+        <path
+          d="M50 4 V15 M50 85 V96 M4 50 H15 M85 50 H96"
+          stroke="var(--color-ink)"
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+        <path
+          d="M50 50 L50 20 A30 30 0 0 1 76 65 Z"
+          fill="var(--color-active)"
+          className={animated ? "pre-slice" : ""}
+        />
+        <circle
+          cx="50"
+          cy="50"
+          r="10"
+          fill="var(--color-fk)"
+          className={animated ? "pre-dot" : ""}
+        />
       </svg>
-      <span className={`inline-block text-(--color-active) ${animated ? 'pre-text' : ''}`}>pe</span>
+      <span
+        className={`inline-block text-(--color-active) ${animated ? "pre-text" : ""}`}
+      >
+        pe
+      </span>
     </div>
   );
 }
@@ -124,7 +190,9 @@ function Preloader({ onDone }: { onDone: () => void }) {
     <div
       data-theme="dark"
       className="pre-root fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-(--color-canvas)"
-      style={{ fontFamily: "'Space Grotesk Variable', 'Space Grotesk', sans-serif" }}
+      style={{
+        fontFamily: "'Space Grotesk Variable', 'Space Grotesk', sans-serif",
+      }}
     >
       <style>{PRELOADER_CSS}</style>
 
@@ -132,7 +200,10 @@ function Preloader({ onDone }: { onDone: () => void }) {
         {/* Ambient glow behind the mark */}
         <div
           className="pre-glow absolute -inset-8 rounded-full"
-          style={{ background: 'radial-gradient(circle, color-mix(in oklch, var(--color-active) 15%, transparent) 0%, transparent 70%)' }}
+          style={{
+            background:
+              "radial-gradient(circle, color-mix(in oklch, var(--color-active) 15%, transparent) 0%, transparent 70%)",
+          }}
         />
         <Logo animated className="relative text-[4rem] sm:text-[5rem]" />
       </div>
@@ -158,7 +229,7 @@ function ParticleField() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let w = 0;
@@ -172,21 +243,28 @@ function ParticleField() {
       ctx.scale(dpr, dpr);
     };
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener("resize", resize);
 
     // Canvas 2D cannot resolve custom properties, so the register is read off
     // the element once — the same approach `CanvasScatter` takes.
     const computed = getComputedStyle(canvas);
     const token = (name: string) => computed.getPropertyValue(name).trim();
-    const AMBER = token('--color-active');
-    const VIOLET = token('--color-fk');
-    const BONE = token('--color-ink');
+    const AMBER = token("--color-active");
+    const VIOLET = token("--color-fk");
+    const BONE = token("--color-ink");
 
     const PARTICLE_COUNT = 60;
     const CONNECT_DIST = 120;
     const MOUSE_DIST = 180;
 
-    interface Particle { x: number; y: number; vx: number; vy: number; r: number; hue: number }
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      hue: number;
+    }
     const particles: Particle[] = [];
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       particles.push({
@@ -262,12 +340,12 @@ function ParticleField() {
       const rect = canvas.getBoundingClientRect();
       mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
-    canvas.addEventListener('mousemove', handleMouse);
+    canvas.addEventListener("mousemove", handleMouse);
 
     return () => {
       cancelAnimationFrame(animRef.current);
-      window.removeEventListener('resize', resize);
-      canvas.removeEventListener('mousemove', handleMouse);
+      window.removeEventListener("resize", resize);
+      canvas.removeEventListener("mousemove", handleMouse);
     };
   }, []);
 
@@ -343,36 +421,61 @@ function Welcome() {
       <style>{WELCOME_CSS}</style>
 
       {/* Preloader overlay — plays exactly once */}
-      {!preloaderDone && <Preloader onDone={() => { _preloaderPlayed = true; setPreloaderDone(true); }} />}
+      {!preloaderDone && (
+        <Preloader
+          onDone={() => {
+            _preloaderPlayed = true;
+            setPreloaderDone(true);
+          }}
+        />
+      )}
 
       {/* Interactive particle constellation — responds to mouse */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden="true"
+      >
         <ParticleField />
       </div>
 
       {/* Radial glows */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute left-1/2 top-[15%] h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{ background: 'radial-gradient(ellipse, color-mix(in oklch, var(--color-active) 3.5%, transparent) 0%, transparent 60%)' }} />
-        <div className="absolute left-[30%] top-[60%] h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{ background: 'radial-gradient(circle, color-mix(in oklch, var(--color-fk) 2.5%, transparent) 0%, transparent 60%)' }} />
+        <div
+          className="absolute left-1/2 top-[15%] h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            background:
+              "radial-gradient(ellipse, color-mix(in oklch, var(--color-active) 3.5%, transparent) 0%, transparent 60%)",
+          }}
+        />
+        <div
+          className="absolute left-[30%] top-[60%] h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, color-mix(in oklch, var(--color-fk) 2.5%, transparent) 0%, transparent 60%)",
+          }}
+        />
       </div>
 
       {/* ---- Main content ---- */}
       <main className="relative z-10 mx-auto grid w-full max-w-[80rem] flex-1 grid-cols-1 items-center gap-12 px-6 py-8 lg:min-h-0 lg:grid-cols-[1.1fr_auto_0.9fr] lg:gap-16 lg:py-0">
-
         {/* Left Column — Logo, Headline & Copy */}
-        <div className="ws-2 flex flex-col items-start justify-center lg:items-end lg:text-right" style={{ fontFamily: "'Space Grotesk Variable', 'Space Grotesk', sans-serif" }}>
+        <div
+          className="ws-2 flex flex-col items-start justify-center lg:items-end lg:text-right"
+          style={{
+            fontFamily: "'Space Grotesk Variable', 'Space Grotesk', sans-serif",
+          }}
+        >
           <div className="mb-10 lg:mb-12">
             <Logo className="text-[2rem] lg:text-[2.2rem]" />
           </div>
           <h1 className="text-[clamp(1.5rem,2.2vw+0.6rem,2.4rem)] leading-[1.15] font-bold tracking-[-0.03em] text-(--color-ink)">
-            Drop data in.<br />
+            Drop data in.
+            <br />
             Get answers <span className="text-(--color-active)">out</span>.
           </h1>
           <p className="mt-5 max-w-[32ch] text-[length:var(--text-lg)] leading-[1.6] text-(--color-ink-2)">
-            Drop a file, paste a URL, or pick a sample.
-            DataScope profiles, charts, and maps it — entirely in your browser.
+            Drop a file, paste a URL, or pick a sample. DataScope profiles,
+            charts, and maps it — entirely in your browser.
           </p>
         </div>
 
@@ -386,11 +489,31 @@ function Welcome() {
         {/* Right Column — Features */}
         <div className="ws-4 flex w-full max-w-[280px] flex-col justify-center gap-3 self-center lg:w-[320px]">
           {[
-            { label: 'Schema detection', desc: 'Automatic typing & PK/FK inference', color: 'var(--color-active)' },
-            { label: 'Auto profiling', desc: 'Histograms, stats, & distributions', color: 'var(--color-fk)' },
-            { label: 'SQL queries', desc: 'Powered by DuckDB in WASM', color: 'var(--color-ink)' },
-            { label: 'Charts & correlation', desc: 'Visual insights instantly', color: 'var(--color-active)' },
-            { label: 'AI optional', desc: 'On-demand intelligence', color: 'var(--color-fk)' },
+            {
+              label: "Schema detection",
+              desc: "Automatic typing & PK/FK inference",
+              color: "var(--color-active)",
+            },
+            {
+              label: "Auto profiling",
+              desc: "Histograms, stats, & distributions",
+              color: "var(--color-fk)",
+            },
+            {
+              label: "SQL queries",
+              desc: "Powered by DuckDB in WASM",
+              color: "var(--color-ink)",
+            },
+            {
+              label: "Charts & correlation",
+              desc: "Visual insights instantly",
+              color: "var(--color-active)",
+            },
+            {
+              label: "AI optional",
+              desc: "On-demand intelligence",
+              color: "var(--color-fk)",
+            },
           ].map((chip, i) => (
             <div
               key={chip.label}
@@ -417,7 +540,6 @@ function Welcome() {
             </div>
           ))}
         </div>
-
       </main>
 
       {/* ---- Footer ---- */}
@@ -428,7 +550,10 @@ function Welcome() {
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-(--color-ok) shadow-[0_0_8px_var(--color-ok)]" />
               In-browser
             </span>
-            <span className="hidden h-3 w-px bg-(--color-rule) sm:block" aria-hidden="true" />
+            <span
+              className="hidden h-3 w-px bg-(--color-rule) sm:block"
+              aria-hidden="true"
+            />
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-(--color-rule-hi)">
               No uploads · No accounts · No tracking
             </p>
@@ -453,24 +578,31 @@ function TabContent({ tab }: { tab: TabSpec }) {
   // 07d: a restored tab whose subject didn't survive the reload degrades rather
   // than dangling — it says so in place, instead of closing itself (the user
   // opened it) or mounting a dashboard over a table the engine doesn't have.
-  if (tab.type === 'profile' && !isTableUsable(outcomes, tab.subject)) {
+  if (tab.type === "profile" && !isTableUsable(outcomes, tab.subject)) {
     return (
-      <p data-testid="tab-subject-unavailable" className="p-6 text-sm text-(--color-fg-muted)">
-        {outcomes[tab.subject]?.reason ?? 'This table is no longer available.'}
+      <p
+        data-testid="tab-subject-unavailable"
+        className="p-6 text-sm text-(--color-fg-muted)"
+      >
+        {outcomes[tab.subject]?.reason ?? "This table is no longer available."}
       </p>
     );
   }
-  if (tab.type === 'profile') return <ProfileDashboard initialTableId={tab.subject} />;
+  if (tab.type === "profile")
+    return <ProfileDashboard initialTableId={tab.subject} />;
   // S5: the standalone SQL playground is gone. `SqlModule` is the drawer
   // console's body now, and a query tab is its own runner on its own session —
   // the tab id *is* that session id.
-  if (tab.type === 'query') return <QueryTab tabId={tab.id} name={tab.subject} />;
-  if (tab.type === 'pivot') return <PivotModule prefill={prefill} />;
-  if (tab.type === 'charts') return <ChartsModule prefill={prefill} requestedTab={tab.subject} />;
-  if (tab.type === 'correlation') return <CorrelationModule prefill={prefill} />;
-  if (tab.type === 'export') return <ExportModule />;
-  if (tab.type === 'ingestion') return <IngestionPanel />;
-  if (tab.type === 'history') return <HistoryTab />;
+  if (tab.type === "query")
+    return <QueryTab tabId={tab.id} name={tab.subject} />;
+  if (tab.type === "pivot") return <PivotModule prefill={prefill} />;
+  if (tab.type === "charts")
+    return <ChartsModule prefill={prefill} requestedTab={tab.subject} />;
+  if (tab.type === "correlation")
+    return <CorrelationModule prefill={prefill} />;
+  if (tab.type === "export") return <ExportModule />;
+  if (tab.type === "ingestion") return <IngestionPanel />;
+  if (tab.type === "history") return <HistoryTab />;
   return <DatasetMap />;
 }
 
@@ -479,15 +611,21 @@ function TabContent({ tab }: { tab: TabSpec }) {
 // never per-glyph special-casing (design.md Iconography). The artifact/purple
 // branch reads `TAB_KIND` directly rather than a fabricated tab type; S5's
 // query tab is the first thing to reach it.
-function TabHeaderGlyph({ type, isActive }: { type: TabType; isActive: boolean }) {
+function TabHeaderGlyph({
+  type,
+  isActive,
+}: {
+  type: TabType;
+  isActive: boolean;
+}) {
   const glyph = TAB_GLYPH[type];
-  const isArtifact = TAB_KIND[type] === 'artifact';
+  const isArtifact = TAB_KIND[type] === "artifact";
   const colorClass = isActive
     ? isArtifact
-      ? 'text-(--color-fk)'
-      : 'text-(--color-active)'
-    : 'text-(--color-ink-3)';
-  if (glyph.kind === 'dingbat') {
+      ? "text-(--color-fk)"
+      : "text-(--color-active)"
+    : "text-(--color-ink-3)";
+  if (glyph.kind === "dingbat") {
     return (
       <span aria-hidden="true" className={colorClass}>
         {glyph.char}
@@ -528,10 +666,16 @@ function TabHost() {
               // scroll (§13.3, decided): without it many tabs compress instead,
               // which is the failure the horizontal-scrolling call rules out.
               className={`flex shrink-0 items-center gap-1.5 border-r border-(--color-rule) px-2 py-1 font-mono text-[length:var(--text-xs)] ${
-                isActive ? 'bg-(--color-canvas) text-(--color-ink)' : 'text-(--color-ink-3) hover:text-(--color-ink-2)'
+                isActive
+                  ? "bg-(--color-canvas) text-(--color-ink)"
+                  : "text-(--color-ink-3) hover:text-(--color-ink-2)"
               }`}
             >
-              <button type="button" onClick={() => setActiveTab(tab.id)} className="flex items-center gap-1.5 whitespace-nowrap">
+              <button
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className="flex items-center gap-1.5 whitespace-nowrap"
+              >
                 <TabHeaderGlyph type={tab.type} isActive={isActive} />
                 {tabLabel(tab)}
               </button>
@@ -551,7 +695,11 @@ function TabHost() {
       </div>
       <div className="flex-1 overflow-auto p-4">
         {tabs.map((tab) => (
-          <div key={tab.id} data-testid={`tab-content-${tab.id}`} hidden={tab.id !== activeTabId}>
+          <div
+            key={tab.id}
+            data-testid={`tab-content-${tab.id}`}
+            hidden={tab.id !== activeTabId}
+          >
             <TabContent tab={tab} />
           </div>
         ))}
@@ -563,8 +711,10 @@ function TabHost() {
 const EXPLORER_MIN_WIDTH = 200;
 const EXPLORER_MAX_WIDTH = 480;
 const EXPLORER_DEFAULT_WIDTH = 256;
+const EXPLORER_BAR_WIDTH = 40;
 
-/** Drag-to-resize for the explorer rail (VS Code-style) — width lives only in this component's state, reset to the default on reload rather than persisted, since nothing asked for that. */
+/** Drag-to-resize for the explorer rail — width lives only in this component's
+ *  state, reset to the default on reload rather than persisted. */
 function useExplorerWidth() {
   const [width, setWidth] = useState(EXPLORER_DEFAULT_WIDTH);
 
@@ -575,14 +725,16 @@ function useExplorerWidth() {
       const startWidth = width;
       const onMouseMove = (moveEvent: MouseEvent) => {
         const next = startWidth + (moveEvent.clientX - startX);
-        setWidth(Math.min(EXPLORER_MAX_WIDTH, Math.max(EXPLORER_MIN_WIDTH, next)));
+        setWidth(
+          Math.min(EXPLORER_MAX_WIDTH, Math.max(EXPLORER_MIN_WIDTH, next)),
+        );
       };
       const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
       };
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
     },
     [width],
   );
@@ -590,55 +742,160 @@ function useExplorerWidth() {
   return { width, onHandleMouseDown };
 }
 
+// ---------------------------------------------------------------------------
+// Keyboard shortcuts — ⌘B toggles the explorer, ⌘J toggles the inspector.
+// ---------------------------------------------------------------------------
+function useLayoutShortcuts() {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      // Skip when typing in an editable field.
+      const target = e.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable || target.closest("input, textarea, select"))
+      ) {
+        return;
+      }
+      if (e.key.toLowerCase() === "b" && !e.shiftKey) {
+        e.preventDefault();
+        useLayoutStore.getState().toggleExplorer();
+      } else if (e.key.toLowerCase() === "j" && !e.shiftKey) {
+        e.preventDefault();
+        const drawer = useDrawerStore.getState();
+        drawer.setOpen(!drawer.open);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+}
+
+// ---------------------------------------------------------------------------
+// Explorer activity bar — the thin strip shown when the explorer is collapsed.
+// Icons match the explorer's three surfaces: table list, search, quality.
+// ---------------------------------------------------------------------------
+function ExplorerActivityBar({ onExpand }: { onExpand: () => void }) {
+  const tables = useDatasetsStore((state) => state.tables);
+  return (
+    <div
+      data-testid="explorer-activity-bar"
+      className="flex h-full flex-col items-center gap-1 border-r border-(--color-rule) bg-(--color-panel) px-1 py-2"
+      style={{ width: EXPLORER_BAR_WIDTH }}
+    >
+      <button
+        type="button"
+        aria-label="Expand explorer (⌘B)"
+        title="Expand explorer"
+        onClick={onExpand}
+        className="rounded-(--radius-sm) p-1.5 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink)"
+      >
+        <Table size={16} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label="Search values"
+        title="Search values"
+        onClick={onExpand}
+        className="rounded-(--radius-sm) p-1.5 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink)"
+      >
+        <Search size={16} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label="Data quality"
+        title="Data quality"
+        onClick={onExpand}
+        className="rounded-(--radius-sm) p-1.5 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink)"
+      >
+        <ShieldCheck size={16} aria-hidden="true" />
+      </button>
+      {tables.length > 0 && (
+        <span className="mt-auto font-mono text-[9px] text-(--color-ink-3)">
+          {tables.length}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function ShellGrid() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   useApplyWorkbenchAIDefault();
+  useLayoutShortcuts();
   const openSettings = () => setSettingsOpen(true);
   const { width: explorerWidth, onHandleMouseDown } = useExplorerWidth();
+  const explorerCollapsed = useLayoutStore((state) => state.explorerCollapsed);
+  const toggleExplorer = useLayoutStore((state) => state.toggleExplorer);
 
   return (
     <EducationalPanelProvider>
       <div data-act="shell" className="flex h-svh flex-col">
         <TitleBar onOpenSettings={openSettings} />
         <div className="flex flex-1 overflow-hidden">
+          {explorerCollapsed ? (
+            <ExplorerActivityBar onExpand={toggleExplorer} />
+          ) : (
+            <>
+              <div
+                data-region="explorer"
+                style={{ width: explorerWidth }}
+                className="flex shrink-0 flex-col overflow-hidden border-r border-(--color-rule) bg-(--color-panel)"
+              >
+                <div className="flex items-center justify-end px-1 py-0.5">
+                  <button
+                    type="button"
+                    aria-label="Collapse explorer (⌘B)"
+                    title="Collapse explorer"
+                    onClick={toggleExplorer}
+                    className="rounded-(--radius-xs) p-1 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink)"
+                  >
+                    <ChevronsLeft size={14} aria-hidden="true" />
+                  </button>
+                </div>
+                <ExplorerPanel />
+              </div>
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize explorer panel"
+                onMouseDown={onHandleMouseDown}
+                className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-(--color-accent)/40 active:bg-(--color-accent)/60"
+              />
+            </>
+          )}
           <div
-            data-region="explorer"
-            style={{ width: explorerWidth }}
-            className="flex shrink-0 flex-col overflow-hidden border-r border-(--color-rule) bg-(--color-panel)"
+            data-region="canvas"
+            className="flex-1 overflow-auto bg-(--color-canvas)"
           >
-            <ExplorerPanel />
-          </div>
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize explorer panel"
-            onMouseDown={onHandleMouseDown}
-            className="w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-(--color-accent)/40 active:bg-(--color-accent)/60"
-          />
-          <div data-region="canvas" className="flex-1 overflow-auto bg-(--color-canvas)">
             <TabHost />
           </div>
           <div data-region="ai-pane" className="bg-(--color-panel)">
             <AIPane onConfigure={openSettings} />
           </div>
         </div>
-        {/* S3 (D73): the region is the two-view drawer now — Info + the console
-            — and owns its own height. Its place in this stack is load-bearing:
-            status bar → WebLLM dock → drawer → canvas, so an expanded drawer
-            pushes against the canvas above it and never over the dock. */}
-        <div data-region="inspector" className="flex shrink-0 flex-col border-t border-(--color-rule) bg-(--color-panel)">
+        <div
+          data-region="inspector"
+          className="flex shrink-0 flex-col border-t border-(--color-rule) bg-(--color-panel)"
+        >
           <InspectorDrawer />
         </div>
         <WebLLMDock />
-        <div data-region="status-bar" className="border-t border-(--color-rule-2) bg-(--color-chrome)">
+        <div
+          data-region="status-bar"
+          className="border-t border-(--color-rule-2) bg-(--color-chrome)"
+        >
           <StatusBar />
         </div>
       </div>
       <CommandPalette />
-      {/* S4: the transform guard's only mount in the app — it belongs to the
-          shared run path, not to whichever surface raised it. */}
       <TransformGuardHost />
-      {settingsOpen && <AISettingsPanel hideModeSwitch onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && (
+        <AISettingsPanel
+          hideModeSwitch
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </EducationalPanelProvider>
   );
 }
@@ -659,7 +916,7 @@ function useMapAutoOpen(hasDatasets: boolean): void {
     if (!hasDatasets || triggered.current) return;
     triggered.current = true;
     if (useTabsStore.getState().tabs.length === 0) {
-      useTabsStore.getState().openTab('map', MAP_TAB_SUBJECT);
+      useTabsStore.getState().openTab("map", MAP_TAB_SUBJECT);
     }
   }, [hasDatasets]);
 }
@@ -678,23 +935,27 @@ function useShareLinkOpener(): void {
   const handled = useRef(false);
   useEffect(() => {
     if (handled.current) return;
-    const token = new URLSearchParams(window.location.search).get('share');
+    const token = new URLSearchParams(window.location.search).get("share");
     if (!token) return;
     handled.current = true;
 
     void loadSharedDataset(token)
       .then((result) => {
-        if (result.kind === 'structure-report' && result.structureReport) {
+        if (result.kind === "structure-report" && result.structureReport) {
           useDspsReceiverStore.getState().open(result.structureReport);
         }
       })
       .catch((error: unknown) => {
         useDspsReceiverStore
           .getState()
-          .fail(error instanceof IngestionError ? error.message : "Couldn't open this share link.");
+          .fail(
+            error instanceof IngestionError
+              ? error.message
+              : "Couldn't open this share link.",
+          );
       })
       .finally(() => {
-        window.history.replaceState(null, '', window.location.pathname);
+        window.history.replaceState(null, "", window.location.pathname);
       });
   }, []);
 }
@@ -750,7 +1011,8 @@ export function WorkbenchShell() {
   // Viewer mode (W8, D62 Workbench amendment) wins regardless of act — a
   // dropped `.dsps` presents immediately whether or not any dataset is
   // already loaded, mirroring the old shell's own App.tsx handling.
-  if (dspsDocument || dspsError) return <ViewerMode document={dspsDocument} error={dspsError} />;
+  if (dspsDocument || dspsError)
+    return <ViewerMode document={dspsDocument} error={dspsError} />;
   // Persisted registry metadata rehydrates synchronously, before OPFS bytes
   // have been registered with the fresh DuckDB worker. Keep engine-backed
   // shell consumers unmounted across that gap: the map and quality panel
@@ -758,12 +1020,17 @@ export function WorkbenchShell() {
   // the engine. The restore job itself remains owned by useWorkspaceRestore.
   if (hasDatasets && workspaceRestore === null) {
     return (
-      <div data-act="restore" className="flex h-svh items-center justify-center bg-(--color-canvas)">
-        <p className="font-mono text-[length:var(--text-sm)] text-(--color-ink-3)">Restoring workspace…</p>
+      <div
+        data-act="restore"
+        className="flex h-svh items-center justify-center bg-(--color-canvas)"
+      >
+        <p className="font-mono text-[length:var(--text-sm)] text-(--color-ink-3)">
+          Restoring workspace…
+        </p>
       </div>
     );
   }
-  if (act === 'act0' || act === 'act1') {
+  if (act === "act0" || act === "act1") {
     return (
       <div data-act={act}>
         <Welcome />

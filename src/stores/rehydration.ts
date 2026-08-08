@@ -5,16 +5,16 @@
 // registry is the *claim* and this is the engine's *answer*, so it must never
 // be persisted. A restored `'restored'` read back from localStorage next load
 // would be exactly the dangling-entry lie 07d exists to make impossible.
-import { create } from 'zustand';
-import type { TableRegistryEntry } from '../types';
+import { create } from "zustand";
+import type { TableRegistryEntry } from "../types";
 
 export type RehydrationStatus =
   /** The table is present in the engine and its identity checks out. Normal, queryable, silent. */
-  | 'restored'
+  | "restored"
   /** The entry survived, the table didn't, and something can rebuild it — never automatically. */
-  | 'recoverable'
+  | "recoverable"
   /** Nothing can rebuild it. Shown as needing a re-drop, with the reason; never a normal row. */
-  | 'lost';
+  | "lost";
 
 export interface TableOutcome {
   tableId: string;
@@ -23,7 +23,7 @@ export interface TableOutcome {
   /** Why it isn't restored, in the user's terms. Null when it is. */
   reason: string | null;
   /** The action that recovers it — only ever set when `status` is `'recoverable'`. */
-  recovery?: 'refetch' | 'replay';
+  recovery?: "refetch" | "replay";
 }
 
 interface RehydrationState {
@@ -38,12 +38,26 @@ interface RehydrationState {
 export const useRehydrationStore = create<RehydrationState>((set) => ({
   outcomes: {},
   setOutcomes: (outcomes) =>
-    set({ outcomes: Object.fromEntries(outcomes.map((outcome) => [outcome.tableId, outcome])) }),
+    set({
+      outcomes: Object.fromEntries(
+        outcomes.map((outcome) => [outcome.tableId, outcome]),
+      ),
+    }),
   markRestored: (tableId) =>
     set((state) => {
       const outcome = state.outcomes[tableId];
       if (!outcome) return state;
-      return { outcomes: { ...state.outcomes, [tableId]: { ...outcome, status: 'restored', reason: null, recovery: undefined } } };
+      return {
+        outcomes: {
+          ...state.outcomes,
+          [tableId]: {
+            ...outcome,
+            status: "restored",
+            reason: null,
+            recovery: undefined,
+          },
+        },
+      };
     }),
   clearOutcome: (tableId) =>
     set((state) => {
@@ -60,9 +74,12 @@ export const useRehydrationStore = create<RehydrationState>((set) => ({
  * goes through this, so "usable" has one definition rather than each caller
  * re-deriving it from `outcomes`.
  */
-export function isTableUsable(outcomes: Record<string, TableOutcome>, tableId: string): boolean {
+export function isTableUsable(
+  outcomes: Record<string, TableOutcome>,
+  tableId: string,
+): boolean {
   const outcome = outcomes[tableId];
-  return outcome === undefined || outcome.status === 'restored';
+  return outcome === undefined || outcome.status === "restored";
 }
 
 /** The table *names* the relationship layer may still reason about — a lost table's edges go inert, not deleted. */
@@ -70,5 +87,7 @@ export function usableTableNames(
   outcomes: Record<string, TableOutcome>,
   tables: TableRegistryEntry[],
 ): string[] {
-  return tables.filter((t) => isTableUsable(outcomes, t.id)).map((t) => t.tableName);
+  return tables
+    .filter((t) => isTableUsable(outcomes, t.id))
+    .map((t) => t.tableName);
 }

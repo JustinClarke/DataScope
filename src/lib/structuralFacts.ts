@@ -9,17 +9,19 @@
 // no re-identification exposure beyond what those already carry, and closes
 // the one gap structure-only synthesis couldn't state on its own. Nothing here
 // is a data row.
-import type { TableRegistryEntry } from '../types'
-import type { StructuralFacts } from '../../edge/protocol'
+import type { TableRegistryEntry } from "../types";
+import type { StructuralFacts } from "../../edge/protocol";
 
 /** `ColumnProfile.min`/`max` come back VARCHAR-cast from SUMMARIZE even for a
  * DATE column (`src/lib/profile.ts`) — already a date string, never a raw
  * number, but typed loosely at the source. */
 function asDateString(value: string | number | null): string | null {
-  return value === null ? null : String(value)
+  return value === null ? null : String(value);
 }
 
-export function buildStructuralFacts(tables: TableRegistryEntry[]): StructuralFacts {
+export function buildStructuralFacts(
+  tables: TableRegistryEntry[],
+): StructuralFacts {
   return {
     tables: tables.map((table) => ({
       name: table.tableName,
@@ -30,10 +32,13 @@ export function buildStructuralFacts(tables: TableRegistryEntry[]): StructuralFa
         physicalType: column.physicalType,
         nullPercentage: column.nullPercentage,
         cardinality: column.cardinality,
-        ...(column.semanticType === 'Temporal'
-          ? { minDate: asDateString(column.min), maxDate: asDateString(column.max) }
+        ...(column.semanticType === "Temporal"
+          ? {
+              minDate: asDateString(column.min),
+              maxDate: asDateString(column.max),
+            }
           : {}),
       })),
     })),
-  }
+  };
 }

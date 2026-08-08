@@ -5,21 +5,21 @@
 // The states are the three-rung degrade ladder's input: only 'ready' lets the
 // provider ladder and the synthesis producer route to WebLLM; every other state
 // leaves the edge (then the deterministic surface) serving.
-import { create } from 'zustand';
+import { create } from "zustand";
 
 export type WebLLMStatus =
   /** Not started — no consent yet, or the app just loaded. */
-  | 'idle'
+  | "idle"
   /** This browser cannot run it (no WebGPU) — the offer never shows. */
-  | 'unavailable'
+  | "unavailable"
   /** Model shards downloading in the background (progress 0–1). */
-  | 'downloading'
+  | "downloading"
   /** Shards down; engine compiling/loading onto the GPU. */
-  | 'warming'
+  | "warming"
   /** Warm — WebLLM serves chat and synthesis client-side, zero egress. */
-  | 'ready'
+  | "ready"
   /** Download or engine failure — the surface stays on the edge rung. */
-  | 'error';
+  | "error";
 
 interface WebLLMState {
   status: WebLLMStatus;
@@ -35,12 +35,13 @@ interface WebLLMState {
 }
 
 export const useWebLLMStore = create<WebLLMState>((set) => ({
-  status: 'idle',
+  status: "idle",
   progress: 0,
-  progressText: '',
+  progressText: "",
   error: null,
 
-  setStatus: (status) => set({ status, ...(status === 'ready' ? { error: null } : {}) }),
+  setStatus: (status) =>
+    set({ status, ...(status === "ready" ? { error: null } : {}) }),
   setProgress: (progress, progressText) => set({ progress, progressText }),
-  setError: (error) => set({ status: 'error', error }),
+  setError: (error) => set({ status: "error", error }),
 }));

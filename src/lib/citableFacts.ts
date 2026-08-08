@@ -6,8 +6,8 @@
 // column/table names a claim citing it may use — so a claim can be checked
 // against the one fact it names, not the dataset at large (the gap that lets
 // a real statistic get attached to the wrong column). Pure, no I/O.
-import type { FactRef, TableRegistryEntry } from '../types';
-import type { TableInsights } from './insights';
+import type { FactRef, TableRegistryEntry } from "../types";
+import type { TableInsights } from "./insights";
 
 export interface CitableFact {
   id: string;
@@ -29,45 +29,53 @@ export interface CitableFact {
 // criterion (d): "Neutral vocabulary ≤ 25 words. Above that, report it as a
 // failure of the approach, not a tuning task." Case-insensitive at check time.
 export const NEUTRAL_VOCABULARY: readonly string[] = [
-  'row',
-  'rows',
-  'record',
-  'records',
-  'value',
-  'values',
-  'column',
-  'columns',
-  'table',
-  'tables',
-  'data',
-  'average',
-  'mean',
-  'higher',
-  'lower',
-  'above',
-  'below',
-  'group',
-  'groups',
-  'null',
-  'missing',
-  'duplicate',
-  'duplicates',
-  'span',
-  'spans',
+  "row",
+  "rows",
+  "record",
+  "records",
+  "value",
+  "values",
+  "column",
+  "columns",
+  "table",
+  "tables",
+  "data",
+  "average",
+  "mean",
+  "higher",
+  "lower",
+  "above",
+  "below",
+  "group",
+  "groups",
+  "null",
+  "missing",
+  "duplicate",
+  "duplicates",
+  "span",
+  "spans",
 ];
 
 function normalizeValue(raw: string): string {
-  return raw
-    .trim()
-    .replace(/,/g, '')
-    .replace(/[%σ]$/, '')
-    .toLowerCase();
+  return raw.trim().replace(/,/g, "").replace(/[%σ]$/, "").toLowerCase();
 }
 
 // Suffixes tried when hunting for a shared stem, longest/most-specific first
 // so "survivors" strips to "surviv" via "ors" rather than misfiring on a
 // shorter alternative — a cheap heuristic, not a real stemmer.
-const STRIP_SUFFIXES = ['ations', 'ives', 'ions', 'ers', 'ors', 'ing', 'ive', 'ion', 'ed', 'es', 's'];
+const STRIP_SUFFIXES = [
+  "ations",
+  "ives",
+  "ions",
+  "ers",
+  "ors",
+  "ing",
+  "ive",
+  "ion",
+  "ed",
+  "es",
+  "s",
+];
 
 // A calendar month name naming a date the cited fact already asserts (see
 // `hasDateValue` in `checkCitation`) is a temporal descriptor, not an
@@ -76,8 +84,18 @@ const STRIP_SUFFIXES = ['ations', 'ives', 'ions', 'ers', 'ors', 'ing', 'ive', 'i
 // exactly the world-knowledge-injection case this mechanism exists to catch,
 // so the exemption is conditional, never blanket.
 const MONTH_NAMES = new Set([
-  'january', 'february', 'march', 'april', 'may', 'june',
-  'july', 'august', 'september', 'october', 'november', 'december',
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
 ]);
 
 // A spelled-out cardinal number ("Seven review entries") states a value just
@@ -86,12 +104,37 @@ const MONTH_NAMES = new Set([
 // invented count in word form would otherwise pass `checkCitation` cleanly
 // (a live-run fabrication: "Seven" served in place of a fact's real "20").
 const WORD_NUMBERS: Record<string, string> = {
-  zero: '0', one: '1', two: '2', three: '3', four: '4', five: '5', six: '6',
-  seven: '7', eight: '8', nine: '9', ten: '10', eleven: '11', twelve: '12',
-  thirteen: '13', fourteen: '14', fifteen: '15', sixteen: '16', seventeen: '17',
-  eighteen: '18', nineteen: '19', twenty: '20', thirty: '30', forty: '40',
-  fifty: '50', sixty: '60', seventy: '70', eighty: '80', ninety: '90',
-  hundred: '100', thousand: '1000', million: '1000000',
+  zero: "0",
+  one: "1",
+  two: "2",
+  three: "3",
+  four: "4",
+  five: "5",
+  six: "6",
+  seven: "7",
+  eight: "8",
+  nine: "9",
+  ten: "10",
+  eleven: "11",
+  twelve: "12",
+  thirteen: "13",
+  fourteen: "14",
+  fifteen: "15",
+  sixteen: "16",
+  seventeen: "17",
+  eighteen: "18",
+  nineteen: "19",
+  twenty: "20",
+  thirty: "30",
+  forty: "40",
+  fifty: "50",
+  sixty: "60",
+  seventy: "70",
+  eighty: "80",
+  ninety: "90",
+  hundred: "100",
+  thousand: "1000",
+  million: "1000000",
 };
 
 /** Every plausible root of `word` — the bare word plus one candidate per
@@ -100,7 +143,7 @@ const WORD_NUMBERS: Record<string, string> = {
  * avoids the classic overstemming trap (picking "es" over "s" for "fares"
  * and mangling "fare" into "far") without needing real morphology. */
 function stemCandidates(word: string): Set<string> {
-  const alpha = word.toLowerCase().replace(/[^a-z]/g, '');
+  const alpha = word.toLowerCase().replace(/[^a-z]/g, "");
   const candidates = new Set<string>([alpha]);
   for (const suffix of STRIP_SUFFIXES) {
     if (alpha.endsWith(suffix) && alpha.length - suffix.length >= 3) {
@@ -141,7 +184,10 @@ function resolveVocabulary(word: string, vocabulary: string[]): string | null {
  * `checkCitation` reject a false positive than under-extract and let a
  * fabrication pass.
  */
-export function extractEntities(text: string, vocabulary: string[] = []): string[] {
+export function extractEntities(
+  text: string,
+  vocabulary: string[] = [],
+): string[] {
   // Underscore stays part of the token (not a separator): a snake_case name
   // like "order_items" must resolve as one identifier, or its fragment
   // "order" can stem-match an unrelated sibling ("orders") and misattribute
@@ -168,28 +214,33 @@ export function extractEntities(text: string, vocabulary: string[] = []): string
  * a stated value; an ISO date (`2016-01-04`) is extracted as one token before
  * the digit scan runs, so its month/day components aren't re-split into
  * standalone numbers that could never match the fact's own value set. */
-export function extractValues(text: string, vocabulary: string[] = []): string[] {
+export function extractValues(
+  text: string,
+  vocabulary: string[] = [],
+): string[] {
   const out: string[] = [];
 
   const dateStripped = text.replace(/\b\d{4}-\d{2}(?:-\d{2})?\b/g, (match) => {
     out.push(match);
-    return '#'.repeat(match.length);
+    return "#".repeat(match.length);
   });
-  for (const m of dateStripped.matchAll(/\d[\d,]*(?:\.\d+)?[%σ]?/g)) out.push(m[0]);
+  for (const m of dateStripped.matchAll(/\d[\d,]*(?:\.\d+)?[%σ]?/g))
+    out.push(m[0]);
 
   for (const m of text.matchAll(/[A-Za-z]+/g)) {
     const digit = WORD_NUMBERS[m[0].toLowerCase()];
     if (digit !== undefined) out.push(digit);
   }
 
-  const isVocabName = (s: string) => vocabulary.some((v) => v.toLowerCase() === s.toLowerCase());
+  const isVocabName = (s: string) =>
+    vocabulary.some((v) => v.toLowerCase() === s.toLowerCase());
   for (const m of text.matchAll(/"([^"]*)"/g)) {
     const inner = m[1].trim();
-    if (inner !== '' && !isVocabName(inner)) out.push(inner);
+    if (inner !== "" && !isVocabName(inner)) out.push(inner);
   }
   for (const m of text.matchAll(/'([^']*)'/g)) {
     const inner = m[1].trim();
-    if (inner !== '' && !isVocabName(inner)) out.push(inner);
+    if (inner !== "" && !isVocabName(inner)) out.push(inner);
   }
   return out;
 }
@@ -203,19 +254,22 @@ export function extractValues(text: string, vocabulary: string[] = []): string[]
  * belongs to this fact *type*'s entity set, not the shared neutral-vocabulary
  * blocklist — it can't be confused with a real schema name either way. */
 function entitiesFromInsightId(id: string, tableName: string): string[] {
-  const [rule, ...rest] = id.split(':');
+  const [rule, ...rest] = id.split(":");
   const entities = [tableName, ...rest];
-  if (rule === 'id-exclusion') entities.push('Profile');
+  if (rule === "id-exclusion") entities.push("Profile");
   return entities;
 }
 
-function factRefFromInsight(table: TableRegistryEntry, insight: TableInsights['insights'][number]): FactRef {
+function factRefFromInsight(
+  table: TableRegistryEntry,
+  insight: TableInsights["insights"][number],
+): FactRef {
   return {
     statement: insight.description,
     sql: insight.sql,
     snapshot: table.createdAt,
-    confidence: table.sampled ? 'medium' : 'high',
-    provenance: 'insight-rule',
+    confidence: table.sampled ? "medium" : "high",
+    provenance: "insight-rule",
   };
 }
 
@@ -236,7 +290,10 @@ function buildVocabulary(tables: TableRegistryEntry[]): string[] {
  * synthesis payload already carries. Every entry's `entities` names only the
  * columns the underlying rule actually read.
  */
-export function buildCitableFacts(tables: TableRegistryEntry[], tableInsights: TableInsights[]): CitableFact[] {
+export function buildCitableFacts(
+  tables: TableRegistryEntry[],
+  tableInsights: TableInsights[],
+): CitableFact[] {
   const vocabulary = buildVocabulary(tables);
   const facts: CitableFact[] = [];
 
@@ -244,19 +301,24 @@ export function buildCitableFacts(tables: TableRegistryEntry[], tableInsights: T
     facts.push({
       id: `fact:${table.tableName}.rowCount`,
       entities: [table.tableName],
-      values: [String(table.rowCount), table.rowCount.toLocaleString('en-US')],
+      values: [String(table.rowCount), table.rowCount.toLocaleString("en-US")],
       vocabulary,
       ref: {
         statement: `${table.tableName}: ${table.rowCount.toLocaleString()} rows.`,
-        sql: '',
+        sql: "",
         snapshot: table.createdAt,
-        confidence: table.sampled ? 'medium' : 'high',
-        provenance: 'schema',
+        confidence: table.sampled ? "medium" : "high",
+        provenance: "schema",
       },
     });
 
     for (const column of table.columns ?? []) {
-      if (column.semanticType !== 'Temporal' || column.min == null || column.max == null) continue;
+      if (
+        column.semanticType !== "Temporal" ||
+        column.min == null ||
+        column.max == null
+      )
+        continue;
       const minDate = String(column.min);
       const maxDate = String(column.max);
       const minYear = minDate.match(/^\d{4}/)?.[0];
@@ -275,10 +337,10 @@ export function buildCitableFacts(tables: TableRegistryEntry[], tableInsights: T
         vocabulary,
         ref: {
           statement: `${column.name} spans ${minDate} to ${maxDate}.`,
-          sql: '',
+          sql: "",
           snapshot: table.createdAt,
-          confidence: table.sampled ? 'medium' : 'high',
-          provenance: 'schema',
+          confidence: table.sampled ? "medium" : "high",
+          provenance: "schema",
         },
       });
     }
@@ -311,20 +373,34 @@ export interface CitationCheckResult {
  * every value stated must belong to `fact`'s own value set. Reject whole on
  * either miss — never repair, never partially accept (the doc's own rule).
  */
-export function checkCitation(statement: string, fact: CitableFact): CitationCheckResult {
-  const allowedEntities = new Set([...fact.entities.map((e) => e.toLowerCase()), ...NEUTRAL_VOCABULARY]);
+export function checkCitation(
+  statement: string,
+  fact: CitableFact,
+): CitationCheckResult {
+  const allowedEntities = new Set([
+    ...fact.entities.map((e) => e.toLowerCase()),
+    ...NEUTRAL_VOCABULARY,
+  ]);
   const allowedValues = new Set(fact.values.map(normalizeValue));
   // A month name only describes a date the fact itself already asserts if the
   // fact actually states one (a year or ISO date among its values) — F3 cites
   // a fact with no date at all, so "April" there stays a bare invented entity.
-  const hasDateValue = fact.values.some((v) => /^\d{4}(-\d{2}(-\d{2})?)?$/.test(v));
+  const hasDateValue = fact.values.some((v) =>
+    /^\d{4}(-\d{2}(-\d{2})?)?$/.test(v),
+  );
 
   const offendingEntities = extractEntities(statement, fact.vocabulary).filter(
-    (e) => !allowedEntities.has(e.toLowerCase()) && !(hasDateValue && MONTH_NAMES.has(e.toLowerCase())),
+    (e) =>
+      !allowedEntities.has(e.toLowerCase()) &&
+      !(hasDateValue && MONTH_NAMES.has(e.toLowerCase())),
   );
   const offendingValues = extractValues(statement, fact.vocabulary)
     .map(normalizeValue)
     .filter((v) => !allowedValues.has(v));
 
-  return { ok: offendingEntities.length === 0 && offendingValues.length === 0, offendingEntities, offendingValues };
+  return {
+    ok: offendingEntities.length === 0 && offendingValues.length === 0,
+    offendingEntities,
+    offendingValues,
+  };
 }

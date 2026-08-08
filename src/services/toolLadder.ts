@@ -1,7 +1,7 @@
 // The small-model determinism strategy (A4 defect ii) — shared by the Ollama
-// and WebLLM providers, because the same pinned coder runs behind both and the
-// old helpers were already shared across them (the defect record named only
-// `ollamaProvider`; the cap governed the zero-egress WebLLM path too).
+// and WebLLM providers, because both face the same unstructured-output problem
+// and the old helpers were already shared across them (the defect record named
+// only `ollamaProvider`; the cap governed the zero-egress WebLLM path too).
 //
 // **What was here before, and why it is not simply deleted.** The old rule was
 // two rungs and a trapdoor: ask for SQL, and the moment a row result came back,
@@ -20,7 +20,7 @@
 // Either way the turn still terminates deterministically: the unstructured
 // ladder's follow-up budget is finite and strictly decreasing, and past it the
 // last rung is answer-only.
-import type { ProviderMessage } from '../types';
+import type { ProviderMessage } from "../types";
 
 /**
  * The catalog operation an extracted SQL statement is wrapped as. It is the
@@ -29,16 +29,16 @@ import type { ProviderMessage } from '../types';
  * the operation that runs, and the `op` in the transcript are one name, and A5
  * has nothing to rename when it serves the same catalog over MCP.
  */
-export const SQL_TOOL = 'run_sql';
+export const SQL_TOOL = "run_sql";
 
 export const SQL_INSTRUCTION =
-  'Reply with ONLY one DuckDB SQL SELECT statement that answers the question — ' +
-  'no explanation, no code fence commentary. DuckDB uses Postgres dialect: ' +
-  'double-quoted identifiers, LIMIT not TOP.';
+  "Reply with ONLY one DuckDB SQL SELECT statement that answers the question — " +
+  "no explanation, no code fence commentary. DuckDB uses Postgres dialect: " +
+  "double-quoted identifiers, LIMIT not TOP.";
 
 export const ANSWER_INSTRUCTION =
-  'The rows above answer the question. Reply with a short plain-language answer ' +
-  'for the user. Do not write SQL.';
+  "The rows above answer the question. Reply with a short plain-language answer " +
+  "for the user. Do not write SQL.";
 
 /**
  * The rung the old ladder had no room for. It is the one that makes a second
@@ -47,9 +47,9 @@ export const ANSWER_INSTRUCTION =
  * picks the path by what it writes, not by a format it has to get right.
  */
 export const CONTINUE_OR_ANSWER_INSTRUCTION =
-  'The rows above are the result of that query. If they answer the question, ' +
-  'reply with a short plain-language answer for the user and no SQL. If you ' +
-  'still need one more query, reply with ONLY that DuckDB SQL SELECT statement.';
+  "The rows above are the result of that query. If they answer the question, " +
+  "reply with a short plain-language answer for the user and no SQL. If you " +
+  "still need one more query, reply with ONLY that DuckDB SQL SELECT statement.";
 
 /**
  * How many further queries an unstructured model may ask for after its first
@@ -60,10 +60,26 @@ export const CONTINUE_OR_ANSWER_INSTRUCTION =
  */
 export const MAX_UNSTRUCTURED_FOLLOW_UPS = 2;
 
+/**
+ * Strip a reasoning model's `<think>...</think>` chain-of-thought before the
+ * reply is parsed or shown. Also strips an unclosed `<think>` run to end of
+ * string, since a token budget can truncate mid-thought before the closing tag.
+ */
+export function stripThink(text: string): string {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<think>[\s\S]*$/i, "")
+    .trim();
+}
+
 /** Pull one SQL statement out of the model's text; null when there is none. */
 export function extractSql(text: string): string | null {
-  const fence = text.match(/```(?:sql|duckdb)?\s*([\s\S]*?)```/i);
-  const candidate = (fence ? fence[1] : text).trim().split(';')[0].trim();
+  const withoutThink = stripThink(text);
+  const fence = withoutThink.match(/```(?:sql|duckdb)?\s*([\s\S]*?)```/i);
+  const candidate = (fence ? fence[1] : withoutThink)
+    .trim()
+    .split(";")[0]
+    .trim();
   return /^\(*\s*(select|with)\b/i.test(candidate) ? candidate : null;
 }
 
@@ -74,25 +90,29 @@ export function extractSql(text: string): string | null {
  * first character, which stopped distinguishing the two once errors became
  * structured too.
  */
-export function lastToolOutcome(messages: ProviderMessage[]): 'rows' | 'error' | 'none' {
+export function lastToolOutcome(
+  messages: ProviderMessage[],
+): "rows" | "error" | "none" {
   const last = messages[messages.length - 1];
-  if (last?.role !== 'tool') return 'none';
+  if (last?.role !== "tool") return "none";
   try {
-    return (JSON.parse(last.content) as { ok?: boolean }).ok === false ? 'error' : 'rows';
+    return (JSON.parse(last.content) as { ok?: boolean }).ok === false
+      ? "error"
+      : "rows";
   } catch {
-    return 'error';
+    return "error";
   }
 }
 
 /** How many queries this turn has already asked for — read off the conversation, so it needs no per-instance counter. */
 function callsSoFar(messages: ProviderMessage[]): number {
   return messages.reduce(
-    (n, m) => n + (m.role === 'assistant' ? (m.toolCalls?.length ?? 0) : 0),
+    (n, m) => n + (m.role === "assistant" ? (m.toolCalls?.length ?? 0) : 0),
     0,
   );
 }
 
-export type LadderRung = 'sql' | 'continue-or-answer' | 'answer';
+export type LadderRung = "sql" | "continue-or-answer" | "answer";
 
 /**
  * The rung for this round-trip, given the conversation so far. Only consulted
@@ -102,16 +122,21 @@ export type LadderRung = 'sql' | 'continue-or-answer' | 'answer';
  * - rows in and follow-ups left → let the model choose to continue or answer;
  * - otherwise → answer only, and the caller omits `tools`.
  */
-export function ladderRung(messages: ProviderMessage[], hasSqlTool: boolean): LadderRung {
-  if (!hasSqlTool) return 'answer';
+export function ladderRung(
+  messages: ProviderMessage[],
+  hasSqlTool: boolean,
+): LadderRung {
+  if (!hasSqlTool) return "answer";
   const outcome = lastToolOutcome(messages);
-  if (outcome === 'none' || outcome === 'error') return 'sql';
-  return callsSoFar(messages) > MAX_UNSTRUCTURED_FOLLOW_UPS ? 'answer' : 'continue-or-answer';
+  if (outcome === "none" || outcome === "error") return "sql";
+  return callsSoFar(messages) > MAX_UNSTRUCTURED_FOLLOW_UPS
+    ? "answer"
+    : "continue-or-answer";
 }
 
 export const RUNG_INSTRUCTION: Record<LadderRung, string> = {
   sql: SQL_INSTRUCTION,
-  'continue-or-answer': CONTINUE_OR_ANSWER_INSTRUCTION,
+  "continue-or-answer": CONTINUE_OR_ANSWER_INSTRUCTION,
   answer: ANSWER_INSTRUCTION,
 };
 

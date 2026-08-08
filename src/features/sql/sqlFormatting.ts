@@ -3,7 +3,7 @@
 // its own module graph — `MonacoWrapper` registers the same function as a
 // document-formatting provider, which is what gives the editor its ⇧⌥F and
 // format-on-paste.
-import { format } from 'sql-formatter';
+import { format } from "sql-formatter";
 
 /**
  * The engine is DuckDB (ADR-004), so the dialect is too — a Postgres-shaped
@@ -14,7 +14,7 @@ import { format } from 'sql-formatter';
  */
 export function formatSql(sql: string): string {
   try {
-    return format(sql, { language: 'duckdb', keywordCase: 'preserve' });
+    return format(sql, { language: "duckdb", keywordCase: "preserve" });
   } catch {
     // Invalid or half-typed SQL is the normal state of an editor buffer. The
     // formatter throwing on it is not an error worth surfacing — it just means

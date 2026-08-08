@@ -10,20 +10,27 @@
 //   pure `describe` closure that turns the query's result into zero or more
 //   candidates, so services/insights.ts only has to execute SQL and call
 //   `describe` — no query-shape knowledge lives outside this file.
-import type { ClassifiedColumn, QueryResult, TableRegistryEntry } from '../types';
-import { buildCorrelationMatrixSql, correlationPairs } from './correlationSql';
-import { buildCategorySummarySql, parseCategorySummary } from './categoricalSql';
-import { formatDateCell } from './columnStats';
+import type {
+  ClassifiedColumn,
+  QueryResult,
+  TableRegistryEntry,
+} from "../types";
+import { buildCorrelationMatrixSql, correlationPairs } from "./correlationSql";
+import {
+  buildCategorySummarySql,
+  parseCategorySummary,
+} from "./categoricalSql";
+import { formatDateCell } from "./columnStats";
 
 export type InsightRuleId =
-  | 'concentration'
-  | 'change-point'
-  | 'outlier-group'
-  | 'null-pattern'
-  | 'duplicates'
-  | 'leakage'
-  | 'id-exclusion'
-  | 'zero-variance';
+  | "concentration"
+  | "change-point"
+  | "outlier-group"
+  | "null-pattern"
+  | "duplicates"
+  | "leakage"
+  | "id-exclusion"
+  | "zero-variance";
 
 export interface InsightCandidate {
   id: string;
@@ -42,14 +49,14 @@ export interface InsightProbe {
 
 /** Human label per rule — shared by every surface that renders an `InsightCandidate` (§10). */
 export const RULE_LABEL: Record<InsightRuleId, string> = {
-  concentration: 'Concentration',
-  'change-point': 'Change point',
-  'outlier-group': 'Outlier group',
-  'null-pattern': 'Null pattern',
-  duplicates: 'Duplicates',
-  leakage: 'Leakage flag',
-  'id-exclusion': 'ID exclusion',
-  'zero-variance': 'Zero variance',
+  concentration: "Concentration",
+  "change-point": "Change point",
+  "outlier-group": "Outlier group",
+  "null-pattern": "Null pattern",
+  duplicates: "Duplicates",
+  leakage: "Leakage flag",
+  "id-exclusion": "ID exclusion",
+  "zero-variance": "Zero variance",
 };
 
 /**
@@ -77,22 +84,30 @@ export const INSIGHT_FEED_CAP = 10;
 // bound how many columns of each type are considered.
 const MAX_COLUMNS_PER_TYPE = 5;
 
-function byType(columns: ClassifiedColumn[], type: ClassifiedColumn['semanticType']): ClassifiedColumn[] {
-  return columns.filter((c) => c.semanticType === type).slice(0, MAX_COLUMNS_PER_TYPE);
+function byType(
+  columns: ClassifiedColumn[],
+  type: ClassifiedColumn["semanticType"],
+): ClassifiedColumn[] {
+  return columns
+    .filter((c) => c.semanticType === type)
+    .slice(0, MAX_COLUMNS_PER_TYPE);
 }
 
 // ---- Null pattern (syntactic — any) ----
 
 const NULL_PATTERN_THRESHOLD = 5;
 
-export function nullPatternCandidates(columns: ClassifiedColumn[], tableName: string): InsightCandidate[] {
+export function nullPatternCandidates(
+  columns: ClassifiedColumn[],
+  tableName: string,
+): InsightCandidate[] {
   return columns
     .filter((c) => (c.nullPercentage ?? 0) > NULL_PATTERN_THRESHOLD)
     .map((c) => {
       const pct = c.nullPercentage ?? 0;
       return {
         id: `null-pattern:${c.name}`,
-        rule: 'null-pattern' as const,
+        rule: "null-pattern" as const,
         description: `Missing values concentrated in "${c.name}" (${pct.toFixed(1)}% null).`,
         sql: `SELECT COUNT(*) FILTER (WHERE ${quoteIdentifier(c.name)} IS NULL) AS null_count, COUNT(*) AS total FROM ${quoteIdentifier(tableName)}`,
         effectSize: 1,
@@ -103,12 +118,15 @@ export function nullPatternCandidates(columns: ClassifiedColumn[], tableName: st
 
 // ---- ID exclusion (syntactic — Identifier) ----
 
-export function idExclusionCandidates(columns: ClassifiedColumn[], tableName: string): InsightCandidate[] {
+export function idExclusionCandidates(
+  columns: ClassifiedColumn[],
+  tableName: string,
+): InsightCandidate[] {
   return columns
-    .filter((c) => c.semanticType === 'Identifier')
+    .filter((c) => c.semanticType === "Identifier")
     .map((c) => ({
       id: `id-exclusion:${c.name}`,
-      rule: 'id-exclusion' as const,
+      rule: "id-exclusion" as const,
       description: `"${c.name}" is near-unique — excluded from analysis (override in Profile).`,
       // The exact query that decided the classification (§8's near-unique
       // identifier rule) — not re-run here since the ratio is already known
@@ -139,7 +157,7 @@ export function zeroVarianceCandidates(
     .filter((c) => c.cardinality === 1)
     .map((c) => ({
       id: `zero-variance:${c.name}`,
-      rule: 'zero-variance' as const,
+      rule: "zero-variance" as const,
       description: `"${c.name}" holds a single repeated value across all ${rowCount.toLocaleString()} rows — zero variance.`,
       // Illustrative, same posture `idExclusionCandidates` already takes —
       // the finding itself needs no live query, since cardinality is already known.
@@ -151,7 +169,10 @@ export function zeroVarianceCandidates(
 
 // ---- Duplicates (probe — any) ----
 
-export function buildDuplicatesProbe(tableName: string, rowCount: number): InsightProbe {
+export function buildDuplicatesProbe(
+  tableName: string,
+  rowCount: number,
+): InsightProbe {
   const table = quoteIdentifier(tableName);
   const sql = `WITH t AS (SELECT * FROM ${table})\nSELECT (SELECT COUNT(*) FROM t) AS total, (SELECT COUNT(*) FROM (SELECT DISTINCT * FROM t)) AS distinct_count`;
   return {
@@ -165,9 +186,9 @@ export function buildDuplicatesProbe(tableName: string, rowCount: number): Insig
       if (duplicates <= 0) return [];
       return [
         {
-          id: 'duplicates',
-          rule: 'duplicates',
-          description: `${duplicates.toLocaleString()} fully duplicated row${duplicates === 1 ? '' : 's'} detected.`,
+          id: "duplicates",
+          rule: "duplicates",
+          description: `${duplicates.toLocaleString()} fully duplicated row${duplicates === 1 ? "" : "s"} detected.`,
           sql,
           effectSize: 1,
           coverage: Math.min(1, (duplicates * 2) / Math.max(1, rowCount)),
@@ -188,7 +209,11 @@ function buildCatQuantProbe(
   quantColumn: ClassifiedColumn,
   rowCount: number,
 ): InsightProbe {
-  const sql = buildCategorySummarySql(tableName, catColumn.name, quantColumn.name);
+  const sql = buildCategorySummarySql(
+    tableName,
+    catColumn.name,
+    quantColumn.name,
+  );
 
   return {
     sql,
@@ -214,10 +239,13 @@ function buildCatQuantProbe(
       const fairShare = groups.length > 0 ? k / groups.length : 0;
       const disproportion = share - fairShare;
       if (disproportion >= CONCENTRATION_MIN_SHARE) {
-        const label = top.length === 1 ? `"${top[0].grp}"` : `the top ${k} "${catColumn.name}" groups`;
+        const label =
+          top.length === 1
+            ? `"${top[0].grp}"`
+            : `the top ${k} "${catColumn.name}" groups`;
         candidates.push({
           id: `concentration:${catColumn.name}:${quantColumn.name}`,
-          rule: 'concentration',
+          rule: "concentration",
           description: `${label} account for ${(share * 100).toFixed(0)}% of total ${quantColumn.name}.`,
           sql,
           effectSize: Math.min(1, disproportion),
@@ -233,13 +261,14 @@ function buildCatQuantProbe(
         let best: { grp: string; z: number; rows: number } | null = null;
         for (const g of groups) {
           const z = (g.mean - overallMean) / overallStdDev;
-          if (!best || Math.abs(z) > Math.abs(best.z)) best = { grp: g.grp, z, rows: g.rows };
+          if (!best || Math.abs(z) > Math.abs(best.z))
+            best = { grp: g.grp, z, rows: g.rows };
         }
         if (best && Math.abs(best.z) >= OUTLIER_MIN_Z) {
           candidates.push({
             id: `outlier-group:${catColumn.name}:${quantColumn.name}`,
-            rule: 'outlier-group',
-            description: `"${best.grp}"'s mean ${quantColumn.name} is ${Math.abs(best.z).toFixed(1)}σ ${best.z >= 0 ? 'above' : 'below'} the rest.`,
+            rule: "outlier-group",
+            description: `"${best.grp}"'s mean ${quantColumn.name} is ${Math.abs(best.z).toFixed(1)}σ ${best.z >= 0 ? "above" : "below"} the rest.`,
             sql,
             effectSize: Math.min(1, Math.abs(best.z) / 5),
             coverage: rowCount > 0 ? best.rows / rowCount : 0,
@@ -292,8 +321,8 @@ function buildChangePointProbe(
       return [
         {
           id: `change-point:${dateColumn.name}:${quantColumn.name}`,
-          rule: 'change-point',
-          description: `${quantColumn.name} ${best.change >= 0 ? 'rose' : 'dropped'} ${Math.abs(best.change * 100).toFixed(0)}% in ${best.period} — largest period-over-period move.`,
+          rule: "change-point",
+          description: `${quantColumn.name} ${best.change >= 0 ? "rose" : "dropped"} ${Math.abs(best.change * 100).toFixed(0)}% in ${best.period} — largest period-over-period move.`,
           sql,
           effectSize: Math.min(1, Math.abs(best.change)),
           coverage: rowCount > 0 ? best.rows / rowCount : 0,
@@ -307,7 +336,10 @@ function buildChangePointProbe(
 
 const LEAKAGE_MIN_CORR = 0.9;
 
-function buildLeakageProbe(tableName: string, quantColumns: ClassifiedColumn[]): InsightProbe | null {
+function buildLeakageProbe(
+  tableName: string,
+  quantColumns: ClassifiedColumn[],
+): InsightProbe | null {
   if (quantColumns.length < 2) return null;
 
   const names = quantColumns.map((c) => c.name);
@@ -325,7 +357,7 @@ function buildLeakageProbe(tableName: string, quantColumns: ClassifiedColumn[]):
         if (Math.abs(corr) < LEAKAGE_MIN_CORR) return;
         candidates.push({
           id: `leakage:${a}:${b}`,
-          rule: 'leakage',
+          rule: "leakage",
           description: `"${a}" and "${b}" correlate at ${corr.toFixed(3)} — possible target leakage.`,
           sql,
           effectSize: Math.abs(corr),
@@ -342,32 +374,45 @@ function buildLeakageProbe(tableName: string, quantColumns: ClassifiedColumn[]):
  * probe's SQL and pass the result to its `describe` closure; this function
  * does no I/O itself.
  */
-export function buildInsightProbes(tableName: string, columns: ClassifiedColumn[], rowCount: number): InsightProbe[] {
-  const categorical = byType(columns, 'Categorical');
-  const quantitative = byType(columns, 'Quantitative');
+export function buildInsightProbes(
+  tableName: string,
+  columns: ClassifiedColumn[],
+  rowCount: number,
+): InsightProbe[] {
+  const categorical = byType(columns, "Categorical");
+  const quantitative = byType(columns, "Quantitative");
   // A bare TIME column has no calendar date component — date_trunc('month', ...)
   // has no TIME overload in DuckDB, so it would always error; exclude it from
   // the change-point probe's date-axis candidates.
-  const temporal = byType(columns, 'Temporal').filter((c) => c.physicalType.toUpperCase() !== 'TIME');
+  const temporal = byType(columns, "Temporal").filter(
+    (c) => c.physicalType.toUpperCase() !== "TIME",
+  );
 
   const probes: InsightProbe[] = [];
 
   for (const cat of categorical) {
-    for (const quant of quantitative) probes.push(buildCatQuantProbe(tableName, cat, quant, rowCount));
+    for (const quant of quantitative)
+      probes.push(buildCatQuantProbe(tableName, cat, quant, rowCount));
   }
   for (const date of temporal) {
-    for (const quant of quantitative) probes.push(buildChangePointProbe(tableName, date, quant, rowCount));
+    for (const quant of quantitative)
+      probes.push(buildChangePointProbe(tableName, date, quant, rowCount));
   }
 
   const leakageProbe = buildLeakageProbe(tableName, quantitative);
   if (leakageProbe) probes.push(leakageProbe);
 
-  if (columns.length > 0) probes.push(buildDuplicatesProbe(tableName, rowCount));
+  if (columns.length > 0)
+    probes.push(buildDuplicatesProbe(tableName, rowCount));
 
   return probes;
 }
 
 /** Rank all candidates by effect size × coverage and cap at ~10 (D10). */
-export function rankInsights(candidates: InsightCandidate[]): InsightCandidate[] {
-  return [...candidates].sort((a, b) => scoreOf(b) - scoreOf(a)).slice(0, INSIGHT_FEED_CAP);
+export function rankInsights(
+  candidates: InsightCandidate[],
+): InsightCandidate[] {
+  return [...candidates]
+    .sort((a, b) => scoreOf(b) - scoreOf(a))
+    .slice(0, INSIGHT_FEED_CAP);
 }

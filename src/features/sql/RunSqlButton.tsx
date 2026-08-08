@@ -6,8 +6,8 @@
 //
 // Never disabled while a query is running: a remote surface has no view of the
 // running state, and a new run supersedes the old one (`services/runPath.ts`).
-import { Play } from 'lucide-react';
-import { runInConsole } from '../../services/runPath';
+import { Play } from "lucide-react";
+import { runInConsole } from "../../services/runPath";
 
 export function RunSqlButton({ sql }: { sql: string }) {
   return (

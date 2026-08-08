@@ -13,8 +13,8 @@ import {
   stagingSupported,
   type StagingRequest,
   type StagingResponse,
-} from '../workers/opfsStaging.protocol';
-import { usePersistenceStore } from '../stores/persistence';
+} from "../workers/opfsStaging.protocol";
+import { usePersistenceStore } from "../stores/persistence";
 
 /**
  * One staged source, as recorded in the OPFS manifest. Deliberately minimal —
@@ -31,13 +31,17 @@ export interface StagedTable {
   stagedAt: string;
 }
 
-const MANIFEST_NAME = 'manifest.json';
+const MANIFEST_NAME = "manifest.json";
 
 // Same realm caveat as the worker side: a structured-cloned buffer is not
 // `instanceof` this realm's ArrayBuffer, so a successful read is recognized by
 // shape.
 function readBuffer(response: StagingResponse): ArrayBuffer | null {
-  if (!response.ok || typeof (response.value as ArrayBuffer)?.byteLength !== 'number') return null;
+  if (
+    !response.ok ||
+    typeof (response.value as ArrayBuffer)?.byteLength !== "number"
+  )
+    return null;
   return response.value as ArrayBuffer;
 }
 
@@ -59,20 +63,30 @@ export interface StagingTransport {
 const NO_STAGING: StagingTransport = {
   send: (request) =>
     Promise.resolve(
-      request.op === 'probe'
+      request.op === "probe"
         ? { id: request.id, ok: true, value: false }
-        : { id: request.id, ok: false, error: { name: 'NotSupportedError', message: 'Storage worker unavailable.' } },
+        : {
+            id: request.id,
+            ok: false,
+            error: {
+              name: "NotSupportedError",
+              message: "Storage worker unavailable.",
+            },
+          },
     ),
   dispose: () => {},
 };
 
 function createWorkerTransport(): StagingTransport {
-  if (typeof Worker === 'undefined') return NO_STAGING;
-  const worker = new Worker(new URL('../workers/opfs.worker.ts', import.meta.url), { type: 'module' });
+  if (typeof Worker === "undefined") return NO_STAGING;
+  const worker = new Worker(
+    new URL("../workers/opfs.worker.ts", import.meta.url),
+    { type: "module" },
+  );
   const pending = new Map<number, (response: StagingResponse) => void>();
   let nextId = 0;
 
-  worker.addEventListener('message', (event: MessageEvent<StagingResponse>) => {
+  worker.addEventListener("message", (event: MessageEvent<StagingResponse>) => {
     pending.get(event.data.id)?.(event.data);
     pending.delete(event.data.id);
   });
@@ -102,7 +116,9 @@ function getTransport(): StagingTransport {
 }
 
 /** Test seam: swap the worker for an in-process handler. Passing `null` restores the real worker. */
-export function setStagingTransportForTests(factory: (() => StagingTransport) | null): void {
+export function setStagingTransportForTests(
+  factory: (() => StagingTransport) | null,
+): void {
   transport?.dispose();
   transport = null;
   transportFactory = factory ?? createWorkerTransport;
@@ -128,14 +144,17 @@ let supportedPromise: Promise<boolean> | null = null;
 export function isStagingSupported(): Promise<boolean> {
   if (!supportedPromise) {
     supportedPromise = getTransport()
-      .send({ id: 0, op: 'probe' })
+      .send({ id: 0, op: "probe" })
       .then((response) => response.ok && response.value === true)
       .catch(() => false)
       .then((supported) => {
         if (!supported) {
           usePersistenceStore
             .getState()
-            .setStatus('unsupported', 'This browser can’t store a workspace on disk, so a refresh starts fresh.');
+            .setStatus(
+              "unsupported",
+              "This browser can’t store a workspace on disk, so a refresh starts fresh.",
+            );
         }
         return supported;
       });
@@ -148,22 +167,31 @@ export function isStagingSupported(): Promise<boolean> {
 // Both engines report a contended sync access handle this way — Chromium
 // "Access Handles cannot be created if there is another open Access Handle",
 // Safari "The object is in an invalid state." (ADR-011, finding 2).
-const LOCKED_ERRORS = new Set(['NoModificationAllowedError', 'InvalidStateError']);
+const LOCKED_ERRORS = new Set([
+  "NoModificationAllowedError",
+  "InvalidStateError",
+]);
 
 function report(response: StagingResponse): boolean {
   if (response.ok) {
-    usePersistenceStore.getState().setStatus('ready');
+    usePersistenceStore.getState().setStatus("ready");
     return true;
   }
   const error = response.error;
   if (error && LOCKED_ERRORS.has(error.name)) {
     usePersistenceStore
       .getState()
-      .setStatus('locked', 'Another DataScope tab is using this workspace’s storage — this table won’t survive a refresh.');
+      .setStatus(
+        "locked",
+        "Another DataScope tab is using this workspace’s storage — this table won’t survive a refresh.",
+      );
   } else {
     usePersistenceStore
       .getState()
-      .setStatus('failed', `Couldn’t store this table on disk: ${error?.message ?? 'unknown error'}`);
+      .setStatus(
+        "failed",
+        `Couldn’t store this table on disk: ${error?.message ?? "unknown error"}`,
+      );
   }
   return false;
 }
@@ -171,7 +199,9 @@ function report(response: StagingResponse): boolean {
 // --- manifest -------------------------------------------------------------
 
 async function readManifestRaw(): Promise<StagedTable[]> {
-  const buffer = readBuffer(await getTransport().send({ id: 0, op: 'read', name: MANIFEST_NAME }));
+  const buffer = readBuffer(
+    await getTransport().send({ id: 0, op: "read", name: MANIFEST_NAME }),
+  );
   if (buffer === null) return [];
   try {
     const parsed: unknown = JSON.parse(new TextDecoder().decode(buffer));
@@ -187,7 +217,7 @@ async function writeManifest(entries: StagedTable[]): Promise<boolean> {
   const bytes = new TextEncoder().encode(JSON.stringify(entries));
   const response = await getTransport().send({
     id: 0,
-    op: 'write',
+    op: "write",
     name: MANIFEST_NAME,
     data: bytes.buffer as ArrayBuffer,
   });
@@ -207,27 +237,40 @@ export async function readStagedManifest(): Promise<StagedTable[]> {
  * exists, so the bytes are never copied on the main thread just to persist
  * them. Returns false when the workspace simply isn't durable right now.
  */
-export async function stageTable(entry: StagedTable, source: Blob): Promise<boolean> {
+export async function stageTable(
+  entry: StagedTable,
+  source: Blob,
+): Promise<boolean> {
   if (!(await isStagingSupported())) return false;
 
   const write = await getTransport().send({
     id: 0,
-    op: 'write',
+    op: "write",
     name: stagingFileName(entry.tableName),
     data: source,
   });
   if (!report(write)) return false;
 
   const manifest = await readManifestRaw();
-  const next = manifest.filter((staged) => staged.tableName !== entry.tableName);
+  const next = manifest.filter(
+    (staged) => staged.tableName !== entry.tableName,
+  );
   next.push(entry);
   return writeManifest(next);
 }
 
 /** The staged bytes for one table, or null when they're gone (evicted, cleared, never staged). */
-export async function readStagedBytes(tableName: string): Promise<Uint8Array | null> {
+export async function readStagedBytes(
+  tableName: string,
+): Promise<Uint8Array | null> {
   if (!(await isStagingSupported())) return null;
-  const buffer = readBuffer(await getTransport().send({ id: 0, op: 'read', name: stagingFileName(tableName) }));
+  const buffer = readBuffer(
+    await getTransport().send({
+      id: 0,
+      op: "read",
+      name: stagingFileName(tableName),
+    }),
+  );
   return buffer === null ? null : new Uint8Array(buffer);
 }
 
@@ -240,13 +283,17 @@ export async function unstageTable(tableName: string): Promise<void> {
   const manifest = await readManifestRaw();
   const next = manifest.filter((staged) => staged.tableName !== tableName);
   if (next.length !== manifest.length) await writeManifest(next);
-  await getTransport().send({ id: 0, op: 'remove', name: stagingFileName(tableName) });
+  await getTransport().send({
+    id: 0,
+    op: "remove",
+    name: stagingFileName(tableName),
+  });
 }
 
 /** Empties the staging directory. The caller must have terminated the DuckDB worker first (see `clearWorkspaceData`). */
 export async function clearStagingStorage(): Promise<boolean> {
   if (!(await isStagingSupported())) return true;
-  const response = await getTransport().send({ id: 0, op: 'clear' });
+  const response = await getTransport().send({ id: 0, op: "clear" });
   return report(response);
 }
 

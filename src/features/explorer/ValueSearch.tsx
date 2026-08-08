@@ -3,14 +3,14 @@
 // lightest rung of the detail ladder: a result is structure only (table,
 // column, match count) and clicking it links into the drawer by selecting
 // the column, rather than rendering the operation's sample values here.
-import { useEffect, useState } from 'react';
-import { Search } from 'lucide-react';
-import { analystCore } from '../../services/analyst';
-import { isOpError, type OpOutcome } from '../../lib/analyst/types';
-import { useDatasetsStore } from '../../stores/datasets';
-import { useSelectionStore } from '../../stores/selection';
-import { openDestination } from '../../services/navigation';
-import { RunSqlButton } from '../sql/RunSqlButton';
+import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
+import { analystCore } from "../../services/analyst";
+import { isOpError, type OpOutcome } from "../../lib/analyst/types";
+import { useDatasetsStore } from "../../stores/datasets";
+import { useSelectionStore } from "../../stores/selection";
+import { openDestination } from "../../services/navigation";
+import { RunSqlButton } from "../sql/RunSqlButton";
 
 const DEBOUNCE_MS = 300;
 
@@ -30,8 +30,8 @@ function rowsFrom(outcome: OpOutcome): SearchRow[] {
 }
 
 export function ValueSearch() {
-  const [term, setTerm] = useState('');
-  const [debounced, setDebounced] = useState('');
+  const [term, setTerm] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [outcome, setOutcome] = useState<OpOutcome | null>(null);
   const [loading, setLoading] = useState(false);
   const tables = useDatasetsStore((state) => state.tables);
@@ -51,7 +51,7 @@ export function ValueSearch() {
     let cancelled = false;
     setLoading(true);
     analystCore()
-      .call('search_values', { term: debounced })
+      .call("search_values", { term: debounced })
       .then((result) => {
         if (cancelled) return;
         setOutcome(result);
@@ -66,7 +66,7 @@ export function ValueSearch() {
     const table = tables.find((t) => t.tableName === row.table);
     if (!table) return;
     selectColumn(table.id, row.column);
-    openDestination('profile', table.id);
+    openDestination("profile", table.id);
   }
 
   const rows = outcome ? rowsFrom(outcome) : [];
@@ -91,15 +91,27 @@ export function ValueSearch() {
       </div>
 
       {debounced && (
-        <div data-testid="value-search-results" className="mt-2 flex max-h-48 flex-col gap-1 overflow-y-auto">
+        <div
+          data-testid="value-search-results"
+          className="mt-2 flex max-h-48 flex-col gap-1 overflow-y-auto"
+        >
           {loading ? (
-            <p className="font-mono text-[length:var(--text-2xs)] text-(--color-ink-3)">Searching…</p>
+            <p className="font-mono text-[length:var(--text-2xs)] text-(--color-ink-3)">
+              Searching…
+            </p>
           ) : outcome && isOpError(outcome) ? (
-            <p role="alert" data-testid="value-search-error" className="font-mono text-[length:var(--text-2xs)] text-(--color-error)">
+            <p
+              role="alert"
+              data-testid="value-search-error"
+              className="font-mono text-[length:var(--text-2xs)] text-(--color-error)"
+            >
               {outcome.message}
             </p>
           ) : rows.length === 0 ? (
-            <p data-testid="value-search-empty" className="font-mono text-[length:var(--text-2xs)] text-(--color-ink-3)">
+            <p
+              data-testid="value-search-empty"
+              className="font-mono text-[length:var(--text-2xs)] text-(--color-ink-3)"
+            >
               No column contains “{debounced}”.
             </p>
           ) : (
@@ -107,7 +119,7 @@ export function ValueSearch() {
               {outcome && !isOpError(outcome) && outcome.sql && (
                 <div className="flex items-center justify-between px-1.5">
                   <span className="font-mono text-[length:var(--text-2xs)] text-(--color-ink-3)">
-                    {rows.length} column{rows.length === 1 ? '' : 's'} match
+                    {rows.length} column{rows.length === 1 ? "" : "s"} match
                   </span>
                   <RunSqlButton sql={outcome.sql} />
                 </div>
@@ -126,7 +138,9 @@ export function ValueSearch() {
                     <span className="truncate">
                       {row.table}.{row.column}
                     </span>
-                    <span className="shrink-0 text-(--color-ink-3)">{row.matchCount.toLocaleString()}</span>
+                    <span className="shrink-0 text-(--color-ink-3)">
+                      {row.matchCount.toLocaleString()}
+                    </span>
                   </button>
                 );
               })}

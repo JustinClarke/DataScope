@@ -7,7 +7,7 @@
 
 export interface StagingRequest {
   id: number;
-  op: 'probe' | 'write' | 'read' | 'remove' | 'clear';
+  op: "probe" | "write" | "read" | "remove" | "clear";
   /** File name inside the OPFS root — absent for `probe`/`clear`. */
   name?: string;
   /** `write` payload. A `Blob` is passed by reference through `postMessage`, so a dropped `File` never gets copied on the main thread. */
@@ -60,9 +60,12 @@ export interface StagingScope {
  * thread would disable persistence on every browser that supports it.
  */
 export function stagingSupported(scope: StagingScope): boolean {
-  if (typeof scope.navigator?.storage?.getDirectory !== 'function') return false;
+  if (typeof scope.navigator?.storage?.getDirectory !== "function")
+    return false;
   const handleCtor = scope.FileSystemFileHandle;
-  return handleCtor !== undefined && 'createSyncAccessHandle' in handleCtor.prototype;
+  return (
+    handleCtor !== undefined && "createSyncAccessHandle" in handleCtor.prototype
+  );
 }
 
 // Written in slices rather than one `arrayBuffer()`: a 300MB file (the §7.3
@@ -73,11 +76,20 @@ const WRITE_CHUNK_BYTES = 8 * 1024 * 1024;
 // Duck-typed, not `instanceof`: this value arrives by structured clone, so its
 // constructor belongs to whichever realm deserialized it.
 function isBlobLike(data: Blob | ArrayBuffer): data is Blob {
-  return typeof (data as Blob).size === 'number' && typeof (data as Blob).slice === 'function';
+  return (
+    typeof (data as Blob).size === "number" &&
+    typeof (data as Blob).slice === "function"
+  );
 }
 
-async function writeFile(root: FileSystemDirectoryHandle, name: string, data: Blob | ArrayBuffer): Promise<void> {
-  const handle = (await root.getFileHandle(name, { create: true })) as SyncCapableFileHandle;
+async function writeFile(
+  root: FileSystemDirectoryHandle,
+  name: string,
+  data: Blob | ArrayBuffer,
+): Promise<void> {
+  const handle = (await root.getFileHandle(name, {
+    create: true,
+  })) as SyncCapableFileHandle;
   const access = await handle.createSyncAccessHandle();
   try {
     access.truncate(0);
@@ -86,7 +98,9 @@ async function writeFile(root: FileSystemDirectoryHandle, name: string, data: Bl
     } else {
       let at = 0;
       while (at < data.size) {
-        const chunk = await data.slice(at, at + WRITE_CHUNK_BYTES).arrayBuffer();
+        const chunk = await data
+          .slice(at, at + WRITE_CHUNK_BYTES)
+          .arrayBuffer();
         access.write(new Uint8Array(chunk), { at });
         at += chunk.byteLength;
       }
@@ -97,7 +111,10 @@ async function writeFile(root: FileSystemDirectoryHandle, name: string, data: Bl
   }
 }
 
-async function readFile(root: FileSystemDirectoryHandle, name: string): Promise<ArrayBuffer> {
+async function readFile(
+  root: FileSystemDirectoryHandle,
+  name: string,
+): Promise<ArrayBuffer> {
   const handle = (await root.getFileHandle(name)) as SyncCapableFileHandle;
   const access = await handle.createSyncAccessHandle();
   try {
@@ -123,7 +140,7 @@ function toFailure(error: unknown): StagingFailure {
   if (error instanceof DOMException || error instanceof Error) {
     return { name: error.name, message: error.message };
   }
-  return { name: 'UnknownError', message: String(error) };
+  return { name: "UnknownError", message: String(error) };
 }
 
 /**
@@ -137,23 +154,33 @@ export async function handleStagingRequest(
   getRoot: () => Promise<FileSystemDirectoryHandle>,
   scope: StagingScope,
 ): Promise<{ response: StagingResponse; transfer: Transferable[] }> {
-  const plain = (response: StagingResponse) => ({ response, transfer: [] as Transferable[] });
+  const plain = (response: StagingResponse) => ({
+    response,
+    transfer: [] as Transferable[],
+  });
 
   try {
     switch (request.op) {
-      case 'probe':
-        return plain({ id: request.id, ok: true, value: stagingSupported(scope) });
-      case 'write':
+      case "probe":
+        return plain({
+          id: request.id,
+          ok: true,
+          value: stagingSupported(scope),
+        });
+      case "write":
         await writeFile(await getRoot(), request.name!, request.data!);
         return plain({ id: request.id, ok: true });
-      case 'read': {
+      case "read": {
         const buffer = await readFile(await getRoot(), request.name!);
-        return { response: { id: request.id, ok: true, value: buffer }, transfer: [buffer] };
+        return {
+          response: { id: request.id, ok: true, value: buffer },
+          transfer: [buffer],
+        };
       }
-      case 'remove':
+      case "remove":
         await (await getRoot()).removeEntry(request.name!);
         return plain({ id: request.id, ok: true });
-      case 'clear':
+      case "clear":
         await clearRoot(await getRoot());
         return plain({ id: request.id, ok: true });
     }

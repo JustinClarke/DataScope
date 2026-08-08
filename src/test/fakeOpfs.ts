@@ -5,7 +5,7 @@
 // actually depends on: exclusive access handles (the second holder throws the
 // way a second tab does) and `removeEntry` failing while a handle is open.
 
-import type { StagingScope } from '../workers/opfsStaging.protocol';
+import type { StagingScope } from "../workers/opfsStaging.protocol";
 
 interface FakeFile {
   bytes: Uint8Array;
@@ -22,9 +22,13 @@ export class FakeOpfsRoot {
   /** Set to a DOMException name to make the next `createSyncAccessHandle` fail — the second-tab case. */
   lockedError: string | null = null;
 
-  async getFileHandle(name: string, options?: { create?: boolean }): Promise<unknown> {
+  async getFileHandle(
+    name: string,
+    options?: { create?: boolean },
+  ): Promise<unknown> {
     if (!this.files.has(name)) {
-      if (!options?.create) throw domException('NotFoundError', `No file named "${name}".`);
+      if (!options?.create)
+        throw domException("NotFoundError", `No file named "${name}".`);
       this.files.set(name, { bytes: new Uint8Array(0), open: false });
     }
     const file = this.files.get(name)!;
@@ -32,10 +36,16 @@ export class FakeOpfsRoot {
     return {
       createSyncAccessHandle: async () => {
         if (this.lockedError !== null) {
-          throw domException(this.lockedError, 'Access Handles cannot be created if there is another open Access Handle.');
+          throw domException(
+            this.lockedError,
+            "Access Handles cannot be created if there is another open Access Handle.",
+          );
         }
         if (file.open) {
-          throw domException('NoModificationAllowedError', 'Access handle already open.');
+          throw domException(
+            "NoModificationAllowedError",
+            "Access handle already open.",
+          );
         }
         file.open = true;
         return {
@@ -54,7 +64,10 @@ export class FakeOpfsRoot {
             return data.byteLength;
           },
           read: (target: Uint8Array, options: { at: number }) => {
-            const slice = file.bytes.subarray(options.at, options.at + target.byteLength);
+            const slice = file.bytes.subarray(
+              options.at,
+              options.at + target.byteLength,
+            );
             target.set(slice, 0);
             return slice.byteLength;
           },
@@ -73,10 +86,14 @@ export class FakeOpfsRoot {
 
   async removeEntry(name: string): Promise<void> {
     const file = this.files.get(name);
-    if (!file) throw domException('NotFoundError', `No file named "${name}".`);
+    if (!file) throw domException("NotFoundError", `No file named "${name}".`);
     // The ordering constraint "Clear workspace data" is built around: a file
     // the engine still holds cannot be removed (ADR-011 build rule 3).
-    if (file.open) throw domException('NoModificationAllowedError', 'File has a live access handle.');
+    if (file.open)
+      throw domException(
+        "NoModificationAllowedError",
+        "File has a live access handle.",
+      );
     this.files.delete(name);
   }
 }

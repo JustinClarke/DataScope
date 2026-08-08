@@ -1,5 +1,5 @@
-import type { ChartSpec } from './chart';
-import type { FactRef, RankedAction } from './actions';
+import type { ChartSpec } from "./chart";
+import type { FactRef, RankedAction } from "./actions";
 
 /**
  * Declarative, capability-gated layout artifact (D55) — the renderer consumes

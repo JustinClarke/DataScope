@@ -9,11 +9,11 @@
 // (the D24 guardrail — never a name/presence matcher, never a computed
 // cardinality). Read-only display + selection; edge evidence/override editing
 // wires into the bottom inspector (W7) as click targets here.
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
-import type { TableRegistryEntry } from '../../types';
-import type { FkEdge } from '../../lib/relationshipInference';
-import { keyColumnsFor } from '../../lib/dossier';
-import { layoutColumns } from './layout';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import type { TableRegistryEntry } from "../../types";
+import type { FkEdge } from "../../lib/relationshipInference";
+import { keyColumnsFor } from "../../lib/dossier";
+import { layoutColumns } from "./layout";
 
 interface ErdProps {
   tables: TableRegistryEntry[];
@@ -28,7 +28,7 @@ interface ErdProps {
 interface Wire {
   edgeId: string;
   d: string;
-  confidence: FkEdge['confidence'];
+  confidence: FkEdge["confidence"];
 }
 
 function fieldRowId(tableId: string, columnName: string): string {
@@ -59,7 +59,11 @@ export function Erd({
   const columns = layoutColumns(
     tables.map((t) => t.tableName),
     edges,
-  ).map((column) => column.map((name) => byName.get(name)).filter((t): t is TableRegistryEntry => t !== undefined));
+  ).map((column) =>
+    column
+      .map((name) => byName.get(name))
+      .filter((t): t is TableRegistryEntry => t !== undefined),
+  );
 
   useLayoutEffect(() => {
     function measure() {
@@ -71,8 +75,12 @@ export function Erd({
         const childTable = byName.get(edge.childTable);
         const parentTable = byName.get(edge.parentTable);
         if (!childTable || !parentTable) continue;
-        const fromEl = document.getElementById(fieldRowId(childTable.id, edge.childColumn));
-        const toEl = document.getElementById(fieldRowId(parentTable.id, edge.parentColumn));
+        const fromEl = document.getElementById(
+          fieldRowId(childTable.id, edge.childColumn),
+        );
+        const toEl = document.getElementById(
+          fieldRowId(parentTable.id, edge.parentColumn),
+        );
         if (!fromEl || !toEl) continue;
         const from = fromEl.getBoundingClientRect();
         const to = toEl.getBoundingClientRect();
@@ -92,14 +100,14 @@ export function Erd({
 
     measure();
     let observer: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+    if (typeof ResizeObserver !== "undefined" && containerRef.current) {
       observer = new ResizeObserver(measure);
       observer.observe(containerRef.current);
     }
-    window.addEventListener('resize', measure);
+    window.addEventListener("resize", measure);
     return () => {
       observer?.disconnect();
-      window.removeEventListener('resize', measure);
+      window.removeEventListener("resize", measure);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tables, edges]);
@@ -119,18 +127,24 @@ export function Erd({
             data-confidence={wire.confidence}
             data-selected={wire.edgeId === selectedEdgeId}
             fill="none"
-            stroke={wire.edgeId === selectedEdgeId ? 'var(--color-accent)' : 'var(--color-fg-muted)'}
+            stroke={
+              wire.edgeId === selectedEdgeId
+                ? "var(--color-accent)"
+                : "var(--color-fg-muted)"
+            }
             strokeWidth={wire.edgeId === selectedEdgeId ? 2.25 : 1.25}
-            strokeDasharray={wire.confidence === 'candidate' ? '5 4' : undefined}
+            strokeDasharray={
+              wire.confidence === "candidate" ? "5 4" : undefined
+            }
             {...(onSelectEdge
               ? {
-                  role: 'button',
+                  role: "button",
                   tabIndex: 0,
-                  'aria-label': `Edge ${wire.edgeId}`,
-                  className: 'pointer-events-auto cursor-pointer outline-none',
+                  "aria-label": `Edge ${wire.edgeId}`,
+                  className: "pointer-events-auto cursor-pointer outline-none",
                   onClick: () => onSelectEdge(wire.edgeId),
                   onKeyDown: (e: KeyboardEvent<SVGPathElement>) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       onSelectEdge(wire.edgeId);
                     }
@@ -149,7 +163,11 @@ export function Erd({
               edges={edges}
               selected={table.id === selectedTableId}
               onSelect={() => onSelectTable(table.id)}
-              onSelectColumn={onSelectColumn ? (column) => onSelectColumn(table.id, column) : undefined}
+              onSelectColumn={
+                onSelectColumn
+                  ? (column) => onSelectColumn(table.id, column)
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -182,18 +200,24 @@ function ErdCard({
       tabIndex={0}
       onClick={onSelect}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect();
         }
       }}
       className={`w-48 cursor-pointer rounded-lg border bg-(--color-bg) shadow-sm outline-none ${
-        selected ? 'border-(--color-accent) ring-1 ring-(--color-accent)' : 'border-(--color-border)'
+        selected
+          ? "border-(--color-accent) ring-1 ring-(--color-accent)"
+          : "border-(--color-border)"
       }`}
     >
       <div className="flex items-center justify-between gap-2 border-b border-(--color-border) px-3 py-1.5">
-        <span className="truncate text-sm font-semibold text-(--color-fg)">{table.tableName}</span>
-        <span className="flex-none text-xs text-(--color-fg-muted)">{table.rowCount.toLocaleString()}</span>
+        <span className="truncate text-sm font-semibold text-(--color-fg)">
+          {table.tableName}
+        </span>
+        <span className="flex-none text-xs text-(--color-fg-muted)">
+          {table.rowCount.toLocaleString()}
+        </span>
       </div>
       <div className="flex flex-col p-1">
         {(table.columns ?? []).map((column) => {
@@ -204,32 +228,38 @@ function ErdCard({
               key={column.name}
               id={fieldRowId(table.id, column.name)}
               data-testid={fieldRowId(table.id, column.name)}
-              data-key={isPk ? 'pk' : isFk ? 'fk' : undefined}
-              role={onSelectColumn ? 'button' : undefined}
+              data-key={isPk ? "pk" : isFk ? "fk" : undefined}
+              role={onSelectColumn ? "button" : undefined}
               tabIndex={onSelectColumn ? 0 : undefined}
-              onClick={onSelectColumn ? () => onSelectColumn(column.name) : undefined}
+              onClick={
+                onSelectColumn ? () => onSelectColumn(column.name) : undefined
+              }
               onKeyDown={
                 onSelectColumn
                   ? (e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
+                      if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         onSelectColumn(column.name);
                       }
                     }
                   : undefined
               }
-              className={`flex items-center justify-between gap-2 rounded px-2 py-0.5 text-xs ${onSelectColumn ? 'cursor-pointer outline-none hover:bg-(--color-border)/40' : ''}`}
+              className={`flex items-center justify-between gap-2 rounded px-2 py-0.5 text-xs ${onSelectColumn ? "cursor-pointer outline-none hover:bg-(--color-border)/40" : ""}`}
             >
               <span className="flex min-w-0 items-center gap-1.5">
                 <span
                   aria-hidden="true"
                   className={`h-1.5 w-1.5 flex-none rounded-full ${
-                    isPk || isFk ? 'bg-(--color-accent)' : 'bg-transparent'
+                    isPk || isFk ? "bg-(--color-accent)" : "bg-transparent"
                   }`}
                 />
-                <span className="truncate text-(--color-fg-muted)">{column.name}</span>
+                <span className="truncate text-(--color-fg-muted)">
+                  {column.name}
+                </span>
               </span>
-              <span className="flex-none text-(--color-fg-muted)">{column.physicalType}</span>
+              <span className="flex-none text-(--color-fg-muted)">
+                {column.physicalType}
+              </span>
             </div>
           );
         })}

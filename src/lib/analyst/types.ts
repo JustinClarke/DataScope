@@ -5,10 +5,10 @@
 // never a thrown engine error. The load-bearing field is `sql` — whatever the
 // core computed, the user can see, re-run, edit and pin, so model work lands
 // as ordinary DataScope artifacts rather than a private channel.
-import type { ChartRecommendation } from '../../types/chart';
+import type { ChartRecommendation } from "../../types/chart";
 
 /** Which engine an executor drives — carried into conformance reporting so a divergence names its side. */
-export type EngineId = 'duckdb-wasm' | 'duckdb-native';
+export type EngineId = "duckdb-wasm" | "duckdb-native";
 
 /** A column of an `OpResult`. `type` is a DuckDB type name (`BIGINT`, `VARCHAR`, `DECIMAL(9,2)`), never an Arrow one. */
 export interface OpSchemaField {
@@ -49,15 +49,15 @@ export interface OpResult {
 }
 
 export type OpErrorCode =
-  | 'invalid_argument'
-  | 'unknown_object'
-  | 'sql_error'
-  | 'not_read_only'
-  | 'result_too_large'
-  | 'timeout'
-  | 'cancelled'
+  | "invalid_argument"
+  | "unknown_object"
+  | "sql_error"
+  | "not_read_only"
+  | "result_too_large"
+  | "timeout"
+  | "cancelled"
   /** The operation needs a host surface this core does not have — see `Workspace`. Not an argument error and not an engine error: the *call* was fine, the host cannot serve it. */
-  | 'unavailable';
+  | "unavailable";
 
 export interface OpError {
   ok: false;
@@ -102,11 +102,11 @@ export interface Executor {
 }
 
 /** Whether an object was loaded by the user or produced by a derivation — the only distinction `drop_derived` refuses on. */
-export type ObjectOrigin = 'source' | 'derived';
+export type ObjectOrigin = "source" | "derived";
 
 export interface CatalogObject {
   name: string;
-  kind: 'table' | 'view';
+  kind: "table" | "view";
   origin: ObjectOrigin;
   /** The statement that produced it. Present for `derived` objects; absent for a source table, which no statement produced. */
   generatingSql?: string;
@@ -146,9 +146,17 @@ export interface Catalog {
    * statement the host must run — passed rather than rebuilt, so the `sql` an
    * `OpResult` reports is the SQL that actually executed.
    */
-  derive(request: { name: string; sql: string; kind: 'table' | 'view' }): Promise<CatalogObject>;
+  derive(request: {
+    name: string;
+    sql: string;
+    kind: "table" | "view";
+  }): Promise<CatalogObject>;
   /** Drop a derived object the host registered, running the statement the core composed. The core has already refused source objects before this is called. */
-  drop(request: { name: string; sql: string; kind: 'table' | 'view' }): Promise<void>;
+  drop(request: {
+    name: string;
+    sql: string;
+    kind: "table" | "view";
+  }): Promise<void>;
 }
 
 /**

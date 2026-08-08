@@ -8,24 +8,39 @@
 // all call a hook. The modal this can raise is hoisted to `TransformGuardHost`,
 // mounted once in `WorkbenchShell`, and the statement between the two lives in
 // `stores/runGuard.ts`.
-import { useQueryStore, CONSOLE_SESSION, type QuerySessionId } from '../stores/query';
-import { useDrawerStore } from '../stores/drawer';
-import { useRunGuardStore } from '../stores/runGuard';
-import { runQuery } from './sql';
-import { runTransform, materializeInsteadOfMutation, forceMutation, isSourceMutation } from './transforms';
-import { classifyStatement } from '../lib/statementClass';
-import type { QueryResult } from '../types';
+import {
+  useQueryStore,
+  CONSOLE_SESSION,
+  type QuerySessionId,
+} from "../stores/query";
+import { useDrawerStore } from "../stores/drawer";
+import { useRunGuardStore } from "../stores/runGuard";
+import { runQuery } from "./sql";
+import {
+  runTransform,
+  materializeInsteadOfMutation,
+  forceMutation,
+  isSourceMutation,
+} from "./transforms";
+import { classifyStatement } from "../lib/statementClass";
+import type { QueryResult } from "../types";
 
 // Drives the same queryStarted/querySucceeded/queryFailed cycle runQuery uses
 // (services/sql.ts) so a CTAS/mutation's outcome shows up in Results/History
 // exactly like a SELECT's does, even though it runs through the transformation
 // layer instead.
-function runAndTrack(session: QuerySessionId, sqlText: string, run: () => Promise<QueryResult>): void {
+function runAndTrack(
+  session: QuerySessionId,
+  sqlText: string,
+  run: () => Promise<QueryResult>,
+): void {
   useQueryStore.getState().queryStarted(session, sqlText);
   run()
     .then((res) => useQueryStore.getState().querySucceeded(session, res))
     .catch((err) =>
-      useQueryStore.getState().queryFailed(session, err instanceof Error ? err.message : String(err)),
+      useQueryStore
+        .getState()
+        .queryFailed(session, err instanceof Error ? err.message : String(err)),
     );
 }
 
@@ -37,12 +52,15 @@ function runAndTrack(session: QuerySessionId, sqlText: string, run: () => Promis
  * flow, not an error"). The console's own Run button still disables itself
  * while running, because that surface is the one *showing* the running state.
  */
-export function requestRun(sql: string, session: QuerySessionId = CONSOLE_SESSION): void {
+export function requestRun(
+  sql: string,
+  session: QuerySessionId = CONSOLE_SESSION,
+): void {
   const statement = sql.trim();
   if (!statement) return;
 
   const info = classifyStatement(statement);
-  if (info.class === 'query') {
+  if (info.class === "query") {
     // runQuery records failure/abort into the query store before it rejects
     // (services/sql.ts) — that store update, not this call site, is what
     // ResultsGrid reads. The rejection only matters to a caller awaiting
@@ -80,7 +98,9 @@ export function materializeGuarded(): void {
   const { pending: info, pendingSession } = useRunGuardStore.getState();
   if (!info) return;
   useRunGuardStore.getState().release();
-  runAndTrack(pendingSession, info.sql, () => materializeInsteadOfMutation(info));
+  runAndTrack(pendingSession, info.sql, () =>
+    materializeInsteadOfMutation(info),
+  );
 }
 
 /** Guard resolution: run the held statement against the source table after all. */

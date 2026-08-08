@@ -1,11 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useDatasetsStore } from '../../../stores/datasets';
-import type { ClassifiedColumn, TableRegistryEntry } from '../../../types';
-import { prefillColumns, prefillTableName, type ModulePrefill } from '../../../lib/threadPrefill';
-import { runChartQuery } from '../../../services/charts';
-import { analystCore } from '../../../services/analyst';
-import { isOpError, type OpOutcome } from '../../../lib/analyst/types';
-import { buildHistogramSql, parseHistogram, type HistogramBucket } from '../../../lib/columnStats';
+import { useEffect, useMemo, useState } from "react";
+import { useDatasetsStore } from "../../../stores/datasets";
+import type { ClassifiedColumn, TableRegistryEntry } from "../../../types";
+import {
+  prefillColumns,
+  prefillTableName,
+  type ModulePrefill,
+} from "../../../lib/threadPrefill";
+import { runChartQuery } from "../../../services/charts";
+import { analystCore } from "../../../services/analyst";
+import { isOpError, type OpOutcome } from "../../../lib/analyst/types";
+import {
+  buildHistogramSql,
+  parseHistogram,
+  type HistogramBucket,
+} from "../../../lib/columnStats";
 import {
   buildMomentsSql,
   buildOutliersSql,
@@ -17,11 +25,11 @@ import {
   type BoxPlotStats,
   type DistributionMoments,
   type Quartiles,
-} from '../../../lib/distributionSql';
-import { Histogram } from './Histogram';
-import { BoxPlot } from './BoxPlot';
-import { StatsPanel } from './StatsPanel';
-import { GeneratedSql } from './GeneratedSql';
+} from "../../../lib/distributionSql";
+import { Histogram } from "./Histogram";
+import { BoxPlot } from "./BoxPlot";
+import { StatsPanel } from "./StatsPanel";
+import { GeneratedSql } from "./GeneratedSql";
 
 type DistributionTable = TableRegistryEntry & { columns: ClassifiedColumn[] };
 
@@ -31,9 +39,11 @@ type DistributionTable = TableRegistryEntry & { columns: ClassifiedColumn[] };
  * `CorrelationModule` already use for their own table lists — this module
  * re-checks per table.
  */
-function hasDistributionShape(table: TableRegistryEntry): table is DistributionTable {
+function hasDistributionShape(
+  table: TableRegistryEntry,
+): table is DistributionTable {
   if (!Array.isArray(table.columns)) return false;
-  return table.columns.some((c) => c.semanticType === 'Quantitative');
+  return table.columns.some((c) => c.semanticType === "Quantitative");
 }
 
 const BIN_COUNTS = [5, 10, 20, 30] as const;
@@ -64,10 +74,12 @@ function quartilesFromColumnStats(outcome: OpOutcome): Quartiles | null {
     const value = index === -1 ? null : row[index];
     return value == null ? null : Number(value);
   };
-  const q1 = read('q1');
-  const median = read('median');
-  const q3 = read('q3');
-  return q1 === null || median === null || q3 === null ? null : { q1, median, q3 };
+  const q1 = read("q1");
+  const median = read("median");
+  const q3 = read("q3");
+  return q1 === null || median === null || q3 === null
+    ? null
+    : { q1, median, q3 };
 }
 
 /**
@@ -77,23 +89,41 @@ function quartilesFromColumnStats(outcome: OpOutcome): Quartiles | null {
  * table/column; a bad or absent name falls through to the existing
  * first-eligible defaults below, same as a plain sidebar-reached open.
  */
-export function DistributionModule({ prefill = null }: { prefill?: ModulePrefill }) {
+export function DistributionModule({
+  prefill = null,
+}: {
+  prefill?: ModulePrefill;
+}) {
   const tables = useDatasetsStore((state) => state.tables);
-  const eligibleTables = useMemo(() => tables.filter(hasDistributionShape), [tables]);
+  const eligibleTables = useMemo(
+    () => tables.filter(hasDistributionShape),
+    [tables],
+  );
   const prefillTable = prefillTableName(prefill);
   const prefillCols = prefillColumns(prefill);
 
   const [selectedTableId, setSelectedTableId] = useState<string | null>(
     () => eligibleTables.find((t) => t.tableName === prefillTable)?.id ?? null,
   );
-  const table = eligibleTables.find((t) => t.id === selectedTableId) ?? eligibleTables[0] ?? null;
+  const table =
+    eligibleTables.find((t) => t.id === selectedTableId) ??
+    eligibleTables[0] ??
+    null;
   const numericColumns = useMemo(
-    () => (table ? table.columns.filter((c) => c.semanticType === 'Quantitative') : []),
+    () =>
+      table
+        ? table.columns.filter((c) => c.semanticType === "Quantitative")
+        : [],
     [table],
   );
 
-  const [selectedColumn, setSelectedColumn] = useState<string | null>(() => prefillCols[0] ?? null);
-  const activeColumn = numericColumns.find((c) => c.name === selectedColumn) ?? numericColumns[0] ?? null;
+  const [selectedColumn, setSelectedColumn] = useState<string | null>(
+    () => prefillCols[0] ?? null,
+  );
+  const activeColumn =
+    numericColumns.find((c) => c.name === selectedColumn) ??
+    numericColumns[0] ??
+    null;
   const [binCount, setBinCount] = useState<number>(10);
 
   const [histogram, setHistogram] = useState<HistogramBucket[] | null>(null);
@@ -113,34 +143,56 @@ export function DistributionModule({ prefill = null }: { prefill?: ModulePrefill
       try {
         const min = Number(activeColumn.min);
         const max = Number(activeColumn.max);
-        const histogramSql = buildHistogramSql(table.tableName, activeColumn.name, min, max, binCount);
+        const histogramSql = buildHistogramSql(
+          table.tableName,
+          activeColumn.name,
+          min,
+          max,
+          binCount,
+        );
         const momentsSql = buildMomentsSql(table.tableName, activeColumn.name);
 
-        const [histogramResult, statsOutcome, momentsResult] = await Promise.all([
-          histogramSql ? runChartQuery(histogramSql) : Promise.resolve(null),
-          analystCore().call('column_stats', { table: table.tableName, column: activeColumn.name }),
-          runChartQuery(momentsSql),
-        ]);
+        const [histogramResult, statsOutcome, momentsResult] =
+          await Promise.all([
+            histogramSql ? runChartQuery(histogramSql) : Promise.resolve(null),
+            analystCore().call("column_stats", {
+              table: table.tableName,
+              column: activeColumn.name,
+            }),
+            runChartQuery(momentsSql),
+          ]);
         if (cancelled) return;
 
         const blocks: SqlBlock[] = [];
-        if (histogramSql) blocks.push({ label: 'Histogram', sql: histogramSql });
+        if (histogramSql)
+          blocks.push({ label: "Histogram", sql: histogramSql });
         if (!isOpError(statsOutcome) && statsOutcome.sql) {
-          blocks.push({ label: 'Quartiles', sql: statsOutcome.sql });
+          blocks.push({ label: "Quartiles", sql: statsOutcome.sql });
         }
 
         let box: BoxPlotStats | null = null;
         const quartiles = quartilesFromColumnStats(statsOutcome);
         if (quartiles) {
           const bounds = computeIqrBounds(quartiles);
-          const whiskersSql = buildWhiskersSql(table.tableName, activeColumn.name, bounds);
-          const outliersSql = buildOutliersSql(table.tableName, activeColumn.name, bounds);
+          const whiskersSql = buildWhiskersSql(
+            table.tableName,
+            activeColumn.name,
+            bounds,
+          );
+          const outliersSql = buildOutliersSql(
+            table.tableName,
+            activeColumn.name,
+            bounds,
+          );
           const [whiskersResult, outliersResult] = await Promise.all([
             runChartQuery(whiskersSql),
             runChartQuery(outliersSql),
           ]);
           if (cancelled) return;
-          blocks.push({ label: 'Whiskers', sql: whiskersSql }, { label: 'Outliers', sql: outliersSql });
+          blocks.push(
+            { label: "Whiskers", sql: whiskersSql },
+            { label: "Outliers", sql: outliersSql },
+          );
 
           const whiskers = parseWhiskers(whiskersResult);
           if (whiskers) {
@@ -154,14 +206,23 @@ export function DistributionModule({ prefill = null }: { prefill?: ModulePrefill
             };
           }
         }
-        blocks.push({ label: 'Descriptive statistics', sql: momentsSql });
+        blocks.push({ label: "Descriptive statistics", sql: momentsSql });
 
-        setHistogram(histogramResult ? parseHistogram(histogramResult, min, max, binCount) : null);
+        setHistogram(
+          histogramResult
+            ? parseHistogram(histogramResult, min, max, binCount)
+            : null,
+        );
         setBoxPlot(box);
         setMoments(parseMoments(momentsResult));
         setSqlBlocks(blocks);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not run the distribution queries.');
+        if (!cancelled)
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not run the distribution queries.",
+          );
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -177,7 +238,8 @@ export function DistributionModule({ prefill = null }: { prefill?: ModulePrefill
   if (eligibleTables.length === 0) {
     return (
       <p className="text-sm text-(--color-fg-muted)">
-        None of your tables have a numeric column — distribution analysis needs at least one.
+        None of your tables have a numeric column — distribution analysis needs
+        at least one.
       </p>
     );
   }
@@ -239,37 +301,53 @@ export function DistributionModule({ prefill = null }: { prefill?: ModulePrefill
       </div>
 
       {loading ? (
-        <div className="flex h-48 items-center justify-center text-sm text-(--color-fg-muted)">Running query…</div>
+        <div className="flex h-48 items-center justify-center text-sm text-(--color-fg-muted)">
+          Running query…
+        </div>
       ) : error ? (
         <p className="text-sm text-(--color-error)">{error}</p>
       ) : (
         <>
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-(--color-fg-muted)">Histogram</span>
+            <span className="text-xs font-medium text-(--color-fg-muted)">
+              Histogram
+            </span>
             {histogram ? (
               <Histogram buckets={histogram} />
             ) : (
-              <p className="text-sm text-(--color-fg-muted)">Not enough variation in {activeColumn.name} to bin.</p>
+              <p className="text-sm text-(--color-fg-muted)">
+                Not enough variation in {activeColumn.name} to bin.
+              </p>
             )}
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-(--color-fg-muted)">Box plot</span>
+            <span className="text-xs font-medium text-(--color-fg-muted)">
+              Box plot
+            </span>
             {boxPlot ? (
               <BoxPlot stats={boxPlot} />
             ) : (
-              <p className="text-sm text-(--color-fg-muted)">Not enough data in {activeColumn.name} to plot.</p>
+              <p className="text-sm text-(--color-fg-muted)">
+                Not enough data in {activeColumn.name} to plot.
+              </p>
             )}
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-(--color-fg-muted)">Descriptive statistics</span>
+            <span className="text-xs font-medium text-(--color-fg-muted)">
+              Descriptive statistics
+            </span>
             {moments && <StatsPanel moments={moments} />}
           </div>
 
           <div className="flex flex-col gap-3 border-t border-(--color-border) pt-4">
             {sqlBlocks.map((block) => (
-              <GeneratedSql key={block.label} label={block.label} sql={block.sql} />
+              <GeneratedSql
+                key={block.label}
+                label={block.label}
+                sql={block.sql}
+              />
             ))}
           </div>
         </>

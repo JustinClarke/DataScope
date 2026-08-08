@@ -1,11 +1,16 @@
 // Ingestion service contract (§21.8). Implements 02-ingestion/01-file-drop
 // (single-file drop, bundled samples) and 02-ingestion/04-multi-file
 // (folder/multi-select/ZIP batches — one Dataset, many tables, per §7.5).
-import type { ClassifiedColumn, ColumnProfile, Dataset, TableRegistryEntry } from '../types';
-import { useDatasetsStore } from '../stores/datasets';
-import { parseSummarizeResult } from '../lib/profile';
-import { classifyColumns } from '../lib/classifier';
-import { SAMPLE_MANIFEST } from '../features/ingestion/samples';
+import type {
+  ClassifiedColumn,
+  ColumnProfile,
+  Dataset,
+  TableRegistryEntry,
+} from "../types";
+import { useDatasetsStore } from "../stores/datasets";
+import { parseSummarizeResult } from "../lib/profile";
+import { classifyColumns } from "../lib/classifier";
+import { SAMPLE_MANIFEST } from "../features/ingestion/samples";
 import {
   detectFormat,
   dedupeTableName,
@@ -13,23 +18,29 @@ import {
   looksMalformed,
   readerCall,
   sanitizeTableName,
-} from '../features/ingestion/formatPolicy';
-import { expandZipFile, isZipFile } from '../features/ingestion/zip';
+} from "../features/ingestion/formatPolicy";
+import { expandZipFile, isZipFile } from "../features/ingestion/zip";
 import {
   aggregateBytes,
   decideSizeTier,
   exceedsAggregateWarnThreshold,
   refusalMessage,
   SAMPLE_ROW_LIMIT,
-} from '../features/ingestion/aggregateSize';
-import { estimateHeadroomExceeded } from '../lib/memoryHeadroom';
-import { ApiFetchError, fetchApiSource, fetchApiSourceViaRelay, tableNameFromUrl, type ApiFetchErrorCode } from './apiIngestion';
-import { RelayFetchError, type RelayFetchErrorCode } from './relayClient';
-import { getSharedObject } from './export';
-import type { StructureReport } from '../lib/structureReport';
-import { hashBytesHex } from '../lib/dsps';
-import { stageTable, unstageTable } from './opfsStaging';
-import type { PersistenceErrorCode } from '../../edge/protocol';
+} from "../features/ingestion/aggregateSize";
+import { estimateHeadroomExceeded } from "../lib/memoryHeadroom";
+import {
+  ApiFetchError,
+  fetchApiSource,
+  fetchApiSourceViaRelay,
+  tableNameFromUrl,
+  type ApiFetchErrorCode,
+} from "./apiIngestion";
+import { RelayFetchError, type RelayFetchErrorCode } from "./relayClient";
+import { getSharedObject } from "./export";
+import type { StructureReport } from "../lib/structureReport";
+import { hashBytesHex } from "../lib/dsps";
+import { stageTable, unstageTable } from "./opfsStaging";
+import type { PersistenceErrorCode } from "../../edge/protocol";
 
 export class IngestionError extends Error {
   readonly code?: ApiFetchErrorCode | RelayFetchErrorCode;
@@ -45,10 +56,10 @@ export class IngestionError extends Error {
 // same per-page-load-constant pattern AIChatModule.tsx's CLOUD_SESSION_ID uses.
 const RELAY_SESSION_ID = crypto.randomUUID();
 
-type EngineModule = typeof import('../workers/duckdb.worker');
+type EngineModule = typeof import("../workers/duckdb.worker");
 let engineModule: Promise<EngineModule> | null = null;
 function loadEngine(): Promise<EngineModule> {
-  if (!engineModule) engineModule = import('../workers/duckdb.worker');
+  if (!engineModule) engineModule = import("../workers/duckdb.worker");
   return engineModule;
 }
 
@@ -71,7 +82,7 @@ export function quoteLiteral(value: string): string {
 function firstLineText(bytes: Uint8Array): string {
   const slice = bytes.subarray(0, 8192);
   const text = new TextDecoder().decode(slice);
-  return text.split(/\r?\n/, 1)[0] ?? '';
+  return text.split(/\r?\n/, 1)[0] ?? "";
 }
 
 // Same header sanity-check, but for the streaming-registration path: `File`
@@ -80,7 +91,7 @@ function firstLineText(bytes: Uint8Array): string {
 // so read order relative to registration doesn't matter here.
 async function firstLineTextFromFile(file: File): Promise<string> {
   const text = await file.slice(0, 8192).text();
-  return text.split(/\r?\n/, 1)[0] ?? '';
+  return text.split(/\r?\n/, 1)[0] ?? "";
 }
 
 function friendlyIngestError(error: unknown, fileName: string): string {
@@ -108,7 +119,10 @@ interface IngestedTable {
 // column list here; parseSummarizeResult resolves each by name. Quoting the
 // identifier lets this run against a table name SUMMARIZE would otherwise
 // choke on unquoted (e.g. one containing a space).
-export async function summarizeTable(engine: EngineModule, tableName: string): Promise<ColumnProfile[]> {
+export async function summarizeTable(
+  engine: EngineModule,
+  tableName: string,
+): Promise<ColumnProfile[]> {
   const result = await engine.duckDBEngine.execute(
     `SELECT column_name, column_type, min, max, approx_unique, avg, std, null_percentage
      FROM (SUMMARIZE ${quoteIdentifier(tableName)})`,
@@ -132,7 +146,7 @@ async function exactDistinctCounts(
   if (columnNames.length === 0) return new Map();
   const projections = columnNames
     .map((name, i) => `COUNT(DISTINCT ${quoteIdentifier(name)}) AS d${i}`)
-    .join(', ');
+    .join(", ");
   const result = await engine.duckDBEngine.execute(
     `SELECT ${projections} FROM ${quoteIdentifier(tableName)}`,
   );
@@ -149,8 +163,15 @@ export async function classifyTable(
   profile: ColumnProfile[],
   rowCount: number,
 ): Promise<ClassifiedColumn[]> {
-  const exact = await exactDistinctCounts(engine, tableName, profile.map((p) => p.name));
-  const classifyInput = profile.map((p) => ({ ...p, cardinality: exact.get(p.name) ?? p.cardinality }));
+  const exact = await exactDistinctCounts(
+    engine,
+    tableName,
+    profile.map((p) => p.name),
+  );
+  const classifyInput = profile.map((p) => ({
+    ...p,
+    cardinality: exact.get(p.name) ?? p.cardinality,
+  }));
   return classifyColumns(classifyInput, rowCount);
 }
 
@@ -175,13 +196,17 @@ async function ingestBuffer(
   // this side — any read of it afterward throws (verified live,
   // 01-file-drop). A File `source` isn't affected (Blob.slice is
   // non-destructive) but reading first either way keeps one code path.
-  const headerLine = source instanceof File ? await firstLineTextFromFile(source) : firstLineText(source);
+  const headerLine =
+    source instanceof File
+      ? await firstLineTextFromFile(source)
+      : firstLineText(source);
   // The D45 snapshot's file-hash half — only when `source` is already a fully
   // in-memory Uint8Array. A sampled-tier File is deliberately never read into
   // one (§7.5 memory headroom); hashing it here would re-introduce exactly the
   // full-buffer read that tier exists to avoid, so it stays unhashed (named
   // gap, `dsps.ts`'s DspsSnapshot.fileHash tolerates `null`).
-  const fileHash = source instanceof Uint8Array ? await hashBytesHex(source) : undefined;
+  const fileHash =
+    source instanceof Uint8Array ? await hashBytesHex(source) : undefined;
   await engine.duckDBEngine.registerFile(vfsName, source);
 
   const selectSql = `SELECT * FROM ${readerCall(detected, quoteLiteral(vfsName))}`;
@@ -195,18 +220,24 @@ async function ingestBuffer(
     throw new IngestionError(friendlyIngestError(error, vfsName));
   }
 
-  const describeResult = await engine.duckDBEngine.execute(`DESCRIBE ${quoteIdentifier(tableName)}`);
+  const describeResult = await engine.duckDBEngine.execute(
+    `DESCRIBE ${quoteIdentifier(tableName)}`,
+  );
   const columnCount = describeResult.rowCount;
 
   if (looksMalformed(detected, headerLine, columnCount)) {
-    await engine.duckDBEngine.execute(`DROP TABLE IF EXISTS ${quoteIdentifier(tableName)}`);
+    await engine.duckDBEngine.execute(
+      `DROP TABLE IF EXISTS ${quoteIdentifier(tableName)}`,
+    );
     throw new IngestionError(
       `"${vfsName}" has rows with a different number of columns than its header — check for a stray delimiter or malformed row.`,
     );
   }
 
   const [countResult, sizeResult, profile] = await Promise.all([
-    engine.duckDBEngine.execute(`SELECT COUNT(*) AS n FROM ${quoteIdentifier(tableName)}`),
+    engine.duckDBEngine.execute(
+      `SELECT COUNT(*) AS n FROM ${quoteIdentifier(tableName)}`,
+    ),
     engine.duckDBEngine.execute(
       `SELECT estimated_size FROM duckdb_tables() WHERE table_name = ${quoteLiteral(tableName)}`,
     ),
@@ -247,7 +278,11 @@ async function ingestBuffer(
  * persisted. Never throws: an undurable workspace is a reported state, not an
  * ingest failure.
  */
-async function stageDurableSource(ingested: IngestedTable, fileName: string, source: Blob): Promise<void> {
+async function stageDurableSource(
+  ingested: IngestedTable,
+  fileName: string,
+  source: Blob,
+): Promise<void> {
   if (ingested.sampled) return;
   await stageTable(
     {
@@ -267,7 +302,7 @@ function existingTableNames(): Set<string> {
 function toRegistryEntry(
   ingested: IngestedTable,
   datasetId: string,
-  origin: TableRegistryEntry['origin'],
+  origin: TableRegistryEntry["origin"],
   sourceUrl?: string,
 ): TableRegistryEntry {
   return {
@@ -300,32 +335,43 @@ function sizeTierFor(bytes: number): ReturnType<typeof decideSizeTier> {
 
 async function loadFile(file: File): Promise<Dataset> {
   const tier = sizeTierFor(file.size);
-  if (tier === 'refuse') throw new IngestionError(refusalMessage(file.size));
+  if (tier === "refuse") throw new IngestionError(refusalMessage(file.size));
 
   const engine = await loadEngine();
   const taken = existingTableNames();
-  const base = sanitizeTableName(file.name.replace(/\.[^./]+$/, ''));
+  const base = sanitizeTableName(file.name.replace(/\.[^./]+$/, ""));
   const tableName = dedupeTableName(base, taken);
 
-  const sampled = tier === 'sampled';
-  const source: Uint8Array | File = sampled ? file : new Uint8Array(await file.arrayBuffer());
-  const ingested = await ingestBuffer(engine, file.name, source, tableName, sampled);
+  const sampled = tier === "sampled";
+  const source: Uint8Array | File = sampled
+    ? file
+    : new Uint8Array(await file.arrayBuffer());
+  const ingested = await ingestBuffer(
+    engine,
+    file.name,
+    source,
+    tableName,
+    sampled,
+  );
   await stageDurableSource(ingested, file.name, file);
 
   const dataset: Dataset = {
     id: crypto.randomUUID(),
     name: file.name,
-    sourceType: 'file',
+    sourceType: "file",
     tableNames: [ingested.tableName],
     ingestedAt: ingested.createdAt,
   };
-  useDatasetsStore.getState().registerDataset(dataset, [toRegistryEntry(ingested, dataset.id, 'file')]);
+  useDatasetsStore
+    .getState()
+    .registerDataset(dataset, [toRegistryEntry(ingested, dataset.id, "file")]);
   return dataset;
 }
 
 async function loadSample(sampleId: string): Promise<Dataset> {
   const manifestEntry = SAMPLE_MANIFEST.find((s) => s.id === sampleId);
-  if (!manifestEntry) throw new IngestionError(`Unknown sample dataset "${sampleId}".`);
+  if (!manifestEntry)
+    throw new IngestionError(`Unknown sample dataset "${sampleId}".`);
 
   const engine = await loadEngine();
   const taken = existingTableNames();
@@ -335,30 +381,37 @@ async function loadSample(sampleId: string): Promise<Dataset> {
 
   for (const file of manifestEntry.files) {
     const response = await fetch(file.url);
-    if (!response.ok) throw new IngestionError(`Couldn't load sample file "${file.url}".`);
+    if (!response.ok)
+      throw new IngestionError(`Couldn't load sample file "${file.url}".`);
     const buffer = new Uint8Array(await response.arrayBuffer());
     // Taken before ingest: `registerFileBuffer` transfers and detaches
     // `buffer`, so there would be nothing left to stage afterwards. Bundled
     // samples are small, which is what makes this copy free here and wrong on
     // the dropped-file path (which stages the `File` itself instead).
     const stageable = new Blob([buffer]);
-    const vfsName = file.url.split('/').pop() ?? file.tableName;
+    const vfsName = file.url.split("/").pop() ?? file.tableName;
     const tableName = dedupeTableName(file.tableName, taken);
     taken.add(tableName);
 
     // Bundled samples are fixed, developer-controlled assets, all well under
     // any tier boundary — no size-tier check needed here (unlike loadFile/
     // loadFiles below), always the ordinary in-memory path.
-    const ingested = await ingestBuffer(engine, vfsName, buffer, tableName, false);
+    const ingested = await ingestBuffer(
+      engine,
+      vfsName,
+      buffer,
+      tableName,
+      false,
+    );
     await stageDurableSource(ingested, vfsName, stageable);
     tableNames.push(ingested.tableName);
-    entries.push(toRegistryEntry(ingested, datasetId, 'sample'));
+    entries.push(toRegistryEntry(ingested, datasetId, "sample"));
   }
 
   const dataset: Dataset = {
     id: datasetId,
     name: manifestEntry.label,
-    sourceType: 'sample',
+    sourceType: "sample",
     tableNames,
     ingestedAt: new Date().toISOString(),
   };
@@ -407,14 +460,19 @@ export async function loadUrl(
     fetchResult = await fetchApiSource(rawUrl, { onProgress });
   } catch (error) {
     if (!(error instanceof ApiFetchError)) throw error;
-    if (error.code !== 'cors-suspected') throw new IngestionError(error.message, error.code);
+    if (error.code !== "cors-suspected")
+      throw new IngestionError(error.message, error.code);
 
     usedRelay = true;
     try {
-      fetchResult = await fetchApiSourceViaRelay(rawUrl, RELAY_SESSION_ID, { onProgress });
+      fetchResult = await fetchApiSourceViaRelay(rawUrl, RELAY_SESSION_ID, {
+        onProgress,
+      });
     } catch (relayError) {
-      if (relayError instanceof RelayFetchError) throw new IngestionError(relayError.message, relayError.code);
-      if (relayError instanceof ApiFetchError) throw new IngestionError(relayError.message, relayError.code);
+      if (relayError instanceof RelayFetchError)
+        throw new IngestionError(relayError.message, relayError.code);
+      if (relayError instanceof ApiFetchError)
+        throw new IngestionError(relayError.message, relayError.code);
       throw relayError;
     }
   }
@@ -423,18 +481,28 @@ export async function loadUrl(
   const taken = existingTableNames();
   const base = sanitizeTableName(tableNameFromUrl(rawUrl));
   const tableName = dedupeTableName(base, taken);
-  const sampled = fetchResult.sizeTier === 'sampled';
+  const sampled = fetchResult.sizeTier === "sampled";
 
-  const ingested = await ingestBuffer(engine, `${tableName}.json`, fetchResult.buffer, tableName, sampled);
+  const ingested = await ingestBuffer(
+    engine,
+    `${tableName}.json`,
+    fetchResult.buffer,
+    tableName,
+    sampled,
+  );
 
   const dataset: Dataset = {
     id: crypto.randomUUID(),
     name: rawUrl,
-    sourceType: 'api',
+    sourceType: "api",
     tableNames: [ingested.tableName],
     ingestedAt: ingested.createdAt,
   };
-  useDatasetsStore.getState().registerDataset(dataset, [toRegistryEntry(ingested, dataset.id, 'api', rawUrl)]);
+  useDatasetsStore
+    .getState()
+    .registerDataset(dataset, [
+      toRegistryEntry(ingested, dataset.id, "api", rawUrl),
+    ]);
 
   return {
     dataset,
@@ -447,7 +515,7 @@ export async function loadUrl(
 
 /** True when `sql` references `tableName` as a bare or double-quoted identifier — the only trace of a derived table's sources this codebase keeps (no explicit dependency graph). */
 export function referencesTableName(sql: string, tableName: string): boolean {
-  const escaped = tableName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escaped = tableName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`"${escaped}"|\\b${escaped}\\b`).test(sql);
 }
 
@@ -473,10 +541,14 @@ export async function refreshTableFromSource(
   tableId: string,
   onProgress?: (pagesFetched: number, bytesAccumulated: number) => void,
 ): Promise<RefreshResult> {
-  const table = useDatasetsStore.getState().tables.find((t) => t.id === tableId);
+  const table = useDatasetsStore
+    .getState()
+    .tables.find((t) => t.id === tableId);
   if (!table) throw new IngestionError(`Unknown table id "${tableId}".`);
-  if (table.origin !== 'api' || !table.sourceUrl) {
-    throw new IngestionError(`"${table.tableName}" has no recorded source URL to refresh from.`);
+  if (table.origin !== "api" || !table.sourceUrl) {
+    throw new IngestionError(
+      `"${table.tableName}" has no recorded source URL to refresh from.`,
+    );
   }
 
   let fetchResult;
@@ -485,26 +557,44 @@ export async function refreshTableFromSource(
     fetchResult = await fetchApiSource(table.sourceUrl, { onProgress });
   } catch (error) {
     if (!(error instanceof ApiFetchError)) throw error;
-    if (error.code !== 'cors-suspected') throw new IngestionError(error.message, error.code);
+    if (error.code !== "cors-suspected")
+      throw new IngestionError(error.message, error.code);
 
     usedRelay = true;
     try {
-      fetchResult = await fetchApiSourceViaRelay(table.sourceUrl, RELAY_SESSION_ID, { onProgress });
+      fetchResult = await fetchApiSourceViaRelay(
+        table.sourceUrl,
+        RELAY_SESSION_ID,
+        { onProgress },
+      );
     } catch (relayError) {
-      if (relayError instanceof RelayFetchError) throw new IngestionError(relayError.message, relayError.code);
-      if (relayError instanceof ApiFetchError) throw new IngestionError(relayError.message, relayError.code);
+      if (relayError instanceof RelayFetchError)
+        throw new IngestionError(relayError.message, relayError.code);
+      if (relayError instanceof ApiFetchError)
+        throw new IngestionError(relayError.message, relayError.code);
       throw relayError;
     }
   }
 
   const engine = await loadEngine();
   const taken = existingTableNames();
-  const stagingName = dedupeTableName(sanitizeTableName(`${table.tableName}_refresh`), taken);
-  const sampled = fetchResult.sizeTier === 'sampled';
+  const stagingName = dedupeTableName(
+    sanitizeTableName(`${table.tableName}_refresh`),
+    taken,
+  );
+  const sampled = fetchResult.sizeTier === "sampled";
 
-  const ingested = await ingestBuffer(engine, `${stagingName}.json`, fetchResult.buffer, stagingName, sampled);
+  const ingested = await ingestBuffer(
+    engine,
+    `${stagingName}.json`,
+    fetchResult.buffer,
+    stagingName,
+    sampled,
+  );
 
-  await engine.duckDBEngine.execute(`DROP TABLE IF EXISTS ${quoteIdentifier(table.tableName)}`);
+  await engine.duckDBEngine.execute(
+    `DROP TABLE IF EXISTS ${quoteIdentifier(table.tableName)}`,
+  );
   await engine.duckDBEngine.execute(
     `ALTER TABLE ${quoteIdentifier(stagingName)} RENAME TO ${quoteIdentifier(table.tableName)}`,
   );
@@ -526,7 +616,12 @@ export async function refreshTableFromSource(
   // Dependent derived tables aren't auto-rebuilt (§12.1 — their recorded SQL
   // makes a manual re-run cheap); this just flags them so the UI can say so.
   const dependentIds = store.tables
-    .filter((t) => t.origin === 'derived' && t.generatingSql && referencesTableName(t.generatingSql, table.tableName))
+    .filter(
+      (t) =>
+        t.origin === "derived" &&
+        t.generatingSql &&
+        referencesTableName(t.generatingSql, table.tableName),
+    )
     .map((t) => t.id);
   if (dependentIds.length > 0) store.markTablesStale(dependentIds);
 
@@ -545,7 +640,7 @@ export interface SkippedFile {
    * malformed content or a DuckDB error mid-ingest; `'refused'` — over the
    * 300MB ingest ceiling, rejected on `File.size` alone before any read.
    */
-  kind: 'unsupported' | 'failed' | 'refused';
+  kind: "unsupported" | "failed" | "refused";
   reason: string;
 }
 
@@ -560,7 +655,9 @@ export interface BatchIngestResult {
 // left as an unsupported-format entry rather than recursed into, so a
 // maliciously nested archive can't blow up expansion work unboundedly.
 async function expandBatch(files: File[]): Promise<File[]> {
-  const expanded = await Promise.all(files.map((file) => (isZipFile(file) ? expandZipFile(file) : [file])));
+  const expanded = await Promise.all(
+    files.map((file) => (isZipFile(file) ? expandZipFile(file) : [file])),
+  );
   return expanded.flat();
 }
 
@@ -571,7 +668,7 @@ async function expandBatch(files: File[]): Promise<File[]> {
  * so one bad file in a folder doesn't sink the rest.
  */
 export async function loadFiles(rawFiles: File[]): Promise<BatchIngestResult> {
-  if (rawFiles.length === 0) throw new IngestionError('No files to ingest.');
+  if (rawFiles.length === 0) throw new IngestionError("No files to ingest.");
 
   const files = await expandBatch(rawFiles);
 
@@ -580,7 +677,11 @@ export async function loadFiles(rawFiles: File[]): Promise<BatchIngestResult> {
   for (const file of files) {
     const detected = detectFormat(file.name);
     if (isFormatRejection(detected)) {
-      skipped.push({ name: file.name, kind: 'unsupported', reason: detected.message });
+      skipped.push({
+        name: file.name,
+        kind: "unsupported",
+        reason: detected.message,
+      });
     } else {
       supported.push(file);
     }
@@ -593,8 +694,8 @@ export async function loadFiles(rawFiles: File[]): Promise<BatchIngestResult> {
   if (supported.length === 0) {
     throw new IngestionError(
       skipped.length > 0
-        ? `None of the ${skipped.length} file${skipped.length === 1 ? '' : 's'} dropped are in a supported format.`
-        : 'No files to ingest.',
+        ? `None of the ${skipped.length} file${skipped.length === 1 ? "" : "s"} dropped are in a supported format.`
+        : "No files to ingest.",
     );
   }
 
@@ -612,39 +713,54 @@ export async function loadFiles(rawFiles: File[]): Promise<BatchIngestResult> {
     // once up front so it reflects whatever the batch has already consumed
     // by the time this file's turn comes up.
     const tier = decideSizeTier(file.size, estimateHeadroomExceeded(file.size));
-    if (tier === 'refuse') {
-      skipped.push({ name: file.name, kind: 'refused', reason: refusalMessage(file.size) });
+    if (tier === "refuse") {
+      skipped.push({
+        name: file.name,
+        kind: "refused",
+        reason: refusalMessage(file.size),
+      });
       continue;
     }
 
-    const base = sanitizeTableName(file.name.replace(/\.[^./]+$/, ''));
+    const base = sanitizeTableName(file.name.replace(/\.[^./]+$/, ""));
     const tableName = dedupeTableName(base, taken);
     taken.add(tableName);
 
     try {
-      const sampled = tier === 'sampled';
-      const source: Uint8Array | File = sampled ? file : new Uint8Array(await file.arrayBuffer());
-      const ingested = await ingestBuffer(engine, file.name, source, tableName, sampled);
+      const sampled = tier === "sampled";
+      const source: Uint8Array | File = sampled
+        ? file
+        : new Uint8Array(await file.arrayBuffer());
+      const ingested = await ingestBuffer(
+        engine,
+        file.name,
+        source,
+        tableName,
+        sampled,
+      );
       await stageDurableSource(ingested, file.name, file);
       tableNames.push(ingested.tableName);
-      entries.push(toRegistryEntry(ingested, datasetId, 'file'));
+      entries.push(toRegistryEntry(ingested, datasetId, "file"));
     } catch (error) {
       skipped.push({
         name: file.name,
-        kind: 'failed',
+        kind: "failed",
         reason: error instanceof Error ? error.message : String(error),
       });
     }
   }
 
   if (tableNames.length === 0) {
-    throw new IngestionError('None of the dropped files could be ingested — see the summary for why.');
+    throw new IngestionError(
+      "None of the dropped files could be ingested — see the summary for why.",
+    );
   }
 
   const dataset: Dataset = {
     id: datasetId,
-    name: rawFiles.length === 1 ? rawFiles[0].name : `${tableNames.length} files`,
-    sourceType: 'folder',
+    name:
+      rawFiles.length === 1 ? rawFiles[0].name : `${tableNames.length} files`,
+    sourceType: "folder",
     tableNames,
     ingestedAt: new Date().toISOString(),
   };
@@ -660,7 +776,9 @@ export async function removeDataset(datasetId: string): Promise<void> {
 
   const engine = await loadEngine();
   for (const tableName of dataset.tableNames) {
-    await engine.duckDBEngine.execute(`DROP TABLE IF EXISTS ${quoteIdentifier(tableName)}`);
+    await engine.duckDBEngine.execute(
+      `DROP TABLE IF EXISTS ${quoteIdentifier(tableName)}`,
+    );
     // Without this the table would reappear on the next reload, restored from
     // bytes whose registry entry the user just deleted (S6.9 / 07b).
     await unstageTable(tableName);
@@ -680,8 +798,10 @@ export async function removeTable(tableId: string): Promise<void> {
   // `DROP TABLE` does not drop a view (A3) — issuing the wrong keyword would
   // leave the object in DuckDB with no registry row pointing at it, which is
   // the S6.9 "registry is a claim" failure running in the other direction.
-  const keyword = table.kind === 'view' ? 'VIEW' : 'TABLE';
-  await engine.duckDBEngine.execute(`DROP ${keyword} IF EXISTS ${quoteIdentifier(table.tableName)}`);
+  const keyword = table.kind === "view" ? "VIEW" : "TABLE";
+  await engine.duckDBEngine.execute(
+    `DROP ${keyword} IF EXISTS ${quoteIdentifier(table.tableName)}`,
+  );
   await unstageTable(table.tableName);
   store.removeTable(tableId);
 }
@@ -695,15 +815,17 @@ export async function removeTable(tableId: string): Promise<void> {
 // derived table; nothing calls it yet. Re-classification drops any prior
 // per-column manual override, since a reshaped table's columns may no longer
 // correspond to the ones that were overridden.
-const SHARE_OPEN_ERROR_MESSAGE: Partial<Record<PersistenceErrorCode | 'unreachable', string>> = {
-  'not-found': "This share link doesn't exist or has expired.",
-  paused: 'Save/share is temporarily paused — try again later.',
-  unavailable: 'Save/share is temporarily unavailable — try again later.',
+const SHARE_OPEN_ERROR_MESSAGE: Partial<
+  Record<PersistenceErrorCode | "unreachable", string>
+> = {
+  "not-found": "This share link doesn't exist or has expired.",
+  paused: "Save/share is temporarily paused — try again later.",
+  unavailable: "Save/share is temporarily unavailable — try again later.",
   unreachable: "Couldn't reach the server to open this share link.",
 };
 
 export interface OpenShareResult {
-  kind: 'dataset' | 'structure-report';
+  kind: "dataset" | "structure-report";
   /** Present when `kind === 'dataset'` — a full-dataset share, ingested and registered like any other table. */
   dataset?: Dataset;
   /** Present when `kind === 'structure-report'` — the structure-only default artifact, which carries no rows to register as a table. */
@@ -717,36 +839,54 @@ export interface OpenShareResult {
 // structure-only default artifact is JSON with no rows at all, so there is
 // nothing to register as a queryable table — it's returned for a read-only
 // viewer instead.
-export async function loadSharedDataset(token: string): Promise<OpenShareResult> {
+export async function loadSharedDataset(
+  token: string,
+): Promise<OpenShareResult> {
   const result = await getSharedObject(token);
   if (!result.ok) {
-    throw new IngestionError(SHARE_OPEN_ERROR_MESSAGE[result.code] ?? "Couldn't open this share link.");
+    throw new IngestionError(
+      SHARE_OPEN_ERROR_MESSAGE[result.code] ?? "Couldn't open this share link.",
+    );
   }
 
-  if (result.contentType.includes('json')) {
+  if (result.contentType.includes("json")) {
     let structureReport: StructureReport;
     try {
-      structureReport = JSON.parse(new TextDecoder().decode(result.buffer)) as StructureReport;
+      structureReport = JSON.parse(
+        new TextDecoder().decode(result.buffer),
+      ) as StructureReport;
     } catch {
-      throw new IngestionError("This share link's structure report is corrupted or not valid JSON.");
+      throw new IngestionError(
+        "This share link's structure report is corrupted or not valid JSON.",
+      );
     }
-    return { kind: 'structure-report', structureReport };
+    return { kind: "structure-report", structureReport };
   }
 
   const engine = await loadEngine();
   const taken = existingTableNames();
-  const tableName = dedupeTableName('shared_dataset', taken);
-  const ingested = await ingestBuffer(engine, `${tableName}.parquet`, result.buffer, tableName, false);
+  const tableName = dedupeTableName("shared_dataset", taken);
+  const ingested = await ingestBuffer(
+    engine,
+    `${tableName}.parquet`,
+    result.buffer,
+    tableName,
+    false,
+  );
 
   const dataset: Dataset = {
     id: crypto.randomUUID(),
-    name: 'Shared dataset',
-    sourceType: 'shared',
+    name: "Shared dataset",
+    sourceType: "shared",
     tableNames: [ingested.tableName],
     ingestedAt: ingested.createdAt,
   };
-  useDatasetsStore.getState().registerDataset(dataset, [toRegistryEntry(ingested, dataset.id, 'shared')]);
-  return { kind: 'dataset', dataset };
+  useDatasetsStore
+    .getState()
+    .registerDataset(dataset, [
+      toRegistryEntry(ingested, dataset.id, "shared"),
+    ]);
+  return { kind: "dataset", dataset };
 }
 
 export async function profileTable(tableId: string): Promise<ColumnProfile[]> {
@@ -762,14 +902,21 @@ export async function profileTable(tableId: string): Promise<ColumnProfile[]> {
   // may already be stale by the time this runs.
   const [describeResult, countResult, sizeResult] = await Promise.all([
     engine.duckDBEngine.execute(`DESCRIBE ${quoteIdentifier(table.tableName)}`),
-    engine.duckDBEngine.execute(`SELECT COUNT(*) AS n FROM ${quoteIdentifier(table.tableName)}`),
+    engine.duckDBEngine.execute(
+      `SELECT COUNT(*) AS n FROM ${quoteIdentifier(table.tableName)}`,
+    ),
     engine.duckDBEngine.execute(
       `SELECT estimated_size FROM duckdb_tables() WHERE table_name = ${quoteLiteral(table.tableName)}`,
     ),
   ]);
   const rowCount = Number(countResult.rows[0]?.[0] ?? 0);
   const profile = await summarizeTable(engine, table.tableName);
-  const columns = await classifyTable(engine, table.tableName, profile, rowCount);
+  const columns = await classifyTable(
+    engine,
+    table.tableName,
+    profile,
+    rowCount,
+  );
 
   store.setTableStats(tableId, {
     rowCount,

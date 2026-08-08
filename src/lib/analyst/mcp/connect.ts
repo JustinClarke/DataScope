@@ -12,21 +12,25 @@
 // handler. The in-tab path is the same protocol an external agent would speak,
 // minus the wire — the point being that a reduced in-house API drifts from the
 // real one and nothing notices, because nothing tests them against each other.
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { AITool } from '../../../types/ai';
-import type { AnalystCore } from '../core';
-import { opError } from '../errors';
-import type { OpOutcome } from '../types';
-import { createAnalystMcpServer } from './server';
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import type { AITool } from "../../../types/ai";
+import type { AnalystCore } from "../core";
+import { opError } from "../errors";
+import type { OpOutcome } from "../types";
+import { createAnalystMcpServer } from "./server";
 
-export const ANALYST_CLIENT_NAME = 'datascope-app';
+export const ANALYST_CLIENT_NAME = "datascope-app";
 
 export interface AnalystMcpSession {
   /** Tool schemas as the server declares them — the app's chat holds no list of its own. */
   tools(): Promise<AITool[]>;
   /** Dispatch one call. Returns the catalog's own envelope; never throws for an operation failure. */
-  call(name: string, args: unknown, options?: { signal?: AbortSignal }): Promise<OpOutcome>;
+  call(
+    name: string,
+    args: unknown,
+    options?: { signal?: AbortSignal },
+  ): Promise<OpOutcome>;
   close(): Promise<void>;
 }
 
@@ -40,35 +44,50 @@ export interface AnalystMcpSession {
  * path an external host that ignores `structuredContent` would take.
  */
 function outcomeFrom(result: Record<string, unknown>): OpOutcome {
-  if (result.structuredContent && typeof result.structuredContent === 'object') {
+  if (
+    result.structuredContent &&
+    typeof result.structuredContent === "object"
+  ) {
     return result.structuredContent as OpOutcome;
   }
   const first = Array.isArray(result.content) ? result.content[0] : undefined;
-  const text = (first as { type?: string; text?: string } | undefined);
-  if (text?.type === 'text' && typeof text.text === 'string') {
+  const text = first as { type?: string; text?: string } | undefined;
+  if (text?.type === "text" && typeof text.text === "string") {
     try {
       return JSON.parse(text.text) as OpOutcome;
     } catch {
-      return opError('sql_error', text.text);
+      return opError("sql_error", text.text);
     }
   }
-  return opError('sql_error', 'The server returned a result with no readable content.');
+  return opError(
+    "sql_error",
+    "The server returned a result with no readable content.",
+  );
 }
 
 /** Connect a client and a server over a linked in-memory pair. The caller owns both ends and closes them together. */
-export async function connectAnalystMcp(core: AnalystCore): Promise<AnalystMcpSession> {
+export async function connectAnalystMcp(
+  core: AnalystCore,
+): Promise<AnalystMcpSession> {
   const server = createAnalystMcpServer(core);
-  const client = new Client({ name: ANALYST_CLIENT_NAME, version: '0.71.0' }, { capabilities: {} });
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client(
+    { name: ANALYST_CLIENT_NAME, version: "0.71.0" },
+    { capabilities: {} },
+  );
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
 
-  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  await Promise.all([
+    server.connect(serverTransport),
+    client.connect(clientTransport),
+  ]);
 
   return {
     async tools() {
       const { tools } = await client.listTools();
       return tools.map((tool) => ({
         name: tool.name,
-        description: tool.description ?? '',
+        description: tool.description ?? "",
         inputSchema: tool.inputSchema as Record<string, unknown>,
       }));
     },
@@ -97,8 +116,12 @@ export async function connectAnalystMcp(core: AnalystCore): Promise<AnalystMcpSe
         );
         return outcomeFrom(result);
       } catch (error) {
-        if (options?.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-        return opError('sql_error', error instanceof Error ? error.message : String(error));
+        if (options?.signal?.aborted)
+          throw new DOMException("Aborted", "AbortError");
+        return opError(
+          "sql_error",
+          error instanceof Error ? error.message : String(error),
+        );
       }
     },
 

@@ -1,18 +1,24 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
-import type { ChartSpec, ChartType, QueryResult } from '../../types';
-import { availableChartTypes, recommendChart, specForType } from '../../lib/chartMapper';
-import { KpiCard } from '../../components/charts/KpiCard';
+import { lazy, Suspense, useMemo, useState } from "react";
+import type { ChartSpec, ChartType, QueryResult } from "../../types";
+import {
+  availableChartTypes,
+  recommendChart,
+  specForType,
+} from "../../lib/chartMapper";
+import { KpiCard } from "../../components/charts/KpiCard";
 
 // The charting library rides in its own chunk — deferred until a chart is
 // actually shown, so the KPI and grid outcomes never load it.
-const ChartRenderer = lazy(() => import('../../components/charts/ChartRenderer'));
+const ChartRenderer = lazy(
+  () => import("../../components/charts/ChartRenderer"),
+);
 
 const TYPE_LABEL: Record<ChartType, string> = {
-  'time-series': 'Line',
-  categorical: 'Bar',
-  correlation: 'Scatter',
-  distribution: 'Distribution',
-  'join-graph': 'Join graph',
+  "time-series": "Line",
+  categorical: "Bar",
+  correlation: "Scatter",
+  distribution: "Distribution",
+  "join-graph": "Join graph",
 };
 
 interface AutoChartPanelProps {
@@ -38,30 +44,38 @@ interface AutoChartPanelProps {
  */
 export function AutoChartPanel({ result, sql, spec }: AutoChartPanelProps) {
   const recommendation = useMemo(
-    () => (spec ? ({ kind: 'chart', spec } as const) : recommendChart(result, sql)),
+    () =>
+      spec ? ({ kind: "chart", spec } as const) : recommendChart(result, sql),
     [result, sql, spec],
   );
   const chartTypes = useMemo(() => availableChartTypes(result), [result]);
 
   // null = the user chose "Table"; undefined = follow the recommendation.
-  const [override, setOverride] = useState<ChartType | null | undefined>(undefined);
+  const [override, setOverride] = useState<ChartType | null | undefined>(
+    undefined,
+  );
 
-  if (recommendation.kind === 'kpi') {
-    return <KpiCard label={recommendation.label} value={recommendation.value} />;
+  if (recommendation.kind === "kpi") {
+    return (
+      <KpiCard label={recommendation.label} value={recommendation.value} />
+    );
   }
 
   // A result the translator sends to the grid, and that can't support any
   // chart type, has nothing to add beyond the table already shown.
-  if (recommendation.kind === 'grid' && chartTypes.length === 0) {
-    return <p className="text-sm text-(--color-fg-muted)">{recommendation.reason}</p>;
+  if (recommendation.kind === "grid" && chartTypes.length === 0) {
+    return (
+      <p className="text-sm text-(--color-fg-muted)">{recommendation.reason}</p>
+    );
   }
 
-  const recommendedType = recommendation.kind === 'chart' ? recommendation.spec.type : null;
+  const recommendedType =
+    recommendation.kind === "chart" ? recommendation.spec.type : null;
   const activeType = override === undefined ? recommendedType : override;
   const activeSpec: ChartSpec | null =
     activeType === null
       ? null
-      : override === undefined && recommendation.kind === 'chart'
+      : override === undefined && recommendation.kind === "chart"
         ? recommendation.spec
         : specForType(result, activeType);
 
@@ -73,12 +87,14 @@ export function AutoChartPanel({ result, sql, spec }: AutoChartPanelProps) {
           <button
             key={type}
             type="button"
-            onClick={() => setOverride(type === recommendedType ? undefined : type)}
+            onClick={() =>
+              setOverride(type === recommendedType ? undefined : type)
+            }
             aria-pressed={activeType === type}
             className={`rounded-full border px-2.5 py-1 font-medium transition-colors ${
               activeType === type
-                ? 'border-(--color-accent) bg-(--color-accent)/10 text-(--color-accent)'
-                : 'border-(--color-border) text-(--color-fg-muted) hover:text-(--color-fg)'
+                ? "border-(--color-accent) bg-(--color-accent)/10 text-(--color-accent)"
+                : "border-(--color-border) text-(--color-fg-muted) hover:text-(--color-fg)"
             }`}
           >
             {TYPE_LABEL[type]}
@@ -90,8 +106,8 @@ export function AutoChartPanel({ result, sql, spec }: AutoChartPanelProps) {
           aria-pressed={activeType === null}
           className={`rounded-full border px-2.5 py-1 font-medium transition-colors ${
             activeType === null
-              ? 'border-(--color-accent) bg-(--color-accent)/10 text-(--color-accent)'
-              : 'border-(--color-border) text-(--color-fg-muted) hover:text-(--color-fg)'
+              ? "border-(--color-accent) bg-(--color-accent)/10 text-(--color-accent)"
+              : "border-(--color-border) text-(--color-fg-muted) hover:text-(--color-fg)"
           }`}
         >
           Table
@@ -99,10 +115,14 @@ export function AutoChartPanel({ result, sql, spec }: AutoChartPanelProps) {
       </div>
 
       {activeSpec === null ? (
-        <p className="text-sm text-(--color-fg-muted)">Showing the table below.</p>
+        <p className="text-sm text-(--color-fg-muted)">
+          Showing the table below.
+        </p>
       ) : (
         <figure className="flex flex-col gap-2">
-          <figcaption className="text-sm font-medium text-(--color-fg)">{activeSpec.title}</figcaption>
+          <figcaption className="text-sm font-medium text-(--color-fg)">
+            {activeSpec.title}
+          </figcaption>
           <Suspense
             fallback={
               <div className="flex h-80 items-center justify-center rounded-lg border border-(--color-border) text-sm text-(--color-fg-muted)">

@@ -1,5 +1,14 @@
-import { CloudSun, Database, Loader2, ShoppingCart, Ship, Star, TrendingUp, type LucideIcon } from 'lucide-react';
-import { SAMPLE_MANIFEST } from './samples';
+import {
+  CloudSun,
+  Database,
+  Loader2,
+  ShoppingCart,
+  Ship,
+  Star,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
+import { SAMPLE_MANIFEST } from "./samples";
 
 interface SamplePickerProps {
   onSelect: (sampleId: string) => void;
@@ -11,22 +20,29 @@ interface SamplePickerProps {
 // pictographic emoji, and tinted from the `--sample-*` ramp (design.md § Sample accent
 // ramp) — the card's identity colour, never a data mark.
 const SAMPLE_ICONS: Record<string, { Icon: LucideIcon; accent: string }> = {
-  ecommerce: { Icon: ShoppingCart, accent: 'var(--sample-1)' },
-  titanic: { Icon: Ship, accent: 'var(--sample-2)' },
-  stock_prices: { Icon: TrendingUp, accent: 'var(--sample-3)' },
-  product_reviews: { Icon: Star, accent: 'var(--sample-4)' },
-  weather: { Icon: CloudSun, accent: 'var(--sample-5)' },
+  ecommerce: { Icon: ShoppingCart, accent: "var(--sample-1)" },
+  titanic: { Icon: Ship, accent: "var(--sample-2)" },
+  stock_prices: { Icon: TrendingUp, accent: "var(--sample-3)" },
+  product_reviews: { Icon: Star, accent: "var(--sample-4)" },
+  weather: { Icon: CloudSun, accent: "var(--sample-5)" },
 };
 
 /**
  * Sample dataset picker — each sample is a clickable card with hover glow.
  * Designed to be the most inviting part of the welcome page.
  */
-export function SamplePicker({ onSelect, disabled = false, activeId = null }: SamplePickerProps) {
+export function SamplePicker({
+  onSelect,
+  disabled = false,
+  activeId = null,
+}: SamplePickerProps) {
   return (
     <div className="grid grid-cols-1 gap-2">
       {SAMPLE_MANIFEST.map((sample) => {
-        const meta = SAMPLE_ICONS[sample.id] ?? { Icon: Database, accent: 'var(--color-ink-2)' };
+        const meta = SAMPLE_ICONS[sample.id] ?? {
+          Icon: Database,
+          accent: "var(--color-ink-2)",
+        };
         return (
           <button
             key={sample.id}
@@ -38,9 +54,16 @@ export function SamplePicker({ onSelect, disabled = false, activeId = null }: Sa
             {/* Icon */}
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-110"
-              style={{ backgroundColor: `color-mix(in oklch, ${meta.accent} 8%, transparent)` }}
+              style={{
+                backgroundColor: `color-mix(in oklch, ${meta.accent} 8%, transparent)`,
+              }}
             >
-              <meta.Icon size={16} strokeWidth={1.75} aria-hidden="true" style={{ color: meta.accent }} />
+              <meta.Icon
+                size={16}
+                strokeWidth={1.75}
+                aria-hidden="true"
+                style={{ color: meta.accent }}
+              />
             </span>
 
             {/* Text */}
@@ -55,11 +78,20 @@ export function SamplePicker({ onSelect, disabled = false, activeId = null }: Sa
 
             {/* Arrow or Loader */}
             {activeId === sample.id ? (
-              <Loader2 size={14} className="shrink-0 animate-spin text-(--color-active)" />
+              <Loader2
+                size={14}
+                className="shrink-0 animate-spin text-(--color-active)"
+              />
             ) : (
               <svg
-                width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 className="shrink-0 text-(--color-ink-3) transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-(--color-active)"
               >
                 <polyline points="9 18 15 12 9 6" />

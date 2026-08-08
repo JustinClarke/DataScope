@@ -6,7 +6,11 @@ interface FormatRejectionModalProps {
 }
 
 /** Blocking-ingest modal — xlsx/other unsupported formats, and oversized files refused outright. */
-export function FormatRejectionModal({ message, onDismiss, ariaLabel = 'Unsupported file' }: FormatRejectionModalProps) {
+export function FormatRejectionModal({
+  message,
+  onDismiss,
+  ariaLabel = "Unsupported file",
+}: FormatRejectionModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-(--color-scrim)"

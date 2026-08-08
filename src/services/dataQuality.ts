@@ -7,12 +7,21 @@
 // writes its own table-qualified sentence at this aggregation layer, since
 // the producers' own `description` strings are column-only — correct for
 // their existing single-table callers (`InsightFeed`, `ColumnDisclosure`).
-import type { TableRegistryEntry } from '../types';
-import { buildDuplicatesProbe, nullPatternCandidates, zeroVarianceCandidates, type InsightCandidate } from '../lib/insights';
+import type { TableRegistryEntry } from "../types";
+import {
+  buildDuplicatesProbe,
+  nullPatternCandidates,
+  zeroVarianceCandidates,
+  type InsightCandidate,
+} from "../lib/insights";
 
-export type QualityRuleId = 'null-pattern' | 'duplicates' | 'zero-variance';
+export type QualityRuleId = "null-pattern" | "duplicates" | "zero-variance";
 
-const ALL_RULES: QualityRuleId[] = ['null-pattern', 'duplicates', 'zero-variance'];
+const ALL_RULES: QualityRuleId[] = [
+  "null-pattern",
+  "duplicates",
+  "zero-variance",
+];
 
 export interface QualityFinding {
   id: string;
@@ -32,38 +41,71 @@ export interface DatasetQualityReport {
 // services/profiling.ts, services/charts.ts, services/sql.ts) already use —
 // many small concurrent queries, not the SQL playground's single-query-panel
 // store.
-type EngineModule = typeof import('../workers/duckdb.worker');
+type EngineModule = typeof import("../workers/duckdb.worker");
 let engineModule: Promise<EngineModule> | null = null;
 function loadEngine(): Promise<EngineModule> {
-  if (!engineModule) engineModule = import('../workers/duckdb.worker');
+  if (!engineModule) engineModule = import("../workers/duckdb.worker");
   return engineModule;
 }
 
-function toFinding(table: TableRegistryEntry, candidate: InsightCandidate, rule: QualityRuleId, description: string): QualityFinding {
-  return { id: `${table.id}:${candidate.id}`, tableId: table.id, tableName: table.tableName, rule, description, sql: candidate.sql };
+function toFinding(
+  table: TableRegistryEntry,
+  candidate: InsightCandidate,
+  rule: QualityRuleId,
+  description: string,
+): QualityFinding {
+  return {
+    id: `${table.id}:${candidate.id}`,
+    tableId: table.id,
+    tableName: table.tableName,
+    rule,
+    description,
+    sql: candidate.sql,
+  };
 }
 
-function nullFinding(table: TableRegistryEntry, candidate: InsightCandidate): QualityFinding {
-  const columnName = candidate.id.slice('null-pattern:'.length);
+function nullFinding(
+  table: TableRegistryEntry,
+  candidate: InsightCandidate,
+): QualityFinding {
+  const columnName = candidate.id.slice("null-pattern:".length);
   const pct = (candidate.coverage * 100).toFixed(1);
-  return toFinding(table, candidate, 'null-pattern', `Missing values concentrated in ${table.tableName}.${columnName} (${pct}% null).`);
-}
-
-function zeroVarianceFinding(table: TableRegistryEntry, candidate: InsightCandidate): QualityFinding {
-  const columnName = candidate.id.slice('zero-variance:'.length);
   return toFinding(
     table,
     candidate,
-    'zero-variance',
+    "null-pattern",
+    `Missing values concentrated in ${table.tableName}.${columnName} (${pct}% null).`,
+  );
+}
+
+function zeroVarianceFinding(
+  table: TableRegistryEntry,
+  candidate: InsightCandidate,
+): QualityFinding {
+  const columnName = candidate.id.slice("zero-variance:".length);
+  return toFinding(
+    table,
+    candidate,
+    "zero-variance",
     `${table.tableName}.${columnName} holds a single repeated value across all ${table.rowCount.toLocaleString()} rows — zero variance.`,
   );
 }
 
-function duplicatesFinding(table: TableRegistryEntry, candidate: InsightCandidate): QualityFinding {
-  const match = /^([\d,]+) fully duplicated rows? detected\.$/.exec(candidate.description);
-  const count = match?.[1] ?? '';
-  const plural = count !== '1';
-  return toFinding(table, candidate, 'duplicates', `${count} fully duplicated row${plural ? 's' : ''} detected in ${table.tableName}.`);
+function duplicatesFinding(
+  table: TableRegistryEntry,
+  candidate: InsightCandidate,
+): QualityFinding {
+  const match = /^([\d,]+) fully duplicated rows? detected\.$/.exec(
+    candidate.description,
+  );
+  const count = match?.[1] ?? "";
+  const plural = count !== "1";
+  return toFinding(
+    table,
+    candidate,
+    "duplicates",
+    `${count} fully duplicated row${plural ? "s" : ""} detected in ${table.tableName}.`,
+  );
 }
 
 /**
@@ -71,7 +113,9 @@ function duplicatesFinding(table: TableRegistryEntry, candidate: InsightCandidat
  * it produced zero candidates across every registered table; otherwise every
  * candidate it produced, from any table, renders under Quality Warnings.
  */
-export async function loadDatasetQualityReport(tables: TableRegistryEntry[]): Promise<DatasetQualityReport> {
+export async function loadDatasetQualityReport(
+  tables: TableRegistryEntry[],
+): Promise<DatasetQualityReport> {
   if (tables.length === 0) return { warnings: [], passedRules: ALL_RULES };
 
   const warnings: QualityFinding[] = [];
@@ -79,13 +123,20 @@ export async function loadDatasetQualityReport(tables: TableRegistryEntry[]): Pr
 
   for (const table of tables) {
     if (!table.columns) continue;
-    for (const candidate of nullPatternCandidates(table.columns, table.tableName)) {
+    for (const candidate of nullPatternCandidates(
+      table.columns,
+      table.tableName,
+    )) {
       warnings.push(nullFinding(table, candidate));
-      rulesWithFindings.add('null-pattern');
+      rulesWithFindings.add("null-pattern");
     }
-    for (const candidate of zeroVarianceCandidates(table.columns, table.tableName, table.rowCount)) {
+    for (const candidate of zeroVarianceCandidates(
+      table.columns,
+      table.tableName,
+      table.rowCount,
+    )) {
       warnings.push(zeroVarianceFinding(table, candidate));
-      rulesWithFindings.add('zero-variance');
+      rulesWithFindings.add("zero-variance");
     }
   }
 
@@ -100,7 +151,7 @@ export async function loadDatasetQualityReport(tables: TableRegistryEntry[]): Pr
   for (const { table, candidates } of duplicateResults) {
     for (const candidate of candidates) {
       warnings.push(duplicatesFinding(table, candidate));
-      rulesWithFindings.add('duplicates');
+      rulesWithFindings.add("duplicates");
     }
   }
 

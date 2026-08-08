@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
-import { Histogram } from './Histogram';
+import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render } from "@testing-library/react";
+import { Histogram } from "./Histogram";
 
-describe('Histogram', () => {
+describe("Histogram", () => {
   afterEach(() => cleanup());
 
-  it('renders one bar per bucket with a range/count tooltip', () => {
+  it("renders one bar per bucket with a range/count tooltip", () => {
     const { getByLabelText, container } = render(
       <Histogram
         buckets={[
@@ -14,12 +14,14 @@ describe('Histogram', () => {
         ]}
       />,
     );
-    expect(getByLabelText('Value distribution histogram').children).toHaveLength(2);
+    expect(
+      getByLabelText("Value distribution histogram").children,
+    ).toHaveLength(2);
     expect(container.querySelector('[title="0.00–10.00: 5"]')).toBeTruthy();
     expect(container.querySelector('[title="10.00–20.00: 15"]')).toBeTruthy();
   });
 
-  it('shows the full min/max range in the footer', () => {
+  it("shows the full min/max range in the footer", () => {
     const { container } = render(
       <Histogram
         buckets={[
@@ -28,7 +30,7 @@ describe('Histogram', () => {
         ]}
       />,
     );
-    expect(container.textContent).toContain('0.42');
-    expect(container.textContent).toContain('80.00');
+    expect(container.textContent).toContain("0.42");
+    expect(container.textContent).toContain("80.00");
   });
 });

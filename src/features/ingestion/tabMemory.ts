@@ -7,6 +7,7 @@ interface ChromeMemory {
 }
 
 export function tabMemoryMB(): number | null {
-  const memory = (performance as Performance & { memory?: ChromeMemory }).memory;
+  const memory = (performance as Performance & { memory?: ChromeMemory })
+    .memory;
   return memory ? memory.usedJSHeapSize / (1024 * 1024) : null;
 }

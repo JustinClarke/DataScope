@@ -7,17 +7,17 @@
 // The `shared` authority profile is deliberate and is explained in
 // `lib/analyst/authority.ts`: the full §11.5 lockdown is a whole-process
 // posture, and this process is also DataScope's ingestion path.
-import { createAnalystCore, type AnalystCore } from '../lib/analyst/core';
-import { createWasmExecutor } from '../lib/analyst/executors/duckdbWasm';
-import type { Catalog, CatalogObject, Workspace } from '../lib/analyst/types';
-import { useDatasetsStore } from '../stores/datasets';
-import { openQueryTab } from './queryTabs';
-import { runTransformDetailed } from './transforms';
+import { createAnalystCore, type AnalystCore } from "../lib/analyst/core";
+import { createWasmExecutor } from "../lib/analyst/executors/duckdbWasm";
+import type { Catalog, CatalogObject, Workspace } from "../lib/analyst/types";
+import { useDatasetsStore } from "../stores/datasets";
+import { openQueryTab } from "./queryTabs";
+import { runTransformDetailed } from "./transforms";
 
-type EngineModule = typeof import('../workers/duckdb.worker');
+type EngineModule = typeof import("../workers/duckdb.worker");
 let engineModule: Promise<EngineModule> | null = null;
 function loadEngine(): Promise<EngineModule> {
-  if (!engineModule) engineModule = import('../workers/duckdb.worker');
+  if (!engineModule) engineModule = import("../workers/duckdb.worker");
   return engineModule;
 }
 
@@ -40,9 +40,11 @@ const tabCatalog: Catalog = {
   async objects(): Promise<CatalogObject[]> {
     return useDatasetsStore.getState().tables.map((table) => ({
       name: table.tableName,
-      kind: table.kind ?? 'table',
-      origin: table.origin === 'derived' ? 'derived' : 'source',
-      ...(table.generatingSql === undefined ? {} : { generatingSql: table.generatingSql }),
+      kind: table.kind ?? "table",
+      origin: table.origin === "derived" ? "derived" : "source",
+      ...(table.generatingSql === undefined
+        ? {}
+        : { generatingSql: table.generatingSql }),
     }));
   },
 
@@ -52,13 +54,17 @@ const tabCatalog: Catalog = {
       // Unreachable through the core, which only ever composes a CREATE
       // TABLE/VIEW AS here — but a silent `undefined` would register nothing
       // and still report success, which is the one outcome worth a throw.
-      throw new Error(`"${name}" was not registered — the statement was not a derivation.`);
+      throw new Error(
+        `"${name}" was not registered — the statement was not a derivation.`,
+      );
     }
     return {
       name: registered.tableName,
       kind: registered.kind ?? kind,
-      origin: 'derived',
-      ...(registered.generatingSql === undefined ? {} : { generatingSql: registered.generatingSql }),
+      origin: "derived",
+      ...(registered.generatingSql === undefined
+        ? {}
+        : { generatingSql: registered.generatingSql }),
     };
   },
 
@@ -83,7 +89,16 @@ const tabCatalog: Catalog = {
  * no parameter that could take an envelope field even if one were passed.
  */
 export const tabWorkspace: Workspace = {
-  async pin({ title, sql, resultId, schema, rows, rowCount, nextOffset, elapsedMs }) {
+  async pin({
+    title,
+    sql,
+    resultId,
+    schema,
+    rows,
+    rowCount,
+    nextOffset,
+    elapsedMs,
+  }) {
     // A released body still pins — the SQL is what makes the tab useful — but it
     // adopts no result, so the tab opens empty with its query ready to run
     // rather than showing zero rows as though that were the answer.
@@ -108,8 +123,10 @@ let core: AnalystCore | null = null;
 export function analystCore(): AnalystCore {
   if (!core) {
     core = createAnalystCore(
-      createWasmExecutor(async (sql, options) => (await loadEngine()).duckDBEngine.execute(sql, options)),
-      { authority: 'shared', catalog: tabCatalog, workspace: tabWorkspace },
+      createWasmExecutor(async (sql, options) =>
+        (await loadEngine()).duckDBEngine.execute(sql, options),
+      ),
+      { authority: "shared", catalog: tabCatalog, workspace: tabWorkspace },
     );
   }
   return core;

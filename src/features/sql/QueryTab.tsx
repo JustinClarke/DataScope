@@ -7,12 +7,12 @@
 // and the export-recipe action. All three are about the *session*, not about
 // the query in hand, and all three stay in the console — a query tab is one
 // query and its result.
-import { useCallback } from 'react';
-import { Play } from 'lucide-react';
-import { useQuerySession, getSession } from '../../stores/query';
-import { requestRun } from '../../services/runPath';
-import { QueryOutput } from './QueryResultsPanel';
-import { LazySqlEditor } from './LazySqlEditor';
+import { useCallback } from "react";
+import { Play } from "lucide-react";
+import { useQuerySession, getSession } from "../../stores/query";
+import { requestRun } from "../../services/runPath";
+import { QueryOutput } from "./QueryResultsPanel";
+import { LazySqlEditor } from "./LazySqlEditor";
 
 interface QueryTabProps {
   /** The tab's id, which is also its query session id. */
@@ -28,7 +28,7 @@ export function QueryTab({ tabId, name }: QueryTabProps) {
     requestRun(getSession(tabId).sql, tabId);
   }, [tabId]);
 
-  const canRun = sql.trim().length > 0 && status !== 'running';
+  const canRun = sql.trim().length > 0 && status !== "running";
 
   return (
     <div data-testid={`query-tab-${tabId}`} className="flex flex-col gap-4">
@@ -41,7 +41,7 @@ export function QueryTab({ tabId, name }: QueryTabProps) {
           className="flex items-center gap-2 rounded-lg bg-(--color-accent) px-3 py-1.5 text-sm font-medium text-(--color-accent-fg) disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Play size={14} aria-hidden="true" />
-          {status === 'running' ? 'Running…' : 'Run'}
+          {status === "running" ? "Running…" : "Run"}
           <span className="text-xs opacity-75">⌘/Ctrl+Enter</span>
         </button>
       </div>

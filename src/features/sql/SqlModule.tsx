@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Play, Save, ShieldCheck, WrapText } from 'lucide-react';
-import { useQuerySession, useQueryStore, CONSOLE_SESSION } from '../../stores/query';
-import { requestRun } from '../../services/runPath';
-import { analystCore } from '../../services/analyst';
-import { isOpError, type OpOutcome } from '../../lib/analyst/types';
-import { LazySqlEditor } from './LazySqlEditor';
+import { useCallback, useEffect, useState } from "react";
+import { Play, Save, ShieldCheck, WrapText } from "lucide-react";
+import {
+  useQuerySession,
+  useQueryStore,
+  CONSOLE_SESSION,
+} from "../../stores/query";
+import { requestRun } from "../../services/runPath";
+import { analystCore } from "../../services/analyst";
+import { isOpError, type OpOutcome } from "../../lib/analyst/types";
+import { LazySqlEditor } from "./LazySqlEditor";
 
 /**
  * The dry-run check beside Run (A2, master §11.5/§13.3) — A1's `validate_sql`
@@ -28,21 +32,22 @@ function ValidateBanner({ outcome }: { outcome: OpOutcome }) {
   const schema = outcome.schema;
   const at = (name: string) => schema.findIndex((field) => field.name === name);
   const row = outcome.rows[0] ?? [];
-  const ok = Boolean(row[at('ok')]);
-  const statementClass = String(row[at('statement_class')] ?? '');
-  const referencedObjects = (row[at('referenced_objects')] as string[] | undefined) ?? [];
-  const error = row[at('error')] as string | null;
+  const ok = Boolean(row[at("ok")]);
+  const statementClass = String(row[at("statement_class")] ?? "");
+  const referencedObjects =
+    (row[at("referenced_objects")] as string[] | undefined) ?? [];
+  const error = row[at("error")] as string | null;
 
   return (
     <p
-      role={ok ? undefined : 'alert'}
+      role={ok ? undefined : "alert"}
       data-testid="console-validate-result"
       className={`shrink-0 border-t border-(--color-rule-2) px-3 py-1.5 font-mono text-[length:var(--text-xs)] ${
-        ok ? 'text-(--color-ok)' : 'text-(--color-error)'
+        ok ? "text-(--color-ok)" : "text-(--color-error)"
       }`}
     >
       {ok
-        ? `✓ Valid — ${statementClass}${referencedObjects.length > 0 ? `, references ${referencedObjects.join(', ')}` : ''} — costs no execution`
+        ? `✓ Valid — ${statementClass}${referencedObjects.length > 0 ? `, references ${referencedObjects.join(", ")}` : ""} — costs no execution`
         : error}
     </p>
   );
@@ -68,10 +73,10 @@ function DeriveBar({
   onCancel,
 }: {
   name: string;
-  kind: 'table' | 'view';
+  kind: "table" | "view";
   busy: boolean;
   onName: (value: string) => void;
-  onKind: (value: 'table' | 'view') => void;
+  onKind: (value: "table" | "view") => void;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -87,13 +92,16 @@ function DeriveBar({
           onConfirm();
         }}
       >
-        <label htmlFor="console-derive-name" className="text-[length:var(--text-xs)] text-(--color-fg-muted)">
+        <label
+          htmlFor="console-derive-name"
+          className="text-[length:var(--text-xs)] text-(--color-fg-muted)"
+        >
           Save this query as
         </label>
         <select
           aria-label="What to create"
           value={kind}
-          onChange={(event) => onKind(event.target.value as 'table' | 'view')}
+          onChange={(event) => onKind(event.target.value as "table" | "view")}
           className="rounded border border-(--color-border) bg-transparent px-2 py-1 text-[length:var(--text-xs)] text-(--color-fg)"
         >
           <option value="table">table</option>
@@ -112,7 +120,7 @@ function DeriveBar({
           data-testid="console-derive-confirm"
           className="rounded-lg bg-(--color-accent) px-3 py-1 text-[length:var(--text-xs)] font-medium text-(--color-accent-fg) disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {busy ? 'Saving…' : 'Save'}
+          {busy ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
@@ -131,17 +139,17 @@ function DeriveResult({ outcome }: { outcome: OpOutcome }) {
   const failed = isOpError(outcome);
   return (
     <p
-      role={failed ? 'alert' : undefined}
+      role={failed ? "alert" : undefined}
       data-testid="console-derive-result"
       className={`shrink-0 border-t border-(--color-rule-2) px-3 py-1.5 font-mono text-[length:var(--text-xs)] ${
-        failed ? 'text-(--color-error)' : 'text-(--color-ok)'
+        failed ? "text-(--color-error)" : "text-(--color-ok)"
       }`}
     >
       {failed
         ? outcome.message
-        // The note carries the deterministic facts the operation reports — a
-        // name it had to change, and what the new object derives from.
-        : `✓ ${String(outcome.rows[0]?.[0] ?? '')} created${outcome.note ? ` — ${outcome.note}` : ''}`}
+        : // The note carries the deterministic facts the operation reports — a
+          // name it had to change, and what the new object derives from.
+          `✓ ${String(outcome.rows[0]?.[0] ?? "")} created${outcome.note ? ` — ${outcome.note}` : ""}`}
     </p>
   );
 }
@@ -161,8 +169,8 @@ export function SqlModule() {
   const [checkOutcome, setCheckOutcome] = useState<OpOutcome | null>(null);
   const [checking, setChecking] = useState(false);
   const [deriveOpen, setDeriveOpen] = useState(false);
-  const [deriveKind, setDeriveKind] = useState<'table' | 'view'>('table');
-  const [deriveName, setDeriveName] = useState('');
+  const [deriveKind, setDeriveKind] = useState<"table" | "view">("table");
+  const [deriveName, setDeriveName] = useState("");
   const [deriveOutcome, setDeriveOutcome] = useState<OpOutcome | null>(null);
   const [deriving, setDeriving] = useState(false);
 
@@ -176,26 +184,34 @@ export function SqlModule() {
   }, [sql]);
 
   const handleRun = useCallback(() => {
-    requestRun(useQueryStore.getState().sessions[CONSOLE_SESSION]?.sql ?? '', CONSOLE_SESSION);
+    requestRun(
+      useQueryStore.getState().sessions[CONSOLE_SESSION]?.sql ?? "",
+      CONSOLE_SESSION,
+    );
   }, []);
 
   const handleValidate = useCallback(async () => {
-    const current = useQueryStore.getState().sessions[CONSOLE_SESSION]?.sql ?? '';
+    const current =
+      useQueryStore.getState().sessions[CONSOLE_SESSION]?.sql ?? "";
     if (current.trim().length === 0) return;
     setChecking(true);
-    const outcome = await analystCore().call('validate_sql', { sql: current });
+    const outcome = await analystCore().call("validate_sql", { sql: current });
     setChecking(false);
     setCheckOutcome(outcome);
   }, []);
 
   const handleDerive = useCallback(async () => {
-    const current = useQueryStore.getState().sessions[CONSOLE_SESSION]?.sql ?? '';
+    const current =
+      useQueryStore.getState().sessions[CONSOLE_SESSION]?.sql ?? "";
     if (current.trim().length === 0 || deriveName.trim().length === 0) return;
     setDeriving(true);
-    const outcome = await analystCore().call(deriveKind === 'view' ? 'create_view' : 'derive_table', {
-      name: deriveName,
-      sql: current,
-    });
+    const outcome = await analystCore().call(
+      deriveKind === "view" ? "create_view" : "derive_table",
+      {
+        name: deriveName,
+        sql: current,
+      },
+    );
     setDeriving(false);
     setDeriveOutcome(outcome);
     // Left open on failure so the name and the message sit together; a success
@@ -212,19 +228,27 @@ export function SqlModule() {
   // shell's eager graph (the drawer mounts it), and a formatter nobody has
   // asked for has no business in the startup chunk (§15).
   const handleFormat = useCallback(async () => {
-    const current = useQueryStore.getState().sessions[CONSOLE_SESSION]?.sql ?? '';
+    const current =
+      useQueryStore.getState().sessions[CONSOLE_SESSION]?.sql ?? "";
     if (current.trim().length === 0) return;
-    const { formatSql } = await import('./sqlFormatting');
+    const { formatSql } = await import("./sqlFormatting");
     useQueryStore.getState().setSql(CONSOLE_SESSION, formatSql(current));
   }, []);
 
-  const canRun = sql.trim().length > 0 && status !== 'running';
+  const canRun = sql.trim().length > 0 && status !== "running";
   const hasSql = sql.trim().length > 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div data-testid="console-editor-region" className="min-h-[4.5rem] flex-1 overflow-hidden px-3 pt-2">
-        <LazySqlEditor sessionId={CONSOLE_SESSION} onRunQuery={handleRun} fillHeight />
+      <div
+        data-testid="console-editor-region"
+        className="min-h-[4.5rem] flex-1 overflow-hidden px-3 pt-2"
+      >
+        <LazySqlEditor
+          sessionId={CONSOLE_SESSION}
+          onRunQuery={handleRun}
+          fillHeight
+        />
       </div>
 
       <div
@@ -245,7 +269,7 @@ export function SqlModule() {
           type="button"
           onClick={() => {
             setDeriveOutcome(null);
-            setDeriveName('');
+            setDeriveName("");
             setDeriveOpen((open) => !open);
           }}
           disabled={!hasSql}
@@ -265,7 +289,7 @@ export function SqlModule() {
           className="flex items-center gap-1 rounded-lg border border-(--color-border) px-3 py-1.5 text-sm font-medium text-(--color-fg) disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ShieldCheck size={14} aria-hidden="true" />
-          {checking ? 'Checking…' : 'Check'}
+          {checking ? "Checking…" : "Check"}
         </button>
         <button
           type="button"
@@ -274,7 +298,7 @@ export function SqlModule() {
           className="flex items-center gap-2 rounded-lg bg-(--color-accent) px-3 py-1.5 text-sm font-medium text-(--color-accent-fg) disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Play size={14} aria-hidden="true" />
-          {status === 'running' ? 'Running…' : 'Run'}
+          {status === "running" ? "Running…" : "Run"}
           <span className="text-xs opacity-75">⌘/Ctrl+Enter</span>
         </button>
       </div>

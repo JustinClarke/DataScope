@@ -1,6 +1,6 @@
-import type { TableRegistryEntry } from '../../types';
+import type { TableRegistryEntry } from "../../types";
 
-export type SqlCompletionKind = 'table' | 'column';
+export type SqlCompletionKind = "table" | "column";
 
 export interface SqlCompletionItem {
   label: string;
@@ -21,21 +21,23 @@ export interface SqlCompletionItem {
  * separate suggestion (with its own table in `detail`) rather than deduped,
  * so the annotation always names the right source table.
  */
-export function buildCompletionItems(tables: TableRegistryEntry[]): SqlCompletionItem[] {
+export function buildCompletionItems(
+  tables: TableRegistryEntry[],
+): SqlCompletionItem[] {
   const items: SqlCompletionItem[] = [];
 
   for (const table of tables) {
     items.push({
       label: table.tableName,
-      kind: 'table',
-      detail: table.origin === 'derived' ? 'derived table' : 'table',
+      kind: "table",
+      detail: table.origin === "derived" ? "derived table" : "table",
       insertText: table.tableName,
     });
 
     for (const column of table.columns ?? []) {
       items.push({
         label: column.name,
-        kind: 'column',
+        kind: "column",
         detail: `column · ${table.tableName}`,
         insertText: column.name,
       });

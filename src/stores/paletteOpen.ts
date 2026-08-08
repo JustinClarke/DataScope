@@ -2,7 +2,7 @@
 // former local `useState` so its own ⌘K/Ctrl+K keyboard listener and
 // `TitleBar`'s button share one source of truth instead of one driving the
 // other through a synthetic keyboard-event dispatch.
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface PaletteOpenState {
   open: boolean;

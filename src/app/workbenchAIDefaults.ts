@@ -5,10 +5,10 @@
 // recommendation (the flat Off/Cloudflare/WebLLM/Your-own-key switches) is
 // W7's AI pane, so wiring this into the shared, persisted `useSettingsStore`
 // now would be an invisible behavior change with nothing yet rendering it.
-import type { AIMode } from '../types';
+import type { AIMode } from "../types";
 
 function defaultHasWebGPU(): boolean {
-  return typeof navigator !== 'undefined' && 'gpu' in navigator;
+  return typeof navigator !== "undefined" && "gpu" in navigator;
 }
 
 /**
@@ -18,15 +18,17 @@ function defaultHasWebGPU(): boolean {
  * stated or verified anywhere in the spec, so adding one here would invent
  * certainty this probe doesn't have.
  */
-export function isCapableDevice(hasWebGPU: () => boolean = defaultHasWebGPU): boolean {
+export function isCapableDevice(
+  hasWebGPU: () => boolean = defaultHasWebGPU,
+): boolean {
   return hasWebGPU();
 }
 
 /**
  * §5.1's mapping, stated directly: Off = mode (a) = `'local-only'`; WebLLM =
  * mode (b) = `'local-model'`. A recommendation never touches `webllmConsent` —
- * D70's download-confirm stays the sole consent gate for the ~830 MB pull.
+ * D70's download-confirm stays the sole consent gate for the ~924 MB pull.
  */
 export function recommendedWorkbenchAIMode(capableDevice: boolean): AIMode {
-  return capableDevice ? 'local-model' : 'local-only';
+  return capableDevice ? "local-model" : "local-only";
 }

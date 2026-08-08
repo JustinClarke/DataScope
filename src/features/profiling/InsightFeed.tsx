@@ -1,14 +1,20 @@
-import { useEffect, useState } from 'react';
-import { BarChart3 } from 'lucide-react';
-import type { QueryResult, TableRegistryEntry } from '../../types';
-import type { InsightCandidate } from '../../lib/insights';
-import { RULE_LABEL } from '../../lib/insights';
-import { loadInsights } from '../../services/insights';
-import { runChartQuery } from '../../services/charts';
-import { AutoChartPanel } from '../sql/AutoChartPanel';
-import { RunSqlButton } from '../sql/RunSqlButton';
+import { useEffect, useState } from "react";
+import { BarChart3 } from "lucide-react";
+import type { QueryResult, TableRegistryEntry } from "../../types";
+import type { InsightCandidate } from "../../lib/insights";
+import { RULE_LABEL } from "../../lib/insights";
+import { loadInsights } from "../../services/insights";
+import { runChartQuery } from "../../services/charts";
+import { AutoChartPanel } from "../sql/AutoChartPanel";
+import { RunSqlButton } from "../sql/RunSqlButton";
 
-function InsightCard({ candidate, onShowSql }: { candidate: InsightCandidate; onShowSql: (label: string, sql: string) => void }) {
+function InsightCard({
+  candidate,
+  onShowSql,
+}: {
+  candidate: InsightCandidate;
+  onShowSql: (label: string, sql: string) => void;
+}) {
   // Charting an insight runs its own query and renders the result through the
   // same translator + panel the SQL playground uses — one implementation, not
   // a second chart path. Toggles closed again on a second click.
@@ -29,7 +35,9 @@ function InsightCard({ candidate, onShowSql }: { candidate: InsightCandidate; on
     try {
       setChart(await runChartQuery(candidate.sql));
     } catch (err) {
-      setChartError(err instanceof Error ? err.message : 'Could not chart this insight.');
+      setChartError(
+        err instanceof Error ? err.message : "Could not chart this insight.",
+      );
     } finally {
       setCharting(false);
     }
@@ -46,7 +54,9 @@ function InsightCard({ candidate, onShowSql }: { candidate: InsightCandidate; on
             <>
               <button
                 type="button"
-                onClick={() => onShowSql(RULE_LABEL[candidate.rule], candidate.sql)}
+                onClick={() =>
+                  onShowSql(RULE_LABEL[candidate.rule], candidate.sql)
+                }
                 className="text-xs text-(--color-accent) hover:underline"
               >
                 Show SQL
@@ -59,7 +69,7 @@ function InsightCard({ candidate, onShowSql }: { candidate: InsightCandidate; on
                 className="flex items-center gap-1 text-xs text-(--color-accent) hover:underline"
               >
                 <BarChart3 size={14} aria-hidden="true" />
-                {chartOpen ? 'Hide chart' : 'Open as chart'}
+                {chartOpen ? "Hide chart" : "Open as chart"}
               </button>
             </>
           )}
@@ -102,9 +112,11 @@ export function InsightFeed({ table, onShowSql }: InsightFeedProps) {
     }
     let cancelled = false;
     setInsights(null);
-    void loadInsights(table.tableName, table.columns, table.rowCount).then((result) => {
-      if (!cancelled) setInsights(result);
-    });
+    void loadInsights(table.tableName, table.columns, table.rowCount).then(
+      (result) => {
+        if (!cancelled) setInsights(result);
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -118,11 +130,17 @@ export function InsightFeed({ table, onShowSql }: InsightFeedProps) {
       {insights === null ? (
         <p className="text-sm text-(--color-fg-muted)">Looking for patterns…</p>
       ) : insights.length === 0 ? (
-        <p className="text-sm text-(--color-fg-muted)">No notable patterns found in this table.</p>
+        <p className="text-sm text-(--color-fg-muted)">
+          No notable patterns found in this table.
+        </p>
       ) : (
         <div className="flex flex-col gap-3">
           {insights.map((candidate) => (
-            <InsightCard key={candidate.id} candidate={candidate} onShowSql={onShowSql} />
+            <InsightCard
+              key={candidate.id}
+              candidate={candidate}
+              onShowSql={onShowSql}
+            />
           ))}
         </div>
       )}

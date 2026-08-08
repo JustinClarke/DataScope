@@ -11,6 +11,10 @@ import { OLLAMA_URL, SQL_INSTRUCTION, execScalar, extractSql, valuesMatch } from
 
 const MODEL = process.argv[2] ?? 'qwen3:1.7b';
 const REPEATS = Number(process.argv[3] ?? '3');
+// No cap here hung indefinitely on Case 2/3 during manual curl replay (Probe 15) — mirrors
+// Probe 5's max_tokens: 2048 fix for WebLLM. Left CLI-adjustable to test whether a bigger
+// budget lets the reasoning loop converge instead of just burning longer.
+const NUM_PREDICT = Number(process.argv[4] ?? '2048');
 
 const SCHEMA_TEXT = `Tables:
 customers(customer_id INTEGER, name TEXT, region TEXT, signed_up_at DATE)
@@ -82,7 +86,10 @@ FROM (
   },
 ];
 
-async function askOllamaChat(model: string, messages: { role: string; content: string }[]): Promise<string> {
+async function askOllamaChat(
+  model: string,
+  messages: { role: string; content: string }[],
+): Promise<{ content: string; doneReason?: string }> {
   // Bounded retry: some of these questions take 40-90s to reason through, and a transient
   // undici headers-timeout can fire mid-call even with Ollama healthy (observed once building
   // this probe) — same shape of flake Probe 5 hit on WebLLM downloads, same fix.
@@ -92,11 +99,16 @@ async function askOllamaChat(model: string, messages: { role: string; content: s
       const res = await fetch(OLLAMA_URL, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ model, messages, stream: false, options: { temperature: 0 } }),
+        body: JSON.stringify({
+          model,
+          messages,
+          stream: false,
+          options: { temperature: 0, num_predict: NUM_PREDICT },
+        }),
       });
       if (!res.ok) throw new Error(`Ollama HTTP ${res.status}: ${await res.text()}`);
-      const json = (await res.json()) as { message?: { content?: string } };
-      return json.message?.content ?? '';
+      const json = (await res.json()) as { message?: { content?: string }; done_reason?: string };
+      return { content: json.message?.content ?? '', doneReason: json.done_reason };
     } catch (e) {
       lastError = e;
       console.log(`  (attempt ${attempt}/3 failed: ${String(e)}${attempt < 3 ? ', retrying...' : ''})`);
@@ -175,10 +187,12 @@ async function main() {
         { role: 'user', content: `Result of running that SQL:\n${firstError}` },
         { role: 'user', content: SQL_INSTRUCTION },
       ];
-      const text = await askOllamaChat(MODEL, messages);
+      const { content: text, doneReason } = await askOllamaChat(MODEL, messages);
       const sql = extractSql(text);
       if (!sql) {
-        console.log(`run ${run}: no_sql_extracted — raw: ${text.slice(0, 200)}`);
+        console.log(
+          `run ${run}: no_sql_extracted (done_reason: ${doneReason ?? 'unknown'}) — raw: ${text.slice(0, 200)}`,
+        );
         continue;
       }
       try {

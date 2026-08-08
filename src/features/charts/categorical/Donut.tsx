@@ -1,8 +1,20 @@
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import type { FrequencyRow } from '../../../lib/categoricalSql';
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+import type { FrequencyRow } from "../../../lib/categoricalSql";
 
-const SLICE_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)'];
-const OTHER_COLOR = 'var(--chart-other)';
+const SLICE_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+];
+const OTHER_COLOR = "var(--chart-other)";
 
 /**
  * Pie/donut for small-cardinality categories (§10 Module 6). `rows` is
@@ -15,9 +27,23 @@ export function Donut({ rows }: { rows: FrequencyRow[] }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <PieChart>
-        <Pie data={rows} dataKey="count" nameKey="category" innerRadius={60} outerRadius={100} paddingAngle={1}>
+        <Pie
+          data={rows}
+          dataKey="count"
+          nameKey="category"
+          innerRadius={60}
+          outerRadius={100}
+          paddingAngle={1}
+        >
           {rows.map((row, i) => (
-            <Cell key={row.category} fill={row.category === 'Other' ? OTHER_COLOR : (SLICE_COLORS[i] ?? OTHER_COLOR)} />
+            <Cell
+              key={row.category}
+              fill={
+                row.category === "Other"
+                  ? OTHER_COLOR
+                  : (SLICE_COLORS[i] ?? OTHER_COLOR)
+              }
+            />
           ))}
         </Pie>
         <Tooltip />

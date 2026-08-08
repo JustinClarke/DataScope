@@ -4,21 +4,23 @@
 // (workers/webllm.worker.ts) — model load janks the main thread badly enough
 // that a main-thread engine is ruled out.
 //
-// The model is pinned to the small 1.5B q4f16 coder: it is the size verified to
-// coexist in memory with DuckDB-Wasm on a large dataset (the 3B variants are
-// unverified on 8 GB machines and out of budget). Inference is zero-egress —
-// once the shards are cached, a completion makes no network request.
-import { useWebLLMStore } from '../stores/webllm';
-import { useSettingsStore } from '../stores/settings';
+// The model is pinned to Qwen3-1.7B: the largest MLC-converted variant that
+// still fits alongside DuckDB-Wasm in browser memory (2036 MB VRAM, ~924 MB
+// download; 3B+ variants are unverified on 8 GB machines and out of budget).
+// It is a reasoning model — replies wrap SQL in a <think> block, which
+// toolLadder.ts strips before parsing. Inference is zero-egress — once the
+// shards are cached, a completion makes no network request.
+import { useWebLLMStore } from "../stores/webllm";
+import { useSettingsStore } from "../stores/settings";
 
 /** The pinned model. Larger variants are not verified to fit beside DuckDB. */
-export const WEBLLM_MODEL_ID = 'Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC';
+export const WEBLLM_MODEL_ID = "Qwen3-1.7B-q4f16_1-MLC";
 
 /** The download's size, surfaced wherever consent is asked. */
-export const WEBLLM_DOWNLOAD_SIZE = '~830 MB';
+export const WEBLLM_DOWNLOAD_SIZE = "~924 MB";
 
 export interface WebLLMChatMessage {
-  role: 'system' | 'user' | 'assistant';
+  role: "system" | "user" | "assistant";
   content: string;
 }
 
@@ -30,14 +32,18 @@ export interface WebLLMEngine {
         messages: WebLLMChatMessage[];
         temperature?: number;
         max_tokens?: number;
-      }): Promise<{ choices: Array<{ message?: { content?: string | null } }> }>;
+      }): Promise<{
+        choices: Array<{ message?: { content?: string | null } }>;
+      }>;
     };
   };
 }
 
 export interface WarmDeps {
   /** One engine-creation attempt; rejects on a dropped shard download. */
-  createEngine?: (onProgress: (progress: number, text: string) => void) => Promise<WebLLMEngine>;
+  createEngine?: (
+    onProgress: (progress: number, text: string) => void,
+  ) => Promise<WebLLMEngine>;
   hasWebGPU?: () => boolean;
   /** Backoff between download retry attempts; injectable so tests don't sleep. */
   delay?: (ms: number) => Promise<void>;
@@ -52,17 +58,20 @@ const DEFAULT_MAX_ATTEMPTS = 30;
 async function defaultCreateEngine(
   onProgress: (progress: number, text: string) => void,
 ): Promise<WebLLMEngine> {
-  const { CreateWebWorkerMLCEngine } = await import('@mlc-ai/web-llm');
-  const worker = new Worker(new URL('../workers/webllm.worker.ts', import.meta.url), {
-    type: 'module',
-  });
+  const { CreateWebWorkerMLCEngine } = await import("@mlc-ai/web-llm");
+  const worker = new Worker(
+    new URL("../workers/webllm.worker.ts", import.meta.url),
+    {
+      type: "module",
+    },
+  );
   return CreateWebWorkerMLCEngine(worker, WEBLLM_MODEL_ID, {
     initProgressCallback: (report) => onProgress(report.progress, report.text),
   });
 }
 
 function defaultHasWebGPU(): boolean {
-  return typeof navigator !== 'undefined' && 'gpu' in navigator;
+  return typeof navigator !== "undefined" && "gpu" in navigator;
 }
 
 let engine: WebLLMEngine | null = null;
@@ -70,7 +79,7 @@ let warmPromise: Promise<boolean> | null = null;
 
 /** True only when a completion can be served locally right now. */
 export function isWebLLMReady(): boolean {
-  return useWebLLMStore.getState().status === 'ready' && engine !== null;
+  return useWebLLMStore.getState().status === "ready" && engine !== null;
 }
 
 /**
@@ -80,7 +89,9 @@ export function isWebLLMReady(): boolean {
  * route through this.
  */
 export function isWebLLMServing(): boolean {
-  return isWebLLMReady() && useSettingsStore.getState().webllmConsent === 'accepted';
+  return (
+    isWebLLMReady() && useSettingsStore.getState().webllmConsent === "accepted"
+  );
 }
 
 /**
@@ -96,28 +107,29 @@ export function warmWebLLM(deps: WarmDeps = {}): Promise<boolean> {
   const store = useWebLLMStore.getState();
   const hasWebGPU = deps.hasWebGPU ?? defaultHasWebGPU;
   if (!hasWebGPU()) {
-    store.setStatus('unavailable');
+    store.setStatus("unavailable");
     return Promise.resolve(false);
   }
 
   const createEngine = deps.createEngine ?? defaultCreateEngine;
-  const delay = deps.delay ?? ((ms) => new Promise((res) => setTimeout(res, ms)));
+  const delay =
+    deps.delay ?? ((ms) => new Promise((res) => setTimeout(res, ms)));
   const maxAttempts = deps.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
 
   warmPromise = (async () => {
-    store.setStatus('downloading');
+    store.setStatus("downloading");
     const onProgress = (progress: number, text: string) => {
       // WebLLM reports shard fetches at fractional progress and the final
       // GPU load at 1.0 — surface the switch so the bar can say "warming".
       useWebLLMStore.getState().setProgress(progress, text);
-      if (progress >= 1) useWebLLMStore.getState().setStatus('warming');
+      if (progress >= 1) useWebLLMStore.getState().setStatus("warming");
     };
 
     let lastError: unknown;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         engine = await createEngine(onProgress);
-        useWebLLMStore.getState().setStatus('ready');
+        useWebLLMStore.getState().setStatus("ready");
         return true;
       } catch (error) {
         lastError = error;
@@ -126,7 +138,11 @@ export function warmWebLLM(deps: WarmDeps = {}): Promise<boolean> {
     }
     useWebLLMStore
       .getState()
-      .setError(lastError instanceof Error ? lastError.message : 'Local model failed to load');
+      .setError(
+        lastError instanceof Error
+          ? lastError.message
+          : "Local model failed to load",
+      );
     return false;
   })().finally(() => {
     warmPromise = null;
@@ -143,19 +159,21 @@ export async function webllmChat(
   messages: WebLLMChatMessage[],
   options: { maxTokens?: number } = {},
 ): Promise<string> {
-  if (engine === null) throw new Error('WebLLM engine is not warm');
+  if (engine === null) throw new Error("WebLLM engine is not warm");
   try {
     const result = await engine.chat.completions.create({
       messages,
       temperature: 0,
       max_tokens: options.maxTokens ?? 512,
     });
-    return result.choices[0]?.message?.content ?? '';
+    return result.choices[0]?.message?.content ?? "";
   } catch (error) {
     engine = null;
     useWebLLMStore
       .getState()
-      .setError(error instanceof Error ? error.message : 'Local model inference failed');
+      .setError(
+        error instanceof Error ? error.message : "Local model inference failed",
+      );
     throw error;
   }
 }

@@ -1,4 +1,4 @@
-import type { FactRef, RankedAction } from '../../../types';
+import type { FactRef, RankedAction } from "../../../types";
 
 export interface VerdictProps {
   headlineFact: FactRef;
@@ -37,7 +37,10 @@ export function Verdict({
               >
                 {action.verb}
               </button>
-              <span className="text-sm text-(--color-fg-muted)"> — {action.evidence.statement}</span>
+              <span className="text-sm text-(--color-fg-muted)">
+                {" "}
+                — {action.evidence.statement}
+              </span>
             </li>
           ))}
         </ul>

@@ -13,8 +13,10 @@ export function QualityHeadline({ items }: QualityHeadlineProps) {
 
   return (
     <div className="rounded-lg border border-(--color-border) p-4">
-      <h2 className="mb-1 text-sm font-medium text-(--color-fg-muted)">Worth knowing</h2>
-      <p className="text-sm text-(--color-fg)">{items.join(' · ')}</p>
+      <h2 className="mb-1 text-sm font-medium text-(--color-fg-muted)">
+        Worth knowing
+      </h2>
+      <p className="text-sm text-(--color-fg)">{items.join(" · ")}</p>
     </div>
   );
 }

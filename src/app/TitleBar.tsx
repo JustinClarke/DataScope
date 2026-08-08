@@ -2,10 +2,12 @@
 // scaffolded. Wordmark, the loaded dataset's identity, the ⌘K palette
 // launcher, and the sole settings entry point (moved off StatusBar, scope
 // call 2 of build/13-hallmark-replication/02-shell-chrome.md).
-import { Settings, Download } from 'lucide-react';
-import { useDatasetsStore } from '../stores/datasets';
-import { usePaletteOpenStore } from '../stores/paletteOpen';
-import { openDestination } from '../services/navigation';
+import { Settings, Download } from "lucide-react";
+import { useDatasetsStore } from "../stores/datasets";
+import { useTabsStore } from "../stores/tabs";
+import { usePaletteOpenStore } from "../stores/paletteOpen";
+import { openDestination } from "../services/navigation";
+import { MAP_TAB_SUBJECT } from "./WorkbenchShell";
 
 interface TitleBarProps {
   onOpenSettings: () => void;
@@ -17,7 +19,10 @@ interface TitleBarProps {
 // second, unrelated one is loaded would be a fabricated label. Names the
 // dataset only when exactly one exists; falls back to a plain table count
 // otherwise (zero datasets or more than one).
-function datasetLabel(datasetName: string | undefined, tableCount: number): string {
+function datasetLabel(
+  datasetName: string | undefined,
+  tableCount: number,
+): string {
   if (datasetName !== undefined) return `${datasetName} · ${tableCount} tables`;
   return `${tableCount} tables`;
 }
@@ -25,7 +30,10 @@ function datasetLabel(datasetName: string | undefined, tableCount: number): stri
 export function TitleBar({ onOpenSettings }: TitleBarProps) {
   const datasets = useDatasetsStore((state) => state.datasets);
   const tables = useDatasetsStore((state) => state.tables);
-  const label = datasetLabel(datasets.length === 1 ? datasets[0].name : undefined, tables.length);
+  const label = datasetLabel(
+    datasets.length === 1 ? datasets[0].name : undefined,
+    tables.length,
+  );
 
   return (
     <div
@@ -33,10 +41,17 @@ export function TitleBar({ onOpenSettings }: TitleBarProps) {
       className="flex items-center justify-between border-b border-(--color-rule-2) bg-(--color-chrome) px-4 py-1.5"
     >
       <div className="flex items-center gap-3">
-        <span className="text-[length:var(--text-xl)] font-semibold tracking-[-0.01em]">
+        <button
+          type="button"
+          aria-label="Go to overview"
+          onClick={() =>
+            useTabsStore.getState().openTab("map", MAP_TAB_SUBJECT)
+          }
+          className="text-[length:var(--text-xl)] font-semibold tracking-[-0.01em] hover:opacity-80 transition-opacity"
+        >
           <span className="text-(--color-ink)">Data</span>
           <span className="text-(--color-active)">Scope</span>
-        </span>
+        </button>
         <span aria-hidden="true" className="h-4 w-px bg-(--color-rule)" />
         <span className="micro text-(--color-ink-3)">{label}</span>
       </div>
@@ -48,7 +63,9 @@ export function TitleBar({ onOpenSettings }: TitleBarProps) {
           className="flex items-center gap-2 rounded-(--radius-sm) border border-(--color-rule) bg-(--color-panel) px-2 py-1 font-mono text-[length:var(--text-md)] text-(--color-ink-2) hover:border-(--color-rule-hi) hover:text-(--color-ink)"
         >
           Search &amp; actions
-          <span className="rounded-(--radius-xs) border border-(--color-rule) px-1 text-(--color-ink-3)">⌘K</span>
+          <span className="rounded-(--radius-xs) border border-(--color-rule) px-1 text-(--color-ink-3)">
+            ⌘K
+          </span>
         </button>
         {/* S5 (D73): Export stays a tab; only its entry point moves here. The
             cluster is deliberately mixed — export is work you return to,
@@ -56,7 +73,7 @@ export function TitleBar({ onOpenSettings }: TitleBarProps) {
         <button
           type="button"
           data-testid="title-bar-export-button"
-          onClick={() => openDestination('export')}
+          onClick={() => openDestination("export")}
           className="flex items-center gap-1.5 rounded-(--radius-sm) border border-(--color-rule) bg-(--color-panel) px-2 py-1 font-mono text-[length:var(--text-md)] text-(--color-ink-2) hover:border-(--color-rule-hi) hover:text-(--color-ink)"
         >
           <Download size={13} aria-hidden="true" />

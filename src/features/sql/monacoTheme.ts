@@ -10,10 +10,10 @@
 // section in `design.md` to be checked against. The editor has no palette of
 // its own: it borrows the surface tokens. So every colour here is read from the
 // live computed tokens and converted, and this file declares none.
-import * as monaco from 'monaco-editor';
-import { activeRegister } from '../../lib/chartPalette';
+import * as monaco from "monaco-editor";
+import { activeRegister } from "../../lib/chartPalette";
 
-export const MONACO_THEME_ID = 'datascope-hud';
+export const MONACO_THEME_ID = "datascope-hud";
 
 /**
  * A canvas 2D context is the one colour parser in the platform that takes the
@@ -30,13 +30,13 @@ export const MONACO_THEME_ID = 'datascope-hud';
  */
 function hexFrom(value: string): string | null {
   if (!value) return null;
-  const ctx = document.createElement('canvas').getContext('2d');
+  const ctx = document.createElement("canvas").getContext("2d");
   if (!ctx) return null;
 
   const untouched = ctx.fillStyle;
   ctx.fillStyle = value;
   const normalized = ctx.fillStyle;
-  if (typeof normalized !== 'string' || normalized === untouched) return null;
+  if (typeof normalized !== "string" || normalized === untouched) return null;
   return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized : null;
 }
 
@@ -56,33 +56,39 @@ export function ensureMonacoTheme(element: HTMLElement): void {
   defined = true;
 
   const computed = getComputedStyle(element);
-  const token = (name: string): string | null => hexFrom(computed.getPropertyValue(name).trim());
+  const token = (name: string): string | null =>
+    hexFrom(computed.getPropertyValue(name).trim());
 
-  const canvas = token('--color-canvas');
-  const ink = token('--color-ink');
-  const ink2 = token('--color-ink-2');
-  const ink3 = token('--color-ink-3');
-  const active = token('--color-active');
-  const elev = token('--color-elev');
-  const ok = token('--color-ok');
+  const canvas = token("--color-canvas");
+  const ink = token("--color-ink");
+  const ink2 = token("--color-ink-2");
+  const ink3 = token("--color-ink-3");
+  const active = token("--color-active");
+  const elev = token("--color-elev");
+  const ok = token("--color-ok");
 
   const colors: Record<string, string> = {};
-  if (canvas) colors['editor.background'] = canvas;
-  if (ink) colors['editor.foreground'] = ink;
-  if (elev) colors['editor.lineHighlightBackground'] = elev;
-  if (elev) colors['editorSuggestWidget.background'] = elev;
-  if (active) colors['editorCursor.foreground'] = active;
-  if (ink3) colors['editorLineNumber.foreground'] = ink3;
-  if (ink2) colors['editorLineNumber.activeForeground'] = ink2;
+  if (canvas) colors["editor.background"] = canvas;
+  if (ink) colors["editor.foreground"] = ink;
+  if (elev) colors["editor.lineHighlightBackground"] = elev;
+  if (elev) colors["editorSuggestWidget.background"] = elev;
+  if (active) colors["editorCursor.foreground"] = active;
+  if (ink3) colors["editorLineNumber.foreground"] = ink3;
+  if (ink2) colors["editorLineNumber.activeForeground"] = ink2;
 
   const rules: monaco.editor.ITokenThemeRule[] = [];
-  if (active) rules.push({ token: 'keyword', foreground: bare(active) });
-  if (ok) rules.push({ token: 'string', foreground: bare(ok) });
-  if (ink2) rules.push({ token: 'number', foreground: bare(ink2) });
-  if (ink3) rules.push({ token: 'comment', foreground: bare(ink3), fontStyle: 'italic' });
+  if (active) rules.push({ token: "keyword", foreground: bare(active) });
+  if (ok) rules.push({ token: "string", foreground: bare(ok) });
+  if (ink2) rules.push({ token: "number", foreground: bare(ink2) });
+  if (ink3)
+    rules.push({
+      token: "comment",
+      foreground: bare(ink3),
+      fontStyle: "italic",
+    });
 
   monaco.editor.defineTheme(MONACO_THEME_ID, {
-    base: activeRegister() === 'light' ? 'vs' : 'vs-dark',
+    base: activeRegister() === "light" ? "vs" : "vs-dark",
     inherit: true,
     rules,
     colors,

@@ -23,9 +23,9 @@
 // The difference is recorded rather than papered over: in `shared`, the
 // statement gate in `core.ts` is what refuses a mutation at `run_sql`, and it
 // is a clear error rather than a security boundary.
-import type { Executor } from './types';
+import type { Executor } from "./types";
 
-export type AuthorityProfile = 'shared' | 'sealed';
+export type AuthorityProfile = "shared" | "sealed";
 
 /**
  * Order is load-bearing: `enable_external_access` must be set *before*
@@ -35,23 +35,24 @@ export type AuthorityProfile = 'shared' | 'sealed';
  * reason — it forbids every option write after it.
  */
 const SEALED: readonly string[] = [
-  'SET enable_external_access = false',
+  "SET enable_external_access = false",
   "SET disabled_filesystems = 'LocalFileSystem'",
-  'SET autoinstall_known_extensions = false',
-  'SET autoload_known_extensions = false',
-  'SET lock_configuration = true',
+  "SET autoinstall_known_extensions = false",
+  "SET autoload_known_extensions = false",
+  "SET lock_configuration = true",
 ];
 
 /** The subset that does not disable the path ingestion reads through. */
 const SHARED: readonly string[] = [
-  'SET autoinstall_known_extensions = false',
-  'SET autoload_known_extensions = false',
+  "SET autoinstall_known_extensions = false",
+  "SET autoload_known_extensions = false",
 ];
 
-export const AUTHORITY_STATEMENTS: Record<AuthorityProfile, readonly string[]> = {
-  shared: SHARED,
-  sealed: SEALED,
-};
+export const AUTHORITY_STATEMENTS: Record<AuthorityProfile, readonly string[]> =
+  {
+    shared: SHARED,
+    sealed: SEALED,
+  };
 
 export interface AuthorityReport {
   profile: AuthorityProfile;
@@ -66,13 +67,16 @@ export async function applyAuthority(
   profile: AuthorityProfile,
 ): Promise<AuthorityReport> {
   const applied: string[] = [];
-  const refused: AuthorityReport['refused'] = [];
+  const refused: AuthorityReport["refused"] = [];
   for (const statement of AUTHORITY_STATEMENTS[profile]) {
     try {
       await executor.execute(statement);
       applied.push(statement);
     } catch (error) {
-      refused.push({ statement, message: error instanceof Error ? error.message : String(error) });
+      refused.push({
+        statement,
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   }
   return { profile, applied, refused, catalogReadOnly: false };

@@ -1,4 +1,4 @@
-import type { BoxPlotStats } from '../../../lib/distributionSql';
+import type { BoxPlotStats } from "../../../lib/distributionSql";
 
 const VIEW_WIDTH = 100;
 const VIEW_HEIGHT = 40;
@@ -36,7 +36,7 @@ export function BoxPlot({ stats }: { stats: BoxPlotStats }) {
 
   const label =
     `Box plot: minimum ${whiskerLow.toFixed(2)}, first quartile ${q1.toFixed(2)}, median ${median.toFixed(2)}, ` +
-    `third quartile ${q3.toFixed(2)}, maximum ${whiskerHigh.toFixed(2)}, ${outliers.length} outlier${outliers.length === 1 ? '' : 's'}`;
+    `third quartile ${q3.toFixed(2)}, maximum ${whiskerHigh.toFixed(2)}, ${outliers.length} outlier${outliers.length === 1 ? "" : "s"}`;
 
   return (
     <div className="flex flex-col gap-1">
@@ -58,8 +58,24 @@ export function BoxPlot({ stats }: { stats: BoxPlotStats }) {
           vectorEffect="non-scaling-stroke"
         />
         {/* Whisker caps */}
-        <line x1={xWhiskerLow} x2={xWhiskerLow} y1={BOX_TOP + 4} y2={BOX_BOTTOM - 4} stroke="var(--color-fg-muted)" strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
-        <line x1={xWhiskerHigh} x2={xWhiskerHigh} y1={BOX_TOP + 4} y2={BOX_BOTTOM - 4} stroke="var(--color-fg-muted)" strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
+        <line
+          x1={xWhiskerLow}
+          x2={xWhiskerLow}
+          y1={BOX_TOP + 4}
+          y2={BOX_BOTTOM - 4}
+          stroke="var(--color-fg-muted)"
+          strokeWidth={0.4}
+          vectorEffect="non-scaling-stroke"
+        />
+        <line
+          x1={xWhiskerHigh}
+          x2={xWhiskerHigh}
+          y1={BOX_TOP + 4}
+          y2={BOX_BOTTOM - 4}
+          stroke="var(--color-fg-muted)"
+          strokeWidth={0.4}
+          vectorEffect="non-scaling-stroke"
+        />
 
         {/* IQR box */}
         <rect
@@ -75,11 +91,26 @@ export function BoxPlot({ stats }: { stats: BoxPlotStats }) {
         />
 
         {/* Median line */}
-        <line x1={xMedian} x2={xMedian} y1={BOX_TOP} y2={BOX_BOTTOM} stroke="var(--chart-1)" strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
+        <line
+          x1={xMedian}
+          x2={xMedian}
+          y1={BOX_TOP}
+          y2={BOX_BOTTOM}
+          stroke="var(--chart-1)"
+          strokeWidth={0.7}
+          vectorEffect="non-scaling-stroke"
+        />
 
         {/* Outliers */}
         {outliers.map((value, i) => (
-          <circle key={i} cx={scale(value)} cy={MID_Y} r={1.1} fill="var(--color-fg-muted)" fillOpacity={0.7} />
+          <circle
+            key={i}
+            cx={scale(value)}
+            cy={MID_Y}
+            r={1.1}
+            fill="var(--color-fg-muted)"
+            fillOpacity={0.7}
+          />
         ))}
       </svg>
       <div className="flex justify-between text-[10px] text-(--color-fg-muted)">
@@ -91,7 +122,8 @@ export function BoxPlot({ stats }: { stats: BoxPlotStats }) {
       </div>
       {outliers.length > 0 && (
         <p className="text-[10px] text-(--color-fg-muted)">
-          {outliers.length} outlier{outliers.length === 1 ? '' : 's'} (IQR rule, 1.5× fence)
+          {outliers.length} outlier{outliers.length === 1 ? "" : "s"} (IQR rule,
+          1.5× fence)
         </p>
       )}
     </div>

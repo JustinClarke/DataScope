@@ -8,20 +8,32 @@
 // second time would be real duplication, not just similar-looking code.
 // `DatasetDossier`'s own output is unchanged by this extraction — only where
 // the logic lives moves.
-import { useEffect, useMemo, useState } from 'react';
-import { useRelationshipsStore } from '../../../stores/relationships';
-import { useInferredEdgesStore } from '../../../stores/inferredEdges';
+import { useEffect, useMemo, useState } from "react";
+import { useRelationshipsStore } from "../../../stores/relationships";
+import { useInferredEdgesStore } from "../../../stores/inferredEdges";
 import {
   buildDatasetVerdict,
   type TableInsights,
   type TimeCoverageRow,
-} from '../../../lib/dossier';
-import { applyOverrides, type FkEdge, type RelationshipOverrides } from '../../../lib/relationshipInference';
-import { JOIN_GRAPH_ENABLED } from '../../../lib/featureFlags';
-import { loadDossierInsights, loadTimeCoverage } from '../../../services/dossier';
-import { loadRelationships } from '../../../services/relationships';
-import { useSynthesisUpgrade } from './useSynthesisUpgrade';
-import type { Dataset, FactRef, RankedAction, TableRegistryEntry } from '../../../types';
+} from "../../../lib/dossier";
+import {
+  applyOverrides,
+  type FkEdge,
+  type RelationshipOverrides,
+} from "../../../lib/relationshipInference";
+import { JOIN_GRAPH_ENABLED } from "../../../lib/featureFlags";
+import {
+  loadDossierInsights,
+  loadTimeCoverage,
+} from "../../../services/dossier";
+import { loadRelationships } from "../../../services/relationships";
+import { useSynthesisUpgrade } from "./useSynthesisUpgrade";
+import type {
+  Dataset,
+  FactRef,
+  RankedAction,
+  TableRegistryEntry,
+} from "../../../types";
 
 export interface DatasetBaseline {
   tableInsights: TableInsights[] | null;
@@ -37,14 +49,24 @@ export interface DatasetBaseline {
   actions: RankedAction[] | null;
 }
 
-export function useDatasetBaseline(tables: TableRegistryEntry[], datasets: Dataset[]): DatasetBaseline {
+export function useDatasetBaseline(
+  tables: TableRegistryEntry[],
+  datasets: Dataset[],
+): DatasetBaseline {
   // Stable per-field selection — a fresh-object selector would loop under Zustand v5.
   const removed = useRelationshipsStore((s) => s.removed);
   const repointed = useRelationshipsStore((s) => s.repointed);
   const added = useRelationshipsStore((s) => s.added);
-  const overrides = useMemo<RelationshipOverrides>(() => ({ removed, repointed, added }), [removed, repointed, added]);
-  const [tableInsights, setTableInsights] = useState<TableInsights[] | null>(null);
-  const [timeCoverage, setTimeCoverage] = useState<TimeCoverageRow[] | null>(null);
+  const overrides = useMemo<RelationshipOverrides>(
+    () => ({ removed, repointed, added }),
+    [removed, repointed, added],
+  );
+  const [tableInsights, setTableInsights] = useState<TableInsights[] | null>(
+    null,
+  );
+  const [timeCoverage, setTimeCoverage] = useState<TimeCoverageRow[] | null>(
+    null,
+  );
   const [inferredEdges, setInferredEdges] = useState<FkEdge[]>([]);
 
   const classifiedCount = tables.filter((t) => t.columns).length;
@@ -86,29 +108,57 @@ export function useDatasetBaseline(tables: TableRegistryEntry[], datasets: Datas
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tables.map((t) => `${t.id}:${t.columns?.length ?? 0}`).join(','), classifiedCount]);
+  }, [
+    tables.map((t) => `${t.id}:${t.columns?.length ?? 0}`).join(","),
+    classifiedCount,
+  ]);
 
-  const liveTableNames = useMemo(() => tables.map((t) => t.tableName), [tables]);
+  const liveTableNames = useMemo(
+    () => tables.map((t) => t.tableName),
+    [tables],
+  );
   const edges = useMemo(
-    () => (JOIN_GRAPH_ENABLED ? applyOverrides(inferredEdges, overrides, liveTableNames) : []),
+    () =>
+      JOIN_GRAPH_ENABLED
+        ? applyOverrides(inferredEdges, overrides, liveTableNames)
+        : [],
     [inferredEdges, overrides, liveTableNames],
   );
 
   const baseline = useMemo(() => {
-    if (tables.length === 0 || tableInsights === null || timeCoverage === null) return null;
-    const latest = [...datasets].sort((a, b) => a.ingestedAt.localeCompare(b.ingestedAt)).at(-1) ?? null;
+    if (tables.length === 0 || tableInsights === null || timeCoverage === null)
+      return null;
+    const latest =
+      [...datasets]
+        .sort((a, b) => a.ingestedAt.localeCompare(b.ingestedAt))
+        .at(-1) ?? null;
     const verdict = buildDatasetVerdict({
-      datasetLabel: datasets.length > 1 ? `${datasets.length} datasets` : (latest?.name ?? 'Dataset'),
+      datasetLabel:
+        datasets.length > 1
+          ? `${datasets.length} datasets`
+          : (latest?.name ?? "Dataset"),
       tables,
       tableInsights,
       timeCoverage,
-      profiledAt: latest?.ingestedAt ?? '',
+      profiledAt: latest?.ingestedAt ?? "",
       relationships: edges,
     });
     return { headlineFact: verdict.headlineFact, actions: verdict.actions };
   }, [tables, tableInsights, timeCoverage, datasets, edges]);
 
-  const { tailored, paused, headlineFact, actions } = useSynthesisUpgrade(tables, baseline);
+  const { tailored, paused, headlineFact, actions } = useSynthesisUpgrade(
+    tables,
+    baseline,
+  );
 
-  return { tableInsights, timeCoverage, edges, baseline, tailored, paused, headlineFact, actions };
+  return {
+    tableInsights,
+    timeCoverage,
+    edges,
+    baseline,
+    tailored,
+    paused,
+    headlineFact,
+    actions,
+  };
 }

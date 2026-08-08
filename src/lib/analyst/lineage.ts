@@ -16,12 +16,16 @@
  * contract to build a required field on). `validate_sql` reports this set and
  * lineage is built from it — one matcher, two callers.
  */
-export function findReferencedObjects(sql: string, knownNames: readonly string[]): string[] {
+export function findReferencedObjects(
+  sql: string,
+  knownNames: readonly string[],
+): string[] {
   const found = new Set<string>();
   for (const name of knownNames) {
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const bare = new RegExp(`(?<![a-zA-Z0-9_])${escaped}(?![a-zA-Z0-9_])`, 'i');
-    if (bare.test(sql) || sql.includes(`"${name.replace(/"/g, '""')}"`)) found.add(name);
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const bare = new RegExp(`(?<![a-zA-Z0-9_])${escaped}(?![a-zA-Z0-9_])`, "i");
+    if (bare.test(sql) || sql.includes(`"${name.replace(/"/g, '""')}"`))
+      found.add(name);
   }
   return [...found].sort();
 }
@@ -50,7 +54,10 @@ export interface Lineage {
  * An object never counts as its own source, so a `CREATE TABLE x AS SELECT …
  * FROM x` rebuild is not reported as depending on itself.
  */
-export function lineageOf(name: string, objects: readonly LineageNode[]): Lineage {
+export function lineageOf(
+  name: string,
+  objects: readonly LineageNode[],
+): Lineage {
   const names = objects.map((o) => o.name);
   const self = objects.find((o) => o.name === name);
 
@@ -70,11 +77,12 @@ export function lineageOf(name: string, objects: readonly LineageNode[]): Lineag
 /** The deterministic, factual sentence the derive operations and `describe_table` attach — never advice, per the `OpResult.note` contract. */
 export function lineageNote(lineage: Lineage): string | undefined {
   const parts: string[] = [];
-  if (lineage.sources.length > 0) parts.push(`Derived from ${lineage.sources.join(', ')}.`);
+  if (lineage.sources.length > 0)
+    parts.push(`Derived from ${lineage.sources.join(", ")}.`);
   if (lineage.dependents.length > 0) {
     parts.push(
-      `${lineage.dependents.length} object(s) derive from this: ${lineage.dependents.join(', ')}.`,
+      `${lineage.dependents.length} object(s) derive from this: ${lineage.dependents.join(", ")}.`,
     );
   }
-  return parts.length > 0 ? parts.join(' ') : undefined;
+  return parts.length > 0 ? parts.join(" ") : undefined;
 }

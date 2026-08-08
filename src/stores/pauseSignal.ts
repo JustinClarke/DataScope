@@ -7,7 +7,7 @@
 // deliberately collapses `'paused'` into `ProviderQuotaExhaustedError` already
 // (`services/cloudProvider.ts`), an existing, intentional design decision this
 // store does not reopen.
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface PauseSignal {
   surface: string;
@@ -22,6 +22,7 @@ interface PauseSignalState {
 
 export const usePauseSignalStore = create<PauseSignalState>((set) => ({
   lastPaused: null,
-  reportPaused: (surface) => set({ lastPaused: { surface, at: new Date().toISOString() } }),
+  reportPaused: (surface) =>
+    set({ lastPaused: { surface, at: new Date().toISOString() } }),
   clear: () => set({ lastPaused: null }),
 }));

@@ -9,8 +9,8 @@
 // name or a column name is mentioned in the question, plus any table joinable to
 // a matched one so the model can write the join. When nothing matches, the whole
 // (typically small) schema is included — pruning needs a signal to prune on.
-import type { TableRegistryEntry } from '../types';
-import type { FkEdge } from './relationshipInference';
+import type { TableRegistryEntry } from "../types";
+import type { FkEdge } from "./relationshipInference";
 
 const IDENTIFIER_TOKEN = /[a-z0-9_]+/g;
 
@@ -20,26 +20,35 @@ function questionTokens(question: string): Set<string> {
 }
 
 /** Does any table/column identifier for this table appear in the question? */
-function tableIsMentioned(table: TableRegistryEntry, tokens: Set<string>): boolean {
+function tableIsMentioned(
+  table: TableRegistryEntry,
+  tokens: Set<string>,
+): boolean {
   if (tokens.has(table.tableName.toLowerCase())) return true;
   const columns = table.columns ?? [];
   return columns.some((c) => tokens.has(c.name.toLowerCase()));
 }
 
-function renderColumn(column: { name: string; semanticType: string; physicalType: string }): string {
+function renderColumn(column: {
+  name: string;
+  semanticType: string;
+  physicalType: string;
+}): string {
   return `  - ${column.name}: ${column.semanticType} (${column.physicalType})`;
 }
 
 /** One table's DDL-ish block: name, row count, and each column's role + physical type. */
 function renderTable(table: TableRegistryEntry): string {
-  const lines = [`Table ${table.tableName} (${table.rowCount.toLocaleString()} rows):`];
+  const lines = [
+    `Table ${table.tableName} (${table.rowCount.toLocaleString()} rows):`,
+  ];
   const columns = table.columns ?? [];
   if (columns.length === 0) {
-    lines.push('  - (columns not yet profiled)');
+    lines.push("  - (columns not yet profiled)");
   } else {
     for (const c of columns) lines.push(renderColumn(c));
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 export interface PrunedSchema {
@@ -60,7 +69,9 @@ export function pruneSchema(
   edges: FkEdge[] = [],
 ): PrunedSchema {
   const tokens = questionTokens(question);
-  const mentioned = new Set(tables.filter((t) => tableIsMentioned(t, tokens)).map((t) => t.tableName));
+  const mentioned = new Set(
+    tables.filter((t) => tableIsMentioned(t, tokens)).map((t) => t.tableName),
+  );
 
   // Pull in tables directly joinable to a mentioned one, so the model can express
   // the join even when the question only named one side.
@@ -72,19 +83,27 @@ export function pruneSchema(
   }
 
   // No signal to prune on → include everything (the small-schema / broad-question case).
-  const included = mentioned.size > 0 ? tables.filter((t) => mentioned.has(t.tableName)) : tables;
+  const included =
+    mentioned.size > 0
+      ? tables.filter((t) => mentioned.has(t.tableName))
+      : tables;
 
   const blocks = included.map(renderTable);
   const relevantEdges = edges.filter(
     (e) => mentioned.has(e.childTable) && mentioned.has(e.parentTable),
   );
   if (relevantEdges.length > 0) {
-    const rels = ['Relationships:'];
+    const rels = ["Relationships:"];
     for (const e of relevantEdges) {
-      rels.push(`  - ${e.childTable}.${e.childColumn} → ${e.parentTable}.${e.parentColumn}`);
+      rels.push(
+        `  - ${e.childTable}.${e.childColumn} → ${e.parentTable}.${e.parentColumn}`,
+      );
     }
-    blocks.push(rels.join('\n'));
+    blocks.push(rels.join("\n"));
   }
 
-  return { prompt: blocks.join('\n\n'), includedTables: included.map((t) => t.tableName) };
+  return {
+    prompt: blocks.join("\n\n"),
+    includedTables: included.map((t) => t.tableName),
+  };
 }

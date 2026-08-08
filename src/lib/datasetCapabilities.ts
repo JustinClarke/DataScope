@@ -9,26 +9,26 @@
 //
 // Real product code, kept independent of the candidate's eventual fate (the
 // design doc's own "What to build" #1 calls it worth having either way).
-import type { StructuralFacts } from '../../edge/protocol';
+import type { StructuralFacts } from "../../edge/protocol";
 
 export type CapabilityKey =
-  | 'seasonality'
-  | 'cohort-retention'
-  | 'group-comparison'
-  | 'lifetime-value'
-  | 'correlation-study';
+  | "seasonality"
+  | "cohort-retention"
+  | "group-comparison"
+  | "lifetime-value"
+  | "correlation-study";
 
 /** Fixed, stable presentation/iteration order — output order never depends on table iteration order. */
 export const CAPABILITY_KEY_ORDER: CapabilityKey[] = [
-  'seasonality',
-  'cohort-retention',
-  'group-comparison',
-  'lifetime-value',
-  'correlation-study',
+  "seasonality",
+  "cohort-retention",
+  "group-comparison",
+  "lifetime-value",
+  "correlation-study",
 ];
 
-type Table = StructuralFacts['tables'][number];
-type Column = Table['columns'][number];
+type Table = StructuralFacts["tables"][number];
+type Column = Table["columns"][number];
 
 // Mirrors src/lib/classifier.ts's own thresholds — a column's classification
 // already encodes cardinality-vs-rowCount, so these are only needed here for
@@ -62,7 +62,10 @@ const MONEY_NAME_PATTERN = /price|cost|amount|revenue|total|fee|charge|value/i;
 export function isRepeatedEntityKey(column: Column, rowCount: number): boolean {
   if (!ENTITY_KEY_NAME_PATTERN.test(column.name)) return false;
   const ratio = rowCount > 0 ? column.cardinality / rowCount : 0;
-  return column.cardinality > CATEGORICAL_CARDINALITY_MAX && ratio <= IDENTIFIER_UNIQUE_RATIO;
+  return (
+    column.cardinality > CATEGORICAL_CARDINALITY_MAX &&
+    ratio <= IDENTIFIER_UNIQUE_RATIO
+  );
 }
 
 /** Temporal + Quantitative + Categorical, all on one table (README's F2 case: weather's
@@ -70,15 +73,19 @@ export function isRepeatedEntityKey(column: Column, rowCount: number): boolean {
  * columns (see the Verdict for the two samples where that produces a known,
  * documented false-ish-positive rather than a silently patched one). */
 function hasSeasonality(table: Table): boolean {
-  const temporal = table.columns.some((c) => c.semanticType === 'Temporal');
-  const quantitative = table.columns.some((c) => c.semanticType === 'Quantitative');
-  const categorical = table.columns.some((c) => c.semanticType === 'Categorical');
+  const temporal = table.columns.some((c) => c.semanticType === "Temporal");
+  const quantitative = table.columns.some(
+    (c) => c.semanticType === "Quantitative",
+  );
+  const categorical = table.columns.some(
+    (c) => c.semanticType === "Categorical",
+  );
   return temporal && quantitative && categorical;
 }
 
 /** Temporal + a repeated entity key, same table (orders.order_date + orders.customer_id). */
 function hasCohortRetention(table: Table): boolean {
-  const temporal = table.columns.some((c) => c.semanticType === 'Temporal');
+  const temporal = table.columns.some((c) => c.semanticType === "Temporal");
   if (!temporal) return false;
   return table.columns.some((c) => isRepeatedEntityKey(c, table.rowCount));
 }
@@ -86,8 +93,12 @@ function hasCohortRetention(table: Table): boolean {
 /** A Categorical column with exactly 2 values, alongside a Quantitative column, same table
  * (titanic's Survived/Sex, card 2, + Age/Fare). */
 function hasGroupComparison(table: Table): boolean {
-  const twoValueCategorical = table.columns.some((c) => c.semanticType === 'Categorical' && c.cardinality === 2);
-  const quantitative = table.columns.some((c) => c.semanticType === 'Quantitative');
+  const twoValueCategorical = table.columns.some(
+    (c) => c.semanticType === "Categorical" && c.cardinality === 2,
+  );
+  const quantitative = table.columns.some(
+    (c) => c.semanticType === "Quantitative",
+  );
   return twoValueCategorical && quantitative;
 }
 
@@ -95,7 +106,9 @@ function hasGroupComparison(table: Table): boolean {
  * carries no correlation field at all, so this is a structural stand-in, not a claim
  * of an actually-computed correlation (see the Verdict). */
 function hasCorrelationStudy(table: Table): boolean {
-  return table.columns.filter((c) => c.semanticType === 'Quantitative').length >= 2;
+  return (
+    table.columns.filter((c) => c.semanticType === "Quantitative").length >= 2
+  );
 }
 
 /** Cross-table only: two distinct tables sharing a column name (the join key), one side
@@ -108,8 +121,11 @@ function hasLifetimeValue(tables: readonly Table[]): boolean {
       const bNames = new Set(b.columns.map((c) => c.name));
       const sharesJoinKey = a.columns.some((c) => bNames.has(c.name));
       if (!sharesJoinKey) continue;
-      const aTemporal = a.columns.some((c) => c.semanticType === 'Temporal');
-      const bMoney = b.columns.some((c) => c.semanticType === 'Quantitative' && MONEY_NAME_PATTERN.test(c.name));
+      const aTemporal = a.columns.some((c) => c.semanticType === "Temporal");
+      const bMoney = b.columns.some(
+        (c) =>
+          c.semanticType === "Quantitative" && MONEY_NAME_PATTERN.test(c.name),
+      );
       if (aTemporal && bMoney) return true;
     }
   }
@@ -125,11 +141,11 @@ function hasLifetimeValue(tables: readonly Table[]): boolean {
 export function detectCapabilities(facts: StructuralFacts): CapabilityKey[] {
   const found = new Set<CapabilityKey>();
   for (const table of facts.tables) {
-    if (hasSeasonality(table)) found.add('seasonality');
-    if (hasCohortRetention(table)) found.add('cohort-retention');
-    if (hasGroupComparison(table)) found.add('group-comparison');
-    if (hasCorrelationStudy(table)) found.add('correlation-study');
+    if (hasSeasonality(table)) found.add("seasonality");
+    if (hasCohortRetention(table)) found.add("cohort-retention");
+    if (hasGroupComparison(table)) found.add("group-comparison");
+    if (hasCorrelationStudy(table)) found.add("correlation-study");
   }
-  if (hasLifetimeValue(facts.tables)) found.add('lifetime-value');
+  if (hasLifetimeValue(facts.tables)) found.add("lifetime-value");
   return CAPABILITY_KEY_ORDER.filter((key) => found.has(key));
 }

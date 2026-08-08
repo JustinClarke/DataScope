@@ -6,12 +6,13 @@
 // `DATE_TRUNC('${granularity}', …)` / `ROWS BETWEEN ${n} PRECEDING` SQL below
 // carries no injection risk — only column/table names (arbitrary strings)
 // go through `quoteIdentifier`.
-import { quoteIdentifier } from '../services/ingestion';
-import type { QueryResult } from '../types';
-import { formatDateCell } from './columnStats';
+import { quoteIdentifier } from "../services/ingestion";
+import type { QueryResult } from "../types";
+import { formatDateCell } from "./columnStats";
 
-export type TimeSeriesGranularity = 'day' | 'week' | 'month' | 'quarter' | 'year';
-export type TimeSeriesAggregate = 'sum' | 'avg' | 'min' | 'max' | 'count';
+export type TimeSeriesGranularity =
+  "day" | "week" | "month" | "quarter" | "year";
+export type TimeSeriesAggregate = "sum" | "avg" | "min" | "max" | "count";
 export type MovingAverageWindow = 7 | 30 | 90;
 
 export interface TimeSeriesBase {
@@ -27,23 +28,30 @@ export interface TrendSpec extends TimeSeriesBase {
   movingAverageWindow?: MovingAverageWindow;
 }
 
-export type PeriodComparisonSpec = TimeSeriesBase & { granularity: TimeSeriesGranularity };
+export type PeriodComparisonSpec = TimeSeriesBase & {
+  granularity: TimeSeriesGranularity;
+};
 export type SeasonalitySpec = TimeSeriesBase;
 
 const AGGREGATE_SQL: Record<TimeSeriesAggregate, string> = {
-  sum: 'SUM',
-  avg: 'AVG',
-  min: 'MIN',
-  max: 'MAX',
-  count: 'COUNT',
+  sum: "SUM",
+  avg: "AVG",
+  min: "MIN",
+  max: "MAX",
+  count: "COUNT",
 };
 
 function sanitizeAliasPart(field: string): string {
-  return field.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '') || 'field';
+  return (
+    field.replace(/[^a-zA-Z0-9_]+/g, "_").replace(/^_+|_+$/g, "") || "field"
+  );
 }
 
-function aggregateExpression(aggregate: TimeSeriesAggregate, column: string): string {
-  if (aggregate === 'count') return 'COUNT(*)';
+function aggregateExpression(
+  aggregate: TimeSeriesAggregate,
+  column: string,
+): string {
+  if (aggregate === "count") return "COUNT(*)";
   return `${AGGREGATE_SQL[aggregate]}(${quoteIdentifier(column)})`;
 }
 
@@ -124,13 +132,18 @@ export interface PeriodComparison {
 }
 
 /** `buildPeriodComparisonSql`'s two rows (latest first) → a typed comparison, or `null` for an empty result. */
-export function parsePeriodComparison(result: QueryResult): PeriodComparison | null {
+export function parsePeriodComparison(
+  result: QueryResult,
+): PeriodComparison | null {
   const [current, prior] = result.rows;
   if (!current) return null;
 
   const currentValue = Number(current[1]);
   const priorValue = prior ? Number(prior[1]) : null;
-  const deltaPct = priorValue !== null && priorValue !== 0 ? ((currentValue - priorValue) / Math.abs(priorValue)) * 100 : null;
+  const deltaPct =
+    priorValue !== null && priorValue !== 0
+      ? ((currentValue - priorValue) / Math.abs(priorValue)) * 100
+      : null;
 
   return {
     currentPeriod: formatDateCell(current[0]),

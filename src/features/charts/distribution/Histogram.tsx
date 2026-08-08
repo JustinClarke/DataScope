@@ -1,4 +1,4 @@
-import type { HistogramBucket } from '../../../lib/columnStats';
+import type { HistogramBucket } from "../../../lib/columnStats";
 
 /**
  * Equal-width bar histogram (§10 Module 5). Same bar-shape as the profile
@@ -13,7 +13,10 @@ export function Histogram({ buckets }: { buckets: HistogramBucket[] }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex h-48 items-end gap-1" aria-label="Value distribution histogram">
+      <div
+        className="flex h-48 items-end gap-1"
+        aria-label="Value distribution histogram"
+      >
         {buckets.map((bucket, i) => (
           <div
             key={i}

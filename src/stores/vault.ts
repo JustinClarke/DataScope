@@ -10,10 +10,10 @@
 // by design, and a durable id is what "across sessions" requires — so a user who
 // never opts into the vault never gains a durable identifier at all, and one who
 // does gains it only for the feature that needs it.
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-export const VAULT_STORAGE_KEY = 'datascope-vault';
+export const VAULT_STORAGE_KEY = "datascope-vault";
 
 interface VaultState {
   /** The durable vault session; null until a key is first remembered. */

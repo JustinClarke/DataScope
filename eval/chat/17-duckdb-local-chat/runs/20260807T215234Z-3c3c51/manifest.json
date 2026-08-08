@@ -1,0 +1,52 @@
+{
+  "runId": "20260807T215234Z-3c3c51",
+  "startedAt": "2026-08-07T21:52:34.131Z",
+  "finishedAt": "2026-08-07T22:14:37.509Z",
+  "model": {
+    "tag": "qwen3:4b",
+    "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+    "quantizationLevel": "Q4_K_M",
+    "parameterSize": "4.0B",
+    "capabilities": [
+      "completion",
+      "tools",
+      "thinking"
+    ]
+  },
+  "chatThink": true,
+  "numCtx": 16384,
+  "temperature": 0,
+  "repeats": 1,
+  "questionCount": 4,
+  "dataset": [
+    {
+      "table": "customers",
+      "sourceFile": "customers.csv",
+      "sha256": "6f18c3272c007abfe977ee5acf38a3df1ac063a0457f30a1da964e23857dcf77",
+      "expectedRowCount": 400,
+      "loadedRowCount": 400
+    },
+    {
+      "table": "products",
+      "sourceFile": "products.csv",
+      "sha256": "1dd5df037f32b85c52470f71ca569e27016d3277fc28cc6cfac470c45656904c",
+      "expectedRowCount": 150,
+      "loadedRowCount": 150
+    },
+    {
+      "table": "orders",
+      "sourceFile": "orders.csv",
+      "sha256": "9a82faa6504e9a8b20fc63bfb226266ca0e7171c4d04bbd523573aded0ee24e8",
+      "expectedRowCount": 1400,
+      "loadedRowCount": 1400
+    },
+    {
+      "table": "order_items",
+      "sourceFile": "order_items.csv",
+      "sha256": "21482e4875fc61c498cd6c6b4d3c17f9712d4ace82373c454597202c0ff05776",
+      "expectedRowCount": 3487,
+      "loadedRowCount": 3487
+    }
+  ],
+  "gitRevision": "088ff93af5588a12487af94719b8eac4c7ed74e9"
+}

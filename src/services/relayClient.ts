@@ -14,13 +14,17 @@
 // (400/502/504, or a passed-through target error) is left as an ordinary
 // Response for the shared loop's existing http-error classification —
 // same treatment Tier 1 gives a non-ok target response.
-export type RelayFetchErrorCode = 'rate-limited' | 'paused' | 'unreachable';
+export type RelayFetchErrorCode = "rate-limited" | "paused" | "unreachable";
 
 export class RelayFetchError extends Error {
   readonly code: RelayFetchErrorCode;
   readonly retryAfterSeconds?: number;
 
-  constructor(code: RelayFetchErrorCode, message: string, retryAfterSeconds?: number) {
+  constructor(
+    code: RelayFetchErrorCode,
+    message: string,
+    retryAfterSeconds?: number,
+  ) {
     super(message);
     this.code = code;
     this.retryAfterSeconds = retryAfterSeconds;
@@ -29,7 +33,7 @@ export class RelayFetchError extends Error {
 
 /** The deployed relay endpoint. Falls back to staging if unset. */
 export const EDGE_CORS_RELAY = (import.meta.env?.VITE_EDGE_CORS_RELAY ??
-  'https://datascope-edge-staging.justinclarke.workers.dev/cors-relay') as string;
+  "https://datascope-edge-staging.justinclarke.workers.dev/cors-relay") as string;
 
 export interface RelayFetchOptions {
   fetchImpl?: typeof fetch;
@@ -50,8 +54,8 @@ export async function fetchViaRelay(
   const doFetch = options.fetchImpl ?? fetch;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const url = new URL(options.endpoint ?? EDGE_CORS_RELAY);
-  url.searchParams.set('url', targetUrl);
-  url.searchParams.set('sessionId', sessionId);
+  url.searchParams.set("url", targetUrl);
+  url.searchParams.set("sessionId", sessionId);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -59,21 +63,28 @@ export async function fetchViaRelay(
   try {
     response = await doFetch(url.toString(), { signal: controller.signal });
   } catch {
-    throw new RelayFetchError('unreachable', "Couldn't reach the relay — try a direct fetch or upload instead.");
+    throw new RelayFetchError(
+      "unreachable",
+      "Couldn't reach the relay — try a direct fetch or upload instead.",
+    );
   } finally {
     clearTimeout(timer);
   }
 
   if (response.status === 429) {
-    const retryAfterSeconds = Number(response.headers.get('retry-after')) || undefined;
+    const retryAfterSeconds =
+      Number(response.headers.get("retry-after")) || undefined;
     throw new RelayFetchError(
-      'rate-limited',
-      'The relay is rate-limited right now — try again in a bit.',
+      "rate-limited",
+      "The relay is rate-limited right now — try again in a bit.",
       retryAfterSeconds,
     );
   }
   if (response.status === 503) {
-    throw new RelayFetchError('paused', 'The relay is temporarily paused — try a direct fetch or upload instead.');
+    throw new RelayFetchError(
+      "paused",
+      "The relay is temporarily paused — try a direct fetch or upload instead.",
+    );
   }
   return response;
 }

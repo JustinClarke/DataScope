@@ -7,10 +7,15 @@
 // Detection is driven primarily by the returned columns' types, with the
 // query text used only as a light hint to tell an aggregated GROUP BY (a bar
 // over a category axis) apart from two raw numeric columns (a scatter).
-import type { ChartRecommendation, ChartSpec, ChartType, QueryResult } from '../types';
-import { formatDateCell } from './columnStats';
+import type {
+  ChartRecommendation,
+  ChartSpec,
+  ChartType,
+  QueryResult,
+} from "../types";
+import { formatDateCell } from "./columnStats";
 
-type ColumnKind = 'temporal' | 'numeric' | 'other';
+type ColumnKind = "temporal" | "numeric" | "other";
 
 // A wider result than this is a table, not a chart — SELECT * degrades cleanly.
 const MAX_CHART_COLUMNS = 4;
@@ -39,9 +44,9 @@ export function classifyColumnType(columnType: string): ColumnKind {
   const t = columnType.trim().toUpperCase();
   // Temporal is tested first: INTERVAL and INT share a prefix, and a DATE/TIME
   // must never be mistaken for a number.
-  if (TEMPORAL_TYPE.test(t)) return 'temporal';
-  if (NUMERIC_TYPE.test(t)) return 'numeric';
-  return 'other';
+  if (TEMPORAL_TYPE.test(t)) return "temporal";
+  if (NUMERIC_TYPE.test(t)) return "numeric";
+  return "other";
 }
 
 function indicesOf(kinds: ColumnKind[], kind: ColumnKind): number[] {
@@ -56,18 +61,20 @@ function indicesOf(kinds: ColumnKind[], kind: ColumnKind): number[] {
 function hasAggregate(sql: string): boolean {
   return (
     /\bgroup\s+by\b/i.test(sql) ||
-    /\b(count|sum|avg|min|max|median|mode|stddev|stddev_pop|variance|var_pop|corr)\s*\(/i.test(sql)
+    /\b(count|sum|avg|min|max|median|mode|stddev|stddev_pop|variance|var_pop|corr)\s*\(/i.test(
+      sql,
+    )
   );
 }
 
 function titleFor(type: ChartType, xField: string, yFields: string[]): string {
-  const ys = yFields.join(', ');
+  const ys = yFields.join(", ");
   switch (type) {
-    case 'time-series':
+    case "time-series":
       return `${ys} over ${xField}`;
-    case 'correlation':
+    case "correlation":
       return `${yFields[0]} vs ${xField}`;
-    case 'distribution':
+    case "distribution":
       return `Distribution of ${xField}`;
     default:
       return `${ys} by ${xField}`;
@@ -75,9 +82,9 @@ function titleFor(type: ChartType, xField: string, yFields: string[]): string {
 }
 
 function formatKpi(value: unknown): string {
-  if (value === null || value === undefined) return '—';
-  if (typeof value === 'bigint') return value.toLocaleString();
-  if (typeof value === 'number') {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "bigint") return value.toLocaleString();
+  if (typeof value === "number") {
     return Number.isInteger(value)
       ? value.toLocaleString()
       : value.toLocaleString(undefined, { maximumFractionDigits: 4 });
@@ -101,10 +108,13 @@ function chartFor(
     yFields,
     ...(seriesIdx !== undefined ? { seriesField: columnNames[seriesIdx] } : {}),
   };
-  return { kind: 'chart', spec };
+  return { kind: "chart", spec };
 }
 
-const gridReason = (reason: string): ChartRecommendation => ({ kind: 'grid', reason });
+const gridReason = (reason: string): ChartRecommendation => ({
+  kind: "grid",
+  reason,
+});
 
 /**
  * The mapping table, deterministic:
@@ -114,41 +124,61 @@ const gridReason = (reason: string): ChartRecommendation => ({ kind: 'grid', rea
  *  - two raw numeric columns      → scatter (correlation)
  *  - anything else / too wide / too many points → the tabular grid
  */
-export function recommendChart(result: QueryResult, sql?: string): ChartRecommendation {
+export function recommendChart(
+  result: QueryResult,
+  sql?: string,
+): ChartRecommendation {
   const { columnNames, columnTypes, rows } = result;
   const n = rows.length;
   const cols = columnNames.length;
 
-  if (cols === 0 || n === 0) return gridReason('Empty result — nothing to plot.');
+  if (cols === 0 || n === 0)
+    return gridReason("Empty result — nothing to plot.");
 
   const kinds = columnTypes.map(classifyColumnType);
-  const temporal = indicesOf(kinds, 'temporal');
-  const numeric = indicesOf(kinds, 'numeric');
-  const other = indicesOf(kinds, 'other');
+  const temporal = indicesOf(kinds, "temporal");
+  const numeric = indicesOf(kinds, "numeric");
+  const other = indicesOf(kinds, "other");
 
   // Single aggregate value — a scalar stat, no axes, so outside ChartSpec.
   if (n === 1 && cols === 1 && numeric.length === 1) {
-    return { kind: 'kpi', label: columnNames[0], value: formatKpi(rows[0][0]) };
+    return { kind: "kpi", label: columnNames[0], value: formatKpi(rows[0][0]) };
   }
 
-  if (cols > MAX_CHART_COLUMNS) return gridReason('Too many columns to chart — showing the table.');
+  if (cols > MAX_CHART_COLUMNS)
+    return gridReason("Too many columns to chart — showing the table.");
 
   const aggregated = sql === undefined ? undefined : hasAggregate(sql);
 
   // Time series — a single temporal axis carrying one or more measures.
   if (temporal.length === 1 && numeric.length >= 1) {
-    if (n > MAX_PLOTTABLE_ROWS) return gridReason('Too many points to plot cleanly — showing the table.');
-    return chartFor('time-series', columnNames, temporal[0], numeric.slice(0, MAX_Y_SERIES));
+    if (n > MAX_PLOTTABLE_ROWS)
+      return gridReason("Too many points to plot cleanly — showing the table.");
+    return chartFor(
+      "time-series",
+      columnNames,
+      temporal[0],
+      numeric.slice(0, MAX_Y_SERIES),
+    );
   }
 
   // Aggregated shape → bar. GROUP BY puts the dimension first even when it is
   // numeric-typed, so the aggregate hint lets a small integer key be the axis.
   if (aggregated === true && n <= MAX_BAR_CATEGORIES) {
-    const groupIdx = other.length >= 1 ? other[0] : numeric.length >= 2 ? numeric[0] : -1;
+    const groupIdx =
+      other.length >= 1 ? other[0] : numeric.length >= 2 ? numeric[0] : -1;
     if (groupIdx >= 0) {
-      const measures = numeric.filter((i) => i !== groupIdx).slice(0, MAX_Y_SERIES);
+      const measures = numeric
+        .filter((i) => i !== groupIdx)
+        .slice(0, MAX_Y_SERIES);
       if (measures.length >= 1) {
-        return chartFor('categorical', columnNames, groupIdx, measures, other.length >= 2 ? other[1] : undefined);
+        return chartFor(
+          "categorical",
+          columnNames,
+          groupIdx,
+          measures,
+          other.length >= 2 ? other[1] : undefined,
+        );
       }
     }
   }
@@ -156,7 +186,7 @@ export function recommendChart(result: QueryResult, sql?: string): ChartRecommen
   // Category dimension + numeric measure, few enough rows → bar.
   if (other.length >= 1 && numeric.length >= 1 && n <= MAX_BAR_CATEGORIES) {
     return chartFor(
-      'categorical',
+      "categorical",
       columnNames,
       other[0],
       numeric.slice(0, MAX_Y_SERIES),
@@ -166,52 +196,74 @@ export function recommendChart(result: QueryResult, sql?: string): ChartRecommen
 
   // Two raw numeric columns, no grouping dimension → scatter.
   if (numeric.length >= 2 && other.length === 0 && temporal.length === 0) {
-    if (n > MAX_PLOTTABLE_ROWS) return gridReason('Too many points to plot cleanly — showing the table.');
-    return chartFor('correlation', columnNames, numeric[0], [numeric[1]]);
+    if (n > MAX_PLOTTABLE_ROWS)
+      return gridReason("Too many points to plot cleanly — showing the table.");
+    return chartFor("correlation", columnNames, numeric[0], [numeric[1]]);
   }
 
-  return gridReason('No clear chart for this result shape — showing the table.');
+  return gridReason(
+    "No clear chart for this result shape — showing the table.",
+  );
 }
 
 /** Chart types the picker can offer for this result, in recommendation order. */
 export function availableChartTypes(result: QueryResult): ChartType[] {
   const kinds = result.columnTypes.map(classifyColumnType);
-  const temporal = indicesOf(kinds, 'temporal').length;
-  const numeric = indicesOf(kinds, 'numeric').length;
-  const other = indicesOf(kinds, 'other').length;
+  const temporal = indicesOf(kinds, "temporal").length;
+  const numeric = indicesOf(kinds, "numeric").length;
+  const other = indicesOf(kinds, "other").length;
   const types: ChartType[] = [];
-  if (temporal >= 1 && numeric >= 1) types.push('time-series');
-  if (numeric >= 1 && (other >= 1 || numeric >= 2)) types.push('categorical');
-  if (numeric >= 2) types.push('correlation');
+  if (temporal >= 1 && numeric >= 1) types.push("time-series");
+  if (numeric >= 1 && (other >= 1 || numeric >= 2)) types.push("categorical");
+  if (numeric >= 2) types.push("correlation");
   return types;
 }
 
 /** Build a spec for a picker-chosen type from the same result, or null if the shape can't support it. */
-export function specForType(result: QueryResult, type: ChartType): ChartSpec | null {
+export function specForType(
+  result: QueryResult,
+  type: ChartType,
+): ChartSpec | null {
   const { columnNames, columnTypes } = result;
   const kinds = columnTypes.map(classifyColumnType);
-  const temporal = indicesOf(kinds, 'temporal');
-  const numeric = indicesOf(kinds, 'numeric');
-  const other = indicesOf(kinds, 'other');
+  const temporal = indicesOf(kinds, "temporal");
+  const numeric = indicesOf(kinds, "numeric");
+  const other = indicesOf(kinds, "other");
 
   switch (type) {
-    case 'time-series': {
+    case "time-series": {
       if (temporal.length < 1 || numeric.length < 1) return null;
-      const rec = chartFor('time-series', columnNames, temporal[0], numeric.slice(0, MAX_Y_SERIES));
-      return rec.kind === 'chart' ? rec.spec : null;
+      const rec = chartFor(
+        "time-series",
+        columnNames,
+        temporal[0],
+        numeric.slice(0, MAX_Y_SERIES),
+      );
+      return rec.kind === "chart" ? rec.spec : null;
     }
-    case 'categorical': {
-      const groupIdx = other.length >= 1 ? other[0] : numeric.length >= 2 ? numeric[0] : -1;
+    case "categorical": {
+      const groupIdx =
+        other.length >= 1 ? other[0] : numeric.length >= 2 ? numeric[0] : -1;
       if (groupIdx < 0) return null;
-      const measures = numeric.filter((i) => i !== groupIdx).slice(0, MAX_Y_SERIES);
+      const measures = numeric
+        .filter((i) => i !== groupIdx)
+        .slice(0, MAX_Y_SERIES);
       if (measures.length < 1) return null;
-      const rec = chartFor('categorical', columnNames, groupIdx, measures, other.length >= 2 ? other[1] : undefined);
-      return rec.kind === 'chart' ? rec.spec : null;
+      const rec = chartFor(
+        "categorical",
+        columnNames,
+        groupIdx,
+        measures,
+        other.length >= 2 ? other[1] : undefined,
+      );
+      return rec.kind === "chart" ? rec.spec : null;
     }
-    case 'correlation': {
+    case "correlation": {
       if (numeric.length < 2) return null;
-      const rec = chartFor('correlation', columnNames, numeric[0], [numeric[1]]);
-      return rec.kind === 'chart' ? rec.spec : null;
+      const rec = chartFor("correlation", columnNames, numeric[0], [
+        numeric[1],
+      ]);
+      return rec.kind === "chart" ? rec.spec : null;
     }
     default:
       return null;
@@ -224,7 +276,10 @@ export function specForType(result: QueryResult, type: ChartType): ChartSpec | n
  * cells (surfaced by the engine as epoch milliseconds) formatted to readable
  * axis labels. Nulls are preserved so the renderer can gap them.
  */
-export function buildChart(result: QueryResult, _spec?: ChartSpec): Array<Record<string, unknown>> {
+export function buildChart(
+  result: QueryResult,
+  _spec?: ChartSpec,
+): Array<Record<string, unknown>> {
   const { columnNames, columnTypes, rows } = result;
   const kinds = columnTypes.map(classifyColumnType);
   return rows.map((row) => {
@@ -233,10 +288,10 @@ export function buildChart(result: QueryResult, _spec?: ChartSpec): Array<Record
       const cell = row[i];
       if (cell === null || cell === undefined) {
         obj[name] = null;
-      } else if (kinds[i] === 'numeric') {
-        const num = typeof cell === 'bigint' ? Number(cell) : Number(cell);
+      } else if (kinds[i] === "numeric") {
+        const num = typeof cell === "bigint" ? Number(cell) : Number(cell);
         obj[name] = Number.isFinite(num) ? num : cell;
-      } else if (kinds[i] === 'temporal') {
+      } else if (kinds[i] === "temporal") {
         obj[name] = formatDateCell(cell);
       } else {
         obj[name] = String(cell);

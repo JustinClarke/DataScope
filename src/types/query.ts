@@ -6,7 +6,10 @@
  * / summarize; cancellation is first-class control flow, not an error (D58).
  */
 export interface QueryEngine {
-  execute(sql: string, options?: { signal?: AbortSignal }): Promise<QueryResult>;
+  execute(
+    sql: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<QueryResult>;
   /**
    * A `Uint8Array` registers a fully in-memory buffer; a `File` registers a
    * streaming handle so a large upload never needs a full in-JS-heap copy
@@ -15,7 +18,10 @@ export interface QueryEngine {
   registerFile(name: string, data: Uint8Array | File): Promise<void>;
   summarize(tableName: string): Promise<QueryResult>;
   /** Copies a whole table to a downloadable buffer via `COPY ... TO` (§12.2) — entirely in-engine, no network. */
-  exportTable(tableName: string, format: 'parquet' | 'csv'): Promise<Uint8Array<ArrayBuffer>>;
+  exportTable(
+    tableName: string,
+    format: "parquet" | "csv",
+  ): Promise<Uint8Array<ArrayBuffer>>;
 }
 
 export interface QueryResult {

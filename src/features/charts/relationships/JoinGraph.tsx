@@ -4,7 +4,7 @@
 // same custom-SVG approach BoxPlot/CorrelationHeatmap take), so there is no
 // graph-layout dependency and the render is stable across runs. Reused compact
 // and non-interactive for the Dossier thumbnail.
-import type { FkEdge } from '../../../lib/relationshipInference';
+import type { FkEdge } from "../../../lib/relationshipInference";
 
 export interface JoinGraphNode {
   tableName: string;
@@ -24,27 +24,50 @@ interface Point {
   y: number;
 }
 
-function layout(count: number, width: number, height: number, radius: number): Point[] {
+function layout(
+  count: number,
+  width: number,
+  height: number,
+  radius: number,
+): Point[] {
   const cx = width / 2;
   const cy = height / 2;
   if (count === 1) return [{ x: cx, y: cy }];
   return Array.from({ length: count }, (_, i) => {
     const theta = -Math.PI / 2 + (i * 2 * Math.PI) / count;
-    return { x: cx + radius * Math.cos(theta), y: cy + radius * Math.sin(theta) };
+    return {
+      x: cx + radius * Math.cos(theta),
+      y: cy + radius * Math.sin(theta),
+    };
   });
 }
 
 /** Trim a segment's endpoints inward by `pad` so an edge stops at the node edge, not its center. */
-function trim(a: Point, b: Point, pad: number): { x1: number; y1: number; x2: number; y2: number } {
+function trim(
+  a: Point,
+  b: Point,
+  pad: number,
+): { x1: number; y1: number; x2: number; y2: number } {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len;
   const uy = dy / len;
-  return { x1: a.x + ux * pad, y1: a.y + uy * pad, x2: b.x - ux * pad, y2: b.y - uy * pad };
+  return {
+    x1: a.x + ux * pad,
+    y1: a.y + uy * pad,
+    x2: b.x - ux * pad,
+    y2: b.y - uy * pad,
+  };
 }
 
-function arrowHead(x: number, y: number, fromX: number, fromY: number, size: number): string {
+function arrowHead(
+  x: number,
+  y: number,
+  fromX: number,
+  fromY: number,
+  size: number,
+): string {
   const angle = Math.atan2(y - fromY, x - fromX);
   const a1 = angle + Math.PI - Math.PI / 7;
   const a2 = angle + Math.PI + Math.PI / 7;
@@ -53,7 +76,13 @@ function arrowHead(x: number, y: number, fromX: number, fromY: number, size: num
   return `${x},${y} ${p1} ${p2}`;
 }
 
-export function JoinGraph({ nodes, edges, selectedEdgeId, onSelectEdge, compact = false }: JoinGraphProps) {
+export function JoinGraph({
+  nodes,
+  edges,
+  selectedEdgeId,
+  onSelectEdge,
+  compact = false,
+}: JoinGraphProps) {
   const width = compact ? 320 : 540;
   const height = compact ? 200 : 380;
   const nodeW = compact ? 92 : 132;
@@ -63,8 +92,8 @@ export function JoinGraph({ nodes, edges, selectedEdgeId, onSelectEdge, compact 
   const positions = layout(nodes.length, width, height, radius);
   const indexByName = new Map(nodes.map((n, i) => [n.tableName, i]));
 
-  const confidentColor = 'var(--color-accent)';
-  const candidateColor = 'var(--color-fg-muted)';
+  const confidentColor = "var(--color-accent)";
+  const candidateColor = "var(--color-fg-muted)";
 
   return (
     <svg
@@ -79,7 +108,7 @@ export function JoinGraph({ nodes, edges, selectedEdgeId, onSelectEdge, compact 
         const pi = indexByName.get(edge.parentTable);
         if (ci === undefined || pi === undefined) return null;
 
-        const isConfident = edge.confidence === 'confident';
+        const isConfident = edge.confidence === "confident";
         const color = isConfident ? confidentColor : candidateColor;
         const selected = edge.id === selectedEdgeId;
 
@@ -95,7 +124,7 @@ export function JoinGraph({ nodes, edges, selectedEdgeId, onSelectEdge, compact 
               fill="none"
               stroke={color}
               strokeWidth={selected ? 3 : 1.5}
-              strokeDasharray={isConfident ? undefined : '5 4'}
+              strokeDasharray={isConfident ? undefined : "5 4"}
               data-testid={`edge-${edge.id}`}
               data-confidence={edge.confidence}
             />
@@ -107,15 +136,15 @@ export function JoinGraph({ nodes, edges, selectedEdgeId, onSelectEdge, compact 
         return (
           <g
             key={edge.id}
-            role={onSelectEdge ? 'button' : undefined}
+            role={onSelectEdge ? "button" : undefined}
             tabIndex={onSelectEdge ? 0 : undefined}
             aria-label={`${edge.childTable}.${edge.childColumn} to ${edge.parentTable}.${edge.parentColumn}, ${edge.confidence}`}
-            className={onSelectEdge ? 'cursor-pointer outline-none' : undefined}
+            className={onSelectEdge ? "cursor-pointer outline-none" : undefined}
             onClick={onSelectEdge ? () => onSelectEdge(edge.id) : undefined}
             onKeyDown={
               onSelectEdge
                 ? (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       onSelectEdge(edge.id);
                     }
@@ -127,7 +156,14 @@ export function JoinGraph({ nodes, edges, selectedEdgeId, onSelectEdge, compact 
           >
             {/* Wide invisible hit target for easier clicking. */}
             {onSelectEdge && (
-              <line x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} stroke="transparent" strokeWidth={14} />
+              <line
+                x1={line.x1}
+                y1={line.y1}
+                x2={line.x2}
+                y2={line.y2}
+                stroke="transparent"
+                strokeWidth={14}
+              />
             )}
             <line
               x1={line.x1}
@@ -136,10 +172,16 @@ export function JoinGraph({ nodes, edges, selectedEdgeId, onSelectEdge, compact 
               y2={line.y2}
               stroke={color}
               strokeWidth={selected ? 3 : 1.5}
-              strokeDasharray={isConfident ? undefined : '5 4'}
+              strokeDasharray={isConfident ? undefined : "5 4"}
             />
             <polygon
-              points={arrowHead(line.x2, line.y2, line.x1, line.y1, compact ? 6 : 8)}
+              points={arrowHead(
+                line.x2,
+                line.y2,
+                line.x1,
+                line.y1,
+                compact ? 6 : 8,
+              )}
               fill={color}
             />
           </g>

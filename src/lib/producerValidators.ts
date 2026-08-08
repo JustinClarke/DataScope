@@ -3,8 +3,8 @@
 // producer never self-certifies: the client computes the deterministic baseline,
 // receives the candidate, and applies these. A false result degrades in place to
 // the baseline. Pure — no I/O, no model call.
-import type { ChartSpec, FactRef, RankedAction } from '../types'
-import { checkCitation, type CitableFact } from './citableFacts'
+import type { ChartSpec, FactRef, RankedAction } from "../types";
+import { checkCitation, type CitableFact } from "./citableFacts";
 
 /**
  * A stable key over everything the action-ranking re-ranker may NOT change:
@@ -19,7 +19,7 @@ function actionIdentity(action: RankedAction): string {
     prefill: action.prefill,
     evidence: action.evidence,
     score: action.score,
-  })
+  });
 }
 
 /**
@@ -28,35 +28,39 @@ function actionIdentity(action: RankedAction): string {
  * keys. An added, dropped, or altered action (a new module, a changed prefill or
  * evidence, a nudged score) fails and degrades to the deterministic baseline.
  */
-export function rankedActionValidator(baseline: RankedAction[], candidate: RankedAction[]): boolean {
-  if (candidate.length !== baseline.length) return false
+export function rankedActionValidator(
+  baseline: RankedAction[],
+  candidate: RankedAction[],
+): boolean {
+  if (candidate.length !== baseline.length) return false;
   // `verb` is the one free-text field the model may write on this path, so it
   // clears the same D45 guard a re-phrased `statement` does — without this the
   // offers slot is the hole an over-claim gets pushed through
   // (10-grounding-ladder.md, "RankedAction.verb is unguarded").
-  if (!candidate.every((action) => passesPhrasingGuard(action.verb))) return false
-  const counts = new Map<string, number>()
+  if (!candidate.every((action) => passesPhrasingGuard(action.verb)))
+    return false;
+  const counts = new Map<string, number>();
   for (const action of baseline) {
-    const key = actionIdentity(action)
-    counts.set(key, (counts.get(key) ?? 0) + 1)
+    const key = actionIdentity(action);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   for (const action of candidate) {
-    const key = actionIdentity(action)
-    const remaining = counts.get(key)
-    if (remaining === undefined || remaining === 0) return false
-    counts.set(key, remaining - 1)
+    const key = actionIdentity(action);
+    const remaining = counts.get(key);
+    if (remaining === undefined || remaining === 0) return false;
+    counts.set(key, remaining - 1);
   }
-  return true
+  return true;
 }
 
 // Permanence, causal, and "verified" wording the D45 guard forbids in a stated
 // fact — the model may re-phrase, not over-claim. Word-boundary, case-insensitive.
 const FORBIDDEN_PHRASING =
-  /\b(always|never|permanent(?:ly)?|guaranteed?|invariant|certain(?:ly)?|proven?|verified|confirmed|because|causes?|caused|due to|leads? to|results? in|drives?)\b/i
+  /\b(always|never|permanent(?:ly)?|guaranteed?|invariant|certain(?:ly)?|proven?|verified|confirmed|because|causes?|caused|due to|leads? to|results? in|drives?)\b/i;
 
 /** True when the re-phrased statement stays within the D45 honesty guard. */
 export function passesPhrasingGuard(statement: string): boolean {
-  return !FORBIDDEN_PHRASING.test(statement)
+  return !FORBIDDEN_PHRASING.test(statement);
 }
 
 /**
@@ -76,21 +80,24 @@ export function passesPhrasingGuard(statement: string): boolean {
  * flatter the numbers.
  */
 export const TREND_GENERALISATION_TERMS = [
-  'consistently',
-  'steadily',
-  'typically',
-  'tend to',
-  'tends to',
-  'continues to',
-  'increasingly',
-  'ongoing',
-] as const
+  "consistently",
+  "steadily",
+  "typically",
+  "tend to",
+  "tends to",
+  "continues to",
+  "increasingly",
+  "ongoing",
+] as const;
 
-const TREND_GENERALISATION_PHRASING = new RegExp(`\\b(${TREND_GENERALISATION_TERMS.join('|')})\\b`, 'i')
+const TREND_GENERALISATION_PHRASING = new RegExp(
+  `\\b(${TREND_GENERALISATION_TERMS.join("|")})\\b`,
+  "i",
+);
 
 /** True when the statement states a trend without generalising it. */
 export function passesTrendGeneralisationGuard(statement: string): boolean {
-  return !TREND_GENERALISATION_PHRASING.test(statement)
+  return !TREND_GENERALISATION_PHRASING.test(statement);
 }
 
 /**
@@ -128,24 +135,41 @@ export function passesTrendGeneralisationGuard(statement: string): boolean {
  * which was built from the result's own schema, so the chart renderer can never
  * be handed a field the data does not have.
  */
-export function chartSpecValidator(baseline: ChartSpec, candidate: ChartSpec): boolean {
-  if (candidate.type !== baseline.type) return false
-  if (candidate.xField !== baseline.xField) return false
-  if (candidate.seriesField !== undefined && candidate.seriesField !== baseline.seriesField) return false
-  if (!Array.isArray(candidate.yFields) || candidate.yFields.length === 0) return false
-  if (new Set(candidate.yFields).size !== candidate.yFields.length) return false
-  if (!candidate.yFields.every((field) => baseline.yFields.includes(field))) return false
-  if (typeof candidate.title !== 'string' || candidate.title.trim() === '') return false
-  return passesPhrasingGuard(candidate.title)
+export function chartSpecValidator(
+  baseline: ChartSpec,
+  candidate: ChartSpec,
+): boolean {
+  if (candidate.type !== baseline.type) return false;
+  if (candidate.xField !== baseline.xField) return false;
+  if (
+    candidate.seriesField !== undefined &&
+    candidate.seriesField !== baseline.seriesField
+  )
+    return false;
+  if (!Array.isArray(candidate.yFields) || candidate.yFields.length === 0)
+    return false;
+  if (new Set(candidate.yFields).size !== candidate.yFields.length)
+    return false;
+  if (!candidate.yFields.every((field) => baseline.yFields.includes(field)))
+    return false;
+  if (typeof candidate.title !== "string" || candidate.title.trim() === "")
+    return false;
+  return passesPhrasingGuard(candidate.title);
 }
 
-export function narrationValidator(baseline: FactRef, candidate: FactRef, citedFact?: CitableFact): boolean {
+export function narrationValidator(
+  baseline: FactRef,
+  candidate: FactRef,
+  citedFact?: CitableFact,
+): boolean {
   const structurallyIntact =
     candidate.sql === baseline.sql &&
     candidate.snapshot === baseline.snapshot &&
     candidate.confidence === baseline.confidence &&
     candidate.provenance === baseline.provenance &&
-    passesPhrasingGuard(candidate.statement)
-  if (!structurallyIntact) return false
-  return citedFact === undefined || checkCitation(candidate.statement, citedFact).ok
+    passesPhrasingGuard(candidate.statement);
+  if (!structurallyIntact) return false;
+  return (
+    citedFact === undefined || checkCitation(candidate.statement, citedFact).ok
+  );
 }

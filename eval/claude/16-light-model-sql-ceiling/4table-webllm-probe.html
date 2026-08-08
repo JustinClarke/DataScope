@@ -46,7 +46,7 @@ mid-transfer on a real connection; each retry only re-fetches what failed), stri
 <code>&lt;think&gt;...&lt;/think&gt;</code> before SQL extraction (Qwen3 is a reasoning model), and
 <code>max_tokens: 2048</code> (512 truncated some Probe 5 answers mid-thought — the join-heavy
 questions here are more reasoning-heavy than the flat schema's, so this matters more here, not
-less). Write-up: <a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling.md" style="color:#7ee787">experiment 16</a>.
+less). Write-up: <a href="../../../_implementation/_misc/_ideation/_experiments/16-light-model-sql-ceiling/README.md" style="color:#7ee787">experiment 16</a>.
 Runs the question set <b>3 times</b> against the same loaded engine (Probe 9 was N=1; this closes that
 gap to match Probe 7's N=3 Ollama rigor) and reports per-question stability, same shape as the Ollama
 scripts' `runProbe()`.</p>

@@ -1,30 +1,35 @@
-import { useMemo, useState } from 'react';
-import { Copy, TriangleAlert, X } from 'lucide-react';
-import type { TableRegistryEntry } from '../../types';
-import { useSettingsStore } from '../../stores/settings';
-import { buildStructureReport, redactColumnNames } from '../../lib/structureReport';
-import { findLikelySensitiveColumns } from '../../lib/sensitiveColumns';
+import { useMemo, useState } from "react";
+import { Copy, TriangleAlert, X } from "lucide-react";
+import type { TableRegistryEntry } from "../../types";
+import { useSettingsStore } from "../../stores/settings";
+import {
+  buildStructureReport,
+  redactColumnNames,
+} from "../../lib/structureReport";
+import { findLikelySensitiveColumns } from "../../lib/sensitiveColumns";
 import {
   buildShareBuffer,
   saveToCloud,
   PARQUET_CONTENT_TYPE,
   STRUCTURE_REPORT_CONTENT_TYPE,
   type ShareFailure,
-} from '../../services/export';
+} from "../../services/export";
 
 // Launch default (§12.3) — the same number the Terraform-owned R2 lifecycle
 // rule enforces server-side; this is disclosure copy, not an app-code check.
 const SHARE_TTL_DAYS = 30;
 
-const ERROR_MESSAGE: Record<ShareFailure['code'], string> = {
-  'bad-request': "Something went wrong preparing this share — try again.",
-  'not-found': "That share link doesn't exist.",
-  'too-large': 'This dataset is too large to share (100 MB per-object limit).',
-  'rate-limited': "You've hit today's save/share rate limit — try again later.",
-  'quota-exceeded': "You've reached today's total save/share data limit — try again tomorrow.",
-  paused: 'Save/share is temporarily paused — try again later.',
-  unavailable: 'Save/share is temporarily unavailable — try again later.',
-  unreachable: "Couldn't reach the server — check your connection and try again.",
+const ERROR_MESSAGE: Record<ShareFailure["code"], string> = {
+  "bad-request": "Something went wrong preparing this share — try again.",
+  "not-found": "That share link doesn't exist.",
+  "too-large": "This dataset is too large to share (100 MB per-object limit).",
+  "rate-limited": "You've hit today's save/share rate limit — try again later.",
+  "quota-exceeded":
+    "You've reached today's total save/share data limit — try again tomorrow.",
+  paused: "Save/share is temporarily paused — try again later.",
+  unavailable: "Save/share is temporarily unavailable — try again later.",
+  unreachable:
+    "Couldn't reach the server — check your connection and try again.",
 };
 
 interface ShareDialogProps {
@@ -45,12 +50,15 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
   const [escalated, setEscalated] = useState(false);
   const [redact, setRedact] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<ShareFailure['code'] | null>(null);
+  const [error, setError] = useState<ShareFailure["code"] | null>(null);
   const [savedUrl, setSavedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const findings = useMemo(
-    () => findLikelySensitiveColumns([{ tableName: table.tableName, columns: table.columns ?? [] }]),
+    () =>
+      findLikelySensitiveColumns([
+        { tableName: table.tableName, columns: table.columns ?? [] },
+      ]),
     [table],
   );
 
@@ -60,7 +68,9 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
     try {
       let buffer: Uint8Array;
       let contentType: string;
-      const kind: 'structure' | 'full-dataset' = escalated ? 'full-dataset' : 'structure';
+      const kind: "structure" | "full-dataset" = escalated
+        ? "full-dataset"
+        : "structure";
 
       if (escalated) {
         buffer = await buildShareBuffer(table);
@@ -109,7 +119,9 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
     >
       <div className="w-full max-w-lg rounded-lg border border-(--color-border) bg-(--color-bg) p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-(--color-fg)">Share &quot;{table.tableName}&quot;</h2>
+          <h2 className="text-sm font-medium text-(--color-fg)">
+            Share &quot;{table.tableName}&quot;
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -122,15 +134,20 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
 
         {savedUrl ? (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-(--color-fg)">Share link created — expires in {SHARE_TTL_DAYS} days.</p>
+            <p className="text-sm text-(--color-fg)">
+              Share link created — expires in {SHARE_TTL_DAYS} days.
+            </p>
             <div className="flex items-center gap-2 rounded border border-(--color-border) px-3 py-2">
-              <span className="flex-1 truncate font-mono text-xs text-(--color-fg-muted)">{savedUrl}</span>
+              <span className="flex-1 truncate font-mono text-xs text-(--color-fg-muted)">
+                {savedUrl}
+              </span>
               <button
                 type="button"
                 onClick={handleCopy}
                 className="flex shrink-0 items-center gap-1 text-xs font-medium text-(--color-fg)"
               >
-                <Copy size={12} aria-hidden="true" /> {copied ? 'Copied!' : 'Copy'}
+                <Copy size={12} aria-hidden="true" />{" "}
+                {copied ? "Copied!" : "Copy"}
               </button>
             </div>
             <button
@@ -145,25 +162,34 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
           <div className="flex flex-col gap-4">
             <p className="text-sm text-(--color-fg-muted)">
               {escalated
-                ? 'The full dataset — every row — will be uploaded and stored on DataScope\'s servers.'
-                : 'Structure only — no data rows included: schema, column types, and profile aggregates. No raw data ever uploads.'}{' '}
-              Stored for {SHARE_TTL_DAYS} days, then automatically deleted. Anyone with the link can view it —
-              links are unguessable but not private beyond that.
+                ? "The full dataset — every row — will be uploaded and stored on DataScope's servers."
+                : "Structure only — no data rows included: schema, column types, and profile aggregates. No raw data ever uploads."}{" "}
+              Stored for {SHARE_TTL_DAYS} days, then automatically deleted.
+              Anyone with the link can view it — links are unguessable but not
+              private beyond that.
             </p>
 
             {findings.length > 0 && (
               <div className="flex items-start gap-2 rounded-lg border border-(--color-warn)/40 bg-(--color-warn)/5 p-3 text-xs text-(--color-warn)">
-                <TriangleAlert size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
+                <TriangleAlert
+                  size={14}
+                  className="mt-0.5 shrink-0"
+                  aria-hidden="true"
+                />
                 <span>
-                  These columns may contain personal data — review before sharing:{' '}
-                  {findings.map((f) => f.columnName).join(', ')}.
+                  These columns may contain personal data — review before
+                  sharing: {findings.map((f) => f.columnName).join(", ")}.
                 </span>
               </div>
             )}
 
             {!escalated && (
               <label className="flex items-center gap-2 text-sm text-(--color-fg)">
-                <input type="checkbox" checked={redact} onChange={(event) => setRedact(event.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={redact}
+                  onChange={(event) => setRedact(event.target.checked)}
+                />
                 Redact column names (column_1, column_2, ...)
               </label>
             )}
@@ -198,11 +224,15 @@ export function ShareDialog({ table, onClose }: ShareDialogProps) {
                 disabled={busy}
                 className={
                   escalated
-                    ? 'rounded border border-(--color-error) bg-(--color-error)/10 px-4 py-2 text-sm font-medium text-(--color-error) disabled:opacity-50 dark:text-(--color-error)'
-                    : 'rounded border border-(--color-border) px-4 py-2 text-sm font-medium text-(--color-fg) disabled:opacity-50'
+                    ? "rounded border border-(--color-error) bg-(--color-error)/10 px-4 py-2 text-sm font-medium text-(--color-error) disabled:opacity-50 dark:text-(--color-error)"
+                    : "rounded border border-(--color-border) px-4 py-2 text-sm font-medium text-(--color-fg) disabled:opacity-50"
                 }
               >
-                {busy ? 'Saving…' : escalated ? 'Save full dataset (includes raw rows)' : 'Save to cloud / Create share link'}
+                {busy
+                  ? "Saving…"
+                  : escalated
+                    ? "Save full dataset (includes raw rows)"
+                    : "Save to cloud / Create share link"}
               </button>
             </div>
           </div>

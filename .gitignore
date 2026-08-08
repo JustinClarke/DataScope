@@ -30,6 +30,10 @@ test-results/
 eval/EVAL-RESULTS.json
 eval/webllm/
 
+# Experiment 17's generated DuckDB files carry the source tables' customer PII
+# (name/email) even though the model-facing views omit it — never committed.
+eval/chat/17-duckdb-local-chat/runs/**/*.duckdb
+
 # Wrangler / edge deploy — local state and secrets never committed
 .wrangler/
 .dev.vars

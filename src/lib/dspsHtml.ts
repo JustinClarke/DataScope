@@ -7,17 +7,17 @@
 // it came from and follows its reader's register (V6c). Carries the D26
 // attribution footer, tagged so the D25 edge counters can distinguish
 // report-referred arrivals.
-import type { StructureReport } from './structureReport';
-import { formatSnapshotLabel } from './dsps';
-import { EXPORT_THEME_CSS } from './exportTheme';
+import type { StructureReport } from "./structureReport";
+import { formatSnapshotLabel } from "./dsps";
+import { EXPORT_THEME_CSS } from "./exportTheme";
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /**
@@ -26,7 +26,10 @@ function escapeHtml(value: string): string {
  * DOM-free pure-builder shape) rather than this module reading `window`
  * itself, so it stays unit-testable without jsdom.
  */
-export function buildDspsHtml(report: StructureReport, attributionUrl: string): string {
+export function buildDspsHtml(
+  report: StructureReport,
+  attributionUrl: string,
+): string {
   const generated = new Date(report.generatedAt).toLocaleString();
 
   const tablesHtml = report.tables
@@ -38,11 +41,11 @@ export function buildDspsHtml(report: StructureReport, attributionUrl: string): 
           <td><code>${escapeHtml(c.name)}</code></td>
           <td>${escapeHtml(c.semanticType)}</td>
           <td>${escapeHtml(c.physicalType)}</td>
-          <td>${c.nullPercentage != null ? `${c.nullPercentage.toFixed(1)}%` : '—'}</td>
+          <td>${c.nullPercentage != null ? `${c.nullPercentage.toFixed(1)}%` : "—"}</td>
           <td>${c.cardinality.toLocaleString()}</td>
         </tr>`,
         )
-        .join('');
+        .join("");
       return `
       <section class="table">
         <h2>${escapeHtml(table.tableName)}</h2>
@@ -53,7 +56,7 @@ export function buildDspsHtml(report: StructureReport, attributionUrl: string): 
         </table>
       </section>`;
     })
-    .join('');
+    .join("");
 
   const insightsHtml =
     report.insights.length > 0
@@ -67,10 +70,10 @@ export function buildDspsHtml(report: StructureReport, attributionUrl: string): 
                 `<li><strong>${escapeHtml(insight.tableName)}</strong> — ${escapeHtml(insight.description)}
                   <span class="snapshot">(${escapeHtml(formatSnapshotLabel(insight.snapshot))})</span></li>`,
             )
-            .join('')}
+            .join("")}
         </ul>
       </section>`
-      : '';
+      : "";
 
   const relationshipsHtml =
     report.relationships && report.relationships.length > 0
@@ -83,10 +86,10 @@ export function buildDspsHtml(report: StructureReport, attributionUrl: string): 
               (rel) =>
                 `<li><code>${escapeHtml(rel.childTable)}.${escapeHtml(rel.childColumn)}</code> → <code>${escapeHtml(rel.parentTable)}.${escapeHtml(rel.parentColumn)}</code> (${rel.confidence}, ${Math.round(rel.containment * 100)}% containment)</li>`,
             )
-            .join('')}
+            .join("")}
         </ul>
       </section>`
-      : '';
+      : "";
 
   return `<!doctype html>
 <html lang="en">
@@ -176,11 +179,16 @@ footer a { color: var(--color-active); }
 }
 
 /** Triggers a browser download of the HTML report. DOM-only, kept separate from the pure builder above. */
-export function downloadDspsHtml(report: StructureReport, filename = 'datascope-structure-report.html'): void {
+export function downloadDspsHtml(
+  report: StructureReport,
+  filename = "datascope-structure-report.html",
+): void {
   const attributionUrl = `${window.location.origin}${window.location.pathname}?ref=dsps-report`;
-  const blob = new Blob([buildDspsHtml(report, attributionUrl)], { type: 'text/html' });
+  const blob = new Blob([buildDspsHtml(report, attributionUrl)], {
+    type: "text/html",
+  });
   const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
+  const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
   anchor.click();

@@ -8,13 +8,13 @@
 // This module owns FactRef, ThreadConfig, and RankedAction — the three the
 // Action Broker (rankNextActions, lib/capabilities.ts) produces. DatasetVerdict
 // (the tier-1 Dossier payload) lands with the Verdict work, not here.
-import type { SidebarModule } from '../stores/ui';
+import type { SidebarModule } from "../stores/ui";
 
 /** How sure we are of a stated fact — not how *interesting* it is. */
-export type FactConfidence = 'high' | 'medium' | 'low';
+export type FactConfidence = "high" | "medium" | "low";
 
 /** Where a fact came from: a §10 insight rule, or the dataset's own schema. */
-export type FactProvenance = 'insight-rule' | 'schema';
+export type FactProvenance = "insight-rule" | "schema";
 
 /**
  * The universal claim-carrier (D45). Every number the app states, anywhere,

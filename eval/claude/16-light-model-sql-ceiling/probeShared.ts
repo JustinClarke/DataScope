@@ -63,10 +63,21 @@ export async function execScalar(
   return result.rows[0][0];
 }
 
+/**
+ * The schema block a probe puts in front of the question. A plain string is the
+ * usual case (one fixed block for the whole run); a function is what 16a needs,
+ * because production's `pruneSchema` builds a *different* block per question —
+ * pruning to the tables that question mentions.
+ */
+export type SchemaPrompt = string | ((question: string) => string);
+
+const schemaFor = (schema: SchemaPrompt, question: string): string =>
+  typeof schema === 'function' ? schema(question) : schema;
+
 export async function runOneQuestion(
   engine: Awaited<ReturnType<typeof createEvalEngine>>,
   model: string,
-  schemaText: string,
+  schemaText: SchemaPrompt,
   item: { q: string; gold: string },
 ): Promise<RowResult> {
   const gold = await execScalar(engine, item.gold);
@@ -74,7 +85,10 @@ export async function runOneQuestion(
   let text: string;
   let ms: number;
   try {
-    ({ text, ms } = await askOllama(model, `${schemaText}\n\nQuestion: ${item.q}\n\n${SQL_INSTRUCTION}`));
+    ({ text, ms } = await askOllama(
+      model,
+      `${schemaFor(schemaText, item.q)}\n\nQuestion: ${item.q}\n\n${SQL_INSTRUCTION}`,
+    ));
   } catch (e) {
     return { question: item.q, gold, outcome: 'engine_error', detail: String(e) };
   }
@@ -104,7 +118,7 @@ export async function runOneQuestion(
 export async function runProbe(
   label: string,
   model: string,
-  schemaText: string,
+  schemaText: SchemaPrompt,
   questions: { q: string; gold: string }[],
   seed: (engine: Awaited<ReturnType<typeof createEvalEngine>>) => Promise<void>,
   repeats: number,

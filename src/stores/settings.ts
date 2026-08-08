@@ -1,16 +1,16 @@
 // Settings: the only store persisted to localStorage (§5.2, §21.7 state tree).
 // Never dataset contents, never a raw BYOK key — `byokPreference` is the D3
 // routing toggle only; key custody (D9) is the vault/BYOK service's job.
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import type { AIMode } from '../types';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { AIMode } from "../types";
 
-export type Theme = 'light' | 'dark' | 'system';
-export type BYOKPreference = 'prefer-key' | 'free-tier-first';
+export type Theme = "light" | "dark" | "system";
+export type BYOKPreference = "prefer-key" | "free-tier-first";
 /** The in-browser local model download is ask-first: null = not asked yet. */
-export type WebLLMConsent = 'accepted' | 'declined' | null;
+export type WebLLMConsent = "accepted" | "declined" | null;
 
-export const SETTINGS_STORAGE_KEY = 'datascope-settings';
+export const SETTINGS_STORAGE_KEY = "datascope-settings";
 
 /**
  * A share link this browser created (§12.3, build/08-persistence/02-r2-save-share)
@@ -23,7 +23,7 @@ export const SETTINGS_STORAGE_KEY = 'datascope-settings';
 export interface CreatedShareLink {
   token: string;
   deleteToken: string;
-  kind: 'structure' | 'full-dataset';
+  kind: "structure" | "full-dataset";
   /** The table or dataset name shown in the "your share links" list. */
   label: string;
   createdAt: string;
@@ -46,7 +46,7 @@ interface SettingsState {
   // D68d: the expert/returning-user escape hatch — remembered so a later
   // ingest lands straight on the per-table profile instead of the Verdict.
   skipToData: boolean;
-  // The ~830 MB in-browser model is never downloaded silently: the user is
+  // The ~924 MB in-browser model is never downloaded silently: the user is
   // asked once, and a decline leaves the quota'd cloud free tier serving.
   // The choice is a preference (safe to persist), never dataset content.
   webllmConsent: WebLLMConsent;
@@ -74,23 +74,28 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       aiMode: null,
-      byokPreference: 'free-tier-first',
+      byokPreference: "free-tier-first",
       byokRoutingTouched: false,
-      theme: 'system',
+      theme: "system",
       skipToData: false,
       webllmConsent: null,
       metadataOnlyRepair: true,
       shareLinks: [],
 
       setAIMode: (mode) => set({ aiMode: mode }),
-      setByokPreference: (preference) => set({ byokPreference: preference, byokRoutingTouched: true }),
+      setByokPreference: (preference) =>
+        set({ byokPreference: preference, byokRoutingTouched: true }),
       setTheme: (theme) => set({ theme }),
       setSkipToData: (skip) => set({ skipToData: skip }),
       setWebllmConsent: (consent) => set({ webllmConsent: consent }),
-      setMetadataOnlyRepair: (metadataOnly) => set({ metadataOnlyRepair: metadataOnly }),
-      addShareLink: (link) => set((state) => ({ shareLinks: [link, ...state.shareLinks] })),
+      setMetadataOnlyRepair: (metadataOnly) =>
+        set({ metadataOnlyRepair: metadataOnly }),
+      addShareLink: (link) =>
+        set((state) => ({ shareLinks: [link, ...state.shareLinks] })),
       removeShareLink: (token) =>
-        set((state) => ({ shareLinks: state.shareLinks.filter((link) => link.token !== token) })),
+        set((state) => ({
+          shareLinks: state.shareLinks.filter((link) => link.token !== token),
+        })),
     }),
     {
       name: SETTINGS_STORAGE_KEY,

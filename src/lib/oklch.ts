@@ -25,7 +25,8 @@ export function oklchToRgb(L: number, C: number, H: number): Rgb {
     -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3,
   ];
   return linear.map((c) => {
-    const encoded = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.max(c, 0) ** (1 / 2.4) - 0.055;
+    const encoded =
+      c <= 0.0031308 ? 12.92 * c : 1.055 * Math.max(c, 0) ** (1 / 2.4) - 0.055;
     return Math.round(Math.min(1, Math.max(0, encoded)) * 255);
   }) as Rgb;
 }
@@ -40,7 +41,9 @@ function relativeLuminance([r, g, b]: Rgb): number {
 
 /** WCAG 2.1 contrast ratio. Order-independent. */
 export function contrastRatio(a: Rgb, b: Rgb): number {
-  const [hi, lo] = [relativeLuminance(a), relativeLuminance(b)].sort((x, y) => y - x);
+  const [hi, lo] = [relativeLuminance(a), relativeLuminance(b)].sort(
+    (x, y) => y - x,
+  );
   return (hi + 0.05) / (lo + 0.05);
 }
 

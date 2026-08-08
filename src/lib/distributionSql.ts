@@ -6,8 +6,8 @@
 // from the profile card's fixed-bucket histogram is a configurable count.
 // This file owns what that one doesn't: quartiles/whiskers/outliers for the
 // box plot, and the mean/median/mode/stddev/skewness/kurtosis moments row.
-import { quoteIdentifier } from '../services/ingestion';
-import type { QueryResult } from '../types';
+import { quoteIdentifier } from "../services/ingestion";
+import type { QueryResult } from "../types";
 
 export interface Quartiles {
   q1: number;
@@ -48,7 +48,11 @@ export interface Whiskers {
 }
 
 /** Whisker ends are real data points inside the fence, not the fence bound itself — the nearest in-fence value to each bound (Tukey's convention), never a value beyond it. */
-export function buildWhiskersSql(tableName: string, column: string, bounds: IqrBounds): string {
+export function buildWhiskersSql(
+  tableName: string,
+  column: string,
+  bounds: IqrBounds,
+): string {
   const col = quoteIdentifier(column);
   const table = quoteIdentifier(tableName);
   return (
@@ -67,7 +71,12 @@ export function parseWhiskers(result: QueryResult): Whiskers | null {
 const OUTLIER_LIMIT = 500;
 
 /** Values outside the IQR fence — capped so a heavy-tailed column doesn't try to plot tens of thousands of dots. */
-export function buildOutliersSql(tableName: string, column: string, bounds: IqrBounds, limit = OUTLIER_LIMIT): string {
+export function buildOutliersSql(
+  tableName: string,
+  column: string,
+  bounds: IqrBounds,
+  limit = OUTLIER_LIMIT,
+): string {
   const col = quoteIdentifier(column);
   const table = quoteIdentifier(tableName);
   return (

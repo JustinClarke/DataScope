@@ -35,10 +35,46 @@ const TOKEN = /[A-Za-z_][A-Za-z0-9_]*/g;
 // happens to sit one edit away (e.g. "count" → a "county" column). Not the full
 // dialect — just the words a natural-language question actually contains.
 const SQL_KEYWORDS = new Set([
-  'select', 'from', 'where', 'group', 'order', 'by', 'having', 'limit', 'offset',
-  'join', 'inner', 'outer', 'left', 'right', 'full', 'on', 'as', 'and', 'or', 'not',
-  'count', 'sum', 'avg', 'min', 'max', 'distinct', 'between', 'like', 'in', 'is',
-  'null', 'asc', 'desc', 'union', 'all', 'case', 'when', 'then', 'else', 'end',
+  "select",
+  "from",
+  "where",
+  "group",
+  "order",
+  "by",
+  "having",
+  "limit",
+  "offset",
+  "join",
+  "inner",
+  "outer",
+  "left",
+  "right",
+  "full",
+  "on",
+  "as",
+  "and",
+  "or",
+  "not",
+  "count",
+  "sum",
+  "avg",
+  "min",
+  "max",
+  "distinct",
+  "between",
+  "like",
+  "in",
+  "is",
+  "null",
+  "asc",
+  "desc",
+  "union",
+  "all",
+  "case",
+  "when",
+  "then",
+  "else",
+  "end",
 ]);
 
 /** Standard Levenshtein edit distance (insert / delete / substitute), case-insensitive by caller. */
@@ -68,7 +104,10 @@ interface NearestMatch {
 }
 
 /** Closest vocabulary term to `token` (all compared lowercased), with the runner-up gap. */
-function nearest(token: string, vocab: Array<{ lower: string; canonical: string }>): NearestMatch | null {
+function nearest(
+  token: string,
+  vocab: Array<{ lower: string; canonical: string }>,
+): NearestMatch | null {
   let bestTerm: string | null = null;
   let bestDistance = Infinity;
   let runnerUp = Infinity;
@@ -82,7 +121,9 @@ function nearest(token: string, vocab: Array<{ lower: string; canonical: string 
       runnerUp = distance;
     }
   }
-  return bestTerm === null ? null : { term: bestTerm, distance: bestDistance, runnerUp };
+  return bestTerm === null
+    ? null
+    : { term: bestTerm, distance: bestDistance, runnerUp };
 }
 
 /**
@@ -91,8 +132,14 @@ function nearest(token: string, vocab: Array<{ lower: string; canonical: string 
  * corrections rewrite to the canonical spelling from that list. Pure and
  * offline — safe to run on every keystroke's worth of input.
  */
-export function normalizeQuestion(question: string, vocabulary: string[]): NormalizedQuestion {
-  const vocab = vocabulary.map((canonical) => ({ lower: canonical.toLowerCase(), canonical }));
+export function normalizeQuestion(
+  question: string,
+  vocabulary: string[],
+): NormalizedQuestion {
+  const vocab = vocabulary.map((canonical) => ({
+    lower: canonical.toLowerCase(),
+    canonical,
+  }));
   const exact = new Set(vocab.map((v) => v.lower));
   const corrections: NormalizationCorrection[] = [];
 
@@ -105,7 +152,12 @@ export function normalizeQuestion(question: string, vocabulary: string[]): Norma
     const match = nearest(lower, vocab);
     if (match === null || match.distance === 0) return token;
 
-    const threshold = Math.max(1, Math.round(Math.max(lower.length, match.term.length) * MAX_DISTANCE_RATIO));
+    const threshold = Math.max(
+      1,
+      Math.round(
+        Math.max(lower.length, match.term.length) * MAX_DISTANCE_RATIO,
+      ),
+    );
     // Within the edit window and strictly closer than any other term: a safe,
     // unambiguous rewrite. Ties (distance === runnerUp) are left uncorrected.
     if (match.distance <= threshold && match.distance < match.runnerUp) {

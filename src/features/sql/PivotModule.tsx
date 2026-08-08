@@ -1,7 +1,7 @@
-import { PivotBuilder } from './PivotBuilder';
-import { QueryOutput } from './QueryResultsPanel';
-import { PIVOT_SESSION } from '../../stores/query';
-import type { ModulePrefill } from '../../lib/threadPrefill';
+import { PivotBuilder } from "./PivotBuilder";
+import { QueryOutput } from "./QueryResultsPanel";
+import { PIVOT_SESSION } from "../../stores/query";
+import type { ModulePrefill } from "../../lib/threadPrefill";
 
 interface PivotModuleProps {
   /** The Workbench tab's own initializer (W7.5) — forwarded to `PivotBuilder`. */

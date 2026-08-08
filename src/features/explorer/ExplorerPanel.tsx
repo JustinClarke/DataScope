@@ -3,20 +3,30 @@
 // share-links list is still open scope for a later leaf (see
 // build/12-workbench/03-left-explorer.md's scope call) — Add-data closed at
 // S1 (`14-workspace-streamline/01-explorer-rail-reflow.md`).
-import { useCallback, useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
-import { TableList } from '../ingestion/TableList';
-import { DataQualityPanel } from './DataQualityPanel';
-import { ValueSearch } from './ValueSearch';
-import { removeTable, refreshTableFromSource, IngestionError } from '../../services/ingestion';
-import { useSelectionStore } from '../../stores/selection';
-import { useDatasetsStore } from '../../stores/datasets';
-import { useRelationshipsStore } from '../../stores/relationships';
-import { useInferredEdgesStore } from '../../stores/inferredEdges';
-import { useRehydrationStore, usableTableNames } from '../../stores/rehydration';
-import { applyOverrides, type RelationshipOverrides } from '../../lib/relationshipInference';
-import { openDestination } from '../../services/navigation';
-import type { TableRegistryEntry } from '../../types';
+import { useCallback, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
+import { TableList } from "../ingestion/TableList";
+import { DataQualityPanel } from "./DataQualityPanel";
+import { ValueSearch } from "./ValueSearch";
+import {
+  removeTable,
+  refreshTableFromSource,
+  IngestionError,
+} from "../../services/ingestion";
+import { useSelectionStore } from "../../stores/selection";
+import { useDatasetsStore } from "../../stores/datasets";
+import { useRelationshipsStore } from "../../stores/relationships";
+import { useInferredEdgesStore } from "../../stores/inferredEdges";
+import {
+  useRehydrationStore,
+  usableTableNames,
+} from "../../stores/rehydration";
+import {
+  applyOverrides,
+  type RelationshipOverrides,
+} from "../../lib/relationshipInference";
+import { openDestination } from "../../services/navigation";
+import type { TableRegistryEntry } from "../../types";
 
 // The explorer's chrome-level header (V3, `.explorer__head`) — "Explorer" +
 // a live table/row count, reusing the same reduction `StatusBar.tsx` already
@@ -33,13 +43,14 @@ function ExplorerHeader() {
       <span className="micro text-(--color-ink-3)">Explorer</span>
       <div className="flex items-center gap-2">
         <span className="font-mono text-[length:var(--text-xs)] text-(--color-ink-3)">
-          {tables.length} table{tables.length !== 1 ? 's' : ''} · {totalRows.toLocaleString()} rows
+          {tables.length} table{tables.length !== 1 ? "s" : ""} ·{" "}
+          {totalRows.toLocaleString()} rows
         </span>
         <button
           type="button"
           aria-label="Add data"
           data-testid="explorer-add-data"
-          onClick={() => openDestination('ingestion')}
+          onClick={() => openDestination("ingestion")}
           className="rounded p-1 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink-2)"
         >
           <Plus size={14} aria-hidden="true" />
@@ -65,16 +76,27 @@ function useExplorerEdges(tables: TableRegistryEntry[]) {
 
   const outcomes = useRehydrationStore((state) => state.outcomes);
 
-  const overrides = useMemo<RelationshipOverrides>(() => ({ removed, repointed, added }), [removed, repointed, added]);
+  const overrides = useMemo<RelationshipOverrides>(
+    () => ({ removed, repointed, added }),
+    [removed, repointed, added],
+  );
   // 07d: "live" now means reconciled-usable, not merely registered — an override
   // naming a table that didn't come back is kept but goes inert, which is
   // exactly what `applyOverrides` already does for a name it isn't given.
-  const liveTableNames = useMemo(() => usableTableNames(outcomes, tables), [outcomes, tables]);
-  return useMemo(() => applyOverrides(inferredEdges, overrides, liveTableNames), [inferredEdges, overrides, liveTableNames]);
+  const liveTableNames = useMemo(
+    () => usableTableNames(outcomes, tables),
+    [outcomes, tables],
+  );
+  return useMemo(
+    () => applyOverrides(inferredEdges, overrides, liveTableNames),
+    [inferredEdges, overrides, liveTableNames],
+  );
 }
 
 export function ExplorerPanel() {
-  const [refreshingTableId, setRefreshingTableId] = useState<string | null>(null);
+  const [refreshingTableId, setRefreshingTableId] = useState<string | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const tables = useDatasetsStore((state) => state.tables);
   const selectTable = useSelectionStore((state) => state.selectTable);
@@ -84,7 +106,7 @@ export function ExplorerPanel() {
   const handleSelectTable = useCallback(
     (tableId: string) => {
       selectTable(tableId);
-      openDestination('profile', tableId);
+      openDestination("profile", tableId);
     },
     [selectTable],
   );
@@ -92,7 +114,7 @@ export function ExplorerPanel() {
   const handleSelectColumn = useCallback(
     (tableId: string, column: string) => {
       selectColumn(tableId, column);
-      openDestination('profile', tableId);
+      openDestination("profile", tableId);
     },
     [selectColumn],
   );
@@ -107,14 +129,21 @@ export function ExplorerPanel() {
     try {
       await refreshTableFromSource(tableId);
     } catch (err) {
-      setError(err instanceof IngestionError ? err.message : "Couldn't refresh — the previous data is unchanged.");
+      setError(
+        err instanceof IngestionError
+          ? err.message
+          : "Couldn't refresh — the previous data is unchanged.",
+      );
     } finally {
       setRefreshingTableId(null);
     }
   }, []);
 
   return (
-    <div data-testid="explorer-panel" className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div
+      data-testid="explorer-panel"
+      className="flex h-full min-h-0 flex-col overflow-hidden"
+    >
       <ExplorerHeader />
       <ValueSearch />
       {error && <p role="alert">{error}</p>}

@@ -18,13 +18,25 @@
 // is appended, and the model drives itself. Until then the request walks the
 // shared ladder in `toolLadder.ts`, which — unlike the rule this replaced —
 // leaves a rung for a second query.
-import type { AIProvider, AITool, ProviderMessage, ProviderToolCall, ProviderTurn } from '../types';
-import { RUNG_INSTRUCTION, SQL_TOOL, createCapabilityProbe, extractSql, ladderRung } from './toolLadder';
+import type {
+  AIProvider,
+  AITool,
+  ProviderMessage,
+  ProviderToolCall,
+  ProviderTurn,
+} from "../types";
+import {
+  RUNG_INSTRUCTION,
+  SQL_TOOL,
+  createCapabilityProbe,
+  extractSql,
+  ladderRung,
+} from "./toolLadder";
 
 /** Default localhost Ollama endpoint (the daemon's standard port). */
-export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
+export const DEFAULT_OLLAMA_URL = "http://localhost:11434";
 /** A small coder model that fits the local honesty guardrail (D43/ADR-007). */
-export const DEFAULT_OLLAMA_MODEL = 'qwen2.5-coder:1.5b';
+export const DEFAULT_OLLAMA_MODEL = "qwen2.5-coder:1.5b";
 
 /**
  * API mode's key/endpoint field auto-detects its own shape (D9, 2026-07-22): a
@@ -35,7 +47,7 @@ export const DEFAULT_OLLAMA_MODEL = 'qwen2.5-coder:1.5b';
 export function isOllamaEndpoint(value: string): boolean {
   try {
     const url = new URL(value.trim());
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    return url.protocol === "http:" || url.protocol === "https:";
   } catch {
     return false;
   }
@@ -47,7 +59,7 @@ interface OllamaToolCall {
 }
 
 interface OllamaMessage {
-  role: 'system' | 'user' | 'assistant' | 'tool';
+  role: "system" | "user" | "assistant" | "tool";
   content: string;
   tool_calls?: OllamaToolCall[];
 }
@@ -58,21 +70,24 @@ interface OllamaChatResponse {
 function toOllamaMessages(messages: ProviderMessage[]): OllamaMessage[] {
   return messages.map((m): OllamaMessage => {
     switch (m.role) {
-      case 'assistant':
+      case "assistant":
         // Every call, in emitted order — the history the model gets back has to
         // match what it actually asked for (A4 defect iii).
         return m.toolCalls !== undefined && m.toolCalls.length > 0
           ? {
-              role: 'assistant',
+              role: "assistant",
               content: m.content,
               tool_calls: m.toolCalls.map((call) => ({
-                function: { name: call.name, arguments: (call.input ?? {}) as Record<string, unknown> },
+                function: {
+                  name: call.name,
+                  arguments: (call.input ?? {}) as Record<string, unknown>,
+                },
               })),
             }
-          : { role: 'assistant', content: m.content };
-      case 'tool':
+          : { role: "assistant", content: m.content };
+      case "tool":
         // Ollama identifies a tool result by position, not id — the id is dropped.
-        return { role: 'tool', content: m.content };
+        return { role: "tool", content: m.content };
       default:
         return { role: m.role, content: m.content };
     }
@@ -81,8 +96,12 @@ function toOllamaMessages(messages: ProviderMessage[]): OllamaMessage[] {
 
 function toOllamaTools(tools: AITool[]) {
   return tools.map((t) => ({
-    type: 'function' as const,
-    function: { name: t.name, description: t.description, parameters: t.inputSchema },
+    type: "function" as const,
+    function: {
+      name: t.name,
+      description: t.description,
+      parameters: t.inputSchema,
+    },
   }));
 }
 
@@ -94,7 +113,7 @@ function toOllamaTools(tools: AITool[]) {
 export function createOllamaProvider(
   options: { baseUrl?: string; model?: string; fetchImpl?: typeof fetch } = {},
 ): AIProvider {
-  const baseUrl = (options.baseUrl ?? DEFAULT_OLLAMA_URL).replace(/\/$/, '');
+  const baseUrl = (options.baseUrl ?? DEFAULT_OLLAMA_URL).replace(/\/$/, "");
   const model = options.model ?? DEFAULT_OLLAMA_MODEL;
   const doFetch = options.fetchImpl ?? fetch;
 
@@ -103,23 +122,27 @@ export function createOllamaProvider(
   const probe = createCapabilityProbe();
 
   return {
-    id: 'ollama',
+    id: "ollama",
     async complete(messages, tools, opts): Promise<ProviderTurn> {
       const sqlTool = tools.find((t) => t.name === SQL_TOOL);
       // A model that drives itself gets the tools and no coaching. One that does
       // not gets the ladder's rung — and tools alongside it on every rung that
       // could carry a call, which is how it gets the chance to prove otherwise.
-      const rung = probe.structured ? null : ladderRung(messages, sqlTool !== undefined);
-      const offerTools = tools.length > 0 && rung !== 'answer';
+      const rung = probe.structured
+        ? null
+        : ladderRung(messages, sqlTool !== undefined);
+      const offerTools = tools.length > 0 && rung !== "answer";
 
       const res = await doFetch(`${baseUrl}/api/chat`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        method: "POST",
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           model,
           messages: [
             ...toOllamaMessages(messages),
-            ...(rung === null ? [] : [{ role: 'user', content: RUNG_INSTRUCTION[rung] }]),
+            ...(rung === null
+              ? []
+              : [{ role: "user", content: RUNG_INSTRUCTION[rung] }]),
           ],
           ...(offerTools ? { tools: toOllamaTools(tools) } : {}),
           stream: false,
@@ -127,23 +150,38 @@ export function createOllamaProvider(
         signal: opts?.signal,
       });
       if (!res.ok) {
-        throw new Error(`Ollama request failed (${res.status}). Is the model "${model}" pulled and the daemon running?`);
+        throw new Error(
+          `Ollama request failed (${res.status}). Is the model "${model}" pulled and the daemon running?`,
+        );
       }
       const data = (await res.json()) as OllamaChatResponse;
-      const content = data.message?.content ?? '';
+      const content = data.message?.content ?? "";
 
       const structured = (data.message?.tool_calls ?? []).map(
-        (call): ProviderToolCall => ({ id: crypto.randomUUID(), name: call.function.name, input: call.function.arguments }),
+        (call): ProviderToolCall => ({
+          id: crypto.randomUUID(),
+          name: call.function.name,
+          input: call.function.arguments,
+        }),
       );
       probe.observe(structured.length);
-      if (structured.length > 0) return { text: content.trim(), calls: structured };
+      if (structured.length > 0)
+        return { text: content.trim(), calls: structured };
 
       // No structured calls: on a rung that asked for SQL, extracted SQL is the
       // call. Prose without SQL means the model answered (or declined) — that is
       // the turn's terminal state, and the only one.
-      const sql = rung === null || rung === 'answer' || sqlTool === undefined ? null : extractSql(content);
+      const sql =
+        rung === null || rung === "answer" || sqlTool === undefined
+          ? null
+          : extractSql(content);
       if (sql !== null) {
-        return { text: content.trim(), calls: [{ id: crypto.randomUUID(), name: sqlTool!.name, input: { sql } }] };
+        return {
+          text: content.trim(),
+          calls: [
+            { id: crypto.randomUUID(), name: sqlTool!.name, input: { sql } },
+          ],
+        };
       }
       return { text: content.trim(), calls: [] };
     },

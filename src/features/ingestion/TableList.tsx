@@ -1,23 +1,35 @@
-import { useEffect, useState } from 'react';
-import { RefreshCw, Trash2, Undo2, ChevronRight, ChevronDown } from 'lucide-react';
-import { useDatasetsStore } from '../../stores/datasets';
-import { useSelectionStore } from '../../stores/selection';
-import { useRehydrationStore, type TableOutcome } from '../../stores/rehydration';
-import { recoverTable } from '../../services/rehydration';
-import { useEducationalPanel } from '../../app/useEducationalPanel';
-import { formatBytes } from '../../lib/formatBytes';
-import { keyColumnsFor } from '../../lib/dossier';
-import { ColumnCard } from '../profiling/ColumnCard';
-import { loadTableCardStats, type ColumnCardStats } from '../../services/profiling';
-import type { FkEdge } from '../../lib/relationshipInference';
-import type { TableRegistryEntry } from '../../types';
+import { useEffect, useState } from "react";
+import {
+  RefreshCw,
+  Trash2,
+  Undo2,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
+import { useDatasetsStore } from "../../stores/datasets";
+import { useSelectionStore } from "../../stores/selection";
+import {
+  useRehydrationStore,
+  type TableOutcome,
+} from "../../stores/rehydration";
+import { recoverTable } from "../../services/rehydration";
+import { useEducationalPanel } from "../../app/useEducationalPanel";
+import { formatBytes } from "../../lib/formatBytes";
+import { keyColumnsFor } from "../../lib/dossier";
+import { ColumnCard } from "../profiling/ColumnCard";
+import {
+  loadTableCardStats,
+  type ColumnCardStats,
+} from "../../services/profiling";
+import type { FkEdge } from "../../lib/relationshipInference";
+import type { TableRegistryEntry } from "../../types";
 
-const ORIGIN_LABEL: Record<TableRegistryEntry['origin'], string> = {
-  file: 'file',
-  sample: 'sample',
-  api: 'API',
-  derived: 'derived',
-  shared: 'shared link',
+const ORIGIN_LABEL: Record<TableRegistryEntry["origin"], string> = {
+  file: "file",
+  sample: "sample",
+  api: "API",
+  derived: "derived",
+  shared: "shared link",
 };
 
 /**
@@ -27,7 +39,7 @@ const ORIGIN_LABEL: Record<TableRegistryEntry['origin'], string> = {
  * size badge is 0 B rather than missing.
  */
 function originLabel(table: TableRegistryEntry): string {
-  return table.kind === 'view' ? 'view' : ORIGIN_LABEL[table.origin];
+  return table.kind === "view" ? "view" : ORIGIN_LABEL[table.origin];
 }
 
 interface TableListProps {
@@ -87,13 +99,15 @@ function RowMetadata({ table }: { table: TableRegistryEntry }) {
       <span className="font-mono text-[length:var(--text-2xs)] uppercase tracking-[0.1em] text-(--color-ink-3)">
         {originLabel(table)}
       </span>
-      <span className="text-[length:var(--text-xs)] text-(--color-ink-3)">{formatBytes(table.memoryBytes)}</span>
-      {table.origin === 'api' && table.lastFetchedAt && (
+      <span className="text-[length:var(--text-xs)] text-(--color-ink-3)">
+        {formatBytes(table.memoryBytes)}
+      </span>
+      {table.origin === "api" && table.lastFetchedAt && (
         <span className="text-[length:var(--text-xs)] text-(--color-ink-3)">
           fetched {new Date(table.lastFetchedAt).toLocaleString()}
         </span>
       )}
-      {table.origin === 'derived' && table.stale && (
+      {table.origin === "derived" && table.stale && (
         // No dismiss control, same reasoning as the sampled badge below —
         // stays visible for as long as the flag holds, straight from the store.
         <span className="ml-2 rounded bg-(--color-warn)/10 px-1.5 py-0.5 text-xs font-medium text-(--color-warn)">
@@ -105,7 +119,8 @@ function RowMetadata({ table }: { table: TableRegistryEntry }) {
         // stays visible for as long as this table does rather than
         // only for the ingestion moment.
         <span className="ml-2 rounded bg-(--color-warn)/10 px-1.5 py-0.5 text-xs font-medium text-(--color-warn)">
-          sampled — first {(table.sampleRowLimit ?? table.rowCount).toLocaleString()} rows
+          sampled — first{" "}
+          {(table.sampleRowLimit ?? table.rowCount).toLocaleString()} rows
         </span>
       )}
     </>
@@ -127,7 +142,7 @@ function RowActions({
 }) {
   return (
     <>
-      {table.origin === 'api' && (
+      {table.origin === "api" && (
         <button
           type="button"
           onClick={() => onRefresh(table.id)}
@@ -135,7 +150,13 @@ function RowActions({
           aria-label={`Refresh ${table.tableName} from source`}
           className="rounded p-1 text-(--color-fg-muted) transition-colors hover:bg-(--color-border) hover:text-(--color-fg) disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <RefreshCw size={16} aria-hidden="true" className={refreshingTableId === table.id ? 'animate-spin' : undefined} />
+          <RefreshCw
+            size={16}
+            aria-hidden="true"
+            className={
+              refreshingTableId === table.id ? "animate-spin" : undefined
+            }
+          />
         </button>
       )}
       {/* A derived table's "remove" action *is* its undo (§12.1) —
@@ -146,10 +167,18 @@ function RowActions({
       <button
         type="button"
         onClick={() => onRemove(table.id)}
-        aria-label={table.origin === 'derived' ? `Undo ${table.tableName}` : `Remove ${table.tableName}`}
+        aria-label={
+          table.origin === "derived"
+            ? `Undo ${table.tableName}`
+            : `Remove ${table.tableName}`
+        }
         className="rounded p-1 text-(--color-fg-muted) transition-colors hover:bg-(--color-border) hover:text-(--color-fg)"
       >
-        {table.origin === 'derived' ? <Undo2 size={16} aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}
+        {table.origin === "derived" ? (
+          <Undo2 size={16} aria-hidden="true" />
+        ) : (
+          <Trash2 size={16} aria-hidden="true" />
+        )}
       </button>
     </>
   );
@@ -184,7 +213,7 @@ function UnavailableRow({
           {table.tableName}
         </span>
         <div className="flex shrink-0 items-center gap-1">
-          {outcome.status === 'recoverable' && (
+          {outcome.status === "recoverable" && (
             <button
               type="button"
               disabled={recovering}
@@ -194,7 +223,9 @@ function UnavailableRow({
               }}
               className="rounded px-1.5 py-0.5 text-[length:var(--text-xs)] text-(--color-accent) hover:underline disabled:opacity-50"
             >
-              {outcome.recovery === 'refetch' ? 'Refresh from source' : 'Rebuild'}
+              {outcome.recovery === "refetch"
+                ? "Refresh from source"
+                : "Rebuild"}
             </button>
           )}
           <button
@@ -207,7 +238,9 @@ function UnavailableRow({
           </button>
         </div>
       </div>
-      <p className="pl-0 text-[length:var(--text-xs)] text-(--color-warn)">{outcome.reason}</p>
+      <p className="pl-0 text-[length:var(--text-xs)] text-(--color-warn)">
+        {outcome.reason}
+      </p>
     </li>
   );
 }
@@ -245,7 +278,10 @@ function ColumnDisclosure({
 }) {
   const columns = table.columns ?? [];
   const { setContent } = useEducationalPanel();
-  const [cardStats, setCardStats] = useState<Record<string, ColumnCardStats> | null>(null);
+  const [cardStats, setCardStats] = useState<Record<
+    string,
+    ColumnCardStats
+  > | null>(null);
 
   useEffect(() => {
     if (columns.length === 0) {
@@ -289,12 +325,19 @@ function ColumnDisclosure({
   const fkColumns = fkColumnsFor(table, edges);
 
   return (
-    <div data-testid={`trow-columns-${table.id}`} className="flex flex-col gap-0.5 pb-2 pl-6 pr-2">
+    <div
+      data-testid={`trow-columns-${table.id}`}
+      className="flex flex-col gap-0.5 pb-2 pl-6 pr-2"
+    >
       {columns.map((column) => {
         const isPk = pkColumns.has(column.name);
         const isFk = fkColumns.has(column.name);
         return (
-          <div key={column.name} data-testid={`trow-column-${table.id}-${column.name}`} data-key={isPk ? 'pk' : isFk ? 'fk' : undefined}>
+          <div
+            key={column.name}
+            data-testid={`trow-column-${table.id}-${column.name}`}
+            data-key={isPk ? "pk" : isFk ? "fk" : undefined}
+          >
             <ColumnCard
               column={column}
               stats={cardStats?.[column.name]}
@@ -303,7 +346,11 @@ function ColumnDisclosure({
               defaultExpanded={false}
               isForeignKey={isFk}
               onShowSql={handleShowSql}
-              onSelect={onSelectColumn ? () => onSelectColumn(table.id, column.name) : undefined}
+              onSelect={
+                onSelectColumn
+                  ? () => onSelectColumn(table.id, column.name)
+                  : undefined
+              }
             />
           </div>
         );
@@ -350,31 +397,44 @@ export function TableList({
 
   return (
     <div>
-      {!hideHeading && <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">Registered tables</h2>}
+      {!hideHeading && (
+        <h2 className="mb-3 text-sm font-medium text-(--color-fg-muted)">
+          Registered tables
+        </h2>
+      )}
       <ul className="flex flex-col gap-2">
         {tables.map((table) => {
           // 07d: reconciliation's answer comes first — a row the engine can't
           // back never reaches the ordinary compositions below, reflowed or not.
           const outcome = outcomes[table.id];
-          if (outcome && outcome.status !== 'restored') {
-            return <UnavailableRow key={table.id} table={table} outcome={outcome} onRemove={onRemove} />;
+          if (outcome && outcome.status !== "restored") {
+            return (
+              <UnavailableRow
+                key={table.id}
+                table={table}
+                outcome={outcome}
+                onRemove={onRemove}
+              />
+            );
           }
 
           const isSelected = table.id === selectedTableId;
           const rowClassName = `group flex items-center justify-between gap-2 rounded-(--radius-sm) px-4 py-2 outline outline-2 -outline-offset-2 outline-transparent ${
-            isSelected ? 'bg-(--color-elev) shadow-[inset_2px_0_0_var(--color-active)]' : 'hover:bg-(--color-elev)'
+            isSelected
+              ? "bg-(--color-elev) shadow-[inset_2px_0_0_var(--color-active)]"
+              : "hover:bg-(--color-elev)"
           }`;
           const name = onSelectTable ? (
             <button
               type="button"
               onClick={() => onSelectTable(table.id)}
-              className={`trow__name min-w-0 text-left font-mono text-[length:var(--text-base)] text-(--color-ink) underline-offset-2 hover:underline ${reflow ? '' : 'flex-auto truncate'}`}
+              className={`trow__name min-w-0 text-left font-mono text-[length:var(--text-base)] text-(--color-ink) underline-offset-2 hover:underline ${reflow ? "" : "flex-auto truncate"}`}
             >
               {table.tableName}
             </button>
           ) : (
             <span
-              className={`trow__name min-w-0 font-mono text-[length:var(--text-base)] text-(--color-ink) ${reflow ? '' : 'flex-auto truncate'}`}
+              className={`trow__name min-w-0 font-mono text-[length:var(--text-base)] text-(--color-ink) ${reflow ? "" : "flex-auto truncate"}`}
             >
               {table.tableName}
             </span>
@@ -384,7 +444,10 @@ export function TableList({
             return (
               <li key={table.id} className={rowClassName}>
                 <div className="flex min-w-0 items-center gap-2">
-                  <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-(--radius-xs) bg-(--color-ink-3)" />
+                  <span
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 shrink-0 rounded-(--radius-xs) bg-(--color-ink-3)"
+                  />
                   {name}
                   <RowMetadata table={table} />
                 </div>
@@ -418,14 +481,17 @@ export function TableList({
             toggleExpanded(table.id);
           };
           return (
-            <li key={table.id} className={`${rowClassName} flex-col items-stretch gap-0`}>
+            <li
+              key={table.id}
+              className={`${rowClassName} flex-col items-stretch gap-0`}
+            >
               <div
                 className="flex cursor-pointer flex-col gap-0 rounded-(--radius-sm) outline-none focus-visible:bg-(--color-elev)"
                 role="button"
                 tabIndex={0}
                 onClick={handleRowClick}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     handleRowClick();
                   }
@@ -439,12 +505,16 @@ export function TableList({
                         e.stopPropagation();
                         toggleExpanded(table.id);
                       }}
-                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${table.tableName}'s columns`}
+                      aria-label={`${isExpanded ? "Collapse" : "Expand"} ${table.tableName}'s columns`}
                       aria-expanded={isExpanded}
                       data-testid={`trow-chevron-${table.id}`}
                       className="shrink-0 rounded p-0.5 text-(--color-ink-3) hover:bg-(--color-elev) hover:text-(--color-ink-2)"
                     >
-                      {isExpanded ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+                      {isExpanded ? (
+                        <ChevronDown size={14} aria-hidden="true" />
+                      ) : (
+                        <ChevronRight size={14} aria-hidden="true" />
+                      )}
                     </button>
                     <span className="trow__name min-w-0 font-mono text-[length:var(--text-base)] text-(--color-ink)">
                       {table.tableName}
@@ -472,7 +542,9 @@ export function TableList({
                   table={table}
                   edges={edges}
                   onSelectColumn={onSelectColumn}
-                  onOpenProfile={onSelectTable ? () => onSelectTable(table.id) : undefined}
+                  onOpenProfile={
+                    onSelectTable ? () => onSelectTable(table.id) : undefined
+                  }
                 />
               )}
             </li>

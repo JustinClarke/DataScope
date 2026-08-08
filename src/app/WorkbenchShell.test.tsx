@@ -1,30 +1,36 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
-import { StrictMode } from 'react';
-import { WorkbenchShell } from './WorkbenchShell';
-import { useDatasetsStore } from '../stores/datasets';
-import { useTabsStore } from '../stores/tabs';
-import { useSelectionStore } from '../stores/selection';
-import { useRehydrationStore } from '../stores/rehydration';
-import { usePersistenceStore } from '../stores/persistence';
-import { useDspsReceiverStore } from '../stores/dspsReceiver';
-import { useSettingsStore } from '../stores/settings';
-import { useByokKeyStore } from '../stores/byokKey';
-import { useRunGuardStore } from '../stores/runGuard';
-import { useQueryStore, CONSOLE_SESSION } from '../stores/query';
-import { openQueryTab } from '../services/queryTabs';
-import { HISTORY_TAB_SUBJECT } from '../features/sql/HistoryTab';
-import { classifyStatement } from '../lib/statementClass';
-import * as ingestionService from '../services/ingestion';
-import type { TableRegistryEntry } from '../types';
-import type { StructureReport } from '../lib/structureReport';
-import type { RestoreReport } from '../services/workspace';
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import {
+  act,
+  fireEvent,
+  render,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { StrictMode } from "react";
+import { WorkbenchShell } from "./WorkbenchShell";
+import { useDatasetsStore } from "../stores/datasets";
+import { useTabsStore } from "../stores/tabs";
+import { useSelectionStore } from "../stores/selection";
+import { useRehydrationStore } from "../stores/rehydration";
+import { usePersistenceStore } from "../stores/persistence";
+import { useDspsReceiverStore } from "../stores/dspsReceiver";
+import { useSettingsStore } from "../stores/settings";
+import { useByokKeyStore } from "../stores/byokKey";
+import { useRunGuardStore } from "../stores/runGuard";
+import { useQueryStore, CONSOLE_SESSION } from "../stores/query";
+import { openQueryTab } from "../services/queryTabs";
+import { HISTORY_TAB_SUBJECT } from "../features/sql/HistoryTab";
+import { classifyStatement } from "../lib/statementClass";
+import * as ingestionService from "../services/ingestion";
+import type { TableRegistryEntry } from "../types";
+import type { StructureReport } from "../lib/structureReport";
+import type { RestoreReport } from "../services/workspace";
 
 // Wraps the real module so `loadSharedDataset` can be mocked per-test for the
 // share-link tests (ported from App.test.tsx, HANDOFF-W8-CUTOVER.md) while
 // `IngestionError` stays the real class `useShareLinkOpener` checks against.
-vi.mock('../services/ingestion', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../services/ingestion')>();
+vi.mock("../services/ingestion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../services/ingestion")>();
   return {
     ...actual,
     loadSharedDataset: vi.fn(actual.loadSharedDataset),
@@ -39,12 +45,13 @@ const { restoreStagedTablesMock, rehydrateWorkspaceMock } = vi.hoisted(() => ({
   restoreStagedTablesMock: vi.fn(),
   rehydrateWorkspaceMock: vi.fn(),
 }));
-vi.mock('../services/workspace', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../services/workspace')>();
+vi.mock("../services/workspace", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../services/workspace")>();
   return { ...actual, restoreStagedTables: restoreStagedTablesMock };
 });
-vi.mock('../services/rehydration', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../services/rehydration')>();
+vi.mock("../services/rehydration", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../services/rehydration")>();
   return { ...actual, rehydrateWorkspace: rehydrateWorkspaceMock };
 });
 
@@ -52,10 +59,14 @@ vi.mock('../services/rehydration', async (importOriginal) => {
 // InsightFeed/ColumnCard's own async effects, which reach the DuckDB worker
 // through these two services — mocked the same way InsightFeed.test.tsx does
 // so this stays a UI test, never an engine one.
-const { loadTableCardStatsMock } = vi.hoisted(() => ({ loadTableCardStatsMock: vi.fn() }));
-vi.mock('../services/profiling', () => ({ loadTableCardStats: loadTableCardStatsMock }));
+const { loadTableCardStatsMock } = vi.hoisted(() => ({
+  loadTableCardStatsMock: vi.fn(),
+}));
+vi.mock("../services/profiling", () => ({
+  loadTableCardStats: loadTableCardStatsMock,
+}));
 const { loadInsightsMock } = vi.hoisted(() => ({ loadInsightsMock: vi.fn() }));
-vi.mock('../services/insights', () => ({ loadInsights: loadInsightsMock }));
+vi.mock("../services/insights", () => ({ loadInsights: loadInsightsMock }));
 // DatasetMap (mounted as `'map'` tab content, W4) reaches the DuckDB worker
 // through `useDatasetBaseline` — the same two services `DatasetMap.test.tsx`
 // mocks.
@@ -63,45 +74,55 @@ const { loadDossierInsightsMock, loadTimeCoverageMock } = vi.hoisted(() => ({
   loadDossierInsightsMock: vi.fn(),
   loadTimeCoverageMock: vi.fn(),
 }));
-vi.mock('../services/dossier', () => ({
+vi.mock("../services/dossier", () => ({
   loadDossierInsights: loadDossierInsightsMock,
   loadTimeCoverage: loadTimeCoverageMock,
 }));
-const { loadRelationshipsMock } = vi.hoisted(() => ({ loadRelationshipsMock: vi.fn() }));
-vi.mock('../services/relationships', () => ({ loadRelationships: loadRelationshipsMock }));
-const { loadDatasetQualityReportMock } = vi.hoisted(() => ({ loadDatasetQualityReportMock: vi.fn() }));
-vi.mock('../services/dataQuality', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../services/dataQuality')>();
+const { loadRelationshipsMock } = vi.hoisted(() => ({
+  loadRelationshipsMock: vi.fn(),
+}));
+vi.mock("../services/relationships", () => ({
+  loadRelationships: loadRelationshipsMock,
+}));
+const { loadDatasetQualityReportMock } = vi.hoisted(() => ({
+  loadDatasetQualityReportMock: vi.fn(),
+}));
+vi.mock("../services/dataQuality", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../services/dataQuality")>();
   return { ...actual, loadDatasetQualityReport: loadDatasetQualityReportMock };
 });
 // SqlModule (mounted as `'sql'` tab content, W7.5) statically lazy-imports the
 // real Monaco editor, which needs a real browser to mount — stubbed the same
 // way SqlModule.test.tsx stubs it, so this stays a UI/wiring test.
-vi.mock('../features/sql/MonacoWrapper', () => ({
+vi.mock("../features/sql/MonacoWrapper", () => ({
   default: () => <div data-testid="fake-monaco" />,
 }));
 
 const DATASET = {
-  id: 'ds-1',
-  name: 'demo',
-  sourceType: 'file' as const,
-  tableNames: ['t'],
+  id: "ds-1",
+  name: "demo",
+  sourceType: "file" as const,
+  tableNames: ["t"],
   ingestedAt: new Date().toISOString(),
 };
 
-function table(overrides: Partial<TableRegistryEntry> & Pick<TableRegistryEntry, 'id' | 'tableName'>): TableRegistryEntry {
+function table(
+  overrides: Partial<TableRegistryEntry> &
+    Pick<TableRegistryEntry, "id" | "tableName">,
+): TableRegistryEntry {
   return {
-    datasetId: 'ds-1',
-    origin: 'sample',
+    datasetId: "ds-1",
+    origin: "sample",
     rowCount: 10,
     columnCount: 1,
     memoryBytes: 100,
     createdAt: new Date().toISOString(),
     columns: [
       {
-        name: 'id',
-        semanticType: 'Categorical',
-        physicalType: 'VARCHAR',
+        name: "id",
+        semanticType: "Categorical",
+        physicalType: "VARCHAR",
         cardinality: 3,
         nullPercentage: 0,
         min: null,
@@ -114,8 +135,8 @@ function table(overrides: Partial<TableRegistryEntry> & Pick<TableRegistryEntry,
   };
 }
 
-const TABLE_A = table({ id: 't-a', tableName: 'orders' });
-const TABLE_B = table({ id: 't-b', tableName: 'customers' });
+const TABLE_A = table({ id: "t-a", tableName: "orders" });
+const TABLE_B = table({ id: "t-b", tableName: "customers" });
 const EMPTY_RESTORE: RestoreReport = { tables: [], durationMs: 0 };
 
 beforeEach(() => {
@@ -124,40 +145,59 @@ beforeEach(() => {
   loadDossierInsightsMock.mockReset().mockResolvedValue([]);
   loadTimeCoverageMock.mockReset().mockResolvedValue([]);
   loadRelationshipsMock.mockReset().mockResolvedValue([]);
-  loadDatasetQualityReportMock.mockReset().mockResolvedValue({ warnings: [], passedRules: [] });
+  loadDatasetQualityReportMock
+    .mockReset()
+    .mockResolvedValue({ warnings: [], passedRules: [] });
   restoreStagedTablesMock.mockReset().mockResolvedValue(EMPTY_RESTORE);
   rehydrateWorkspaceMock.mockReset().mockResolvedValue([]);
-  useDatasetsStore.setState({ tables: [], datasets: [], workerStatus: 'idle', workerError: null });
+  useDatasetsStore.setState({
+    tables: [],
+    datasets: [],
+    workerStatus: "idle",
+    workerError: null,
+  });
   useTabsStore.setState({ tabs: [], activeTabId: null });
-  useQueryStore.setState({ sessions: {}, history: [], lastRunSession: CONSOLE_SESSION });
+  useQueryStore.setState({
+    sessions: {},
+    history: [],
+    lastRunSession: CONSOLE_SESSION,
+  });
   useDspsReceiverStore.setState({ document: null, error: null });
   // S6.7 ties the drawer's Info pane to there being a selection or a run, so
   // the selection store is part of this file's reset now.
   useSelectionStore.getState().clearSelection();
   useRehydrationStore.setState({ outcomes: {} });
-  usePersistenceStore.setState({ status: 'unknown', note: null, restore: EMPTY_RESTORE });
+  usePersistenceStore.setState({
+    status: "unknown",
+    note: null,
+    restore: EMPTY_RESTORE,
+  });
 });
 
-describe('WorkbenchShell — act assembly (§13.3, W1/W6)', () => {
-  it('renders Act 0 chrome-free when there are no datasets and no ingest in progress, with real ingestion entry points', () => {
+describe("WorkbenchShell — act assembly (§13.3, W1/W6)", () => {
+  it("renders Act 0 chrome-free when there are no datasets and no ingest in progress, with real ingestion entry points", () => {
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-act="act0"]')).not.toBeNull();
-    expect(container.querySelector('[data-region]')).toBeNull();
-    expect(within(container).getByText(/Nothing leaves your machine/)).toBeTruthy();
+    expect(container.querySelector("[data-region]")).toBeNull();
+    expect(
+      within(container).getByText(/Nothing leaves your machine/),
+    ).toBeTruthy();
     expect(container.querySelector('input[type="file"]')).not.toBeNull();
   });
 
-  it('does not auto-load any sample dataset on a fresh Act 0 mount', () => {
+  it("does not auto-load any sample dataset on a fresh Act 0 mount", () => {
     render(<WorkbenchShell />);
     expect(useDatasetsStore.getState().datasets).toHaveLength(0);
   });
 
-  it('renders Act 1 chrome-free while the worker is loading or compiling, with the same welcome content as Act 0', () => {
-    useDatasetsStore.setState({ workerStatus: 'loading' });
+  it("renders Act 1 chrome-free while the worker is loading or compiling, with the same welcome content as Act 0", () => {
+    useDatasetsStore.setState({ workerStatus: "loading" });
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-act="act1"]')).not.toBeNull();
-    expect(container.querySelector('[data-region]')).toBeNull();
-    expect(within(container).getByText(/Nothing leaves your machine/)).toBeTruthy();
+    expect(container.querySelector("[data-region]")).toBeNull();
+    expect(
+      within(container).getByText(/Nothing leaves your machine/),
+    ).toBeTruthy();
     expect(container.querySelector('input[type="file"]')).not.toBeNull();
   });
 
@@ -166,37 +206,47 @@ describe('WorkbenchShell — act assembly (§13.3, W1/W6)', () => {
   // build/13-hallmark-replication/06d-act0.md).
   // The lockup sets the "o" as the brand reticle, so the word is three runs —
   // bone "Data", amber "Sc", the mark, amber "pe" — not a two-span split.
-  it('renders the masthead wordmark with the shipped Data/Sc-reticle-pe amber split', () => {
+  it("renders the masthead wordmark with the shipped Data/Sc-reticle-pe amber split", () => {
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getAllByText('Data')[0].className).toContain('text-(--color-ink)');
-    expect(within(container).getAllByText('Sc')[0].className).toContain('text-(--color-active)');
-    expect(within(container).getAllByText('pe')[0].className).toContain('text-(--color-active)');
+    expect(within(container).getAllByText("Data")[0].className).toContain(
+      "text-(--color-ink)",
+    );
+    expect(within(container).getAllByText("Sc")[0].className).toContain(
+      "text-(--color-active)",
+    );
+    expect(within(container).getAllByText("pe")[0].className).toContain(
+      "text-(--color-active)",
+    );
   });
 
   // The rebuilt page states the local-first promise in the footer band rather
   // than in numbered section eyebrows (design.md § Variants, resolved 07-28).
-  it('carries the local-first promises in the footer band', () => {
+  it("carries the local-first promises in the footer band", () => {
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByText(/No uploads · No accounts · No tracking/)).toBeTruthy();
-    expect(within(container).getByText(/Nothing leaves your machine/)).toBeTruthy();
-    expect(within(container).getByText('In-browser')).toBeTruthy();
+    expect(
+      within(container).getByText(/No uploads · No accounts · No tracking/),
+    ).toBeTruthy();
+    expect(
+      within(container).getByText(/Nothing leaves your machine/),
+    ).toBeTruthy();
+    expect(within(container).getByText("In-browser")).toBeTruthy();
   });
 
   // §5.1 ships no forced gate; the rebuilt page carries that posture in the
   // feature rail rather than as a prose section (design.md § Variants, 07-28).
   // The mock's "we'll ask exactly one thing" promise stays absent either way.
-  it('presents AI as optional and never promises a forced question', () => {
+  it("presents AI as optional and never promises a forced question", () => {
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByText('AI optional')).toBeTruthy();
+    expect(within(container).getByText("AI optional")).toBeTruthy();
     expect(within(container).queryByText(/ask exactly one thing/)).toBeNull();
   });
 
-  it('gives Act 1 the identical composition, not a second progress screen', () => {
-    useDatasetsStore.setState({ workerStatus: 'compiling' });
+  it("gives Act 1 the identical composition, not a second progress screen", () => {
+    useDatasetsStore.setState({ workerStatus: "compiling" });
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-act="act1"]')).not.toBeNull();
-    expect(within(container).getByText('AI optional')).toBeTruthy();
-    expect(within(container).getAllByText('Sc').length).toBeGreaterThan(0);
+    expect(within(container).getByText("AI optional")).toBeTruthy();
+    expect(within(container).getAllByText("Sc").length).toBeGreaterThan(0);
   });
 
   // `design.md` § Variants: no page scroll at `lg` and up — Act 0 is a decision
@@ -204,60 +254,72 @@ describe('WorkbenchShell — act assembly (§13.3, W1/W6)', () => {
   // `lg` the page deliberately still flows and scrolls: a phone can't hold a
   // drop target, a URL field and five samples at once. The rebuilt composition
   // gives the ingest column the one overflow (resolved 07-28).
-  it('frames Act 0 as one viewport with a column, not the page, taking any overflow', () => {
+  it("frames Act 0 as one viewport with a column, not the page, taking any overflow", () => {
     const { container } = render(<WorkbenchShell />);
     const frame = container.querySelector('[data-act="act0"] > div');
-    expect(frame?.className).toContain('min-h-svh');
-    expect(frame?.className).toContain('lg:h-svh');
-    expect(frame?.className).toContain('lg:overflow-hidden');
-    expect(container.querySelectorAll('main .lg\\:overflow-y-auto')).toHaveLength(1);
+    expect(frame?.className).toContain("min-h-svh");
+    expect(frame?.className).toContain("lg:h-svh");
+    expect(frame?.className).toContain("lg:overflow-hidden");
+    expect(
+      container.querySelectorAll("main .lg\\:overflow-y-auto"),
+    ).toHaveLength(1);
   });
 
   // Act 0 is always the dark composition, whatever the OS preference — pinned
   // through the register `theme.css` carries, never a local palette override
   // (design.md § Variants / § Drift policy).
-  it('pins the dark register rather than redeclaring the palette', () => {
+  it("pins the dark register rather than redeclaring the palette", () => {
     const { container } = render(<WorkbenchShell />);
     const frame = container.querySelector('[data-act="act0"] > div');
-    expect(frame?.getAttribute('data-theme')).toBe('dark');
-    expect(frame?.getAttribute('style') ?? '').not.toMatch(/--color-/);
+    expect(frame?.getAttribute("data-theme")).toBe("dark");
+    expect(frame?.getAttribute("style") ?? "").not.toMatch(/--color-/);
   });
 
-  it('mounts the shell grid once a dataset is registered', () => {
+  it("mounts the shell grid once a dataset is registered", () => {
     useDatasetsStore.setState({ datasets: [DATASET] });
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-act="shell"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="title-bar"]')).not.toBeNull();
-    for (const region of ['explorer', 'canvas', 'ai-pane', 'inspector', 'status-bar']) {
-      expect(container.querySelector(`[data-region="${region}"]`)).not.toBeNull();
+    for (const region of [
+      "explorer",
+      "canvas",
+      "ai-pane",
+      "inspector",
+      "status-bar",
+    ]) {
+      expect(
+        container.querySelector(`[data-region="${region}"]`),
+      ).not.toBeNull();
     }
   });
 
-  it('mounts the transform guard exactly once, at the shell level (S4)', () => {
+  it("mounts the transform guard exactly once, at the shell level (S4)", () => {
     useDatasetsStore.setState({ datasets: [DATASET] });
-    useRunGuardStore.getState().hold(classifyStatement('DROP TABLE orders'), CONSOLE_SESSION);
+    useRunGuardStore
+      .getState()
+      .hold(classifyStatement("DROP TABLE orders"), CONSOLE_SESSION);
 
     const { container } = render(<WorkbenchShell />);
 
     // One dialog for a held statement — not one per surface that could have
     // raised it. The guard belongs to the run path, not to any component.
-    expect(within(container).getAllByRole('dialog')).toHaveLength(1);
+    expect(within(container).getAllByRole("dialog")).toHaveLength(1);
     useRunGuardStore.getState().release();
   });
 
-  it('stays on the shell even if the worker later errors, once data exists', () => {
-    useDatasetsStore.setState({ datasets: [DATASET], workerStatus: 'error' });
+  it("stays on the shell even if the worker later errors, once data exists", () => {
+    useDatasetsStore.setState({ datasets: [DATASET], workerStatus: "error" });
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-act="shell"]')).not.toBeNull();
   });
 });
 
-describe('WorkbenchShell — workspace restore lifecycle (S6.9 / 07b)', () => {
+describe("WorkbenchShell — workspace restore lifecycle (S6.9 / 07b)", () => {
   beforeEach(() => {
     usePersistenceStore.setState({ restore: null });
   });
 
-  it('does not publish a restore that completes after the shell has unmounted', async () => {
+  it("does not publish a restore that completes after the shell has unmounted", async () => {
     let resolveRestore!: (report: RestoreReport) => void;
     const pendingRestore = new Promise<RestoreReport>((resolve) => {
       resolveRestore = resolve;
@@ -276,7 +338,7 @@ describe('WorkbenchShell — workspace restore lifecycle (S6.9 / 07b)', () => {
     expect(usePersistenceStore.getState().restore).toBeNull();
   });
 
-  it('publishes the restore to the active Strict Mode mount', async () => {
+  it("publishes the restore to the active Strict Mode mount", async () => {
     let resolveRestore!: (report: RestoreReport) => void;
     const pendingRestore = new Promise<RestoreReport>((resolve) => {
       resolveRestore = resolve;
@@ -299,7 +361,7 @@ describe('WorkbenchShell — workspace restore lifecycle (S6.9 / 07b)', () => {
     expect(usePersistenceStore.getState().restore).toEqual(report);
   });
 
-  it('does not mount engine-backed shell consumers before persisted tables are restored', async () => {
+  it("does not mount engine-backed shell consumers before persisted tables are restored", async () => {
     let resolveRestore!: (report: RestoreReport) => void;
     const pendingRestore = new Promise<RestoreReport>((resolve) => {
       resolveRestore = resolve;
@@ -320,11 +382,13 @@ describe('WorkbenchShell — workspace restore lifecycle (S6.9 / 07b)', () => {
       await Promise.resolve();
     });
 
-    await waitFor(() => expect(container.querySelector('[data-act="shell"]')).not.toBeNull());
+    await waitFor(() =>
+      expect(container.querySelector('[data-act="shell"]')).not.toBeNull(),
+    );
   });
 });
 
-describe('WorkbenchShell — tab host (canvas region, W3)', () => {
+describe("WorkbenchShell — tab host (canvas region, W3)", () => {
   beforeEach(() => {
     useDatasetsStore.setState({ datasets: [DATASET] });
   });
@@ -337,62 +401,97 @@ describe('WorkbenchShell — tab host (canvas region, W3)', () => {
   // tab removes it from the host" below already asserts the same
   // `tab-host-empty` markup for.
 
-  it('lists open tabs as headers and marks the active one', () => {
-    const id = useTabsStore.getState().openTab('map', 'ds-1');
+  it("lists open tabs as headers and marks the active one", () => {
+    const id = useTabsStore.getState().openTab("map", "ds-1");
     const { container } = render(<WorkbenchShell />);
     const header = container.querySelector(`[data-testid="tab-header-${id}"]`);
-    expect(header?.textContent).toContain('map');
-    expect(header?.textContent).toContain('ds-1');
-    expect(header?.getAttribute('data-active')).toBe('true');
+    expect(header?.textContent).toContain("map");
+    expect(header?.textContent).toContain("ds-1");
+    expect(header?.getAttribute("data-active")).toBe("true");
   });
 
-  it('clicking a tab header switches the active tab', () => {
-    const first = useTabsStore.getState().openTab('map', 'orders');
-    const second = useTabsStore.getState().openTab('map', 'customers');
+  it("clicking a tab header switches the active tab", () => {
+    const first = useTabsStore.getState().openTab("map", "orders");
+    const second = useTabsStore.getState().openTab("map", "customers");
     const { container } = render(<WorkbenchShell />);
     expect(useTabsStore.getState().activeTabId).toBe(second);
 
-    fireEvent.click(container.querySelector<HTMLButtonElement>(`[data-testid="tab-header-${first}"] button`)!);
+    fireEvent.click(
+      container.querySelector<HTMLButtonElement>(
+        `[data-testid="tab-header-${first}"] button`,
+      )!,
+    );
 
     expect(useTabsStore.getState().activeTabId).toBe(first);
-    expect(container.querySelector(`[data-testid="tab-header-${first}"]`)?.getAttribute('data-active')).toBe('true');
-    expect(container.querySelector(`[data-testid="tab-header-${second}"]`)?.getAttribute('data-active')).toBe('false');
+    expect(
+      container
+        .querySelector(`[data-testid="tab-header-${first}"]`)
+        ?.getAttribute("data-active"),
+    ).toBe("true");
+    expect(
+      container
+        .querySelector(`[data-testid="tab-header-${second}"]`)
+        ?.getAttribute("data-active"),
+    ).toBe("false");
   });
 
-  it('closing a tab removes it from the host', () => {
-    useTabsStore.getState().openTab('map', 'orders');
+  it("closing a tab removes it from the host", () => {
+    useTabsStore.getState().openTab("map", "orders");
     const { container } = render(<WorkbenchShell />);
 
-    fireEvent.click(container.querySelector<HTMLButtonElement>('[aria-label="Close map · orders"]')!);
+    fireEvent.click(
+      container.querySelector<HTMLButtonElement>(
+        '[aria-label="Close map · orders"]',
+      )!,
+    );
 
     expect(useTabsStore.getState().tabs).toHaveLength(0);
-    expect(container.querySelector('[data-testid="tab-host-empty"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="tab-host-empty"]'),
+    ).not.toBeNull();
   });
 
   // S5 — the strip after the registry amendment.
-  it('labels a query tab by its own name, and a singleton by type · subject', () => {
-    const singleton = useTabsStore.getState().openTab('map', 'orders');
-    const queryTab = openQueryTab({ sql: 'SELECT 1', name: 'Orders by month' });
+  it("labels a query tab by its own name, and a singleton by type · subject", () => {
+    const singleton = useTabsStore.getState().openTab("map", "orders");
+    const queryTab = openQueryTab({ sql: "SELECT 1", name: "Orders by month" });
     const { container } = render(<WorkbenchShell />);
 
-    expect(container.querySelector(`[data-testid="tab-header-${queryTab}"]`)?.textContent).toContain('Orders by month');
-    expect(container.querySelector(`[data-testid="tab-header-${queryTab}"]`)?.textContent).not.toContain('query ·');
-    expect(container.querySelector(`[data-testid="tab-header-${singleton}"]`)?.textContent).toContain('map · orders');
+    expect(
+      container.querySelector(`[data-testid="tab-header-${queryTab}"]`)
+        ?.textContent,
+    ).toContain("Orders by month");
+    expect(
+      container.querySelector(`[data-testid="tab-header-${queryTab}"]`)
+        ?.textContent,
+    ).not.toContain("query ·");
+    expect(
+      container.querySelector(`[data-testid="tab-header-${singleton}"]`)
+        ?.textContent,
+    ).toContain("map · orders");
   });
 
-  it('scrolls the strip rather than compressing headers (§13.3, decided)', () => {
-    const id = useTabsStore.getState().openTab('map', 'orders');
+  it("scrolls the strip rather than compressing headers (§13.3, decided)", () => {
+    const id = useTabsStore.getState().openTab("map", "orders");
     const { container } = render(<WorkbenchShell />);
 
-    expect(container.querySelector('[data-testid="tab-host"]')?.className).toContain('overflow-x-auto');
-    expect(container.querySelector(`[data-testid="tab-header-${id}"]`)?.className).toContain('shrink-0');
+    expect(
+      container.querySelector('[data-testid="tab-host"]')?.className,
+    ).toContain("overflow-x-auto");
+    expect(
+      container.querySelector(`[data-testid="tab-header-${id}"]`)?.className,
+    ).toContain("shrink-0");
   });
 
-  it('closing a query tab drops its query session with it', () => {
-    const tabId = openQueryTab({ sql: 'SELECT 1', name: 'Query 9' });
+  it("closing a query tab drops its query session with it", () => {
+    const tabId = openQueryTab({ sql: "SELECT 1", name: "Query 9" });
     const { container } = render(<WorkbenchShell />);
 
-    fireEvent.click(container.querySelector<HTMLButtonElement>('[aria-label="Close Query 9"]')!);
+    fireEvent.click(
+      container.querySelector<HTMLButtonElement>(
+        '[aria-label="Close Query 9"]',
+      )!,
+    );
 
     expect(useTabsStore.getState().tabs).toHaveLength(0);
     expect(useQueryStore.getState().sessions[tabId]).toBeUndefined();
@@ -403,190 +502,246 @@ describe('WorkbenchShell — tab host (canvas region, W3)', () => {
 // rather than dangling. Closing it would discard a tab the user opened;
 // mounting the dashboard over a table the engine doesn't have is the dangling
 // reference itself.
-describe('WorkbenchShell — a tab on a lost subject (07d)', () => {
+describe("WorkbenchShell — a tab on a lost subject (07d)", () => {
   beforeEach(() => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
   });
 
-  it('shows the reason in place of the profile dashboard, and keeps the tab open', () => {
-    const tabId = useTabsStore.getState().openTab('profile', TABLE_A.id);
+  it("shows the reason in place of the profile dashboard, and keeps the tab open", () => {
+    const tabId = useTabsStore.getState().openTab("profile", TABLE_A.id);
     useRehydrationStore.getState().setOutcomes([
       {
         tableId: TABLE_A.id,
         tableName: TABLE_A.tableName,
-        status: 'lost',
-        reason: 'This was a sampled preview, so its rows were never stored — re-drop the file.',
+        status: "lost",
+        reason:
+          "This was a sampled preview, so its rows were never stored — re-drop the file.",
       },
     ]);
 
     const { container } = render(<WorkbenchShell />);
-    const content = container.querySelector(`[data-testid="tab-content-${tabId}"]`)!;
+    const content = container.querySelector(
+      `[data-testid="tab-content-${tabId}"]`,
+    )!;
 
-    expect(within(content as HTMLElement).getByTestId('tab-subject-unavailable').textContent).toContain(
-      'its rows were never stored',
-    );
-    expect(container.querySelector(`[data-testid="tab-header-${tabId}"]`)).toBeTruthy();
+    expect(
+      within(content as HTMLElement).getByTestId("tab-subject-unavailable")
+        .textContent,
+    ).toContain("its rows were never stored");
+    expect(
+      container.querySelector(`[data-testid="tab-header-${tabId}"]`),
+    ).toBeTruthy();
   });
 
-  it('mounts the dashboard normally for a restored subject', () => {
-    const tabId = useTabsStore.getState().openTab('profile', TABLE_A.id);
+  it("mounts the dashboard normally for a restored subject", () => {
+    const tabId = useTabsStore.getState().openTab("profile", TABLE_A.id);
     useRehydrationStore
       .getState()
-      .setOutcomes([{ tableId: TABLE_A.id, tableName: TABLE_A.tableName, status: 'restored', reason: null }]);
+      .setOutcomes([
+        {
+          tableId: TABLE_A.id,
+          tableName: TABLE_A.tableName,
+          status: "restored",
+          reason: null,
+        },
+      ]);
 
     const { container } = render(<WorkbenchShell />);
-    const content = container.querySelector(`[data-testid="tab-content-${tabId}"]`)!;
+    const content = container.querySelector(
+      `[data-testid="tab-content-${tabId}"]`,
+    )!;
 
-    expect(content.querySelector('[data-testid="tab-subject-unavailable"]')).toBeNull();
-    expect(content.querySelector('h2')?.textContent).toBe(TABLE_A.tableName);
+    expect(
+      content.querySelector('[data-testid="tab-subject-unavailable"]'),
+    ).toBeNull();
+    expect(content.querySelector("h2")?.textContent).toBe(TABLE_A.tableName);
   });
 });
 
-describe('WorkbenchShell — keep-mounted preservation (W3, §13.3)', () => {
+describe("WorkbenchShell — keep-mounted preservation (W3, §13.3)", () => {
   beforeEach(() => {
-    useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A, TABLE_B] });
+    useDatasetsStore.setState({
+      datasets: [DATASET],
+      tables: [TABLE_A, TABLE_B],
+    });
   });
 
-  it('switching away from a profile tab and back preserves its local state', () => {
-    const tabA = useTabsStore.getState().openTab('profile', TABLE_A.id);
-    const tabB = useTabsStore.getState().openTab('profile', TABLE_B.id);
+  it("switching away from a profile tab and back preserves its local state", () => {
+    const tabA = useTabsStore.getState().openTab("profile", TABLE_A.id);
+    const tabB = useTabsStore.getState().openTab("profile", TABLE_B.id);
     const { container } = render(<WorkbenchShell />);
 
-    const contentA = () => container.querySelector(`[data-testid="tab-content-${tabA}"]`)!;
+    const contentA = () =>
+      container.querySelector(`[data-testid="tab-content-${tabA}"]`)!;
     const headerButton = (id: string) =>
-      container.querySelector<HTMLButtonElement>(`[data-testid="tab-header-${id}"] button`)!;
+      container.querySelector<HTMLButtonElement>(
+        `[data-testid="tab-header-${id}"] button`,
+      )!;
 
     // tabB opened last (active); switch to tabA — it opens on its own subject.
     fireEvent.click(headerButton(tabA));
-    expect(contentA().querySelector('h2')?.textContent).toBe(TABLE_A.tableName);
+    expect(contentA().querySelector("h2")?.textContent).toBe(TABLE_A.tableName);
 
     // Change tabA's own table-picker selection away from its initial subject —
     // local component state (`ProfileDashboard`'s `activeTableId`), not store state.
-    const pickToTableB = Array.from(contentA().querySelectorAll('button')).find(
+    const pickToTableB = Array.from(contentA().querySelectorAll("button")).find(
       (button) => button.textContent === TABLE_B.tableName,
     )!;
     fireEvent.click(pickToTableB);
-    expect(contentA().querySelector('h2')?.textContent).toBe(TABLE_B.tableName);
+    expect(contentA().querySelector("h2")?.textContent).toBe(TABLE_B.tableName);
 
     // Switch away, then back. A remount would reset to `initialTableId` (TABLE_A).
     fireEvent.click(headerButton(tabB));
     fireEvent.click(headerButton(tabA));
 
-    expect(contentA().querySelector('h2')?.textContent).toBe(TABLE_B.tableName);
+    expect(contentA().querySelector("h2")?.textContent).toBe(TABLE_B.tableName);
   });
 });
 
-describe('WorkbenchShell — dataset map tab content (W4)', () => {
-  it('a map tab renders real DatasetMap content, not the pre-W4 placeholder', async () => {
+describe("WorkbenchShell — dataset map tab content (W4)", () => {
+  it("a map tab renders real DatasetMap content, not the pre-W4 placeholder", async () => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
-    useTabsStore.getState().openTab('map', 'workspace');
+    useTabsStore.getState().openTab("map", "workspace");
     const { getByText, queryByText } = render(<WorkbenchShell />);
     await waitFor(() => expect(getByText(/Skip to data/)).toBeTruthy());
-    expect(queryByText('Dataset map (W4)')).toBeNull();
+    expect(queryByText("Dataset map (W4)")).toBeNull();
   });
 });
 
-describe('WorkbenchShell — module-wiring tab content (W7.5)', () => {
+describe("WorkbenchShell — module-wiring tab content (W7.5)", () => {
   // This file has no RTL auto-cleanup (see PivotBuilder.test.tsx's own note on
   // the same repo-wide config) — every `render()` in this describe block
   // accumulates in `document.body` rather than replacing the previous test's
   // tree, so assertions here scope to each render's own `container` (matching
   // the "tab host"/"keep-mounted" blocks above in this file) rather than the
   // document-bound `getByText`/`screen`.
-  it('a query tab renders its own editor and Run, on its own session (S5)', () => {
+  it("a query tab renders its own editor and Run, on its own session (S5)", () => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
-    const tabId = openQueryTab({ sql: 'SELECT 1', name: 'Query 1' });
+    const tabId = openQueryTab({ sql: "SELECT 1", name: "Query 1" });
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByRole('heading', { name: 'Query 1' })).toBeTruthy();
-    expect(container.querySelector(`[data-testid="query-tab-${tabId}"]`)).not.toBeNull();
+    expect(
+      within(container).getByRole("heading", { name: "Query 1" }),
+    ).toBeTruthy();
+    expect(
+      container.querySelector(`[data-testid="query-tab-${tabId}"]`),
+    ).not.toBeNull();
   });
 
-  it('a pivot tab renders real PivotModule content', () => {
+  it("a pivot tab renders real PivotModule content", () => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
-    useTabsStore.getState().openTab('pivot', 'pivot');
+    useTabsStore.getState().openTab("pivot", "pivot");
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-testid="well-rows"]')).not.toBeNull();
   });
 
-  it('a charts tab renders real ChartsModule content', () => {
+  it("a charts tab renders real ChartsModule content", () => {
     // TABLE_A's one Categorical column clears canDoCategoricalBreakdown —
     // enough for a real chart tab to render, distinguishing this from the
     // pre-W7.5 placeholder.
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
-    useTabsStore.getState().openTab('charts', 'charts');
+    useTabsStore.getState().openTab("charts", "charts");
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByRole('tablist', { name: 'Chart type' })).toBeTruthy();
+    expect(
+      within(container).getByRole("tablist", { name: "Chart type" }),
+    ).toBeTruthy();
   });
 
-  it('a correlation tab renders real CorrelationModule content', () => {
+  it("a correlation tab renders real CorrelationModule content", () => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
-    useTabsStore.getState().openTab('correlation', 'correlation');
+    useTabsStore.getState().openTab("correlation", "correlation");
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByText(/2 or more numeric columns/)).toBeTruthy();
+    expect(
+      within(container).getByText(/2 or more numeric columns/),
+    ).toBeTruthy();
   });
 
-  it('an export tab renders real ExportModule content', () => {
+  it("an export tab renders real ExportModule content", () => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [] });
-    useTabsStore.getState().openTab('export', 'export');
+    useTabsStore.getState().openTab("export", "export");
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByText('Drop a dataset to export tables.')).toBeTruthy();
+    expect(
+      within(container).getByText("Drop a dataset to export tables."),
+    ).toBeTruthy();
   });
 
-  it('an ingestion tab renders real IngestionPanel content (S1, closes W2\'s Add-data deferral)', () => {
+  it("an ingestion tab renders real IngestionPanel content (S1, closes W2's Add-data deferral)", () => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
-    useTabsStore.getState().openTab('ingestion', 'ingestion');
+    useTabsStore.getState().openTab("ingestion", "ingestion");
     const { container } = render(<WorkbenchShell />);
-    expect(within(container).getByText('Drop files, a folder, or a ZIP')).toBeTruthy();
+    expect(
+      within(container).getByText("Drop files, a folder, or a ZIP"),
+    ).toBeTruthy();
   });
 
-  it('a history tab renders the session run log (S6.7)', () => {
+  it("a history tab renders the session run log (S6.7)", () => {
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
-    useTabsStore.getState().openTab('history', HISTORY_TAB_SUBJECT);
+    useTabsStore.getState().openTab("history", HISTORY_TAB_SUBJECT);
     const { container } = render(<WorkbenchShell />);
-    expect(container.querySelector('[data-testid="history-tab"]')).not.toBeNull();
-    expect(within(container).getByText('No statements run yet this session.')).toBeTruthy();
+    expect(
+      container.querySelector('[data-testid="history-tab"]'),
+    ).not.toBeNull();
+    expect(
+      within(container).getByText("No statements run yet this session."),
+    ).toBeTruthy();
   });
 });
 
-describe('WorkbenchShell — right AI pane, inspector, status bar (W7)', () => {
+describe("WorkbenchShell — right AI pane, inspector, status bar (W7)", () => {
   beforeEach(() => {
     useDatasetsStore.setState({ datasets: [DATASET] });
   });
 
-  it('mounts AIPane, Inspector, and StatusBar with real content in their regions', () => {
+  it("mounts AIPane, Inspector, and StatusBar with real content in their regions", () => {
     const { container } = render(<WorkbenchShell />);
-    expect(within(container.querySelector('[data-region="ai-pane"]')!).getByText('Off')).toBeTruthy();
+    expect(
+      within(container.querySelector('[data-region="ai-pane"]')!).getByText(
+        "Off",
+      ),
+    ).toBeTruthy();
     // With nothing selected and nothing run the inspector region is the editor
     // alone (S6.7) — its toolbar is the region's real content now.
-    expect(within(container.querySelector('[data-region="inspector"]')!).getByTestId('console-toolbar')).toBeTruthy();
-    expect(within(container.querySelector('[data-region="status-bar"]')!).getByText(/Engine:/)).toBeTruthy();
+    expect(
+      within(container.querySelector('[data-region="inspector"]')!).getByTestId(
+        "console-toolbar",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(container.querySelector('[data-region="status-bar"]')!).getByText(
+        /Engine:/,
+      ),
+    ).toBeTruthy();
   });
 
   // S3/S6.5: the bottom region is the drawer, not a bare Inspector, and since
   // S6.5 it hosts both panes at once. §13.3's stacking is load-bearing, because
   // an expanded drawer must push against the canvas and never over the dock or
   // the status bar.
-  it('hosts the inspector drawer in the inspector region, stacked canvas → drawer → dock → status bar (S3)', () => {
+  it("hosts the inspector drawer in the inspector region, stacked canvas → drawer → dock → status bar (S3)", () => {
     // A selection is what earns Info its place since S6.7; the console pane is
     // there either way.
     useDatasetsStore.setState({ datasets: [DATASET], tables: [TABLE_A] });
     useSelectionStore.getState().selectTable(TABLE_A.id);
     const { container } = render(<WorkbenchShell />);
-    const region = container.querySelector('[data-region="inspector"]')! as HTMLElement;
-    expect(within(region).getByTestId('inspector-drawer')).toBeTruthy();
-    expect(within(region).getByTestId('drawer-console-pane')).toBeTruthy();
-    expect(within(region).getByTestId('drawer-info-pane')).toBeTruthy();
+    const region = container.querySelector(
+      '[data-region="inspector"]',
+    )! as HTMLElement;
+    expect(within(region).getByTestId("inspector-drawer")).toBeTruthy();
+    expect(within(region).getByTestId("drawer-console-pane")).toBeTruthy();
+    expect(within(region).getByTestId("drawer-info-pane")).toBeTruthy();
 
     // The dock sits between the drawer and the status bar in the JSX, but it
     // renders nothing unless WebLLM is eligible, so it carries no marker to
     // assert against here — these three are the stacking that always holds.
-    const order = ['canvas', 'inspector', 'status-bar'].map((name) => {
+    const order = ["canvas", "inspector", "status-bar"].map((name) => {
       const node = container.querySelector(`[data-region="${name}"]`);
       expect(node, `no [data-region="${name}"]`).toBeTruthy();
       return node!;
     });
     for (let i = 0; i < order.length - 1; i += 1) {
-      expect(order[i].compareDocumentPosition(order[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(
+        order[i].compareDocumentPosition(order[i + 1]) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
     }
   });
 
@@ -596,47 +751,54 @@ describe('WorkbenchShell — right AI pane, inspector, status bar (W7)', () => {
    * pushes both below the fold, taking the privacy posture dot with them. The
    * criterion S3 checked was checked against an assertion its test never made.
    */
-  it('expands the drawer against the canvas, leaving the dock and status bar in the flow (S6.5)', () => {
+  it("expands the drawer against the canvas, leaving the dock and status bar in the flow (S6.5)", () => {
     const { container } = render(<WorkbenchShell />);
-    fireEvent.click(within(container).getByRole('button', { name: 'Expand drawer to full height' }));
+    fireEvent.click(
+      within(container).getByRole("button", {
+        name: "Expand drawer to full height",
+      }),
+    );
 
-    const drawer = within(container).getByTestId('inspector-drawer');
-    expect(drawer.style.height).not.toBe('100svh');
-    expect(drawer.style.height).toContain('calc(100svh -');
+    const drawer = within(container).getByTestId("inspector-drawer");
+    expect(drawer.style.height).not.toBe("100svh");
+    expect(drawer.style.height).toContain("calc(100svh -");
 
     const statusBar = container.querySelector('[data-region="status-bar"]')!;
     const inspector = container.querySelector('[data-region="inspector"]')!;
-    expect(inspector.compareDocumentPosition(statusBar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      inspector.compareDocumentPosition(statusBar) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(statusBar.parentElement).toBe(inspector.parentElement);
   });
 
   it('"Configure workspace" (AI pane) opens the shared settings modal with the Mode fieldset hidden', () => {
     const { container } = render(<WorkbenchShell />);
-    fireEvent.click(within(container).getByText('Configure workspace'));
-    expect(within(container).getByText('AI settings')).toBeTruthy();
-    expect(within(container).queryByText('Mode')).toBeNull();
+    fireEvent.click(within(container).getByText("Configure workspace"));
+    expect(within(container).getByText("AI settings")).toBeTruthy();
+    expect(within(container).queryByText("Mode")).toBeNull();
     fireEvent.click(container.querySelector('[aria-label="Close"]')!);
-    expect(within(container).queryByText('AI settings')).toBeNull();
+    expect(within(container).queryByText("AI settings")).toBeNull();
   });
 
-  it('the title bar gear opens the same settings modal', () => {
+  it("the title bar gear opens the same settings modal", () => {
     const { container } = render(<WorkbenchShell />);
-    fireEvent.click(within(container).getByLabelText('Settings'));
-    expect(within(container).getByText('AI settings')).toBeTruthy();
-    expect(within(container).queryByText('Mode')).toBeNull();
+    fireEvent.click(within(container).getByLabelText("Settings"));
+    expect(within(container).getByText("AI settings")).toBeTruthy();
+    expect(within(container).queryByText("Mode")).toBeNull();
   });
 });
 
-describe('WorkbenchShell — map auto-open (W4)', () => {
-  it('opens the map tab once datasets exist, at a fixed subject so it dedupes as a singleton', () => {
+describe("WorkbenchShell — map auto-open (W4)", () => {
+  it("opens the map tab once datasets exist, at a fixed subject so it dedupes as a singleton", () => {
     useDatasetsStore.setState({ datasets: [DATASET] });
     render(<WorkbenchShell />);
     const tabs = useTabsStore.getState().tabs;
     expect(tabs).toHaveLength(1);
-    expect(tabs[0]).toMatchObject({ type: 'map', subject: 'workspace' });
+    expect(tabs[0]).toMatchObject({ type: "map", subject: "workspace" });
   });
 
-  it('does not auto-open until datasets actually appear, and does not reopen after the user closes it', () => {
+  it("does not auto-open until datasets actually appear, and does not reopen after the user closes it", () => {
     const { container, rerender } = render(<WorkbenchShell />);
     expect(useTabsStore.getState().tabs).toHaveLength(0);
 
@@ -644,7 +806,11 @@ describe('WorkbenchShell — map auto-open (W4)', () => {
     rerender(<WorkbenchShell />);
     expect(useTabsStore.getState().tabs).toHaveLength(1);
 
-    fireEvent.click(container.querySelector<HTMLButtonElement>('[aria-label="Close map · workspace"]')!);
+    fireEvent.click(
+      container.querySelector<HTMLButtonElement>(
+        '[aria-label="Close map · workspace"]',
+      )!,
+    );
     expect(useTabsStore.getState().tabs).toHaveLength(0);
 
     rerender(<WorkbenchShell />);
@@ -652,22 +818,22 @@ describe('WorkbenchShell — map auto-open (W4)', () => {
   });
 });
 
-describe('WorkbenchShell — viewer mode (W8, D62 Workbench amendment)', () => {
+describe("WorkbenchShell — viewer mode (W8, D62 Workbench amendment)", () => {
   const DOC: StructureReport = {
-    dspsVersion: '1.0.0',
-    generatedAt: '2026-07-25T12:00:00.000Z',
-    tables: [{ tableName: 'orders', rowCount: 5, columnCount: 1, columns: [] }],
+    dspsVersion: "1.0.0",
+    generatedAt: "2026-07-25T12:00:00.000Z",
+    tables: [{ tableName: "orders", rowCount: 5, columnCount: 1, columns: [] }],
     insights: [],
   };
 
-  it('renders viewer mode instead of Act 0 when a .dsps document is present, with no datasets loaded', () => {
+  it("renders viewer mode instead of Act 0 when a .dsps document is present, with no datasets loaded", () => {
     useDspsReceiverStore.setState({ document: DOC });
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-act="viewer"]')).not.toBeNull();
     expect(container.querySelector('[data-act="act0"]')).toBeNull();
   });
 
-  it('renders viewer mode instead of the shell grid even when datasets already exist', () => {
+  it("renders viewer mode instead of the shell grid even when datasets already exist", () => {
     useDatasetsStore.setState({ datasets: [DATASET] });
     useDspsReceiverStore.setState({ document: DOC });
     const { container } = render(<WorkbenchShell />);
@@ -675,8 +841,10 @@ describe('WorkbenchShell — viewer mode (W8, D62 Workbench amendment)', () => {
     expect(container.querySelector('[data-act="shell"]')).toBeNull();
   });
 
-  it('renders viewer mode on a receiver error too, even with no document', () => {
-    useDspsReceiverStore.setState({ error: "isn't a DSPS document this version can read" });
+  it("renders viewer mode on a receiver error too, even with no document", () => {
+    useDspsReceiverStore.setState({
+      error: "isn't a DSPS document this version can read",
+    });
     const { container } = render(<WorkbenchShell />);
     expect(container.querySelector('[data-act="viewer"]')).not.toBeNull();
     expect(container.textContent).toContain("isn't a DSPS document");
@@ -685,7 +853,7 @@ describe('WorkbenchShell — viewer mode (W8, D62 Workbench amendment)', () => {
   it('"Start my own session" returns to the ordinary shell', () => {
     useDspsReceiverStore.setState({ document: DOC });
     const { container } = render(<WorkbenchShell />);
-    fireEvent.click(within(container).getByText('Start my own session'));
+    fireEvent.click(within(container).getByText("Start my own session"));
     expect(useDspsReceiverStore.getState().document).toBeNull();
   });
 });
@@ -693,77 +861,92 @@ describe('WorkbenchShell — viewer mode (W8, D62 Workbench amendment)', () => {
 // Ported from App.test.tsx's "opening a share link" describe block
 // (HANDOFF-W8-CUTOVER.md) — both outcomes now route through
 // useDspsReceiverStore/ViewerMode instead of SharedStructureReportView.
-describe('WorkbenchShell — opening a share link (§12.3)', () => {
+describe("WorkbenchShell — opening a share link (§12.3)", () => {
   beforeEach(() => {
     vi.mocked(ingestionService.loadSharedDataset).mockReset();
-    window.history.pushState({}, '', '/?share=tok-1');
+    window.history.pushState({}, "", "/?share=tok-1");
   });
 
   afterEach(() => {
-    window.history.pushState({}, '', '/');
+    window.history.pushState({}, "", "/");
   });
 
-  it('renders the read-only viewer for a structure-only share', async () => {
+  it("renders the read-only viewer for a structure-only share", async () => {
     const report: StructureReport = {
-      dspsVersion: '1.0.0',
-      generatedAt: '2026-07-23T00:00:00.000Z',
-      tables: [{ tableName: 'orders', rowCount: 5, columnCount: 1, columns: [] }],
+      dspsVersion: "1.0.0",
+      generatedAt: "2026-07-23T00:00:00.000Z",
+      tables: [
+        { tableName: "orders", rowCount: 5, columnCount: 1, columns: [] },
+      ],
       insights: [],
     };
     vi.mocked(ingestionService.loadSharedDataset).mockResolvedValue({
-      kind: 'structure-report',
+      kind: "structure-report",
       structureReport: report,
     });
 
     const { container } = render(<WorkbenchShell />);
 
-    await waitFor(() => expect(container.querySelector('[data-act="viewer"]')).not.toBeNull());
-    expect(container.textContent).toContain('orders');
-    expect(window.location.search).toBe('');
+    await waitFor(() =>
+      expect(container.querySelector('[data-act="viewer"]')).not.toBeNull(),
+    );
+    expect(container.textContent).toContain("orders");
+    expect(window.location.search).toBe("");
   });
 
-  it('registers the dataset and auto-opens the map for a full-dataset share', async () => {
+  it("registers the dataset and auto-opens the map for a full-dataset share", async () => {
     // Mirrors loadSharedDataset's real dataset branch, which calls
     // registerDataset directly (ingestion.ts) before returning — the map
     // auto-open picks up the newly-registered dataset on its own.
-    vi.mocked(ingestionService.loadSharedDataset).mockImplementation(async () => {
-      useDatasetsStore.getState().registerDataset(DATASET, []);
-      return { kind: 'dataset', dataset: DATASET };
-    });
+    vi.mocked(ingestionService.loadSharedDataset).mockImplementation(
+      async () => {
+        useDatasetsStore.getState().registerDataset(DATASET, []);
+        return { kind: "dataset", dataset: DATASET };
+      },
+    );
 
     render(<WorkbenchShell />);
 
     await waitFor(() => expect(useTabsStore.getState().tabs).toHaveLength(1));
-    expect(useTabsStore.getState().tabs[0]).toMatchObject({ type: 'map', subject: 'workspace' });
-    expect(window.location.search).toBe('');
+    expect(useTabsStore.getState().tabs[0]).toMatchObject({
+      type: "map",
+      subject: "workspace",
+    });
+    expect(window.location.search).toBe("");
   });
 
-  it('renders the viewer error state when the share link cannot be opened, without breaking the rest of the app', async () => {
+  it("renders the viewer error state when the share link cannot be opened, without breaking the rest of the app", async () => {
     vi.mocked(ingestionService.loadSharedDataset).mockRejectedValue(
-      new ingestionService.IngestionError("This share link doesn't exist or has expired."),
+      new ingestionService.IngestionError(
+        "This share link doesn't exist or has expired.",
+      ),
     );
 
     const { container } = render(<WorkbenchShell />);
 
-    await waitFor(() => expect(container.textContent).toContain("This share link doesn't exist or has expired."));
+    await waitFor(() =>
+      expect(container.textContent).toContain(
+        "This share link doesn't exist or has expired.",
+      ),
+    );
     expect(container.querySelector('[data-act="viewer"]')).not.toBeNull();
-    expect(window.location.search).toBe('');
+    expect(window.location.search).toBe("");
   });
 });
 
 // Ported from WebLLMDock.test.tsx's own eligibility fixture (HANDOFF-W8-CUTOVER.md)
 // — only proves WorkbenchShell mounts the dock, not the dock's own internals.
-describe('WorkbenchShell — WebLLM consent dock (D70)', () => {
+describe("WorkbenchShell — WebLLM consent dock (D70)", () => {
   beforeEach(() => {
     useDatasetsStore.setState({ datasets: [DATASET] });
-    useSettingsStore.setState({ aiMode: 'cloud', webllmConsent: null });
+    useSettingsStore.setState({ aiMode: "cloud", webllmConsent: null });
     useByokKeyStore.setState({ key: null });
     // jsdom has no WebGPU; the dock's eligibility gate reads `'gpu' in navigator`.
-    Object.defineProperty(navigator, 'gpu', { value: {}, configurable: true });
+    Object.defineProperty(navigator, "gpu", { value: {}, configurable: true });
   });
 
-  it('mounts the consent banner above the status bar when eligible', () => {
+  it("mounts the consent banner above the status bar when eligible", () => {
     const { container } = render(<WorkbenchShell />);
-    expect(container.textContent).toContain('Run AI fully on your device?');
+    expect(container.textContent).toContain("Run AI fully on your device?");
   });
 });

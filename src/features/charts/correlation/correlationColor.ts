@@ -1,4 +1,4 @@
-import { divergingScale, type DivergingScale } from '../../../lib/chartPalette';
+import { divergingScale, type DivergingScale } from "../../../lib/chartPalette";
 
 // Diverging color scale for the heatmap (§10 Module 4's fixed spec, on the
 // palette design.md § Chart palette locks): the azure pole (strong positive) →
@@ -9,12 +9,17 @@ import { divergingScale, type DivergingScale } from '../../../lib/chartPalette';
 // column DuckDB's `corr()` can't compute) gets no fill at all rather than a
 // color, so "no data" never reads as "zero correlation".
 
-export function correlationCellColor(value: number | null, scale: DivergingScale = divergingScale()): string {
-  if (value === null) return 'transparent';
+export function correlationCellColor(
+  value: number | null,
+  scale: DivergingScale = divergingScale(),
+): string {
+  if (value === null) return "transparent";
   const clamped = Math.max(-1, Math.min(1, value));
   const pole = clamped >= 0 ? scale.pos : scale.neg;
   const t = Math.abs(clamped);
-  const [r, g, b] = scale.mid.map((mid, i) => Math.round(mid + (pole[i] - mid) * t));
+  const [r, g, b] = scale.mid.map((mid, i) =>
+    Math.round(mid + (pole[i] - mid) * t),
+  );
   return `rgb(${r}, ${g}, ${b})`;
 }
 
@@ -25,12 +30,20 @@ function srgbToLinear(channel: number): number {
 
 /** Relative luminance (WCAG) of an `rgb(r, g, b)` string, for picking readable cell text. */
 function relativeLuminance(rgb: string): number {
-  const [r, g, b] = (rgb.match(/\d+(\.\d+)?/g) ?? ['255', '255', '255']).map(Number);
-  return 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
+  const [r, g, b] = (rgb.match(/\d+(\.\d+)?/g) ?? ["255", "255", "255"]).map(
+    Number,
+  );
+  return (
+    0.2126 * srgbToLinear(r) +
+    0.7152 * srgbToLinear(g) +
+    0.0722 * srgbToLinear(b)
+  );
 }
 
 /** The darkest or lightest ink, whichever contrasts more against the given cell fill (0.179 is the standard WCAG break-even point). */
 export function correlationTextColor(cellColor: string): string {
-  if (cellColor === 'transparent') return 'var(--color-fg-muted)';
-  return relativeLuminance(cellColor) > 0.179 ? 'var(--color-void)' : 'var(--color-ink)';
+  if (cellColor === "transparent") return "var(--color-fg-muted)";
+  return relativeLuminance(cellColor) > 0.179
+    ? "var(--color-void)"
+    : "var(--color-ink)";
 }

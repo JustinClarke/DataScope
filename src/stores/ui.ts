@@ -4,19 +4,19 @@
 // profile-bound action names are no longer separate modules — they travel as
 // `activeTabId`, a generic "sub-destination within the active module" hint
 // (a chart sub-type for 'charts', a table id for 'profile').
-import { create } from 'zustand';
+import { create } from "zustand";
 
 export type SidebarModule =
-  | 'ingestion'
-  | 'dossier'
-  | 'profile'
-  | 'sql'
-  | 'pivot'
-  | 'charts'
-  | 'correlation'
-  | 'relationships'
-  | 'ai'
-  | 'export';
+  | "ingestion"
+  | "dossier"
+  | "profile"
+  | "sql"
+  | "pivot"
+  | "charts"
+  | "correlation"
+  | "relationships"
+  | "ai"
+  | "export";
 
 interface UIState {
   activeModule: SidebarModule;
@@ -30,13 +30,17 @@ interface UIState {
    */
   pendingPrefill: Record<string, unknown> | null;
   /** Switches the active destination; `tabId` names a sub-destination, `prefill` a ThreadConfig payload (both default to none — a plain module switch has neither). */
-  setActiveModule: (module: SidebarModule, tabId?: string | null, prefill?: Record<string, unknown> | null) => void;
+  setActiveModule: (
+    module: SidebarModule,
+    tabId?: string | null,
+    prefill?: Record<string, unknown> | null,
+  ) => void;
   setActiveTabId: (tabId: string | null) => void;
   clearPendingPrefill: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  activeModule: 'ingestion',
+  activeModule: "ingestion",
   activeTabId: null,
   pendingPrefill: null,
   setActiveModule: (module, tabId = null, prefill = null) =>

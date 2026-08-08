@@ -16,7 +16,7 @@
 // deterministic floor are untouched. The deterministic output is the complete
 // product with AI off (D2/D28) — it always paints first and is what shows on
 // any degrade.
-import type { FactRef, RankedAction } from './actions';
+import type { FactRef, RankedAction } from "./actions";
 
 /**
  * Stable cache key over a producer's deterministic baseline (D45 fingerprint,
@@ -29,7 +29,7 @@ import type { FactRef, RankedAction } from './actions';
 export type FactFingerprint = string;
 
 /** Which producer actually filled a slice — the deterministic floor, or AI. */
-export type ProducerSource = 'deterministic' | 'ai';
+export type ProducerSource = "deterministic" | "ai";
 
 /**
  * Why the deterministic output is showing even though an AI producer exists —
@@ -41,7 +41,8 @@ export type ProducerSource = 'deterministic' | 'ai';
  *  - `ai-uncached` first paint: no cache hit yet, AI request in flight
  *  - `ai-rejected` AI returned, but failed the seam's validator below
  */
-export type ProducerDegradeReason = 'ai-off' | 'ai-down' | 'ai-uncached' | 'ai-rejected';
+export type ProducerDegradeReason =
+  "ai-off" | "ai-down" | "ai-uncached" | "ai-rejected";
 
 /**
  * What a seam hands the view after resolution. `source: 'deterministic'` always
@@ -77,7 +78,10 @@ export type ProducerValidator<T> = (baseline: T, candidate: T) => boolean;
  * result; the ranker does not self-certify.
  */
 export interface ActionRanker {
-  rerank(baseline: RankedAction[], fingerprint: FactFingerprint): Promise<RankedAction[]>;
+  rerank(
+    baseline: RankedAction[],
+    fingerprint: FactFingerprint,
+  ): Promise<RankedAction[]>;
 }
 
 /** Enforces action-set identity (module + prefill + evidence unchanged); order and `verb` may differ. */

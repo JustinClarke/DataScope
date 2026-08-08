@@ -1,11 +1,11 @@
 // The single migration seam (W0, D71, §19) — every ranked-action / palette /
 // explorer click routes through `openDestination`, into the Workbench tabs
 // store.
-import type { SidebarModule } from '../stores/ui';
-import { useTabsStore } from '../stores/tabs';
-import { useDrawerStore } from '../stores/drawer';
-import { runInConsole } from './runPath';
-import type { TabType } from '../types/tabs';
+import type { SidebarModule } from "../stores/ui";
+import { useTabsStore } from "../stores/tabs";
+import { useDrawerStore } from "../stores/drawer";
+import { runInConsole } from "./runPath";
+import type { TabType } from "../types/tabs";
 
 /**
  * The module→tab-type mapping is provisional — filled in one entry at a time
@@ -17,12 +17,12 @@ import type { TabType } from '../types/tabs';
  * (D73). Anything not listed falls back to `'map'`.
  */
 const TAB_TYPE_BY_MODULE: Partial<Record<SidebarModule, TabType>> = {
-  profile: 'profile',
-  pivot: 'pivot',
-  charts: 'charts',
-  correlation: 'correlation',
-  export: 'export',
-  ingestion: 'ingestion',
+  profile: "profile",
+  pivot: "pivot",
+  charts: "charts",
+  correlation: "correlation",
+  export: "export",
+  ingestion: "ingestion",
 };
 
 /**
@@ -35,21 +35,21 @@ export function isDestinationReady(module: SidebarModule): boolean {
   // `sql` is ready and always was — S5 moved its destination out of the tab
   // registry into the drawer console, and this predicate is about whether a
   // destination is reachable, not about whether it happens to be a tab.
-  return module === 'sql' || module in TAB_TYPE_BY_MODULE;
+  return module === "sql" || module in TAB_TYPE_BY_MODULE;
 }
 
 /** Human-readable names for disabled-with-reason copy (strip + palette, W5) — one shared source so the two surfaces never drift on what to call a destination. */
 export const MODULE_LABELS: Record<SidebarModule, string> = {
-  ingestion: 'Add data',
-  dossier: 'Blueprint',
-  profile: 'Profile',
-  sql: 'SQL console',
-  pivot: 'Pivot',
-  charts: 'Charts',
-  correlation: 'Correlation',
-  relationships: 'Join Graph',
-  ai: 'AI chat',
-  export: 'Export',
+  ingestion: "Add data",
+  dossier: "Blueprint",
+  profile: "Profile",
+  sql: "SQL console",
+  pivot: "Pivot",
+  charts: "Charts",
+  correlation: "Correlation",
+  relationships: "Join Graph",
+  ai: "AI chat",
+  export: "Export",
 };
 
 /**
@@ -69,15 +69,20 @@ export function openDestination(
   tab?: string | null,
   prefill?: Record<string, unknown> | null,
 ): void {
-  if (module === 'sql') {
+  if (module === "sql") {
     const prefilledSql = prefill?.sql;
-    if (typeof prefilledSql === 'string' && prefilledSql.trim()) runInConsole(prefilledSql);
+    if (typeof prefilledSql === "string" && prefilledSql.trim())
+      runInConsole(prefilledSql);
     else useDrawerStore.getState().activateConsole();
     return;
   }
 
-  const type = TAB_TYPE_BY_MODULE[module] ?? 'map';
+  const type = TAB_TYPE_BY_MODULE[module] ?? "map";
   useTabsStore
     .getState()
-    .openTab(type, tab ?? module, prefill ? { module, prefilledConfig: prefill } : null);
+    .openTab(
+      type,
+      tab ?? module,
+      prefill ? { module, prefilledConfig: prefill } : null,
+    );
 }

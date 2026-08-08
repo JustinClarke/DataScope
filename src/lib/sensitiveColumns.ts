@@ -22,22 +22,43 @@ interface Pattern {
 // matches "email"/"user_email"/"contactEmail" without also matching an
 // unrelated column that merely contains the substring elsewhere.
 const PATTERNS: Pattern[] = [
-  { reason: 'email address', test: /e[-_]?mail/i },
-  { reason: 'phone number', test: /phone|mobile|telephone/i },
-  { reason: 'postal address', test: /address|\bstreet\b|\bzip\b|postal[-_]?code/i },
+  { reason: "email address", test: /e[-_]?mail/i },
+  { reason: "phone number", test: /phone|mobile|telephone/i },
+  {
+    reason: "postal address",
+    test: /address|\bstreet\b|\bzip\b|postal[-_]?code/i,
+  },
   // A bare "name" column (e.g. Titanic's own `Name`) is exact-matched, not
   // substring-matched — matching `name` anywhere would also flag ordinary
   // structural columns like `table_name`/`column_name`/`file_name`.
-  { reason: 'personal name', test: /^name$|\b(first|last|full|maiden)[-_]?name\b|\bsurname\b/i },
-  { reason: 'date of birth', test: /\bdob\b|date[-_]?of[-_]?birth|birth[-_]?date/i },
-  { reason: 'government id (SSN/national id/passport)', test: /\bssn\b|social[-_]?security|passport|national[-_]?id/i },
-  { reason: 'driver’s license', test: /driver.?s?[-_]?licen[cs]e/i },
-  { reason: 'payment card number', test: /card[-_]?number|\bcvv\b|credit[-_]?card|debit[-_]?card/i },
-  { reason: 'IP address', test: /ip[-_]?address|\bip[-_]?addr\b/i },
-  { reason: 'health/medical information', test: /medical|diagnosis|health[-_]?record/i },
-  { reason: 'gender or race', test: /\bgender\b|\brace\b|ethnicity/i },
-  { reason: 'salary or income', test: /salary|\bincome\b|compensation/i },
-  { reason: 'password or credential', test: /password|\bpasswd\b|secret[-_]?key/i },
+  {
+    reason: "personal name",
+    test: /^name$|\b(first|last|full|maiden)[-_]?name\b|\bsurname\b/i,
+  },
+  {
+    reason: "date of birth",
+    test: /\bdob\b|date[-_]?of[-_]?birth|birth[-_]?date/i,
+  },
+  {
+    reason: "government id (SSN/national id/passport)",
+    test: /\bssn\b|social[-_]?security|passport|national[-_]?id/i,
+  },
+  { reason: "driver’s license", test: /driver.?s?[-_]?licen[cs]e/i },
+  {
+    reason: "payment card number",
+    test: /card[-_]?number|\bcvv\b|credit[-_]?card|debit[-_]?card/i,
+  },
+  { reason: "IP address", test: /ip[-_]?address|\bip[-_]?addr\b/i },
+  {
+    reason: "health/medical information",
+    test: /medical|diagnosis|health[-_]?record/i,
+  },
+  { reason: "gender or race", test: /\bgender\b|\brace\b|ethnicity/i },
+  { reason: "salary or income", test: /salary|\bincome\b|compensation/i },
+  {
+    reason: "password or credential",
+    test: /password|\bpasswd\b|secret[-_]?key/i,
+  },
 ];
 
 /** True when `columnName` matches one of the likely-personal-data patterns. */
@@ -59,7 +80,12 @@ export function findLikelySensitiveColumns(
   for (const table of tables) {
     for (const column of table.columns) {
       const reason = isLikelySensitiveColumnName(column.name);
-      if (reason) findings.push({ tableName: table.tableName, columnName: column.name, reason });
+      if (reason)
+        findings.push({
+          tableName: table.tableName,
+          columnName: column.name,
+          reason,
+        });
     }
   }
   return findings;

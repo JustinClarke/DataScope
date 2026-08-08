@@ -1,6 +1,6 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import type { ChartSpec, QueryResult } from '../../../types';
-import { runChartQuery } from '../../../services/charts';
+import { lazy, Suspense, useEffect, useState } from "react";
+import type { ChartSpec, QueryResult } from "../../../types";
+import { runChartQuery } from "../../../services/charts";
 import {
   buildTrendSql,
   movingAverageAlias,
@@ -8,14 +8,22 @@ import {
   type MovingAverageWindow,
   type TimeSeriesAggregate,
   type TimeSeriesGranularity,
-} from '../../../lib/timeSeriesSql';
-import { GeneratedSql } from './GeneratedSql';
+} from "../../../lib/timeSeriesSql";
+import { GeneratedSql } from "./GeneratedSql";
 
 // The charting library rides in its own chunk, same lazy boundary AutoChartPanel uses.
-const ChartRenderer = lazy(() => import('../../../components/charts/ChartRenderer'));
+const ChartRenderer = lazy(
+  () => import("../../../components/charts/ChartRenderer"),
+);
 
-const GRANULARITIES: TimeSeriesGranularity[] = ['day', 'week', 'month', 'quarter', 'year'];
-const AGGREGATES: TimeSeriesAggregate[] = ['avg', 'sum', 'min', 'max', 'count'];
+const GRANULARITIES: TimeSeriesGranularity[] = [
+  "day",
+  "week",
+  "month",
+  "quarter",
+  "year",
+];
+const AGGREGATES: TimeSeriesAggregate[] = ["avg", "sum", "min", "max", "count"];
 const MA_WINDOWS: MovingAverageWindow[] = [7, 30, 90];
 const RUN_DEBOUNCE_MS = 300;
 
@@ -34,8 +42,8 @@ interface TrendViewProps {
  * here with no chart-primitive changes (this item's own Dependencies note).
  */
 export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
-  const [granularity, setGranularity] = useState<TimeSeriesGranularity>('day');
-  const [aggregate, setAggregate] = useState<TimeSeriesAggregate>('avg');
+  const [granularity, setGranularity] = useState<TimeSeriesGranularity>("day");
+  const [aggregate, setAggregate] = useState<TimeSeriesAggregate>("avg");
   const [maEnabled, setMaEnabled] = useState(false);
   const [maWindow, setMaWindow] = useState<MovingAverageWindow>(7);
 
@@ -43,7 +51,14 @@ export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const spec = { table, dateColumn, valueColumn, granularity, aggregate, movingAverageWindow: maEnabled ? maWindow : undefined };
+  const spec = {
+    table,
+    dateColumn,
+    valueColumn,
+    granularity,
+    aggregate,
+    movingAverageWindow: maEnabled ? maWindow : undefined,
+  };
   const sql = buildTrendSql(spec);
 
   useEffect(() => {
@@ -56,7 +71,12 @@ export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
           if (!cancelled) setResult(r);
         })
         .catch((err) => {
-          if (!cancelled) setError(err instanceof Error ? err.message : 'Could not run the trend query.');
+          if (!cancelled)
+            setError(
+              err instanceof Error
+                ? err.message
+                : "Could not run the trend query.",
+            );
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
@@ -72,9 +92,9 @@ export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
   const yFields = [valueAlias(spec)];
   if (maEnabled) yFields.push(movingAverageAlias(maWindow));
   const chartSpec: ChartSpec = {
-    type: 'time-series',
+    type: "time-series",
     title: `${valueColumn} over ${dateColumn}`,
-    xField: 'period',
+    xField: "period",
     yFields,
   };
 
@@ -86,7 +106,9 @@ export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
           <select
             aria-label="Granularity"
             value={granularity}
-            onChange={(e) => setGranularity(e.target.value as TimeSeriesGranularity)}
+            onChange={(e) =>
+              setGranularity(e.target.value as TimeSeriesGranularity)
+            }
             className="rounded border border-(--color-border) bg-transparent px-2 py-1 text-(--color-fg)"
           >
             {GRANULARITIES.map((g) => (
@@ -101,7 +123,9 @@ export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
           <select
             aria-label="Aggregate"
             value={aggregate}
-            onChange={(e) => setAggregate(e.target.value as TimeSeriesAggregate)}
+            onChange={(e) =>
+              setAggregate(e.target.value as TimeSeriesAggregate)
+            }
             className="rounded border border-(--color-border) bg-transparent px-2 py-1 text-(--color-fg)"
           >
             {AGGREGATES.map((a) => (
@@ -112,14 +136,20 @@ export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
           </select>
         </label>
         <label className="flex items-center gap-1.5 text-(--color-fg-muted)">
-          <input type="checkbox" checked={maEnabled} onChange={(e) => setMaEnabled(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={maEnabled}
+            onChange={(e) => setMaEnabled(e.target.checked)}
+          />
           Moving average
         </label>
         {maEnabled && (
           <select
             aria-label="Moving average window"
             value={maWindow}
-            onChange={(e) => setMaWindow(Number(e.target.value) as MovingAverageWindow)}
+            onChange={(e) =>
+              setMaWindow(Number(e.target.value) as MovingAverageWindow)
+            }
             className="rounded border border-(--color-border) bg-transparent px-2 py-1 text-(--color-fg)"
           >
             {MA_WINDOWS.map((w) => (
@@ -138,7 +168,9 @@ export function TrendView({ table, dateColumn, valueColumn }: TrendViewProps) {
       ) : error ? (
         <p className="text-sm text-(--color-error)">{error}</p>
       ) : result && result.rows.length === 0 ? (
-        <p className="text-sm text-(--color-fg-muted)">No rows for this table.</p>
+        <p className="text-sm text-(--color-fg-muted)">
+          No rows for this table.
+        </p>
       ) : result ? (
         <Suspense
           fallback={

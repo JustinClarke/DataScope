@@ -3,22 +3,22 @@
 // SemanticType that decides which analysis modules it can feed (the
 // capabilities broker) and how the AI layer describes it in schema-pruned
 // prompts. Pure and deterministic: same profile in, same classification out.
-import type { ClassifiedColumn, ColumnProfile, SemanticType } from '../types';
+import type { ClassifiedColumn, ColumnProfile, SemanticType } from "../types";
 
 // DuckDB physical types that are always time-series regardless of cardinality.
-const TEMPORAL_TYPES = ['DATE', 'TIMESTAMP', 'TIMESTAMPTZ', 'TIME'];
+const TEMPORAL_TYPES = ["DATE", "TIMESTAMP", "TIMESTAMPTZ", "TIME"];
 
 // Numeric physical types. Low-cardinality members read as encoded categories
 // (survived 0/1, class 1/2/3); higher-cardinality members are continuous.
 const NUMERIC_TYPES = [
-  'BIGINT',
-  'INTEGER',
-  'DOUBLE',
-  'FLOAT',
-  'HUGEINT',
-  'SMALLINT',
-  'TINYINT',
-  'DECIMAL',
+  "BIGINT",
+  "INTEGER",
+  "DOUBLE",
+  "FLOAT",
+  "HUGEINT",
+  "SMALLINT",
+  "TINYINT",
+  "DECIMAL",
 ];
 
 // A column whose distinct-value count is at or below this reads as a set of
@@ -35,7 +35,7 @@ export const IDENTIFIER_UNIQUE_RATIO = 0.95;
 
 /** True when `physicalType` names a numeric DuckDB type (DECIMAL(9,2) etc. included). */
 function isNumericType(physicalType: string): boolean {
-  const base = physicalType.replace(/\(.*\)$/, '').toUpperCase();
+  const base = physicalType.replace(/\(.*\)$/, "").toUpperCase();
   return NUMERIC_TYPES.includes(base);
 }
 
@@ -61,25 +61,31 @@ function uniqueRatioOf(cardinality: number, totalRows: number): number {
  * an exotic column (STRUCT, LIST, BLOB, INTERVAL) is excluded from analysis
  * rather than crashing the classifier.
  */
-export function classifyColumn(profile: ColumnProfile, totalRows: number): SemanticType {
+export function classifyColumn(
+  profile: ColumnProfile,
+  totalRows: number,
+): SemanticType {
   const { physicalType, cardinality } = profile;
 
-  if (isTemporalType(physicalType)) return 'Temporal';
+  if (isTemporalType(physicalType)) return "Temporal";
 
-  if (uniqueRatioOf(cardinality, totalRows) > IDENTIFIER_UNIQUE_RATIO) return 'Identifier';
+  if (uniqueRatioOf(cardinality, totalRows) > IDENTIFIER_UNIQUE_RATIO)
+    return "Identifier";
 
   if (isNumericType(physicalType)) {
-    return cardinality <= CATEGORICAL_CARDINALITY_MAX ? 'Categorical' : 'Quantitative';
+    return cardinality <= CATEGORICAL_CARDINALITY_MAX
+      ? "Categorical"
+      : "Quantitative";
   }
 
   const upperType = physicalType.toUpperCase();
-  if (upperType === 'VARCHAR' || upperType === 'BOOLEAN') {
-    if (cardinality <= CATEGORICAL_CARDINALITY_MAX) return 'Categorical';
-    if (cardinality > TEXTUAL_CARDINALITY_MIN) return 'Textual';
-    return 'Categorical'; // moderate-cardinality strings
+  if (upperType === "VARCHAR" || upperType === "BOOLEAN") {
+    if (cardinality <= CATEGORICAL_CARDINALITY_MAX) return "Categorical";
+    if (cardinality > TEXTUAL_CARDINALITY_MIN) return "Textual";
+    return "Categorical"; // moderate-cardinality strings
   }
 
-  return 'Identifier';
+  return "Identifier";
 }
 
 /**
@@ -88,11 +94,15 @@ export function classifyColumn(profile: ColumnProfile, totalRows: number): Seman
  * unique"). Derived from the same fields as the classification, so it always
  * describes the *deciding* rule for that column.
  */
-export function classificationReason(profile: ColumnProfile, totalRows: number): string {
+export function classificationReason(
+  profile: ColumnProfile,
+  totalRows: number,
+): string {
   const { physicalType, cardinality } = profile;
   const ratio = uniqueRatioOf(cardinality, totalRows);
 
-  if (isTemporalType(physicalType)) return `${physicalType} values — treated as a time axis`;
+  if (isTemporalType(physicalType))
+    return `${physicalType} values — treated as a time axis`;
 
   if (ratio > IDENTIFIER_UNIQUE_RATIO) {
     return `${(ratio * 100).toFixed(1)}% unique — near one value per row`;
@@ -105,9 +115,11 @@ export function classificationReason(profile: ColumnProfile, totalRows: number):
   }
 
   const upperType = physicalType.toUpperCase();
-  if (upperType === 'VARCHAR' || upperType === 'BOOLEAN') {
-    if (cardinality <= CATEGORICAL_CARDINALITY_MAX) return `discrete categories (${cardinality} distinct)`;
-    if (cardinality > TEXTUAL_CARDINALITY_MIN) return `free text (${cardinality} distinct values)`;
+  if (upperType === "VARCHAR" || upperType === "BOOLEAN") {
+    if (cardinality <= CATEGORICAL_CARDINALITY_MAX)
+      return `discrete categories (${cardinality} distinct)`;
+    if (cardinality > TEXTUAL_CARDINALITY_MIN)
+      return `free text (${cardinality} distinct values)`;
     return `moderate-cardinality text (${cardinality} distinct)`;
   }
 
@@ -125,7 +137,10 @@ export function manualOverrideReason(semanticType: SemanticType): string {
  * `classificationReason` alongside its `semanticType`; all other profile fields
  * carry over unchanged.
  */
-export function classifyColumns(profiles: ColumnProfile[], totalRows: number): ClassifiedColumn[] {
+export function classifyColumns(
+  profiles: ColumnProfile[],
+  totalRows: number,
+): ClassifiedColumn[] {
   return profiles.map((profile) => ({
     ...profile,
     semanticType: classifyColumn(profile, totalRows),

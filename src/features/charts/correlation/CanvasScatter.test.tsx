@@ -1,21 +1,30 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
-import { CanvasScatter } from './CanvasScatter';
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render } from "@testing-library/react";
+import { CanvasScatter } from "./CanvasScatter";
 
-describe('CanvasScatter', () => {
+describe("CanvasScatter", () => {
   afterEach(() => cleanup());
 
-  it('renders a canvas labeled with the point count and axis names', () => {
-    const points = Array.from({ length: 12_000 }, (_, i) => ({ x: i, y: i * 2 }));
-    const { getByRole } = render(<CanvasScatter points={points} xLabel="Age" yLabel="Fare" />);
-    const canvas = getByRole('img', { name: /Age/ });
-    expect(canvas.getAttribute('aria-label')).toBe('Scatter plot of Fare vs Age, 12,000 points');
+  it("renders a canvas labeled with the point count and axis names", () => {
+    const points = Array.from({ length: 12_000 }, (_, i) => ({
+      x: i,
+      y: i * 2,
+    }));
+    const { getByRole } = render(
+      <CanvasScatter points={points} xLabel="Age" yLabel="Fare" />,
+    );
+    const canvas = getByRole("img", { name: /Age/ });
+    expect(canvas.getAttribute("aria-label")).toBe(
+      "Scatter plot of Fare vs Age, 12,000 points",
+    );
   });
 
-  it('renders with no points without throwing (jsdom has no 2D canvas context)', () => {
-    expect(() => render(<CanvasScatter points={[]} xLabel="x" yLabel="y" />)).not.toThrow();
+  it("renders with no points without throwing (jsdom has no 2D canvas context)", () => {
+    expect(() =>
+      render(<CanvasScatter points={[]} xLabel="x" yLabel="y" />),
+    ).not.toThrow();
   });
 });
 
@@ -29,9 +38,9 @@ describe('CanvasScatter', () => {
  * nothing failed when they drifted. The fallbacks mirror the *dark* register, which is this
  * system's primary one and also `chartPalette.ts#activeRegister`'s answer without `matchMedia`.
  */
-describe('CanvasScatter fallback literals', () => {
-  const theme = readFileSync(join(__dirname, '../../../app/theme.css'), 'utf8');
-  const source = readFileSync(join(__dirname, 'CanvasScatter.tsx'), 'utf8');
+describe("CanvasScatter fallback literals", () => {
+  const theme = readFileSync(join(__dirname, "../../../app/theme.css"), "utf8");
+  const source = readFileSync(join(__dirname, "CanvasScatter.tsx"), "utf8");
 
   /** The first declaration of a token — the dark register, which theme.css declares first. */
   const darkDeclaration = (token: string) => {
@@ -41,16 +50,23 @@ describe('CanvasScatter fallback literals', () => {
   };
 
   it.each([
-    ['--color-border', '--color-rule'],
-    ['--color-fg-muted', '--color-ink-2'],
-  ])('the %s fallback still equals its token', (alias, backing) => {
+    ["--color-border", "--color-rule"],
+    ["--color-fg-muted", "--color-ink-2"],
+  ])("the %s fallback still equals its token", (alias, backing) => {
     expect(darkDeclaration(alias)).toBe(`var(${backing})`);
-    const fallback = source.match(new RegExp(`read\\('${alias}', '([^']+)'\\)`));
-    expect(fallback, `no getComputedStyle fallback found for ${alias}`).not.toBeNull();
+    const fallback = source.match(
+      new RegExp(`read\\('${alias}', '([^']+)'\\)`),
+    );
+    expect(
+      fallback,
+      `no getComputedStyle fallback found for ${alias}`,
+    ).not.toBeNull();
     expect(fallback?.[1]).toBe(darkDeclaration(backing));
   });
 
-  it('declares no colour beyond those two fallbacks', () => {
-    expect(source.match(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(|\boklch\(/g) ?? []).toHaveLength(2);
+  it("declares no colour beyond those two fallbacks", () => {
+    expect(
+      source.match(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(|\boklch\(/g) ?? [],
+    ).toHaveLength(2);
   });
 });
