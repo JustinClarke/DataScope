@@ -466,3 +466,292 @@ by this pass) a real per-question `correctViewName` map for accurate `viewUsage`
 decision on whether the `chasm` composed-rollup gap needs a new mechanism (a second-order
 "sibling rollup via shared parent" view) before the full run, or gets reported as a known
 limitation.
+
+## Full-ladder diagnosis on `qwen3:4b`, run live (`ladderDiagnosis.ts`, roadmap item 1)
+
+Answers the bake-off's own open question directly: is the A0→A4 regression it found (57.9%→47.4%)
+concentrated in one rung, or spread across the ladder? Ran all 5 main arms (A0–A4) across all 6
+datasets, plus the 2 diagnostic arms (A2′, A1x — DESIGN.md §3, newly wired: `describeGrainCorrupted`
+in `profiler.ts`, `buildA2PrimePrompt` in `armPrompts.ts`, both arms plumbed into `runner.ts`'s
+`Arm` union and `buildArmPrompt`) on `ecommerce` only, per that section's own scope note. Same
+machinery as `bakeoff.ts` (num_ctx=8192, N=2, resumable manifest), single model, 438/440 cells
+logged (2 failed after retry, in `errors.jsonl`). A live smoke test against real Ollama (one
+question, both new arms) confirmed the new prompt builders before the full run.
+
+**Headline: the ladder does not climb monotonically, and the regression is not concentrated in
+A4.** All-dataset correct-rate (n=76/arm, 95% Wilson CI):
+
+| Arm | Correct-rate | 95% CI | wrong-but-ran | exec-error |
+|---|---|---|---|---|
+| A0 — baseline | 57.9% | [46.7, 68.4] | 24 | 8 |
+| A1 — +profile | 47.4% | [36.5, 58.4] | 28 | 12 |
+| A2 — +views | 50.0% | [39.0, 61.0] | 24 | 14 |
+| A3 — +few-shot | 55.3% | [44.1, 65.9] | 26 | 8 |
+| A4 — +plan-first | 47.4% | [36.5, 58.4] | 25 | 11 (+2 client-error) |
+
+A0 is the single best-performing arm. A1 alone accounts for most of the drop — already visible
+before A2's views or A4's plan-first schema enter the picture — and A2 doesn't recover it; A3's
+worked examples claw back most (not all) of the gap; A4 gives it back. Every CI overlaps every
+other, so none of this is individually significant at n=76 — the correct claim is "no arm showed
+a significant improvement over A0," not "A1/A2/A4 hurt." Consistent with, and sharpening, the
+bake-off's own A0-vs-A4 finding on this model.
+
+**Ecommerce-only (n=30/arm, the one dataset the diagnostic arms also ran on — matched
+comparison)** makes the pattern starker and lets the two diagnostic arms be read directly against
+their same-dataset main-arm counterparts:
+
+| Arm | Correct-rate | view-referenced |
+|---|---|---|
+| A0 | 66.7% | 0/30 (no views in prompt) |
+| A1 | 40.0% | 0/30 (no views in prompt) |
+| A2 | 40.0% | 6/30 (20%) |
+| A3 | 53.3% | 14/30 (47%) |
+| A4 | 46.7% | 4/30 (13%) — matches the bake-off's own independently-measured 13%, a real cross-check |
+| A2′ (views, no profile) | 46.7% | 6/30 (20%) |
+| A1x (corrupted profile) | 36.7% | 0/30 (no views in prompt) |
+
+Two diagnostic reads, both weak-signal at n=30 (wide, overlapping CIs) but directionally
+consistent with a real effect:
+
+- **A2′ (46.7%) beats real A2 (40.0%)** on the same 15 questions — the generated views do
+  *something* on their own, and pairing them with A1's profile text doesn't help and may actively
+  hurt at this model size. Answers DESIGN.md §3's question ("are the views load-bearing on their
+  own, without A1 already having primed the model?") in the affirmative, at least directionally.
+- **A1x (36.7%) scores below real A1 (40.0%)** — accuracy *does* drop when the grain statement is
+  corrupted, which is the direction the negative control needs to *not* dismiss A1's mechanism as
+  a pure prompt-length artifact. But the gap (3.3pp) is small relative to the noise floor at
+  n=30, so this is weak supporting evidence, not a clean confirmation either way — a larger N
+  would be needed to say more.
+- **A4's view-reference rate (13%) is lower than A3's (47%)**, despite A4 = A3 + forced
+  plan-first — the forced-plan schema is associated with *less* engagement with the pre-built
+  views, not more, which lines up with A4 scoring below A3 on both the all-dataset and
+  ecommerce-only tables above. This is the most concrete, actionable lead this run produced:
+  A4's plan-first framing may be pulling the model's attention away from the views rather than
+  toward correct grain reasoning as intended.
+
+**Caveat repeated deliberately**: `viewUsage` still can't distinguish right-view from wrong-view
+(`correctViewName` passed `null` throughout, matching the bake-off's own known limitation) — every
+"view-referenced" count above is "referenced *some* generated view," not "referenced the correct
+one." The real per-question `correctViewName` map (roadmap item 2) would sharpen every number in
+this section, especially A3 vs A4's engagement gap.
+
+**Implication for the roadmap**: this reinforces item 2 (real `correctViewName` map, per-model
+`num_ctx`, real Ollama-process RSS sampling) as the right next step ahead of item 5's full
+multi-model ablation — spending that run's multi-hour/~19GB budget is premature while "referenced
+a view" and "referenced the *right* view" are still conflated, especially given A3-vs-A4's
+engagement gap is exactly the kind of question a real correctness map would resolve cleanly
+instead of arguing from aggregate accuracy alone.
+
+## Roadmap item 2: technical debt the full run needs
+
+Three infrastructure gaps, fixed in code (not run against a live model sweep — that's item 5's
+job; this is the prep work). All three are additive/backward-compatible: `bakeoff.ts` and
+`ladderDiagnosis.ts`'s already-collected manifests and reported results are untouched (verified —
+see below), and every existing test still passes (153/153, `npx vitest run eval/chat/20-grain-rescue
+eval/chat/17-duckdb-local-chat`).
+
+**1. Per-model `num_ctx` pinning, actually wired to the call.** `runner.ts`'s `RunOneCallParams`
+already had a `numCtx` field, but it was only ever used for the 0.8x prompt-overflow arithmetic —
+the real `/api/chat` call went through `ollama.ts`'s `callForProposal` / `planFirstOllama.ts`'s
+`callForPlannedProposal`, both of which read `num_ctx` from a module-level `CHAT_NUM_CTX` constant
+(or, for the A4 path, `process.env.CHAT_NUM_CTX` read at call time — still one process-wide value).
+`bakeoff.ts`'s own header comment already named this exactly: "`ollama.ts` reads it once at module
+import... setting it internally would be silently too late." That's true for the *env var*, but
+the actual fix is to stop relying on it for the value that matters: `callOllama`, `callForProposal`,
+and `callForPlannedProposal` now all take an explicit optional `numCtx` parameter (default = the
+prior module-constant behavior, so every exp17 caller that omits it — `chat.ts`, `score.ts`,
+`thinkOffPrimingProbe.ts`, `silverLayerProbe.ts`, all frozen for exp17's own scored runs — is
+byte-for-byte unaffected), and `runner.ts`'s `callArm` now threads `params.numCtx` through to both
+the initial call and the one-shot repair call. `RunOneCallParams.numCtx` is now the single source
+of truth for both the overflow check and the real call, which is what lets a future full-run sweep
+pin a different `num_ctx` per model tier (`qwen3:1.7b` through `qwen3:14b`) within one process
+instead of needing a separate process launch per model. Verified with two new `runner.test.ts`
+cases that capture the actual outgoing fetch body and assert `options.num_ctx` matches the
+per-call value, on both the A0-A3 path and the A4 (plan-first) path — not just that it compiles.
+`bakeoff.ts`/`ladderDiagnosis.ts` are unaffected in practice: both already passed
+`numCtx: REQUIRED_NUM_CTX` (8192) while also requiring `CHAT_NUM_CTX=8192` be exported by the
+caller, so the value flowing through the fix is identical to what those two already-run scripts
+used.
+
+**2. Ollama-runner RSS sampling, not harness-process RSS.** `manifest.ts`'s `peakRssBytes` sampled
+`process.memoryUsage().rss` — this harness's own Node process. Checked live against the actual
+Ollama install on this machine (0.32.1): `ollama serve` itself never exceeds ~50MB RSS regardless
+of what's loaded; it spawns a separate `llama-server` child process per loaded model (confirmed via
+`ps aux` while a live `/api/chat` call was in flight — the child appeared with `--model
+<blob-path> --port <ephemeral>`), and *that* process is where the model weights and KV cache
+actually live. So neither the harness process nor `ollama serve` itself was ever going to reflect
+DESIGN.md §4's "peak RSS under 6GB" viability budget — the field was measuring the wrong process
+entirely. New `ollamaRssBytes` field on `ManifestRow`: sums RSS (bytes) across every process whose
+command line matches `llama-server` or `ollama_llama_server` (both names Ollama's runner binary has
+used across versions), sampled every 200ms while a call is in flight (coarser than the harness
+sampler's 50ms — shelling out to `ps` per tick is real overhead the in-process `process.memoryUsage()`
+read isn't). `peakRssBytes` is kept as-is (not repurposed) for comparability with the bake-off's and
+ladder-diagnosis's already-collected manifests. Verified live, not just against a mocked test: a
+real `runAndLog` call against `qwen3:0.6b` reported `peakRssBytes` ≈173MB (harness) vs.
+`ollamaRssBytes` ≈1028MB (the actual runner) — the harness number alone would have wildly
+understated the real memory cost.
+
+**3. Real per-question `correctViewName` map.** Added `correctViewName: string | null` to every one
+of `computeGold.ts`'s 28 `QuestionSpec` entries (flows through to both the explicit and paraphrase
+rows in `questions.json` — 63 questions total now carry it), replacing the `null` every caller was
+passing uniformly. Grounded in two things, not guessed: (a) DESIGN.md §2's own prose, which already
+names the correct/trap view explicitly for every `V`/`M`-tagged ecommerce question (E8/E11/E13/E15
+are explicitly "the view is the trap, use raw tables instead"; E12 is explicitly "the product-grain
+view IS correct here"; E3/E4/E14 share `order_items_rollup_by_orders`, the M-trap being *which
+column* inside it, not which view); (b) live enumeration of the real views `buildAllRollupViews`
+generates against the actual combined catalog (a throwaway script, not committed — 4 real views
+survive FK inference: `orders_rollup_by_customers`, `order_items_rollup_by_orders`,
+`order_items_rollup_by_products`, `product_reviews_rollup_by_products`; three more edges get
+inferred — `product_reviews.ReviewId → titanic.PassengerId`, `titanic.Age → customers.customer_id`,
+`weather.Humidity → customers.customer_id` — but `buildRollupView` silently rejects all three as
+non-fanouts, so they never produce views; this is the exact cross-dataset FK-inference risk
+`profiler.otherDatasets.test.ts`'s own module comment already flags as deliberately not designed
+away).
+
+**Real finding, not assumed**: two systematic measure-column gaps, verified against the live
+catalog's actual `semanticType` classifications, not inferred from behavior. `buildRollupView` only
+SUMs/AVGs columns the profiler classifies `Quantitative` — and `order_items.quantity` and
+`product_reviews.Rating` both classify `Categorical` (small-integer scales read as low-cardinality
+categoricals by the classifier), so **no view anywhere carries a units-sold or a rating measure**.
+Concretely: `order_items_rollup_by_orders` / `order_items_rollup_by_products` have
+`order_items_row_count`, `unit_price_sum`/`avg`, and `quantity_unit_price_product_sum` (the
+revenue pairing) — but no `quantity_sum`. `product_reviews_rollup_by_products` has only
+`product_reviews_row_count` — no rating measure at all. Consequences, cross-checked against
+`computeGold.ts`'s own gold SQL (which independently needed `SUM(oi.quantity)` for E9 and
+`AVG(pr.Rating)` for every R/C rating question, confirming the gap rather than assuming it from the
+view schema alone):
+- **E7 and E9** (`quantity`-based: avg items/order, top-4-by-units) are `correctViewName: null` —
+  not because DESIGN.md tags them `V` (it doesn't; only `G`), but because the mechanism genuinely
+  has nothing to offer them. DESIGN.md's authors couldn't have caught this without running the
+  profiler live against real data — it's an emergent property of the semantic-type classifier's
+  cardinality threshold, not a design oversight.
+- **Every rating question** (R2, R3, R4, and the rating half of C2/C3/C4) is `correctViewName:
+  null` for the same root cause. C2/C3/C4 still get `order_items_rollup_by_products` as their
+  `correctViewName` — the revenue half of those chasm questions *is* view-assisted (this is the
+  mechanism's intended chasm fix, per DESIGN.md's chasm section), it's specifically the rating half
+  that has no view to lean on.
+- This isn't itself a bug to fix in this pass (item 2 is instrumentation/plumbing, not a mechanism
+  change — fixing the classifier's cardinality threshold, if that's even the right fix, is separate,
+  undiscussed scope) but it's a real, generalizable limitation worth carrying into item 6's final
+  report: the current view-synthesis rule structurally can't assist with count/quantity/rating-style
+  measures, independent of anything the model does.
+
+`computeGold.ts` re-run end to end after the edit (`npx tsx eval/chat/20-grain-rescue/fixtures/computeGold.ts`):
+all 43 base questions recomputed identically (every gold value byte-identical to before — confirmed
+via `git diff`, the only non-`correctViewName` diff was E9's tied-at-105 row ordering, which
+`score.ts`'s row-set comparison sorts before comparing, so it's a pre-existing SQL-has-no-tiebreaker
+nondeterminism artifact with zero effect on scoring, not a regression). `bakeoff.ts` and
+`ladderDiagnosis.ts` are deliberately left reading `correctViewName: null` — both are finished,
+already-reported one-time decision scripts (bake-off's model pick, the ladder diagnosis's findings
+above) with their own comments explaining why `null` was the right choice *for those scripts*
+specifically; retroactively rewiring them wouldn't change anything they've already reported and
+would blur what ran under what instrumentation. The map exists now so item 5's full-run script can
+read `correctViewName` straight off `questions.json` instead of authoring it from scratch.
+
+## Roadmap item 3 investigated, and a bigger finding: prompt size (`a5Probe.ts`, `buildA5Prompt`)
+
+**Status: A5 arm built, tested, and ready to run — the sweep itself is not done.** Started live,
+stopped after 2 cells at the session boundary. Resume with the command at the bottom of this
+section.
+
+### Item 3: what the chasm arm actually contains
+
+Went to decide `chasm`'s fate (report the 0% as a known limitation, or build a second-order
+sibling-rollup view) and found the README's framing of the choice was wrong. Bootstrapped the full
+8-table catalog exactly as `ladderDiagnosis.ts` does and enumerated the real prompt contents:
+
+- **Both sibling rollup views already exist and are already in the chasm prompt** —
+  `order_items_rollup_by_products` and `product_reviews_rollup_by_products`, both at
+  `products.product_id` grain. There is nothing to build for the composition. BUILD_NOTES' earlier
+  "nothing in the mechanism teaches composing two sibling rollups" is about the *model* not
+  composing them, not about the views being absent; DESIGN.md's chasm section ("A2's per-edge
+  rollup views are exactly the right fix here") is structurally correct.
+- **C4 is fully answerable from those two views today.** Joining them on `product_id` and filtering
+  `product_reviews_row_count >= 5` reproduces C4's gold (`Toys Item 24`) exactly — verified by
+  running it. So C4's 0% is a pure model-composition failure with the correct tools in the prompt,
+  not a missing mechanism.
+- **C2/C3 are blocked by something else entirely.** `product_reviews_rollup_by_products` carries
+  exactly one measure, `product_reviews_row_count`. No rating measure, because `Rating`
+  (cardinality 5) classifies `Categorical` — the same classifier gap item 2 already logged for
+  `quantity`/`Rating`, not a chasm-specific one. Both questions need `AVG(Rating)`, so no
+  second-order view fixes them without fixing the classifier first.
+
+The run scores C2/C3/C4 only (C1 has 3 checks, filtered out). Two of the three were unwinnable for
+a reason unrelated to the chasm trap; the third was winnable and every model missed it.
+
+Minor, uncharted: the chasm arm is also offered `order_items_rollup_by_orders`, keyed on
+`orders.order_id`, while `orders` is not in the chasm DDL block — `ladderDiagnosis.ts`/`bakeoff.ts`
+filter `dViews` by child table only. The view is queryable (it only reads `order_items`) so nothing
+breaks, but the model is shown a view keyed on a table it cannot see. Not changed.
+
+**Item 3 is therefore not yet decided** — the evidence changed the question, and the prompt-size
+finding below is the more likely explanation for chasm's 0% anyway.
+
+### Why every arm above A0 might be losing: prompt size
+
+Measured every arm's assembled prompt (scratchpad script, ~4 chars/token):
+
+| arm | ecommerce tokens | vs A0 | ecommerce correct (ladder run) |
+| :--- | ---: | ---: | ---: |
+| A0 bare DDL | ~102 | 1.0x | **66.7%** |
+| A2′ DDL + views | ~604 | 5.9x | 46.7% |
+| A1 + profile | ~643 | 6.3x | 40.0% |
+| A2 + profile + views | ~1145 | 11.2x | 40.0% |
+| A3 + few-shot | ~1378 | 13.5x | 53.3% |
+| A4 + plan-first | ~1400 | 13.7x | 46.7% |
+
+The best-scoring prompt is 102 tokens and everything else is 6-14x longer and worse. A3's worked
+examples buy some of it back, so it isn't purely length — but the cliff sits between 102 and 604,
+and **the ladder never tested anything in that gap.**
+
+Then, counting who the views are even for (explicit single-check questions, i.e. the run set):
+
+```
+ecommerce         8/15 questions have a correctViewName
+chasm             3/3
+titanic           0/7      weather 0/6      stock_prices 0/3      product_reviews 0/4
+------------------------------------------------------------------
+                 11/38
+```
+
+**27 of 38 questions cannot be helped by any view, and all 38 carry the full profile + all-views
+payload regardless.** On the three single-table datasets it is pure overhead by construction. That
+is a sufficient explanation for A0 winning, and it is a packaging problem, not a mechanism one.
+
+### A5: the minimal-prompt ceiling arm
+
+`buildA5Prompt(tables, view | null)` — bare DDL plus *only* the one view this question needs, no
+stats block, no grain prose, no sibling views. ~322 tokens on ecommerce; byte-identical to A0 when
+the question has no view (asserted in a test — the mechanism should cost nothing where it cannot
+help). `viewsBlock` is reused verbatim rather than reworded for the one-view case, so the only
+variable between A5 and A2′ is *which* views are present.
+
+Wired as `Arm` `'A5'` with a new `ArmContext.selectedView` (`undefined` throws; `null` is a valid,
+meaningful "this question has no view"). `a5Probe.ts` is the run script: `qwen3:4b`, arms A0+A5,
+ecommerce + chasm (the only datasets with any `correctViewName`), N=2, num_ctx=8192, resumable
+manifest, same machinery as `ladderDiagnosis.ts`. It is **the first script to actually read item 2's
+`correctViewName` map**, so `viewUsage` finally distinguishes right-view from wrong-view rather than
+only some-view from none. A built-in summary reports A0-vs-A5 split three ways (all / view-backed /
+no-view-possible), view engagement, and a paired per-question table.
+
+**A5 is a ceiling, not a shippable arm** — it selects the view by the question's pre-registered
+`correctViewName`, an oracle a real system would have to infer. That is the point: if a perfectly
+selected, minimally packaged view still doesn't beat A0, no selection strategy built on these views
+will, and the negative result is conclusive rather than a packaging artifact. Labelled a diagnostic
+alongside A2′/A1x.
+
+72/72 exp20 tests pass (run with `--no-file-parallelism`; two files time out under vitest's default
+parallel file execution from DuckDB contention — pre-existing, unrelated to this change).
+`npx tsc --noEmit` clean.
+
+**To resume:**
+
+```
+CHAT_NUM_CTX=8192 npx tsx eval/chat/20-grain-rescue/a5Probe.ts       # ~15-20 min, 72 cells
+SUMMARY_ONLY=1  npx tsx eval/chat/20-grain-rescue/a5Probe.ts         # re-print summary only
+```
+
+`runs/a5-probe/manifest.jsonl` already holds 2 cells (A0 C2, both reps, both `wrong-but-ran`, 122
+prompt tokens, ~6-10s each). The script resumes from those — **do not delete the manifest**, that
+was `bakeoff.ts`'s original crash bug. Observed cell latency suggests the full sweep is ~15-20
+minutes, not the hour originally estimated.

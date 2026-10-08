@@ -18,15 +18,15 @@
 // datasets and dynamically-generated views don't fit.
 import type { DuckDBConnection } from '@duckdb/node-api';
 import { callForProposal, type CallUsage, type ChatMessage } from '../17-duckdb-local-chat/ollama';
-import { buildA0Prompt, buildA1Prompt, buildA2Prompt, buildA2PrimePrompt, buildA3Prompt } from './armPrompts';
+import { buildA0Prompt, buildA1Prompt, buildA2Prompt, buildA2PrimePrompt, buildA3Prompt, buildA5Prompt } from './armPrompts';
 import type { DatasetFacts } from './datasetFacts';
 import { buildA4Prompt, callForPlannedProposal } from './planFirstOllama';
 import type { RollupView } from './profiler';
 import { bucketOutcome, tagViewUsage, type CallOutcome, type ExecutedResult, type GoldCheck, type ScoreBucket, type ViewUsage } from './score';
 import type { TableRegistryEntry } from '../../../src/types/dataset';
 
-/** A2′ and A1x are DESIGN.md §3's diagnostic arms (ecommerce/ only, per that section — never run on the other 5 datasets): A2′ breaks the ladder's order-dependence (views without a preceding profile), A1x is the negative control (A1's grain statement deliberately corrupted). */
-export type Arm = 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A2prime' | 'A1x';
+/** A2′, A1x and A5 are diagnostic arms, not rungs of the shipped ladder: A2′ breaks the ladder's order-dependence (views without a preceding profile), A1x is the negative control (A1's grain statement deliberately corrupted), A5 is the minimal-prompt ceiling (one oracle-selected view, no profile — see `buildA5Prompt`). A2′/A1x are ecommerce/ only per DESIGN.md §3; A5 is not, since its question is about prompt size rather than the ecommerce fanout specifically. */
+export type Arm = 'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'A2prime' | 'A1x' | 'A5';
 
 export interface ArmContext {
   tables: readonly TableRegistryEntry[];
@@ -35,6 +35,8 @@ export interface ArmContext {
   views: readonly RollupView[];
   /** Only read by the A1x diagnostic arm — the deliberately corrupted grain/fanout text (`describeGrainCorrupted`, DESIGN.md §3's negative control). */
   corruptedGrainByTable?: ReadonlyMap<string, string>;
+  /** Only read by the A5 diagnostic arm — the single view this question should use, or null when it has none (A5 then degenerates to A0 exactly). Resolved by the caller from the question's `correctViewName`; this file keeps no per-question knowledge. */
+  selectedView?: RollupView | null;
 }
 
 export function buildArmPrompt(arm: Arm, ctx: ArmContext): string {
@@ -54,6 +56,9 @@ export function buildArmPrompt(arm: Arm, ctx: ArmContext): string {
     case 'A1x':
       if (!ctx.corruptedGrainByTable) throw new Error('A1x arm requires ArmContext.corruptedGrainByTable');
       return buildA1Prompt(ctx.tables, ctx.facts, ctx.corruptedGrainByTable);
+    case 'A5':
+      if (ctx.selectedView === undefined) throw new Error('A5 arm requires ArmContext.selectedView (null is valid — an explicit "this question has no view")');
+      return buildA5Prompt(ctx.tables, ctx.selectedView);
   }
 }
 
@@ -67,9 +72,9 @@ interface NormalizedCall {
   usage: CallUsage;
 }
 
-async function callArm(arm: Arm, model: string, messages: readonly ChatMessage[], baseUrl?: string): Promise<NormalizedCall> {
+async function callArm(arm: Arm, model: string, messages: readonly ChatMessage[], numCtx: number, baseUrl?: string): Promise<NormalizedCall> {
   if (arm === 'A4') {
-    const call = await callForPlannedProposal(model, messages, baseUrl);
+    const call = await callForPlannedProposal(model, messages, baseUrl, numCtx);
     if (call.proposal === null) {
       return { status: null, sql: null, reason: null, parseError: call.parseError, rawContent: call.rawContent, usage: call.usage };
     }
@@ -78,7 +83,7 @@ async function callArm(arm: Arm, model: string, messages: readonly ChatMessage[]
     }
     return { status: 'query', sql: call.proposal.sql, reason: null, parseError: null, rawContent: call.rawContent, usage: call.usage };
   }
-  const call = await callForProposal(model, messages, baseUrl);
+  const call = await callForProposal(model, messages, baseUrl, numCtx);
   if (call.proposal === null) {
     return { status: null, sql: null, reason: null, parseError: call.parseError, rawContent: call.rawContent, usage: call.usage };
   }
@@ -154,7 +159,7 @@ export interface RunOneCallParams {
   allViewNames: readonly string[];
   /** The view this specific question/check should use, or null if the question has no single correct view (e.g. a plain profiling question). Caller-supplied — this function has no per-question knowledge of its own. */
   correctViewName: string | null;
-  /** The num_ctx this model is pinned to for this run (DESIGN.md §4) — used only for the 0.8x overflow check, not passed to the call itself (callForProposal/callForPlannedProposal read CHAT_NUM_CTX from the environment). */
+  /** The num_ctx this model is pinned to for this run (DESIGN.md §4) — the single source of truth for both the 0.8x overflow check below and the actual call (passed through callArm to callForProposal/callForPlannedProposal), so a sweep can pin a different value per model tier within one process. */
   numCtx: number;
   baseUrl?: string;
 }
@@ -175,7 +180,7 @@ export async function runOneCall(params: RunOneCallParams): Promise<RunOneCallRe
     { role: 'user', content: params.question },
   ];
 
-  let call = await callArm(params.arm, params.model, messages, params.baseUrl);
+  let call = await callArm(params.arm, params.model, messages, params.numCtx, params.baseUrl);
   const usage: CallUsage[] = [call.usage];
 
   if (call.usage.promptTokens > params.numCtx * PROMPT_TOKEN_BUDGET_FRACTION) {
@@ -216,7 +221,7 @@ export async function runOneCall(params: RunOneCallParams): Promise<RunOneCallRe
         { role: 'assistant', content: call.rawContent },
         { role: 'user', content: `${REPAIR_INSTRUCTION_PREFIX}${executionError}${CORRECTION_SUFFIX}` },
       );
-      const repairCall = await callArm(params.arm, params.model, messages, params.baseUrl);
+      const repairCall = await callArm(params.arm, params.model, messages, params.numCtx, params.baseUrl);
       usage.push(repairCall.usage);
       call = repairCall;
       if (call.status === 'query') {

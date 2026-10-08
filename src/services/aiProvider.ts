@@ -82,6 +82,15 @@ export interface ProviderContext {
   byokValue?: string | null;
   /** The D3 routing toggle (settings store) — injectable for tests. */
   byokPreference?: BYOKPreference;
+  /**
+   * Local-Ollama generation controls (settings store) — injectable for tests.
+   * Read here rather than baked into the provider so the user's choice of model
+   * and of whether to let a reasoning model think actually reaches the daemon.
+   */
+  ollamaModel?: string;
+  ollamaThink?: boolean;
+  ollamaTemperature?: number;
+  ollamaKeepAlive?: string;
   /** Whether routing was ever explicitly chosen (settings store) — injectable for tests. */
   byokRoutingTouched?: boolean;
   /**
@@ -144,7 +153,14 @@ export function resolveProvider(
   if (webllmReady && byokValue === null && vaultRef === null)
     return { provider: createWebLLMProvider() };
   if (byokValue !== null && isOllamaEndpoint(byokValue)) {
-    const ollama = createOllamaProvider({ baseUrl: byokValue });
+    const settings = useSettingsStore.getState();
+    const ollama = createOllamaProvider({
+      baseUrl: byokValue,
+      model: context.ollamaModel ?? settings.ollamaModel,
+      think: context.ollamaThink ?? settings.ollamaThink,
+      temperature: context.ollamaTemperature ?? settings.ollamaTemperature,
+      keepAlive: context.ollamaKeepAlive ?? settings.ollamaKeepAlive,
+    });
     const byokPreference =
       context.byokPreference ?? useSettingsStore.getState().byokPreference;
     const byokRoutingTouched =

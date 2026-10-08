@@ -29,6 +29,7 @@ import type { AITurn, TableRegistryEntry } from "../../types";
 import type { CloudProviderConfig } from "../../services/cloudProvider";
 import { AITurnView } from "./AITurnView";
 import { describeAIStatus, aiStatusLabel } from "./aiStatusUtils";
+import { useRehydrationStore, isTableUsable } from "../../stores/rehydration";
 
 // The deployed edge router endpoint. Falls back to staging if unset.
 const EDGE_AI_ROUTER = (import.meta.env.VITE_EDGE_AI_ROUTER ??
@@ -79,13 +80,26 @@ export function AIChatModule() {
   const transcript = useAISessionStore((s) => s.transcript);
   const addTurn = useAISessionStore((s) => s.addTurn);
   const appendTurn = useAISessionStore((s) => s.appendTurn);
-  const tables = useDatasetsStore((s) => s.tables);
+  const registeredTables = useDatasetsStore((s) => s.tables);
+  const rehydrationOutcomes = useRehydrationStore((s) => s.outcomes);
+  // 07d: the schema prompt may only advertise tables the engine can actually
+  // query. A registry entry that didn't come back is still *registered* — the
+  // Explorer, Inspector and TableList all read "live" as reconciled-usable and
+  // this path was the one consumer re-deriving it as "registered", so the model
+  // was handed dead tables, wrote correct SQL against one, and every attempt
+  // came back "Table with name X does not exist" with the schema still
+  // insisting it did.
+  const tables = useMemo(
+    () => registeredTables.filter((t) => isTableUsable(rehydrationOutcomes, t.id)),
+    [registeredTables, rehydrationOutcomes],
+  );
   const edges = useChatEdges(tables);
   const aiMode = useSettingsStore((s) => s.aiMode);
   // The D3 toggle the settings panel writes — not the aiSession stub's field.
   const byokPreference = useSettingsStore((s) => s.byokPreference);
   const byokRoutingTouched = useSettingsStore((s) => s.byokRoutingTouched);
   const metadataOnlyRepair = useSettingsStore((s) => s.metadataOnlyRepair);
+  const ollamaModel = useSettingsStore((s) => s.ollamaModel);
   const webllmConsent = useSettingsStore((s) => s.webllmConsent);
   const webllmStatus = useWebLLMStore((s) => s.status);
   const byokKey = useByokKeyStore((s) => s.key);
@@ -111,6 +125,7 @@ export function AIChatModule() {
     byokPreference,
     byokRoutingTouched,
     endpointConfigured: EDGE_AI_ROUTER.length > 0,
+    ollamaModel,
   });
 
   const [draft, setDraft] = useState("");

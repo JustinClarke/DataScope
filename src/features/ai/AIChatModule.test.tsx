@@ -8,7 +8,9 @@
 // asserted at the call site.
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import type { AITurn } from "../../types";
+import type { AITurn, TableRegistryEntry } from "../../types";
+import { useDatasetsStore } from "../../stores/datasets";
+import { useRehydrationStore } from "../../stores/rehydration";
 
 const askAI = vi.fn(
   async (_question: string, _deps: unknown): Promise<AITurn> => ({
@@ -59,5 +61,53 @@ describe("AIChatModule — execution wiring", () => {
     const deps = await ask();
     expect(deps.signal).toBeInstanceOf(AbortSignal);
     expect(deps.signal?.aborted).toBe(false);
+  });
+});
+
+// The schema prompt may only name tables the engine can actually query (07d).
+// A `recoverable`/`lost` entry is still in the registry, so a chat that reads
+// the registry directly advertises it, the model writes correct SQL against it,
+// and every attempt fails "Table with name X does not exist" while the schema
+// keeps insisting it exists — an unrecoverable retry loop, since the prompt
+// never changes between attempts.
+describe("AIChatModule — only reconciled-usable tables reach the prompt", () => {
+  const entry = (id: string, tableName: string): TableRegistryEntry => ({
+    id,
+    tableName,
+    datasetId: "d",
+    origin: "file",
+    rowCount: 10,
+    columnCount: 1,
+    memoryBytes: 0,
+    createdAt: "2026-08-27T00:00:00.000Z",
+  });
+
+  beforeEach(() => {
+    useDatasetsStore.setState({
+      tables: [entry("t1", "material_master"), entry("t2", "sales")],
+    });
+    useRehydrationStore.setState({ outcomes: {} });
+  });
+
+  it("drops a table that reconciliation could not bring back", async () => {
+    useRehydrationStore.getState().setOutcomes([
+      { tableId: "t1", tableName: "material_master", status: "restored", reason: null },
+      {
+        tableId: "t2",
+        tableName: "sales",
+        status: "lost",
+        reason: "the staged file was evicted",
+      },
+    ]);
+    const deps = (await ask()) as unknown as { tables: TableRegistryEntry[] };
+    expect(deps.tables.map((t) => t.tableName)).toEqual(["material_master"]);
+  });
+
+  it("keeps every table in an ordinary session, where nothing was reconciled", async () => {
+    const deps = (await ask()) as unknown as { tables: TableRegistryEntry[] };
+    expect(deps.tables.map((t) => t.tableName)).toEqual([
+      "material_master",
+      "sales",
+    ]);
   });
 });

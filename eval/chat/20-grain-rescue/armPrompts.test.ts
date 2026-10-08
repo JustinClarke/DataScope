@@ -14,7 +14,7 @@ import { buildDatasetFacts, type DatasetFacts } from './datasetFacts';
 import { buildAllRollupViews, buildTableRegistry, describeGrain, inferEdges } from './profiler';
 import type { RollupView } from './profiler';
 import type { TableRegistryEntry } from '../../../src/types/dataset';
-import { buildA0Prompt, buildA1Prompt, buildA2Prompt, buildA2PrimePrompt, buildA3Prompt, synthesizeFewShotExamples } from './armPrompts';
+import { buildA0Prompt, buildA1Prompt, buildA2Prompt, buildA2PrimePrompt, buildA3Prompt, buildA5Prompt, synthesizeFewShotExamples } from './armPrompts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DB_PATH = join(HERE, 'runs', 'test', 'arm-prompts.duckdb');
@@ -78,6 +78,31 @@ describe('arm prompt-assembly layer (A0-A3)', () => {
     expect(prompt).toContain('CREATE VIEW "order_items_rollup_by_orders"');
     expect(prompt).not.toMatch(/— \d+ rows/); // A1's statsBlock row-count line
     expect(prompt).not.toMatch(/Grain:|line-grain/i);
+  });
+
+  it('A5 (diagnostic) carries the one selected view and nothing else — no profile, no sibling views', () => {
+    const { subset, subsetViews } = ecommerceSubset();
+    const selected = subsetViews.find((v) => v.viewName === 'order_items_rollup_by_orders')!;
+    const prompt = buildA5Prompt(subset, selected);
+    expect(prompt).toContain('CREATE VIEW "order_items_rollup_by_orders"');
+    expect(prompt).not.toContain('orders_rollup_by_customers'); // the other view this dataset generates
+    expect(prompt).not.toMatch(/— \d+ rows/);
+    expect(prompt).not.toMatch(/Grain:|line-grain/i);
+    expect(prompt).not.toMatch(/Example \d:/);
+  });
+
+  it('A5 with no view is byte-identical to A0 — the mechanism costs nothing where it cannot help', () => {
+    const { subset } = ecommerceSubset();
+    expect(buildA5Prompt(subset, null)).toBe(buildA0Prompt(subset));
+  });
+
+  it('A5 is materially shorter than every arm above A0 — the property the probe exists to test', () => {
+    const { subset, subsetViews } = ecommerceSubset();
+    const selected = subsetViews.find((v) => v.viewName === 'order_items_rollup_by_orders')!;
+    const a5 = buildA5Prompt(subset, selected).length;
+    expect(a5).toBeLessThan(buildA2PrimePrompt(subset, subsetViews).length);
+    expect(a5).toBeLessThan(buildA1Prompt(subset, facts, grainByTable).length);
+    expect(a5).toBeLessThan(buildA3Prompt(subset, facts, grainByTable, subsetViews).length / 2);
   });
 
   it('A3 adds worked examples that demonstrate AVG(measure) directly and a join-back-to-parent filter, capped at 3 total', () => {

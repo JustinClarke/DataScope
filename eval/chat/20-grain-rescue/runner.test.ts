@@ -246,6 +246,61 @@ describe('runner (run/scoring loop wiring)', () => {
     expect(result.bucket).toBeNull();
   });
 
+  it('sends the per-cell numCtx to the real Ollama call, not just the overflow check (roadmap item 2 — a shared CHAT_NUM_CTX env var can\'t vary per model within one sweep process)', async () => {
+    const bodies: Array<{ options?: { num_ctx?: number } }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: { body: string }) => {
+        bodies.push(JSON.parse(init.body));
+        return new Response(JSON.stringify(proposalResponse({ status: 'query', sql: correctSql, assumptions: [], result_shape: 'scalar' })), { status: 200 });
+      }),
+    );
+    await runOneCall({
+      arm: 'A2',
+      model: 'qwen3:4b',
+      question: 'What is the average order value?',
+      questionId: 'E3',
+      ctx,
+      conn,
+      gold,
+      allViewNames: ecommerceViewNames,
+      correctViewName: 'order_items_rollup_by_orders',
+      numCtx: 4096,
+    });
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]!.options?.num_ctx).toBe(4096);
+  });
+
+  it('sends the per-cell numCtx on the A4 (plan-first) path too', async () => {
+    const bodies: Array<{ options?: { num_ctx?: number } }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: { body: string }) => {
+        bodies.push(JSON.parse(init.body));
+        return new Response(
+          JSON.stringify(
+            proposalResponse({ status: 'query', plan: { grain: 'one row per order', tables: ['order_items'], filters: [] }, sql: correctSql, assumptions: [], result_shape: 'scalar' }),
+          ),
+          { status: 200 },
+        );
+      }),
+    );
+    await runOneCall({
+      arm: 'A4',
+      model: 'qwen3:4b',
+      question: 'What is the average order value?',
+      questionId: 'E3',
+      ctx,
+      conn,
+      gold,
+      allViewNames: ecommerceViewNames,
+      correctViewName: 'order_items_rollup_by_orders',
+      numCtx: 12_288,
+    });
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]!.options?.num_ctx).toBe(12_288);
+  });
+
   it('buildArmPrompt dispatches to the matching arm builder, A0 through A4', () => {
     const a0 = buildArmPrompt('A0', ctx);
     const a4 = buildArmPrompt('A4', ctx);
@@ -266,5 +321,18 @@ describe('runner (run/scoring loop wiring)', () => {
   it('buildArmPrompt throws for A1x when ArmContext.corruptedGrainByTable is missing', () => {
     const { corruptedGrainByTable: _omit, ...rest } = ctx;
     expect(() => buildArmPrompt('A1x', rest)).toThrow(/corruptedGrainByTable/);
+  });
+
+  it('buildArmPrompt dispatches A5 to the single selected view, dropping the sibling view A2prime would include', () => {
+    const selected = views.find((v) => v.viewName === 'order_items_rollup_by_orders')!;
+    const a5 = buildArmPrompt('A5', { ...ctx, selectedView: selected });
+    expect(a5).toContain('CREATE VIEW "order_items_rollup_by_orders"');
+    expect(a5).not.toContain('orders_rollup_by_customers');
+    expect(a5.length).toBeLessThan(buildArmPrompt('A2prime', ctx).length);
+  });
+
+  it('buildArmPrompt gives A5 exactly A0 when selectedView is null, and throws when it is left undefined', () => {
+    expect(buildArmPrompt('A5', { ...ctx, selectedView: null })).toBe(buildArmPrompt('A0', ctx));
+    expect(() => buildArmPrompt('A5', ctx)).toThrow(/selectedView/);
   });
 });

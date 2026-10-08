@@ -128,6 +128,34 @@ export function buildA2PrimePrompt(tables: readonly TableRegistryEntry[], views:
   return assemble([ddlBlock(tables), viewsBlock(views)]);
 }
 
+// ---- A5: + exactly one targeted view, no profile (diagnostic ceiling — see below) ----
+
+/**
+ * The minimal-prompt diagnostic (BUILD_NOTES.md "Prompt size vs. accuracy").
+ * Motivating measurement: A0 is ~102 tokens and the best-scoring arm, while
+ * every arm above it is 6-14x that and scores worse — and only 11 of the
+ * run's 38 questions have a view that can help them at all, so the other 27
+ * pay the full context cost for view/profile text that cannot apply to them.
+ * A5 isolates that confound: bare DDL plus *only* the one view this question
+ * actually needs, and nothing else. When the question needs no view this is
+ * byte-identical to A0 (`assemble` drops `viewsBlock`'s empty string), which
+ * is the point — the mechanism should cost nothing where it cannot help.
+ *
+ * Diagnostic only, never a shippable arm: the view is picked by the
+ * question's pre-registered `correctViewName`, an oracle the real system
+ * wouldn't have. It measures the mechanism's *ceiling*. If a perfectly
+ * selected, minimally packaged view still doesn't beat A0, then no selection
+ * strategy built on these views will, and the negative result is conclusive
+ * rather than a packaging artifact.
+ *
+ * `viewsBlock` is reused verbatim rather than rewritten for the single-view
+ * case, so the only variable between this and A2′ is *which* views are
+ * present — not how they are worded.
+ */
+export function buildA5Prompt(tables: readonly TableRegistryEntry[], view: RollupView | null): string {
+  return assemble([ddlBlock(tables), viewsBlock(view ? [view] : [])]);
+}
+
 // ---- A3: + schema-derived few-shot examples ----
 
 export interface FewShotExample {

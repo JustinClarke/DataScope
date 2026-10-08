@@ -120,6 +120,8 @@ export async function callForPlannedProposal(
   model: string,
   messages: readonly ChatMessage[],
   baseUrl: string = OLLAMA_BASE_URL,
+  /** exp20 roadmap item 2: explicit param instead of reading CHAT_NUM_CTX per call — a single sweep process needs to pin a different num_ctx per model tier, which an env var read (even at call time) can't do without the caller mutating process.env between cells. */
+  numCtx: number = Number(process.env.CHAT_NUM_CTX ?? 16_384),
 ): Promise<PlannedProposalCallResult> {
   const response = await fetch(`${baseUrl}/api/chat`, {
     method: 'POST',
@@ -130,7 +132,7 @@ export async function callForPlannedProposal(
       think: process.env.CHAT_THINK === '1',
       stream: false,
       format: PLANNED_PROPOSAL_JSON_SCHEMA,
-      options: { num_ctx: Number(process.env.CHAT_NUM_CTX ?? 16_384), temperature: Number(process.env.CHAT_TEMPERATURE ?? 0) },
+      options: { num_ctx: numCtx, temperature: Number(process.env.CHAT_TEMPERATURE ?? 0) },
     }),
     signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
   });

@@ -8,6 +8,7 @@
     ],
     "text": "How many rows are in the dataset?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "row_count",
@@ -25,6 +26,7 @@
     ],
     "text": "What percentage of rows have a null Age?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "pct_null_age",
@@ -42,6 +44,7 @@
     ],
     "text": "How many distinct values does Pclass have?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "distinct_pclass",
@@ -59,6 +62,7 @@
     ],
     "text": "What is the overall survival rate (%)?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "survival_rate_pct",
@@ -76,6 +80,7 @@
     ],
     "text": "What is the survival rate (%) by Pclass and Sex?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "survival_rate_by_pclass_sex",
@@ -124,6 +129,7 @@
     ],
     "text": "What fraction of all passengers were under 18?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "pct_under_18_of_all",
@@ -141,6 +147,7 @@
     ],
     "text": "What is the average Fare for passengers who embarked at 'C'?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_fare_embarked_c",
@@ -158,6 +165,7 @@
     ],
     "text": "How many rows are in the dataset, and what date range does it cover?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "row_count",
@@ -185,6 +193,7 @@
     ],
     "text": "Is there more than one location in this data?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "distinct_city_count",
@@ -202,6 +211,7 @@
     ],
     "text": "On average, how windy is the windiest day of a month?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_of_monthly_max_wind",
@@ -219,6 +229,7 @@
     ],
     "text": "If you look at whichever day was the gustiest within each month, how strong does the wind typically get on that day?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_of_monthly_max_wind",
@@ -236,6 +247,7 @@
     ],
     "text": "What is the average daily temperature swing (TempHighC - TempLowC) in each calendar month of the year?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_swing_by_calendar_month",
@@ -302,6 +314,7 @@
     ],
     "text": "Across the months of the year, how much does the temperature typically swing between the hottest and coldest point of the day?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_swing_by_calendar_month",
@@ -368,6 +381,7 @@
     ],
     "text": "What is the single global average TempHighC across all days?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "global_avg_temp_high",
@@ -386,6 +400,7 @@
     ],
     "text": "Considering only days with Humidity above 70, what is the average monthly-mean TempLowC?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_monthly_mean_templow_humid_gt_70",
@@ -404,6 +419,7 @@
     ],
     "text": "Sticking to the more humid days here — humidity above 70 — what's the typical overnight low, worked out month by month and then averaged?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_monthly_mean_templow_humid_gt_70",
@@ -421,6 +437,7 @@
     ],
     "text": "What is the average WindKph in 2024?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_wind_2024",
@@ -438,6 +455,7 @@
     ],
     "text": "How many rows / what date range does this cover?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "row_count",
@@ -465,6 +483,7 @@
     ],
     "text": "What is the average daily trading range (High - Low)?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_daily_range",
@@ -482,6 +501,7 @@
     ],
     "text": "On how many days did the stock close higher than it opened?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "days_closed_higher",
@@ -499,6 +519,7 @@
     ],
     "text": "What is the highest single-day Close price, and on what date?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "max_close",
@@ -521,6 +542,7 @@
     ],
     "text": "What is the average total monthly trading volume?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_monthly_total_volume",
@@ -538,6 +560,7 @@
     ],
     "text": "In a typical month of trading, roughly how many shares change hands in total?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_monthly_total_volume",
@@ -555,6 +578,7 @@
     ],
     "text": "How many distinct ProductIds are referenced in the reviews?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "distinct_product_ids",
@@ -572,6 +596,7 @@
     ],
     "text": "What is the average Rating per product category (product_reviews.ProductId -> products.product_id)?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_rating_by_category",
@@ -614,6 +639,7 @@
     ],
     "text": "Which product has the highest average rating among products with at least 7 reviews?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "top_rated_product_min_7_reviews",
@@ -631,6 +657,7 @@
     ],
     "text": "What is the overall average Rating across all reviews?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "overall_avg_rating",
@@ -648,6 +675,7 @@
     ],
     "text": "How many products, line items, and reviews are there?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "product_count",
@@ -675,6 +703,7 @@
     ],
     "text": "For each product category, what is the total revenue and the average review rating?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_products",
     "checks": [
       {
         "label": "revenue_and_rating_by_category",
@@ -723,6 +752,7 @@
     ],
     "text": "Category by category, how much money came in, and separately, how do customers rate the products in that category on average?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_products",
     "checks": [
       {
         "label": "revenue_and_rating_by_category",
@@ -771,6 +801,7 @@
     ],
     "text": "Which product category has the best average rating per dollar of revenue?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_products",
     "checks": [
       {
         "label": "best_rating_per_revenue_dollar_category",
@@ -788,6 +819,7 @@
     ],
     "text": "Which product category gives customers the most rating for their money, relative to how much revenue it brings in?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_products",
     "checks": [
       {
         "label": "best_rating_per_revenue_dollar_category",
@@ -806,6 +838,7 @@
     ],
     "text": "Among products with at least 5 reviews, which has the highest total revenue?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_products",
     "checks": [
       {
         "label": "top_revenue_product_min_5_reviews",
@@ -824,6 +857,7 @@
     ],
     "text": "Looking only at products that have built up a decent number of reviews — 5 or more — which one has actually sold the most in dollar terms?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_products",
     "checks": [
       {
         "label": "top_revenue_product_min_5_reviews",
@@ -841,6 +875,7 @@
     ],
     "text": "How many rows in each of the four tables?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "customers_count",
@@ -873,6 +908,7 @@
     ],
     "text": "On average, how many line items does an order have?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_line_items_per_order",
@@ -890,6 +926,7 @@
     ],
     "text": "When someone places an order, how many separate line entries does it usually contain?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_line_items_per_order",
@@ -908,6 +945,7 @@
     ],
     "text": "What is the average order value?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_order_value_all_statuses",
@@ -926,6 +964,7 @@
     ],
     "text": "When someone places an order here, how much do they typically spend on it?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_order_value_all_statuses",
@@ -944,6 +983,7 @@
     ],
     "text": "What is the average order value for orders with status = 'completed'?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_order_value_completed",
@@ -962,6 +1002,7 @@
     ],
     "text": "For orders that actually went through to completion, how much does a customer typically spend on one?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_order_value_completed",
@@ -979,6 +1020,7 @@
     ],
     "text": "What is the total revenue from completed orders?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "total_revenue_completed",
@@ -996,6 +1038,7 @@
     ],
     "text": "Which customer has the highest total spend across their completed orders?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "top_spend_customer",
@@ -1013,6 +1056,7 @@
     ],
     "text": "Who's our best customer, in terms of how much they've spent on orders that actually went through?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "top_spend_customer",
@@ -1030,6 +1074,7 @@
     ],
     "text": "What is the average number of items per order?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_units_per_order",
@@ -1047,6 +1092,7 @@
     ],
     "text": "When someone places an order, how many items do they usually end up with?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_units_per_order",
@@ -1066,6 +1112,7 @@
     ],
     "text": "Which product category generated the most total revenue from completed orders only?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "top_revenue_category_completed_only",
@@ -1085,6 +1132,7 @@
     ],
     "text": "Restricting to orders that actually completed, which category of product brought in the most money overall?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "top_revenue_category_completed_only",
@@ -1102,6 +1150,7 @@
     ],
     "text": "What are the top 4 products by total units sold?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "top_4_products_by_units",
@@ -1112,15 +1161,15 @@
             113
           ],
           [
+            "Apparel Item 81",
+            105
+          ],
+          [
             "Sporting Goods Item 60",
             105
           ],
           [
             "Books Item 86",
-            105
-          ],
-          [
-            "Apparel Item 81",
             105
           ]
         ]
@@ -1136,6 +1185,7 @@
     ],
     "text": "Which four products have customers bought the most of, in terms of sheer quantity moved?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "top_4_products_by_units",
@@ -1146,15 +1196,15 @@
             113
           ],
           [
+            "Apparel Item 81",
+            105
+          ],
+          [
             "Sporting Goods Item 60",
             105
           ],
           [
             "Books Item 86",
-            105
-          ],
-          [
-            "Apparel Item 81",
             105
           ]
         ]
@@ -1170,6 +1220,7 @@
     ],
     "text": "How many orders are in each status?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "order_count_by_status",
@@ -1204,6 +1255,7 @@
     ],
     "text": "What is the average price of a single line item across completed orders?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_line_item_price_completed",
@@ -1221,6 +1273,7 @@
     ],
     "text": "Looking at completed orders, if you priced out each individual item on its own — not the whole order — what would a typical one cost?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_line_item_price_completed",
@@ -1238,6 +1291,7 @@
     ],
     "text": "Which product category generated the most revenue overall, across every order status?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_products",
     "checks": [
       {
         "label": "top_revenue_category_all_statuses",
@@ -1255,6 +1309,7 @@
     ],
     "text": "Regardless of whether the order ever completed, which product category has brought in the most revenue in total?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_products",
     "checks": [
       {
         "label": "top_revenue_category_all_statuses",
@@ -1273,6 +1328,7 @@
     ],
     "text": "What is the average total spend per customer, counting only completed orders?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_spend_per_customer_completed",
@@ -1291,6 +1347,7 @@
     ],
     "text": "Looking only at customers who've completed at least one order, what's the average amount they've spent in total?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "avg_spend_per_customer_completed",
@@ -1309,6 +1366,7 @@
     ],
     "text": "What is the average order value? (same gold as E3, graded against viewUsage)",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_order_value_all_statuses_v2",
@@ -1327,6 +1385,7 @@
     ],
     "text": "When someone places an order here, how much do they typically spend on it?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_order_value_all_statuses_v2",
@@ -1344,6 +1403,7 @@
     ],
     "text": "How many distinct customers placed at least one order in 2024?",
     "wording": "explicit",
+    "correctViewName": null,
     "checks": [
       {
         "label": "distinct_customers_ordered_2024",
@@ -1361,6 +1421,7 @@
     ],
     "text": "Out of everyone who's ordered from us, how many different people bought something at some point during 2024?",
     "wording": "paraphrase",
+    "correctViewName": null,
     "checks": [
       {
         "label": "distinct_customers_ordered_2024",
@@ -1378,6 +1439,7 @@
     ],
     "text": "On average, how much revenue does a customer generate?",
     "wording": "explicit",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_revenue_per_customer_all_400",
@@ -1395,6 +1457,7 @@
     ],
     "text": "Across our whole customer base, what's the typical amount of revenue one customer brings in?",
     "wording": "paraphrase",
+    "correctViewName": "order_items_rollup_by_orders",
     "checks": [
       {
         "label": "avg_revenue_per_customer_all_400",

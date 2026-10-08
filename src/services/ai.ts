@@ -102,7 +102,19 @@ export const MAX_TOOL_CALLS = 48;
  */
 export const DEFAULT_TOOL_PREVIEW_ROWS = 50;
 // §21.6 provider timeout — a slow provider yields a clean error, never a hung chat.
-const DEFAULT_TIMEOUT_MS = 30_000;
+//
+// Raised from 30 s on 2026-08-27. A local reasoning model does not fit 30 s on
+// an 8 GB M1: measured on Ollama 0.32.1 against a one-table prompt with
+// `run_sql` attached, qwen3:4b took 22-37 s per turn and qwen3.5:4b left
+// thinking took 67.6 s — so the budget was cutting off turns that were working,
+// and the user saw "the AI provider timed out" for a daemon that was fine.
+// 90 s clears both with headroom.
+//
+// The cost is a longer hang before a genuinely dead provider gives up, and it
+// is bounded to the local path in practice: the edge router enforces its own
+// server-side budget and returns a typed `timeout` code well inside this one,
+// so this constant is the backstop there rather than the thing that fires.
+const DEFAULT_TIMEOUT_MS = 90_000;
 
 /**
  * A4 shipped a deliberate two-tool placeholder here — `run_sql` and

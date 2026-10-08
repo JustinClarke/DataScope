@@ -6,7 +6,9 @@ the other sample datasets. Can a **deterministically inferred** (not hand-author
 grain-correct view layer measurably close that gap — and if it does, does the fix survive on
 the actual 8GB-machine deployment target, not just a headroom machine?
 
-**Status (2026-08-08): design v2, harness built, bake-off run, full ablation not yet run.** See
+**Status (2026-08-09): design v2, harness built, bake-off run, full-ladder diagnosis run on the
+primary candidate, A5 minimal-prompt arm built and awaiting its sweep, full ablation not yet
+run.** See
 "Next steps" below for the current roadmap. Literature research done
 ([`RESEARCH.md`](RESEARCH.md)); v1 of the experiment design was adversarially reviewed by Opus
 and found not runnable as written — one dataset was mis-described (`weather.csv` is a
@@ -64,26 +66,63 @@ layer the *harness* generates deterministically (never the model) is enough on i
 **Roadmap, in recommended order (2026-08-08, post-bake-off)** — each item is independently
 startable except where noted; pick one per session rather than trying to chain them:
 
-1. **Diagnose the ladder on `qwen3:4b`** — run all 5 main arms (A0-A4) + the 2 diagnostic arms
-   (A2′, A1✗) on `qwen3:4b` alone, all 6 datasets, N=2, reusing `bakeoff.ts`'s exact machinery
-   (num_ctx=8192, same question set). No new model pulls, ~20-30 min. **Why first**: the bake-off
-   (A0+A4 only, see below) found A4 did *not* clearly beat A0 for `qwen3:4b` — this is the
-   cheapest way to find out whether that's a real regression or concentrated in one rung (A2's
-   view-selection, A3's worked examples, or A4's plan-first schema specifically) before spending
-   the full run's time budget on it.
-2. **Fix technical debt the full run actually needs** (the bake-off didn't, since it deliberately
-   held num_ctx shared and skipped per-question view-correctness): per-model `num_ctx` pinning
-   (currently one shared env var — fine comparing same-tier 4B models, not fine once `qwen3:14b`
-   and the 7B pair are in the mix); Ollama-side RSS sampling (`peakRssBytes` currently measures
-   this harness process, not Ollama's server process, which is what DESIGN.md §4's viability
-   budget — "peak RSS under 6GB" — actually needs); a real per-question `correctViewName` map so
-   `viewUsage` can distinguish right-view from wrong-view (currently always `null` → tags
-   collapse to "referenced *something*" vs "referenced nothing").
-3. **Decide `chasm`'s fate**: the bake-off found 0% correct across every model/arm/attempt,
-   confirmed genuine (not a harness bug — see BUILD_NOTES.md). Either report it as a known
-   limitation of the current single-hop rollup mechanism in the final report, or build a
-   second-order "sibling rollup via shared parent" view (`order_items_rollup_by_products` +
-   `product_reviews_rollup_by_products`, joined on `product_id`) before the full run and re-test.
+1. ~~**Diagnose the ladder on `qwen3:4b`**~~ — **done**, run live (`ladderDiagnosis.ts`, 438/440
+   cells, all 5 main arms + both diagnostic arms). Answer: **not concentrated in one rung** — A0
+   (bare DDL) is the single best-performing arm (57.9% all-dataset / 66.7% ecommerce-only); A1
+   alone accounts for most of the drop, A2 doesn't recover it, A3's few-shot claws back most of
+   the gap, A4 gives it back. All CIs overlap (n=76/30, not individually significant). The two
+   diagnostic arms both point the same weak-signal direction: A2′ (views, no profile) beats real
+   A2 on the same questions (46.7% vs 40.0%) — views help more *without* the profile at this model
+   size — and A1x (corrupted grain statement) scores below real A1 (36.7% vs 40.0%), so the model
+   is reading the profile, just not benefiting from it net. Most actionable lead: A4's
+   view-reference rate (13%, matching the bake-off's own independent measurement) is well below
+   A3's (47%) despite A4 = A3 + forced plan-first — the plan-first schema looks like it pulls
+   attention away from the pre-built views rather than toward correct grain reasoning. Full
+   readout, tables, and caveats in BUILD_NOTES.md's "Full-ladder diagnosis on `qwen3:4b`" section.
+   **Implication**: reinforces doing item 2 before item 5 — "referenced a view" and "referenced
+   the *right* view" are still conflated (`correctViewName` is `null` throughout), and that's
+   exactly what's needed to pin down the A3-vs-A4 engagement gap this run surfaced.
+2. ~~**Fix technical debt the full run actually needs**~~ — **done**, all three, in code (not
+   run against a live sweep — that's item 5's job). `numCtx` now actually reaches the real
+   `/api/chat` call (`ollama.ts`/`planFirstOllama.ts`/`runner.ts`) instead of only feeding the
+   overflow-check arithmetic, so a single sweep can pin a different value per model tier.
+   `manifest.ts` gained a real `ollamaRssBytes` field sampling the live `llama-server` runner
+   subprocess(es) — confirmed live that `ollama serve` itself never exceeds ~50MB regardless of
+   what's loaded, so the old `peakRssBytes` (kept, now documented as harness-only) could never
+   have reflected DESIGN.md §4's "peak RSS under 6GB" budget; a real call against `qwen3:0.6b`
+   showed harness ≈173MB vs. runner ≈1028MB. Every one of `computeGold.ts`'s 28 questions now
+   carries a real `correctViewName`, grounded in DESIGN.md §2's own trap prose plus live
+   enumeration of the actual generated views — and that pass surfaced a real, previously
+   uncharted mechanism gap: `order_items.quantity` and `product_reviews.Rating` both classify
+   `Categorical` (not `Quantitative`), so **no generated view anywhere carries a units-sold or a
+   rating measure** — E7/E9 and every R/C rating question are `correctViewName: null` for that
+   reason, not because DESIGN.md tags them view-selection traps. 153/153 tests pass; full
+   rationale, the view-by-view mapping, and both findings in BUILD_NOTES.md's "Roadmap item 2"
+   section. `bakeoff.ts`/`ladderDiagnosis.ts` deliberately left as-is (already-reported,
+   one-time scripts) — the map exists for item 5's future full-run script to read directly.
+3. **Decide `chasm`'s fate** — **investigated, not yet decided; the question changed.** Both
+   sibling rollup views (`order_items_rollup_by_products`, `product_reviews_rollup_by_products`)
+   turn out to **already exist and already be in the chasm prompt** — there is nothing to build
+   for the composition. C4 is fully answerable from them today (verified: joining the two on
+   `product_id` with `product_reviews_row_count >= 5` reproduces its gold `Toys Item 24` exactly),
+   so C4's 0% is a pure model-composition failure with the right tools in hand. C2/C3 are blocked
+   by a different thing entirely: `product_reviews_rollup_by_products` carries no rating measure,
+   because `Rating` (cardinality 5) classifies `Categorical` — item 2's already-logged classifier
+   gap, not a chasm-specific one. Two of the three scored questions were unwinnable for reasons
+   unrelated to the chasm trap. **Superseded in priority by item 3a** — the prompt-size finding is
+   the more likely explanation for chasm's 0% and needs to land first. Full detail in
+   BUILD_NOTES.md's "Roadmap item 3 investigated" section.
+3a. **Run the A5 minimal-prompt probe** — **built, tested, ready; sweep not run** (started, stopped
+   after 2 cells at a session boundary). Motivation, measured this session: A0 (bare DDL) is ~102
+   tokens and the best-scoring arm, while every arm above it is 6-14x longer and scores worse — and
+   only **11 of the run's 38 questions have a view that can help them at all**, while all 38 carry
+   the full profile + all-views payload. The ladder never tested the gap between 102 and 604
+   tokens. `buildA5Prompt` is that arm: bare DDL + only the one view this question needs (~322
+   tokens), byte-identical to A0 when it needs none. It is a **ceiling, not a shippable arm** — the
+   view is oracle-selected from `correctViewName`, so if a perfectly selected, minimally packaged
+   view still doesn't beat A0, the mechanism's negative result is conclusive rather than a
+   packaging artifact. Run: `CHAT_NUM_CTX=8192 npx tsx eval/chat/20-grain-rescue/a5Probe.ts`
+   (~15-20 min, 72 cells, resumable — do not delete the manifest).
 4. **The `ecommerce-dirty/` mutation dataset** (same E-series questions re-asked against seeded
    orphan/null/dupe-key data) — DESIGN.md's own scope note marks this the first item to cut if a
    session runs long. Self-contained, doesn't depend on 1-3.

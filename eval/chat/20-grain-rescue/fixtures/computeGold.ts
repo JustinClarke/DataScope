@@ -43,6 +43,26 @@ export interface QuestionSpec {
   text: string;
   /** DESIGN.md §2 paraphrase requirement: required for every G/X/V/M/TG-tagged question — a wording that never names the correct grain, sharing this question's gold value. Asserted present by `assertParaphrasesPresent` below. */
   paraphrase?: string;
+  /**
+   * Roadmap item 2 (README.md): the view (from `buildAllRollupViews`'s
+   * `<child>_rollup_by_<parent>` naming) this question's gold answer should
+   * be built from, or `null` if no single generated view is correct —
+   * either the question needs no rollup (plain profiling/raw-table
+   * filters), DESIGN.md §2 names the view as the trap itself (E8, E11,
+   * E13, E15 — using it silently produces the wrong number), or the
+   * measure the question needs was never materialized as a view column.
+   * The last case is a real, verified mechanism gap this pass surfaced:
+   * `buildRollupView` only SUMs/AVGs columns the profiler classifies
+   * `Quantitative`, and low-cardinality integer measure columns
+   * (`order_items.quantity`, `product_reviews.Rating` — both small
+   * integer scales) get classified `Categorical` instead (confirmed live
+   * against the real combined catalog), so no view anywhere carries a
+   * units-sold or rating measure — E7/E9 and every R/C rating question are
+   * `null` for that reason, not because DESIGN.md calls them
+   * view-selection traps (it doesn't tag them `V`). Full per-question
+   * rationale in BUILD_NOTES.md's "correctViewName map" section.
+   */
+  correctViewName: string | null;
   premises: Premise[];
   checks: CheckSpec[];
 }
@@ -61,6 +81,7 @@ export interface ComputedQuestion {
   trap: string[];
   text: string;
   wording: 'explicit' | 'paraphrase';
+  correctViewName: string | null;
   checks: ComputedCheck[];
 }
 
@@ -154,6 +175,7 @@ const titanic: QuestionSpec[] = [
     dataset: 'titanic',
     category: 'profiling',
     trap: ['-'],
+    correctViewName: null,
     text: 'How many rows are in the dataset?',
     premises: [{ kind: 'column', table: 'titanic', column: 'PassengerId' }],
     checks: [
@@ -165,6 +187,7 @@ const titanic: QuestionSpec[] = [
     dataset: 'titanic',
     category: 'profiling',
     trap: ['N'],
+    correctViewName: null,
     text: 'What percentage of rows have a null Age?',
     premises: [{ kind: 'column', table: 'titanic', column: 'Age' }],
     checks: [
@@ -181,6 +204,7 @@ const titanic: QuestionSpec[] = [
     dataset: 'titanic',
     category: 'profiling',
     trap: ['-'],
+    correctViewName: null,
     text: 'How many distinct values does Pclass have?',
     premises: [{ kind: 'column', table: 'titanic', column: 'Pclass' }],
     checks: [
@@ -197,6 +221,7 @@ const titanic: QuestionSpec[] = [
     dataset: 'titanic',
     category: 'analytical',
     trap: ['-'],
+    correctViewName: null,
     text: 'What is the overall survival rate (%)?',
     premises: [{ kind: 'column', table: 'titanic', column: 'Survived' }],
     checks: [
@@ -213,6 +238,7 @@ const titanic: QuestionSpec[] = [
     dataset: 'titanic',
     category: 'analytical',
     trap: ['-'],
+    correctViewName: null,
     text: 'What is the survival rate (%) by Pclass and Sex?',
     premises: [
       { kind: 'column', table: 'titanic', column: 'Pclass' },
@@ -233,6 +259,7 @@ const titanic: QuestionSpec[] = [
     dataset: 'titanic',
     category: 'analytical',
     trap: ['N'],
+    correctViewName: null,
     text: 'What fraction of all passengers were under 18?',
     premises: [{ kind: 'column', table: 'titanic', column: 'Age' }],
     checks: [
@@ -249,6 +276,7 @@ const titanic: QuestionSpec[] = [
     dataset: 'titanic',
     category: 'analytical',
     trap: ['F'],
+    correctViewName: null,
     text: "What is the average Fare for passengers who embarked at 'C'?",
     premises: [
       { kind: 'column', table: 'titanic', column: 'Fare' },
@@ -271,6 +299,7 @@ const weather: QuestionSpec[] = [
     dataset: 'weather',
     category: 'profiling',
     trap: ['-'],
+    correctViewName: null,
     text: 'How many rows are in the dataset, and what date range does it cover?',
     premises: [{ kind: 'column', table: 'weather', column: 'Date' }],
     checks: [
@@ -288,6 +317,7 @@ const weather: QuestionSpec[] = [
     dataset: 'weather',
     category: 'profiling',
     trap: ['-'],
+    correctViewName: null,
     text: 'Is there more than one location in this data?',
     premises: [{ kind: 'column', table: 'weather', column: 'City' }],
     checks: [
@@ -304,6 +334,7 @@ const weather: QuestionSpec[] = [
     dataset: 'weather',
     category: 'analytical',
     trap: ['TG'],
+    correctViewName: null,
     text: 'On average, how windy is the windiest day of a month?',
     paraphrase: 'If you look at whichever day was the gustiest within each month, how strong does the wind typically get on that day?',
     premises: [
@@ -325,6 +356,7 @@ const weather: QuestionSpec[] = [
     dataset: 'weather',
     category: 'analytical',
     trap: ['TG'],
+    correctViewName: null,
     text: 'What is the average daily temperature swing (TempHighC - TempLowC) in each calendar month of the year?',
     paraphrase: 'Across the months of the year, how much does the temperature typically swing between the hottest and coldest point of the day?',
     premises: [
@@ -345,6 +377,7 @@ const weather: QuestionSpec[] = [
     dataset: 'weather',
     category: 'analytical',
     trap: ['-'],
+    correctViewName: null,
     text: 'What is the single global average TempHighC across all days?',
     premises: [{ kind: 'column', table: 'weather', column: 'TempHighC' }],
     checks: [
@@ -356,6 +389,7 @@ const weather: QuestionSpec[] = [
     dataset: 'weather',
     category: 'analytical',
     trap: ['TG', 'F'],
+    correctViewName: null,
     text: 'Considering only days with Humidity above 70, what is the average monthly-mean TempLowC?',
     paraphrase: "Sticking to the more humid days here — humidity above 70 — what's the typical overnight low, worked out month by month and then averaged?",
     premises: [
@@ -378,6 +412,7 @@ const weather: QuestionSpec[] = [
     dataset: 'weather',
     category: 'analytical',
     trap: ['F'],
+    correctViewName: null,
     text: 'What is the average WindKph in 2024?',
     premises: [
       { kind: 'column', table: 'weather', column: 'WindKph' },
@@ -400,6 +435,7 @@ const stock: QuestionSpec[] = [
     dataset: 'stock_prices',
     category: 'profiling',
     trap: ['-'],
+    correctViewName: null,
     text: 'How many rows / what date range does this cover?',
     premises: [{ kind: 'column', table: 'stock_prices', column: 'Date' }],
     checks: [
@@ -417,6 +453,7 @@ const stock: QuestionSpec[] = [
     dataset: 'stock_prices',
     category: 'analytical',
     trap: ['-'],
+    correctViewName: null,
     text: 'What is the average daily trading range (High - Low)?',
     premises: [
       { kind: 'column', table: 'stock_prices', column: 'High' },
@@ -431,6 +468,7 @@ const stock: QuestionSpec[] = [
     dataset: 'stock_prices',
     category: 'analytical',
     trap: ['-'],
+    correctViewName: null,
     text: 'On how many days did the stock close higher than it opened?',
     premises: [
       { kind: 'column', table: 'stock_prices', column: 'Close' },
@@ -450,6 +488,7 @@ const stock: QuestionSpec[] = [
     dataset: 'stock_prices',
     category: 'analytical',
     trap: ['-'],
+    correctViewName: null,
     text: 'What is the highest single-day Close price, and on what date?',
     premises: [{ kind: 'column', table: 'stock_prices', column: 'Close' }],
     checks: [
@@ -473,6 +512,7 @@ const stock: QuestionSpec[] = [
     dataset: 'stock_prices',
     category: 'analytical',
     trap: ['TG'],
+    correctViewName: null,
     text: 'What is the average total monthly trading volume?',
     paraphrase: 'In a typical month of trading, roughly how many shares change hands in total?',
     premises: [
@@ -497,6 +537,7 @@ const reviews: QuestionSpec[] = [
     dataset: 'product_reviews',
     category: 'profiling',
     trap: ['-'],
+    correctViewName: null,
     text: 'How many distinct ProductIds are referenced in the reviews?',
     premises: [{ kind: 'column', table: 'product_reviews', column: 'ProductId' }],
     checks: [
@@ -513,6 +554,7 @@ const reviews: QuestionSpec[] = [
     dataset: 'product_reviews',
     category: 'analytical',
     trap: ['-'],
+    correctViewName: null,
     text: 'What is the average Rating per product category (product_reviews.ProductId -> products.product_id)?',
     premises: [
       { kind: 'column', table: 'product_reviews', column: 'Rating' },
@@ -533,6 +575,7 @@ const reviews: QuestionSpec[] = [
     dataset: 'product_reviews',
     category: 'analytical',
     trap: ['F'],
+    correctViewName: null,
     text: 'Which product has the highest average rating among products with at least 7 reviews?',
     premises: [{ kind: 'column', table: 'product_reviews', column: 'Rating' }],
     checks: [
@@ -558,6 +601,7 @@ const reviews: QuestionSpec[] = [
     dataset: 'product_reviews',
     category: 'analytical',
     trap: ['-'],
+    correctViewName: null,
     text: 'What is the overall average Rating across all reviews?',
     premises: [{ kind: 'column', table: 'product_reviews', column: 'Rating' }],
     checks: [
@@ -572,6 +616,7 @@ const chasm: QuestionSpec[] = [
     dataset: 'chasm',
     category: 'profiling',
     trap: ['-'],
+    correctViewName: null,
     text: 'How many products, line items, and reviews are there?',
     premises: [
       { kind: 'column', table: 'products', column: 'product_id' },
@@ -589,6 +634,7 @@ const chasm: QuestionSpec[] = [
     dataset: 'chasm',
     category: 'analytical',
     trap: ['X'],
+    correctViewName: 'order_items_rollup_by_products',
     text: 'For each product category, what is the total revenue and the average review rating?',
     paraphrase: 'Category by category, how much money came in, and separately, how do customers rate the products in that category on average?',
     premises: [
@@ -612,6 +658,7 @@ const chasm: QuestionSpec[] = [
     dataset: 'chasm',
     category: 'analytical',
     trap: ['X'],
+    correctViewName: 'order_items_rollup_by_products',
     text: 'Which product category has the best average rating per dollar of revenue?',
     paraphrase: 'Which product category gives customers the most rating for their money, relative to how much revenue it brings in?',
     premises: [
@@ -637,6 +684,7 @@ const chasm: QuestionSpec[] = [
     dataset: 'chasm',
     category: 'analytical',
     trap: ['X', 'F'],
+    correctViewName: 'order_items_rollup_by_products',
     text: 'Among products with at least 5 reviews, which has the highest total revenue?',
     paraphrase: "Looking only at products that have built up a decent number of reviews — 5 or more — which one has actually sold the most in dollar terms?",
     premises: [
@@ -664,6 +712,7 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'profiling',
     trap: ['-'],
+    correctViewName: null,
     text: 'How many rows in each of the four tables?',
     premises: [
       { kind: 'column', table: 'customers', column: 'customer_id' },
@@ -683,6 +732,7 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'profiling',
     trap: ['G'],
+    correctViewName: 'order_items_rollup_by_orders',
     text: 'On average, how many line items does an order have?',
     paraphrase: 'When someone places an order, how many separate line entries does it usually contain?',
     premises: [{ kind: 'column', table: 'order_items', column: 'order_id' }],
@@ -700,6 +750,7 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['G', 'M'],
+    correctViewName: 'order_items_rollup_by_orders',
     text: 'What is the average order value?',
     paraphrase: 'When someone places an order here, how much do they typically spend on it?',
     premises: [
@@ -720,6 +771,7 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['G', 'F'],
+    correctViewName: 'order_items_rollup_by_orders',
     text: "What is the average order value for orders with status = 'completed'?",
     paraphrase: 'For orders that actually went through to completion, how much does a customer typically spend on one?',
     premises: [{ kind: 'categoricalValue', table: 'orders', column: 'status', value: 'completed' }],
@@ -739,6 +791,7 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['F'],
+    correctViewName: 'order_items_rollup_by_orders',
     text: 'What is the total revenue from completed orders?',
     premises: [{ kind: 'categoricalValue', table: 'orders', column: 'status', value: 'completed' }],
     checks: [
@@ -756,6 +809,7 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['G'],
+    correctViewName: 'order_items_rollup_by_orders',
     text: 'Which customer has the highest total spend across their completed orders?',
     paraphrase: "Who's our best customer, in terms of how much they've spent on orders that actually went through?",
     premises: [{ kind: 'categoricalValue', table: 'orders', column: 'status', value: 'completed' }],
@@ -777,6 +831,11 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['G'],
+    // No view carries this measure: `order_items.quantity` is classified
+    // Categorical (low cardinality), not Quantitative, so buildRollupView
+    // never emits a quantity_sum column — confirmed live, not assumed. Same
+    // root cause as E9.
+    correctViewName: null,
     text: 'What is the average number of items per order?',
     paraphrase: 'When someone places an order, how many items do they usually end up with?',
     premises: [{ kind: 'column', table: 'order_items', column: 'quantity' }],
@@ -794,6 +853,11 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['G', 'F', 'V'],
+    // DESIGN.md §2: "the product-grain rollup view pre-aggregates across
+    // *all* statuses — using it here is silently wrong." No correct view
+    // exists; referencing order_items_rollup_by_products should tag as
+    // wrong-view, which is the point of this question.
+    correctViewName: null,
     text: 'Which product category generated the most total revenue from completed orders only?',
     paraphrase: 'Restricting to orders that actually completed, which category of product brought in the most money overall?',
     premises: [{ kind: 'categoricalValue', table: 'orders', column: 'status', value: 'completed' }],
@@ -815,6 +879,8 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['G'],
+    // Same gap as E7: needs SUM(quantity), which no view provides.
+    correctViewName: null,
     text: 'What are the top 4 products by total units sold?',
     paraphrase: 'Which four products have customers bought the most of, in terms of sheer quantity moved?',
     premises: [{ kind: 'column', table: 'order_items', column: 'quantity' }],
@@ -839,6 +905,7 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['F'],
+    correctViewName: null,
     text: 'How many orders are in each status?',
     premises: [{ kind: 'column', table: 'orders', column: 'status' }],
     checks: [
@@ -855,6 +922,10 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['V'],
+    // DESIGN.md §2: "line grain is correct here — the order-grain rollup
+    // view is the trap" (AVG of per-order unit_price_avg != the flat
+    // per-line-item average unless every order has equal line-item counts).
+    correctViewName: null,
     text: 'What is the average price of a single line item across completed orders?',
     paraphrase: 'Looking at completed orders, if you priced out each individual item on its own — not the whole order — what would a typical one cost?',
     premises: [{ kind: 'categoricalValue', table: 'orders', column: 'status', value: 'completed' }],
@@ -872,6 +943,10 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['V'],
+    // DESIGN.md §2: "the product-grain view IS correct here — the
+    // discriminating twin of E8" (no status filter, so pre-aggregating
+    // across all statuses is fine).
+    correctViewName: 'order_items_rollup_by_products',
     text: 'Which product category generated the most revenue overall, across every order status?',
     paraphrase: 'Regardless of whether the order ever completed, which product category has brought in the most revenue in total?',
     premises: [],
@@ -893,6 +968,10 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['V', 'G'],
+    // DESIGN.md §2: "the customer-grain rollup view counts *orders*, not
+    // money — a decoy." orders_rollup_by_customers has no amount measure at
+    // all (confirmed live); referencing it here should tag wrong-view.
+    correctViewName: null,
     text: 'What is the average total spend per customer, counting only completed orders?',
     paraphrase: "Looking only at customers who've completed at least one order, what's the average amount they've spent in total?",
     premises: [{ kind: 'categoricalValue', table: 'orders', column: 'status', value: 'completed' }],
@@ -912,6 +991,10 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['V', 'M'],
+    // Same view as E3 — DESIGN.md §2 frames E14's trap as which *column*
+    // inside the view the model picks (quantity_x_unit_price vs the
+    // sum_unit_price distractor), not which view.
+    correctViewName: 'order_items_rollup_by_orders',
     text: 'What is the average order value? (same gold as E3, graded against viewUsage)',
     // Same paraphrase as E3, deliberately — E14 duplicates E3's wording exactly
     // (both explicit and paraphrase) to isolate measure-selection (viewUsage)
@@ -935,6 +1018,9 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['V'],
+    // DESIGN.md §2: "no generated view helps here; raw `orders` is correct
+    // — a view-reflex model gets this wrong."
+    correctViewName: null,
     text: 'How many distinct customers placed at least one order in 2024?',
     paraphrase: "Out of everyone who's ordered from us, how many different people bought something at some point during 2024?",
     premises: [{ kind: 'temporalYear', table: 'orders', column: 'order_date', year: 2024 }],
@@ -952,6 +1038,7 @@ const ecommerce: QuestionSpec[] = [
     dataset: 'ecommerce',
     category: 'analytical',
     trap: ['G'],
+    correctViewName: 'order_items_rollup_by_orders',
     text: 'On average, how much revenue does a customer generate?',
     paraphrase: "Across our whole customer base, what's the typical amount of revenue one customer brings in?",
     premises: [{ kind: 'column', table: 'customers', column: 'customer_id' }],
@@ -993,9 +1080,9 @@ async function main() {
       // DESIGN.md §2: the gold value doesn't depend on wording, so the same
       // computed checks back both the explicit and paraphrase entries — they
       // are graded as separate checks against one shared gold value.
-      computed.push({ id: q.id, dataset: q.dataset, category: q.category, trap: q.trap, text: q.text, wording: 'explicit', checks });
+      computed.push({ id: q.id, dataset: q.dataset, category: q.category, trap: q.trap, text: q.text, wording: 'explicit', correctViewName: q.correctViewName, checks });
       if (q.paraphrase) {
-        computed.push({ id: `${q.id}P`, dataset: q.dataset, category: q.category, trap: q.trap, text: q.paraphrase, wording: 'paraphrase', checks });
+        computed.push({ id: `${q.id}P`, dataset: q.dataset, category: q.category, trap: q.trap, text: q.paraphrase, wording: 'paraphrase', correctViewName: q.correctViewName, checks });
       }
       console.log(`${q.id}: OK — ${checks.map((c) => `${c.label}=${c.grading === 'scalar' ? c.scalar : JSON.stringify(c.rows)}`).join(', ')}`);
     }

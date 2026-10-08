@@ -28,6 +28,12 @@ const MANIFEST: { dataset: string; tableName: string; csv: string }[] = [
   { dataset: 'ecommerce', tableName: 'products', csv: 'ecommerce/products.csv' },
   { dataset: 'ecommerce', tableName: 'orders', csv: 'ecommerce/orders.csv' },
   { dataset: 'ecommerce', tableName: 'order_items', csv: 'ecommerce/order_items.csv' },
+  // A synthetic SAP-style spare-parts material master (800 rows) carrying four
+  // deliberate defects: exact duplicate rows, a 35%-null column, a zero-variance
+  // column, and the same physical part entered under several free-text
+  // descriptions. Its question set lives in materialMaster.ts, deliberately
+  // apart from the D40 set so that baseline's denominator stays at 58.
+  { dataset: 'material_master', tableName: 'material_master', csv: 'material_master.csv' },
 ];
 
 function quoteIdentifier(name: string): string {

@@ -4,6 +4,12 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { AIMode } from "../types";
+import {
+  DEFAULT_OLLAMA_MODEL,
+  DEFAULT_OLLAMA_THINK,
+  DEFAULT_OLLAMA_TEMPERATURE,
+  DEFAULT_OLLAMA_KEEP_ALIVE,
+} from "../services/ollamaProvider";
 
 export type Theme = "light" | "dark" | "system";
 export type BYOKPreference = "prefer-key" | "free-tier-first";
@@ -54,6 +60,23 @@ interface SettingsState {
   // loop's stage-5 "data-sampled repair" only resamples real rows on a failed
   // attempt when this is explicitly turned off. A preference, not content.
   metadataOnlyRepair: boolean;
+  // Local-Ollama generation controls. Exposed rather than fixed because the
+  // right value depends on the model behind the endpoint, which only the user
+  // knows: `ollamaModel` is whatever they have pulled, `ollamaThink` matters
+  // only for hybrid-reasoning models, and temperature is a correctness/variety
+  // trade the user owns. See services/ollamaProvider.ts for the measurements
+  // behind the defaults. Preferences, never dataset content — safe to persist.
+  ollamaModel: string;
+  ollamaThink: boolean;
+  ollamaTemperature: number;
+  /**
+   * How long the daemon keeps the model resident after a question. Exposed
+   * because it is the setting that decides whether closing the tab leaves
+   * gigabytes held on the machine: the browser cannot stop Ollama, so this
+   * window (and the unload control beside it) is the whole of the user's
+   * control over that memory.
+   */
+  ollamaKeepAlive: string;
   // The user's own "links I created" list — local only; the server holds no
   // reverse index from session to shares (§12.3). Losing this list still
   // leaves the links working for anyone holding the URL; it only loses the
@@ -66,6 +89,10 @@ interface SettingsState {
   setSkipToData: (skip: boolean) => void;
   setWebllmConsent: (consent: WebLLMConsent) => void;
   setMetadataOnlyRepair: (metadataOnly: boolean) => void;
+  setOllamaModel: (model: string) => void;
+  setOllamaThink: (think: boolean) => void;
+  setOllamaTemperature: (temperature: number) => void;
+  setOllamaKeepAlive: (keepAlive: string) => void;
   addShareLink: (link: CreatedShareLink) => void;
   removeShareLink: (token: string) => void;
 }
@@ -80,6 +107,10 @@ export const useSettingsStore = create<SettingsState>()(
       skipToData: false,
       webllmConsent: null,
       metadataOnlyRepair: true,
+      ollamaModel: DEFAULT_OLLAMA_MODEL,
+      ollamaThink: DEFAULT_OLLAMA_THINK,
+      ollamaTemperature: DEFAULT_OLLAMA_TEMPERATURE,
+      ollamaKeepAlive: DEFAULT_OLLAMA_KEEP_ALIVE,
       shareLinks: [],
 
       setAIMode: (mode) => set({ aiMode: mode }),
@@ -90,6 +121,12 @@ export const useSettingsStore = create<SettingsState>()(
       setWebllmConsent: (consent) => set({ webllmConsent: consent }),
       setMetadataOnlyRepair: (metadataOnly) =>
         set({ metadataOnlyRepair: metadataOnly }),
+      setOllamaModel: (model) => set({ ollamaModel: model.trim() }),
+      setOllamaThink: (think) => set({ ollamaThink: think }),
+      // Ollama rejects anything outside 0-2; clamp rather than trust the input.
+      setOllamaTemperature: (temperature) =>
+        set({ ollamaTemperature: Math.min(2, Math.max(0, temperature)) }),
+      setOllamaKeepAlive: (keepAlive) => set({ ollamaKeepAlive: keepAlive }),
       addShareLink: (link) =>
         set((state) => ({ shareLinks: [link, ...state.shareLinks] })),
       removeShareLink: (token) =>

@@ -72,6 +72,81 @@ export function stripThink(text: string): string {
     .trim();
 }
 
+/**
+ * A tool call a model wrote as *text* instead of emitting through the API's
+ * tool-call channel. `raw` is the exact substring matched, so a caller can
+ * remove it from what it shows the user.
+ */
+export interface TextToolCall {
+  name: string;
+  input: Record<string, unknown>;
+  raw: string;
+}
+
+/** Shown when a model asks for a tool this endpoint has not offered it. */
+export const UNAVAILABLE_TOOL_MESSAGE =
+  "The model tried to use a tool that isn’t available here, so nothing was run. Try asking again, or switch to a larger model.";
+
+/**
+ * Small models routinely emit a tool call as a JSON blob in the message body
+ * rather than through Ollama's `tool_calls` field. Left unparsed it reaches the
+ * user as raw JSON, which is never a correct thing to show — so find it, and
+ * let the caller decide whether to honour it or strip it.
+ *
+ * Scans for the first balanced `{…}` that parses and carries a string `name`
+ * plus an `arguments` (or `parameters`) object. Brace-matching rather than a
+ * regex because the SQL inside frequently contains braces and quotes of its
+ * own, and string state has to be tracked to skip those.
+ */
+export function extractTextToolCall(text: string): TextToolCall | null {
+  const source = stripThink(text);
+  for (let start = source.indexOf("{"); start !== -1; start = source.indexOf("{", start + 1)) {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (let i = start; i < source.length; i++) {
+      const ch = source[i];
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === "\\" && inString) {
+        escaped = true;
+        continue;
+      }
+      if (ch === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString) continue;
+      if (ch === "{") depth++;
+      else if (ch === "}") {
+        depth--;
+        if (depth !== 0) continue;
+        const raw = source.slice(start, i + 1);
+        try {
+          const parsed = JSON.parse(raw) as Record<string, unknown>;
+          const name = parsed.name;
+          const args = parsed.arguments ?? parsed.parameters;
+          if (
+            typeof name === "string" &&
+            name !== "" &&
+            typeof args === "object" &&
+            args !== null &&
+            !Array.isArray(args)
+          ) {
+            return { name, input: args as Record<string, unknown>, raw };
+          }
+        } catch {
+          // Not JSON, or not a tool call — keep scanning from the next brace.
+        }
+        break;
+      }
+    }
+  }
+  return null;
+}
+
 /** Pull one SQL statement out of the model's text; null when there is none. */
 export function extractSql(text: string): string | null {
   const withoutThink = stripThink(text);
@@ -132,6 +207,46 @@ export function ladderRung(
   return callsSoFar(messages) > MAX_UNSTRUCTURED_FOLLOW_UPS
     ? "answer"
     : "continue-or-answer";
+}
+
+/**
+ * Attach this round-trip's rung instruction to the outgoing messages.
+ *
+ * It is *merged into the trailing user turn* rather than appended as a user
+ * turn of its own, which is what this used to do. Appending it displaced the
+ * question: with the tool catalog between them (~2k prompt tokens), the last
+ * user turn a small model actually attends to was the instruction, and the
+ * question scrolled out of reach. Measured 2026-08-27 on the material master
+ * extract, one question, tools attached, temperature 0:
+ *
+ *   qwen3:4b            appended -> "they didn't specify the actual question"
+ *   qwen2.5-coder:1.5b  appended -> SELECT * FROM your_table WHERE condition
+ *   qwen2.5-coder:1.5b  merged   -> SELECT count(*) FROM extract WHERE ...
+ *
+ * Both appended answers are the same artefact: placeholder SQL invented by a
+ * model that could not find a question to answer. In the app that surfaced as
+ * a query against a table nobody has (`SELECT * FROM "sales" LIMIT 100`),
+ * repeated identically on every retry because nothing about the prompt shape
+ * changed between attempts.
+ *
+ * When the conversation ends in a tool result there is no user turn to merge
+ * into and the instruction is appended as before — there it refers to the
+ * result immediately above it, which is exactly where it belongs.
+ */
+export function withRungInstruction<M extends { role: string; content: string }>(
+  messages: M[],
+  rung: LadderRung | null,
+): M[] {
+  if (rung === null) return messages;
+  const instruction = RUNG_INSTRUCTION[rung];
+  const last = messages[messages.length - 1];
+  if (last?.role !== "user") {
+    return [...messages, { role: "user", content: instruction } as unknown as M];
+  }
+  return [
+    ...messages.slice(0, -1),
+    { ...last, content: `${last.content}\n\n${instruction}` },
+  ];
 }
 
 export const RUNG_INSTRUCTION: Record<LadderRung, string> = {

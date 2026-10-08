@@ -72,6 +72,15 @@ describe("privacy gate", () => {
       webllmConsent: null,
       // §11.3 / 06-ai/03: the metadata-only-repair toggle is a preference too.
       metadataOnlyRepair: true,
+      // Local-Ollama generation controls: a model tag, a boolean and a number.
+      // Preferences about how the local daemon is driven — they describe the
+      // model and the machine, never the data it is pointed at.
+      ollamaModel: "qwen2.5-coder:1.5b",
+      ollamaThink: false,
+      ollamaTemperature: 0,
+      // How long the daemon holds the model after an answer — a duration, and
+      // a statement about this machine's memory, not about the data.
+      ollamaKeepAlive: "30m",
       // §12.3: the "links I created" list — tokens/labels, never dataset content.
       shareLinks: [],
     });

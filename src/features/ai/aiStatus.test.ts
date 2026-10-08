@@ -8,6 +8,7 @@ const base = {
   byokPreference: "free-tier-first" as const,
   byokRoutingTouched: false,
   endpointConfigured: true,
+  ollamaModel: "qwen2.5-coder:1.5b",
 };
 
 describe("describeAIStatus — a remembered key (D9 opt-in vault)", () => {
@@ -59,5 +60,17 @@ describe("describeAIStatus — a remembered key (D9 opt-in vault)", () => {
     expect(
       describeAIStatus({ ...base, aiMode: "local-model", vaulted: true }),
     ).toEqual({ kind: "local-pending" });
+  });
+});
+
+describe("describeAIStatus — which local model the status line names", () => {
+  it("names the model the user picked, not the pinned default", () => {
+    expect(
+      describeAIStatus({
+        ...base,
+        byokValue: "http://localhost:11434",
+        ollamaModel: "qwen3:4b",
+      }),
+    ).toEqual({ kind: "local", engine: "ollama", model: "qwen3:4b" });
   });
 });

@@ -127,6 +127,8 @@ async function callOllama(
   messages: readonly ChatMessage[],
   format: unknown,
   baseUrl: string,
+  /** exp20 roadmap item 2: CHAT_NUM_CTX is read once at module import, so a single process sweeping multiple model tiers (qwen3:1.7b through qwen3:14b) can't vary it per call through the env var alone — this override defaults to that same module constant, so every exp17 caller (frozen for its own scored runs) that omits it is unaffected. */
+  numCtx: number = CHAT_NUM_CTX,
 ): Promise<{ rawContent: string; usage: CallUsage }> {
   const response = await fetch(`${baseUrl}/api/chat`, {
     method: 'POST',
@@ -137,7 +139,7 @@ async function callOllama(
       think: CHAT_THINK,
       stream: false,
       ...(format !== undefined ? { format } : {}),
-      options: { num_ctx: CHAT_NUM_CTX, temperature: CHAT_TEMPERATURE },
+      options: { num_ctx: numCtx, temperature: CHAT_TEMPERATURE },
     }),
     signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
   });
@@ -165,8 +167,9 @@ export async function callForProposal(
   model: string,
   messages: readonly ChatMessage[],
   baseUrl: string = OLLAMA_BASE_URL,
+  numCtx: number = CHAT_NUM_CTX,
 ): Promise<ProposalCallResult> {
-  const { rawContent, usage } = await callOllama(model, messages, MODEL_PROPOSAL_JSON_SCHEMA, baseUrl);
+  const { rawContent, usage } = await callOllama(model, messages, MODEL_PROPOSAL_JSON_SCHEMA, baseUrl, numCtx);
   try {
     const parsed: unknown = JSON.parse(rawContent);
     const result = ModelProposalSchema.safeParse(parsed);

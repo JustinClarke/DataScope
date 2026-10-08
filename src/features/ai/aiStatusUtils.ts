@@ -1,8 +1,5 @@
 import { WEBLLM_MODEL_ID } from "../../services/webllm";
-import {
-  DEFAULT_OLLAMA_MODEL,
-  isOllamaEndpoint,
-} from "../../services/ollamaProvider";
+import { isOllamaEndpoint } from "../../services/ollamaProvider";
 import type { AIMode } from "../../types";
 import type { BYOKPreference } from "../../stores/settings";
 
@@ -22,6 +19,8 @@ export function describeAIStatus(params: {
   byokPreference: BYOKPreference;
   byokRoutingTouched: boolean;
   endpointConfigured: boolean;
+  /** The model the settings store will actually send to the daemon. */
+  ollamaModel: string;
 }): AIStatus {
   const {
     aiMode,
@@ -30,6 +29,7 @@ export function describeAIStatus(params: {
     byokPreference,
     byokRoutingTouched,
     endpointConfigured,
+    ollamaModel,
   } = params;
   const vaulted = params.vaulted === true;
   if (aiMode === null || aiMode === "local-only") return { kind: "off" };
@@ -54,7 +54,10 @@ export function describeAIStatus(params: {
         detail: "shared free tier, your local Ollama on overflow",
       };
     }
-    return { kind: "local", engine: "ollama", model: DEFAULT_OLLAMA_MODEL };
+    // The user's chosen model, not the pinned default — the two diverge the
+    // moment the model picker is touched, and a status line that names the
+    // wrong model sends anyone debugging a slow turn after the wrong thing.
+    return { kind: "local", engine: "ollama", model: ollamaModel };
   }
   if (!endpointConfigured) return { kind: "not-connected" };
   if (byokValue !== null || vaulted) {

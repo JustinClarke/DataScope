@@ -23,11 +23,11 @@ import type {
 } from "../types";
 import { webllmChat, type WebLLMChatMessage } from "./webllm";
 import {
-  RUNG_INSTRUCTION,
   SQL_TOOL,
   extractSql,
   ladderRung,
   stripThink,
+  withRungInstruction,
 } from "./toolLadder";
 
 /**
@@ -99,10 +99,7 @@ export function createWebLLMProvider(
       const rung = ladderRung(messages, sqlTool !== undefined);
       const output = await raceAbort(
         chat(
-          [
-            ...toChatMessages(messages),
-            { role: "user", content: RUNG_INSTRUCTION[rung] },
-          ],
+          withRungInstruction(toChatMessages(messages), rung),
           { maxTokens: 2048 },
         ),
         options?.signal,

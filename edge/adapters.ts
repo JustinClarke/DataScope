@@ -375,12 +375,16 @@ export function createWorkersAiProvider(ai: Ai, model: string): InferenceProvide
       messages: WireProviderMessage[],
       tools: WireTool[],
       signal: AbortSignal,
+      maxTokens?: number,
+      temperature?: number,
     ): AsyncGenerator<InferEvent, void, unknown> {
       if (signal.aborted) throw new DOMException('aborted', 'AbortError')
       const inputs: Record<string, unknown> = {
         messages: toWorkersAiMessages(messages),
         stream: true,
       }
+      if (maxTokens !== undefined) inputs.max_tokens = maxTokens
+      if (temperature !== undefined) inputs.temperature = temperature
       if (tools.length > 0) inputs.tools = toWorkersAiTools(tools)
 
       let result: unknown

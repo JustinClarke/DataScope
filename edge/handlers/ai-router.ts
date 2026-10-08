@@ -68,6 +68,8 @@ export interface InferenceProvider {
     messages: WireProviderMessage[],
     tools: WireTool[],
     signal: AbortSignal,
+    maxTokens?: number,
+    temperature?: number,
   ): AsyncGenerator<InferEvent, void, unknown>
 }
 
@@ -129,6 +131,24 @@ function isWellFormed(body: unknown): body is AiRouterRequest {
   )
 }
 
+const DEFAULT_MAX_TOKENS = 2000
+const MAX_MAX_TOKENS = 4096
+
+/** Client-requested output cap, clamped; defaults to 2000 when absent/invalid. */
+function resolveMaxTokens(v: unknown): number {
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < 1) return DEFAULT_MAX_TOKENS
+  return Math.min(Math.floor(v), MAX_MAX_TOKENS)
+}
+
+/**
+ * Optional sampling temperature. Absent/invalid returns undefined so Workers AI's
+ * own default applies (never overridden). Clamped to a sane 0-2 range.
+ */
+function resolveTemperature(v: unknown): number | undefined {
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) return undefined
+  return Math.min(v, 2)
+}
+
 function isAbort(err: unknown): boolean {
   return err instanceof DOMException && err.name === 'AbortError'
 }
@@ -147,14 +167,16 @@ async function startInference(
   tools: WireTool[],
   primaryServedBy: ServedBy,
   signal: AbortSignal,
+  maxTokens?: number,
+  temperature?: number,
 ): Promise<{ gen: AsyncGenerator<InferEvent>; first: IteratorResult<InferEvent>; servedBy: ServedBy }> {
-  const gen = primary.infer(messages, tools, signal)
+  const gen = primary.infer(messages, tools, signal, maxTokens, temperature)
   try {
     const first = await gen.next()
     return { gen, first, servedBy: primaryServedBy }
   } catch (err) {
     if (err instanceof WorkersAiCeilingError && overflow !== null) {
-      const gen2 = overflow.provider.infer(messages, tools, signal)
+      const gen2 = overflow.provider.infer(messages, tools, signal, maxTokens, temperature)
       const first2 = await gen2.next()
       return { gen: gen2, first: first2, servedBy: overflow.servedBy }
     }
@@ -334,6 +356,8 @@ export async function handleAiRouter(request: Request, env: AiRouterEnv): Promis
         body.tools,
         primaryServedBy,
         controller.signal,
+        resolveMaxTokens(body.maxTokens ?? body.num_predict),
+        resolveTemperature(body.temperature),
       )
     } catch (err) {
       if (err instanceof WorkersAiCeilingError) {

@@ -1,0 +1,213 @@
+{
+  "ranAt": "2026-08-27T09:18:25.848Z",
+  "model": "qwen3.5:4b",
+  "baseUrl": "http://localhost:11434",
+  "summary": {
+    "provider": "ollama:qwen3.5:4b",
+    "total": 20,
+    "execRate": 0.05,
+    "correctnessRate": 0,
+    "repairRate": null,
+    "avgEstTokensPerTurn": 60.75
+  },
+  "scores": [
+    {
+      "questionId": "mm-01",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-02",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-03",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0
+    },
+    {
+      "questionId": "mm-04",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-05",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-20",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-06",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-07",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": true,
+      "resultCorrect": false,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 1,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-08",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-09",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-10",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-11",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-12",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-19",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-13",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-14",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0
+    },
+    {
+      "questionId": "mm-15",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-16",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-17",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    },
+    {
+      "questionId": "mm-18",
+      "provider": "ollama:qwen3.5:4b",
+      "execOk": false,
+      "resultCorrect": null,
+      "neededRepair": false,
+      "repairSucceeded": null,
+      "attemptCount": 0,
+      "error": "The AI provider timed out. Try again, or switch modes."
+    }
+  ]
+}

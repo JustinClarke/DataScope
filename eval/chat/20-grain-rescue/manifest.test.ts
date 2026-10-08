@@ -52,6 +52,7 @@ describe('manifest logging', () => {
       dataset: 'titanic',
       machine: 'test',
       peakRssBytes: 12345,
+      ollamaRssBytes: 0,
       timestamp: '2026-08-08T00:00:00.000Z',
     } as unknown as ManifestRow;
     appendManifestRow(MANIFEST_PATH, row);
@@ -61,7 +62,7 @@ describe('manifest logging', () => {
     expect(JSON.parse(lines[0]!)).toMatchObject({ arm: 'A0', dataset: 'titanic', machine: 'test' });
   });
 
-  it('runAndLog runs a real cell and appends dataset/machine/peakRssBytes/timestamp on top of the call result', async () => {
+  it('runAndLog runs a real cell and appends dataset/machine/peakRssBytes/ollamaRssBytes/timestamp on top of the call result', async () => {
     if (existsSync(MANIFEST_PATH)) rmSync(MANIFEST_PATH);
     queueFetch([{ message: { content: JSON.stringify({ status: 'query', sql: 'SELECT 1', assumptions: [], result_shape: 'scalar' }) }, prompt_eval_count: 50, eval_count: 5 }]);
 
@@ -82,6 +83,7 @@ describe('manifest logging', () => {
     expect(row.dataset).toBe('titanic');
     expect(row.machine).toBe('test-machine');
     expect(row.peakRssBytes).toBeGreaterThan(0);
+    expect(row.ollamaRssBytes).toBeGreaterThanOrEqual(0);
     expect(new Date(row.timestamp).toString()).not.toBe('Invalid Date');
 
     const lines = readFileSync(MANIFEST_PATH, 'utf8').trim().split('\n');

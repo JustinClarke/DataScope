@@ -2,9 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createOllamaProvider,
   isOllamaEndpoint,
+  listOllamaModels,
   DEFAULT_OLLAMA_MODEL,
+  listRunningOllamaModels,
+  unloadOllamaModel,
 } from "./ollamaProvider";
-import { MAX_UNSTRUCTURED_FOLLOW_UPS, SQL_TOOL } from "./toolLadder";
+import {
+  MAX_UNSTRUCTURED_FOLLOW_UPS,
+  SQL_TOOL,
+  UNAVAILABLE_TOOL_MESSAGE,
+  extractTextToolCall,
+} from "./toolLadder";
 import type { AITool, ProviderMessage } from "../types";
 
 const TOOLS: AITool[] = [
@@ -452,5 +460,257 @@ describe("isOllamaEndpoint — API mode field-shape detection (D9, 2026-07-22)",
   it("treats an empty or malformed string as not an endpoint", () => {
     expect(isOllamaEndpoint("")).toBe(false);
     expect(isOllamaEndpoint("not a url")).toBe(false);
+  });
+});
+
+describe("listOllamaModels", () => {
+  const tagsResponse = (body: unknown) =>
+    vi.fn().mockResolvedValue({ ok: true, json: async () => body } as Response);
+
+  it("returns the pulled models, name-sorted, with sizes", async () => {
+    const fetchImpl = tagsResponse({
+      models: [
+        { name: "qwen3.5:4b", size: 3_390_000_000 },
+        { name: "qwen2.5-coder:1.5b", size: 990_000_000 },
+      ],
+    });
+    const found = await listOllamaModels({
+      baseUrl: "http://localhost:11434",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(found).toEqual([
+      { name: "qwen2.5-coder:1.5b", sizeBytes: 990_000_000 },
+      { name: "qwen3.5:4b", sizeBytes: 3_390_000_000 },
+    ]);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "http://localhost:11434/api/tags",
+      expect.anything(),
+    );
+  });
+
+  it("strips a trailing slash from the endpoint", async () => {
+    const fetchImpl = tagsResponse({ models: [] });
+    await listOllamaModels({
+      baseUrl: "http://localhost:11434/",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "http://localhost:11434/api/tags",
+      expect.anything(),
+    );
+  });
+
+  // An unreachable daemon is a UI state (offer free text), not an error to
+  // throw at a user who is only opening a settings panel.
+  it("returns an empty list when the daemon is unreachable", async () => {
+    const found = await listOllamaModels({
+      fetchImpl: vi.fn().mockRejectedValue(new TypeError("failed to fetch")) as unknown as typeof fetch,
+    });
+    expect(found).toEqual([]);
+  });
+
+  it("returns an empty list on a non-ok response or a malformed body", async () => {
+    expect(
+      await listOllamaModels({
+        fetchImpl: vi.fn().mockResolvedValue({ ok: false } as Response) as unknown as typeof fetch,
+      }),
+    ).toEqual([]);
+    expect(
+      await listOllamaModels({
+        fetchImpl: tagsResponse({}) as unknown as typeof fetch,
+      }),
+    ).toEqual([]);
+  });
+
+  it("falls back to `model` when an entry has no `name`, and drops nameless ones", async () => {
+    const found = await listOllamaModels({
+      fetchImpl: tagsResponse({
+        models: [{ model: "qwen3:8b", size: 5_230_000_000 }, { size: 1 }],
+      }) as unknown as typeof fetch,
+    });
+    expect(found).toEqual([{ name: "qwen3:8b", sizeBytes: 5_230_000_000 }]);
+  });
+});
+
+describe("extractTextToolCall", () => {
+  // The exact payload a qwen2.5-coder:1.5b turn put in the message body, which
+  // reached the user as raw JSON on screen.
+  const OBSERVED =
+    '{"name": "derive_table", "arguments": {"name": "sales_by_order", "sql": "SELECT order_id, customer_id, amount FROM sales"}}';
+
+  it("parses a tool call the model wrote as text", () => {
+    expect(extractTextToolCall(OBSERVED)).toEqual({
+      name: "derive_table",
+      input: {
+        name: "sales_by_order",
+        sql: "SELECT order_id, customer_id, amount FROM sales",
+      },
+      raw: OBSERVED,
+    });
+  });
+
+  it("finds the call when prose surrounds it, and reports the exact span", () => {
+    const found = extractTextToolCall(`Sure, here goes:\n${OBSERVED}\nhope that helps`);
+    expect(found?.name).toBe("derive_table");
+    expect(found?.raw).toBe(OBSERVED);
+  });
+
+  // Brace-matching, not a regex: SQL string literals routinely carry braces and
+  // quotes that end a naive match early.
+  it("handles braces and escaped quotes inside the SQL argument", () => {
+    const tricky =
+      '{"name": "run_sql", "arguments": {"sql": "SELECT \'a}b\' AS x, \\"y\\" FROM t"}}';
+    expect(extractTextToolCall(tricky)?.name).toBe("run_sql");
+  });
+
+  it("accepts `parameters` as well as `arguments`", () => {
+    expect(
+      extractTextToolCall('{"name": "run_sql", "parameters": {"sql": "SELECT 1"}}')?.input,
+    ).toEqual({ sql: "SELECT 1" });
+  });
+
+  it("ignores JSON that is not a tool call, and plain prose", () => {
+    expect(extractTextToolCall('{"rows": 3}')).toBeNull();
+    expect(extractTextToolCall("There are 18 distinct manufacturers.")).toBeNull();
+    expect(extractTextToolCall('{"name": "run_sql", "arguments": "not an object"}')).toBeNull();
+  });
+
+  it("skips a non-call object and finds a later real one", () => {
+    const found = extractTextToolCall('{"note": "thinking"} then {"name": "run_sql", "arguments": {"sql": "SELECT 1"}}');
+    expect(found?.name).toBe("run_sql");
+  });
+});
+
+describe("a tool call emitted as text", () => {
+  const textCall = (name: string, args: Record<string, unknown>) =>
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        message: { content: JSON.stringify({ name, arguments: args }) },
+      }),
+    } as Response);
+
+  it("is honoured as a real call when it names an offered tool", async () => {
+    const provider = createOllamaProvider({
+      fetchImpl: textCall(SQL_TOOL, { sql: "SELECT count(*) FROM t" }) as unknown as typeof fetch,
+    });
+    const turn = await provider.complete(MESSAGES, TOOLS);
+    expect(turn.calls).toHaveLength(1);
+    expect(turn.calls[0].name).toBe(SQL_TOOL);
+    expect(turn.calls[0].input).toEqual({ sql: "SELECT count(*) FROM t" });
+    // The JSON is the call, not the answer — it must not also be shown.
+    expect(turn.text).toBe("");
+  });
+
+  it("never shows raw JSON when the tool does not exist", async () => {
+    const provider = createOllamaProvider({
+      fetchImpl: textCall("derive_table", { sql: "SELECT 1 FROM sales" }) as unknown as typeof fetch,
+    });
+    const turn = await provider.complete(MESSAGES, TOOLS);
+    expect(turn.calls).toHaveLength(0);
+    expect(turn.text).toBe(UNAVAILABLE_TOOL_MESSAGE);
+    expect(turn.text).not.toContain("derive_table");
+    expect(turn.text).not.toContain("{");
+  });
+});
+
+describe("the `think` flag on the wire", () => {
+  const complete = async (think: boolean) => {
+    const fetchImpl = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve(ok({ message: { role: "assistant", content: "42" } })),
+    );
+    const provider = createOllamaProvider({
+      think,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    await provider.complete(MESSAGES, TOOLS);
+    return sentBody(fetchImpl);
+  };
+
+  // Ollama 0.32.1 rejects `think: true` on a model without the capability with
+  // a 400 (`"qwen2.5-coder:1.5b" does not support thinking`), which fails the
+  // whole turn. Omitting the flag leaves a reasoning model reasoning and a
+  // plain one unbothered, so think-on must never reach the wire as `true`.
+  it("omits the flag entirely when thinking is on", async () => {
+    expect(await complete(true)).not.toHaveProperty("think");
+  });
+
+  // Think-off still has to be sent: it is what collapses a model that honours
+  // it (qwen3.5:4b, 819 tokens -> 8) down to a turn that fits the budget.
+  it("sends think:false when thinking is off", async () => {
+    expect(await complete(false)).toMatchObject({ think: false });
+  });
+});
+
+describe("listRunningOllamaModels — what the daemon holds in memory", () => {
+  const psBody = {
+    models: [
+      {
+        name: "qwen3:4b",
+        size_vram: 3_169_761_361,
+        size: 2_497_293_931,
+        expires_at: "2026-08-27T16:23:55.130129+05:30",
+      },
+      { model: "qwen2.5-coder:1.5b", size_vram: 1_160_000_000 },
+      { size_vram: 1 },
+    ],
+  };
+
+  it("reads residency, preferring the in-memory size over the on-disk one", async () => {
+    const fetchImpl = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve(ok(psBody)),
+    );
+    const running = await listRunningOllamaModels({
+      baseUrl: "http://localhost:11434/",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(fetchImpl.mock.calls[0][0]).toBe("http://localhost:11434/api/ps");
+    expect(running).toEqual([
+      {
+        name: "qwen3:4b",
+        sizeBytes: 3_169_761_361,
+        expiresAt: new Date("2026-08-27T16:23:55.130129+05:30"),
+      },
+      // No expiry reported is not an error — the row is still real memory.
+      { name: "qwen2.5-coder:1.5b", sizeBytes: 1_160_000_000, expiresAt: null },
+    ]);
+  });
+
+  it("reports an unreachable daemon as nothing resident, not an error", async () => {
+    const fetchImpl = vi.fn(() => Promise.reject(new Error("ECONNREFUSED")));
+    await expect(
+      listRunningOllamaModels({
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      }),
+    ).resolves.toEqual([]);
+  });
+});
+
+describe("unloadOllamaModel — ending a model's residency", () => {
+  it("asks for an empty turn with keep_alive 0, which is what frees the memory", async () => {
+    const fetchImpl = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve(ok({ done_reason: "unload" })),
+    );
+    const freed = await unloadOllamaModel("qwen3:4b", {
+      baseUrl: "http://localhost:11434",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(freed).toBe(true);
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe("http://localhost:11434/api/chat");
+    expect(JSON.parse((init as RequestInit | undefined)!.body as string)).toEqual({
+      model: "qwen3:4b",
+      messages: [],
+      keep_alive: 0,
+    });
+  });
+
+  it("reports failure rather than throwing at a dead daemon", async () => {
+    const fetchImpl = vi.fn(() => Promise.reject(new Error("ECONNREFUSED")));
+    await expect(
+      unloadOllamaModel("qwen3:4b", {
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      }),
+    ).resolves.toBe(false);
   });
 });

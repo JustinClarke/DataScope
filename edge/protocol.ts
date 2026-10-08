@@ -169,6 +169,14 @@ export interface AiRouterRequest {
   stream?: boolean;
   /** 1-based §11.1 loop attempt — numeric only, for the D41 retry/repair metric. */
   attempt?: number;
+  /** Max output tokens for the reply (default 2000, clamped to 4096). */
+  maxTokens?: number;
+  /** Sampling temperature; omitted = Workers AI default. Clamped to 0-2. */
+  temperature?: number;
+  /** Ollama-style alias for maxTokens (used only when maxTokens is absent). */
+  num_predict?: number;
+  /** Accepted for Ollama-proxy compatibility; Workers AI has a fixed context, so ignored. */
+  num_ctx?: number;
 }
 
 /** Which provider served the response — surfaced so the client can label it (D3). */
