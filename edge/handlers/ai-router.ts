@@ -108,7 +108,17 @@ export interface AiRouterEnv {
   AI_ROUTER_KILL_SWITCH?: string
   perMinuteLimits?: RateLimits
   workersAiDailyQuota?: number
+  /**
+   * Hard ceiling on the whole inference, ms (§21.6). It bounds a reply that keeps
+   * producing tokens; the output cap (maxTokens) bounds it too.
+   */
   providerTimeoutMs?: number
+  /**
+   * Longest silence allowed from the provider, ms: the wait for the first event and
+   * between any two events. Each delta resets it, so a long answer that is still
+   * arriving is not cut off by it, while a hung provider still fails fast.
+   */
+  providerIdleTimeoutMs?: number
   maxBodyBytes?: number
 }
 
@@ -117,7 +127,13 @@ const DEFAULT_PER_MINUTE: RateLimits = { perSession: 10, perIp: 30, windowSecond
 const DEFAULT_DAILY_QUOTA = 20
 const DAY_SECONDS = 86_400
 const DEFAULT_MAX_BODY_BYTES = 64 * 1_024
-const DEFAULT_TIMEOUT_MS = 30_000
+// The total ceiling was 30 s, which cut off any answer longer than about 1,100-1,200
+// tokens (Mistral Small 3.1 streams roughly 38-44 tokens/s), before the 2,000-token
+// default cap could be reached. The idle budget keeps the old 30 s for a provider that
+// goes silent; the total is 80 s so the edge's typed `timeout` still lands inside the
+// browser client's own 90 s budget (src/services/ai.ts DEFAULT_TIMEOUT_MS).
+const DEFAULT_TIMEOUT_MS = 80_000
+const DEFAULT_IDLE_TIMEOUT_MS = 30_000
 
 function isWellFormed(body: unknown): body is AiRouterRequest {
   if (typeof body !== 'object' || body === null) return false
@@ -132,7 +148,7 @@ function isWellFormed(body: unknown): body is AiRouterRequest {
 }
 
 const DEFAULT_MAX_TOKENS = 2000
-const MAX_MAX_TOKENS = 4096
+const MAX_MAX_TOKENS = 8192
 
 /** Client-requested output cap, clamped; defaults to 2000 when absent/invalid. */
 function resolveMaxTokens(v: unknown): number {
@@ -151,6 +167,32 @@ function resolveTemperature(v: unknown): number | undefined {
 
 function isAbort(err: unknown): boolean {
   return err instanceof DOMException && err.name === 'AbortError'
+}
+
+/**
+ * The provider deadline: one abort, two clocks. `total` runs from the start of the
+ * request and is never reset; `idle` is reset by `touch()` each time the provider
+ * yields an event (a text delta or the final turn). Whichever fires first aborts.
+ */
+interface Watchdog {
+  touch(): void
+  clear(): void
+}
+
+function startWatchdog(controller: AbortController, totalMs: number, idleMs: number): Watchdog {
+  const abort = (): void => controller.abort()
+  const total = setTimeout(abort, totalMs)
+  let idle = setTimeout(abort, idleMs)
+  return {
+    touch() {
+      clearTimeout(idle)
+      if (!controller.signal.aborted) idle = setTimeout(abort, idleMs)
+    },
+    clear() {
+      clearTimeout(total)
+      clearTimeout(idle)
+    },
+  }
 }
 
 /**
@@ -184,15 +226,17 @@ async function startInference(
   }
 }
 
-/** Drains a generator from its first event to the terminal `done`. */
+/** Drains a generator from its first event to the terminal `done`, resetting the idle clock per event. */
 async function drain(
   gen: AsyncGenerator<InferEvent>,
   first: IteratorResult<InferEvent>,
+  onEvent: () => void = () => {},
 ): Promise<{ turn: WireProviderTurn; tokensIn: number; tokensOut: number }> {
   let step = first
   while (!step.done) {
     if (step.value.type === 'done') return step.value
     step = await gen.next()
+    onEvent()
   }
   // A well-behaved provider always yields `done`; a generator that returns
   // without one is a provider bug, surfaced as an empty text turn.
@@ -216,6 +260,7 @@ function streamResponse(
   first: IteratorResult<InferEvent>,
   servedBy: ServedBy,
   record: (outcome: AiRouterOutcome, served: ServedBy, tokensIn: number, tokensOut: number) => void,
+  onEvent: () => void = () => {},
 ): Response {
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -236,6 +281,7 @@ function streamResponse(
         while (!step.done) {
           if (emit(step.value)) break
           step = await gen.next()
+          onEvent()
         }
         controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'))
         record('ok', servedBy, tokensIn, tokensOut)
@@ -258,6 +304,7 @@ export async function handleAiRouter(request: Request, env: AiRouterEnv): Promis
   const dailyQuota = env.workersAiDailyQuota ?? DEFAULT_DAILY_QUOTA
   const maxBodyBytes = env.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES
   const timeoutMs = env.providerTimeoutMs ?? DEFAULT_TIMEOUT_MS
+  const idleTimeoutMs = env.providerIdleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS
 
   // One place records the numeric-only metric for every exit. There is nowhere in
   // its shape to put message content — that is the D41 guarantee.
@@ -305,7 +352,7 @@ export async function handleAiRouter(request: Request, env: AiRouterEnv): Promis
   let overflow: { provider: InferenceProvider; servedBy: ServedBy } | null = null
 
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const timer = startWatchdog(controller, timeoutMs, idleTimeoutMs)
   try {
     if (body.routing === 'prefer-key') {
       // 100% of inference via the user's provider; the free pool is never touched.
@@ -359,6 +406,7 @@ export async function handleAiRouter(request: Request, env: AiRouterEnv): Promis
         resolveMaxTokens(body.maxTokens ?? body.num_predict),
         resolveTemperature(body.temperature),
       )
+      timer.touch()
     } catch (err) {
       if (err instanceof WorkersAiCeilingError) {
         // Ceiling with no key to overflow to: the shared pool is spent.
@@ -380,13 +428,13 @@ export async function handleAiRouter(request: Request, env: AiRouterEnv): Promis
         tIn: number,
         tOut: number,
       ): void => {
-        clearTimeout(timer)
+        timer.clear()
         record(outcome, served, tIn, tOut, attempt)
       }
-      return streamResponse(session.gen, session.first, session.servedBy, streamRecord)
+      return streamResponse(session.gen, session.first, session.servedBy, streamRecord, timer.touch)
     }
 
-    const { turn, tokensIn, tokensOut } = await drain(session.gen, session.first)
+    const { turn, tokensIn, tokensOut } = await drain(session.gen, session.first, timer.touch)
     record('ok', session.servedBy, tokensIn, tokensOut, attempt)
     const response: AiRouterResponse = { turn, servedBy: session.servedBy }
     return new Response(JSON.stringify(response), {
@@ -409,7 +457,7 @@ export async function handleAiRouter(request: Request, env: AiRouterEnv): Promis
   } finally {
     // The streamed path clears the timer itself once its body closes; every other
     // path clears it here. Clearing twice is harmless.
-    if (body.stream !== true) clearTimeout(timer)
+    if (body.stream !== true) timer.clear()
   }
 }
 

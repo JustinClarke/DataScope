@@ -169,7 +169,7 @@ export interface AiRouterRequest {
   stream?: boolean;
   /** 1-based §11.1 loop attempt — numeric only, for the D41 retry/repair metric. */
   attempt?: number;
-  /** Max output tokens for the reply (default 2000, clamped to 4096). */
+  /** Max output tokens for the reply (default 2000, clamped to 8192). */
   maxTokens?: number;
   /** Sampling temperature; omitted = Workers AI default. Clamped to 0-2. */
   temperature?: number;

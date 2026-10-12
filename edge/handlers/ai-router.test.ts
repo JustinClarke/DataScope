@@ -56,6 +56,43 @@ function hangingProvider(): InferenceProvider {
   }
 }
 
+/** Waits `ms`, or rejects with AbortError the moment `signal` fires (as the real adapter's raceAbort does). */
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(new DOMException('Aborted', 'AbortError'))
+    const t = setTimeout(resolve, ms)
+    signal.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('Aborted', 'AbortError')) }, { once: true })
+  })
+}
+
+/** A provider that yields one 't' delta every `everyMs`, `count` times, then the done turn. */
+function tricklingProvider(everyMs: number, count: number): InferenceProvider {
+  return {
+    id: 'workers-ai',
+    async *infer(_m, _t, signal) {
+      let text = ''
+      for (let i = 0; i < count; i++) {
+        await sleep(everyMs, signal)
+        text += 't'
+        yield { type: 'delta', text: 't' }
+      }
+      yield { type: 'done', turn: { text, calls: [] }, tokensIn: 10, tokensOut: count }
+    },
+  }
+}
+
+/** A provider that yields `deltas` deltas at once, then goes silent until aborted. */
+function stallingProvider(deltas: number): InferenceProvider {
+  return {
+    id: 'workers-ai',
+    async *infer(_m, _t, signal) {
+      for (let i = 0; i < deltas; i++) yield { type: 'delta', text: 'x' }
+      await sleep(3_600_000, signal)
+      yield { type: 'done', turn: TEXT_TURN, tokensIn: 0, tokensOut: 0 } // unreachable
+    },
+  }
+}
+
 function resolver(p: InferenceProvider | null): ByokResolver {
   return { resolve: () => Promise.resolve(p) }
 }
@@ -230,6 +267,51 @@ describe('ai-router: kill switch and timeout', () => {
     const res = await handleAiRouter(makeRequest(base), env)
     expect(res.status).toBe(504)
     expect(await res.json()).toEqual({ error: 'timeout' })
+  })
+
+  it('a long answer that keeps arriving outlives the idle budget: 200 with the full turn', async () => {
+    // 12 deltas 15 ms apart (~180 ms in all) against a 60 ms idle budget and a 2 s total.
+    const env = makeEnv({ workersAi: tricklingProvider(15, 12), providerIdleTimeoutMs: 60, providerTimeoutMs: 2_000 })
+    const res = await handleAiRouter(makeRequest(base), env)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.turn.text).toBe('t'.repeat(12))
+  })
+
+  it('a provider that goes silent mid-answer → timeout 504 at the idle budget, long before the total', async () => {
+    const env = makeEnv({ workersAi: stallingProvider(2), providerIdleTimeoutMs: 30, providerTimeoutMs: 60_000 })
+    const started = Date.now()
+    const res = await handleAiRouter(makeRequest(base), env)
+    expect(res.status).toBe(504)
+    expect(await res.json()).toEqual({ error: 'timeout' })
+    expect(Date.now() - started).toBeLessThan(2_000)
+  })
+
+  it('a reply that never ends → timeout 504 at the total ceiling even though tokens keep coming', async () => {
+    const env = makeEnv({ workersAi: tricklingProvider(5, Infinity), providerIdleTimeoutMs: 1_000, providerTimeoutMs: 80 })
+    const res = await handleAiRouter(makeRequest(base), env)
+    expect(res.status).toBe(504)
+    expect(await res.json()).toEqual({ error: 'timeout' })
+  })
+
+  it('streamed: a long answer that keeps arriving completes with its done turn past the idle budget', async () => {
+    const sink = createMemorySink()
+    const env = makeEnv({ workersAi: tricklingProvider(15, 12), providerIdleTimeoutMs: 60, providerTimeoutMs: 2_000, sink })
+    const res = await handleAiRouter(makeRequest({ ...base, stream: true }), env)
+    const text = await res.text()
+    expect((text.match(/"type":"delta"/g) ?? []).length).toBe(12)
+    expect(text).toContain('"type":"done"')
+    expect(sink.metrics.at(-1)).toMatchObject({ outcome: 'ok' })
+  })
+
+  it('streamed: silence mid-stream closes the stream without a done turn and records timeout', async () => {
+    const sink = createMemorySink()
+    const env = makeEnv({ workersAi: stallingProvider(2), providerIdleTimeoutMs: 30, providerTimeoutMs: 60_000, sink })
+    const res = await handleAiRouter(makeRequest({ ...base, stream: true }), env)
+    const text = await res.text()
+    expect((text.match(/"type":"delta"/g) ?? []).length).toBe(2)
+    expect(text).not.toContain('"type":"done"')
+    expect(sink.metrics.at(-1)).toMatchObject({ outcome: 'timeout' })
   })
 
   it('an upstream failure (e.g. a rejected BYOK key) → typed upstream-error 502, never an unhandled throw', async () => {

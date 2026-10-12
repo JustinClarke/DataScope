@@ -98,6 +98,7 @@ function buildAiRouterEnv(env: Env): AiRouterEnv {
     AI_ROUTER_KILL_SWITCH: env.AI_ROUTER_KILL_SWITCH,
     workersAiDailyQuota: numVar(env.WORKERS_AI_DAILY_QUOTA),
     providerTimeoutMs: numVar(env.AI_ROUTER_TIMEOUT_MS),
+    providerIdleTimeoutMs: numVar(env.AI_ROUTER_IDLE_TIMEOUT_MS),
     maxBodyBytes: numVar(env.AI_ROUTER_MAX_BODY_BYTES),
     perMinuteLimits:
       perSession !== undefined && perIp !== undefined && windowSeconds !== undefined

@@ -53,10 +53,16 @@ MCP_KILL_SWITCH = "off"
 AI_MODEL = "@cf/mistralai/mistral-small-3.1-24b-instruct"
 WORKERS_AI_DAILY_QUOTA = "20"
 CORS_ALLOW_ORIGIN = "*"
-# These four reproduce ai-router.ts's own hardcoded defaults — setting them here
+# These reproduce ai-router.ts's own hardcoded defaults — setting them here
 # is a no-op until an environment deliberately overrides one (e.g. staging, to
-# live-test the §21.6 timeout without waiting 30s).
-AI_ROUTER_TIMEOUT_MS = "30000"
+# live-test the §21.6 timeout).
+# §21.6 provider deadline, two clocks (2026-10-11): AI_ROUTER_TIMEOUT_MS is the
+# hard total for one inference; AI_ROUTER_IDLE_TIMEOUT_MS is the longest silence
+# (first token, or between tokens), reset by every streamed token. The total was
+# 30000, which cut off answers past ~1,100-1,200 tokens; 80000 keeps the typed
+# `timeout` inside the browser client's 90 s budget (src/services/ai.ts).
+AI_ROUTER_TIMEOUT_MS = "80000"
+AI_ROUTER_IDLE_TIMEOUT_MS = "30000"
 AI_ROUTER_MAX_BODY_BYTES = "65536"
 AI_ROUTER_PER_SESSION_LIMIT = "10"
 AI_ROUTER_PER_IP_LIMIT = "30"
@@ -102,9 +108,12 @@ VAULT_KILL_SWITCH = "off"
 PERSISTENCE_KILL_SWITCH = "off"
 MCP_KILL_SWITCH = "off"
 AI_MODEL = "@cf/mistralai/mistral-small-3.1-24b-instruct"
-WORKERS_AI_DAILY_QUOTA = "20"
+WORKERS_AI_DAILY_QUOTA = "2000"
 CORS_ALLOW_ORIGIN = "*"
-AI_ROUTER_TIMEOUT_MS = "120000"
+# Staging allows a full 8,192-token reply (~190 s at ~44 tok/s); the idle clock
+# still fails a silent provider at 30 s.
+AI_ROUTER_TIMEOUT_MS = "240000"
+AI_ROUTER_IDLE_TIMEOUT_MS = "30000"
 AI_ROUTER_MAX_BODY_BYTES = "65536"
 AI_ROUTER_PER_SESSION_LIMIT = "10"
 AI_ROUTER_PER_IP_LIMIT = "30"

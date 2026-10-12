@@ -1,4 +1,4 @@
-.PHONY: help install dev build preview lint typecheck test check clean docker-build docker-run docker-stop docker-logs docker-clean ollama-start ollama-stop edge-dev edge-deploy-staging terraform-init terraform-plan-dev terraform-plan-prod terraform-apply-dev terraform-apply-prod
+.PHONY: help install dev build preview lint typecheck test check clean docker-build docker-run docker-stop docker-logs docker-clean ollama-start ollama-stop edge-dev edge-deploy-staging firebase-deploy terraform-init terraform-plan-dev terraform-plan-prod terraform-apply-dev terraform-apply-prod
 
 help:
 	@echo "DataScope — Data exploration and AI-powered analysis"
@@ -8,6 +8,7 @@ help:
 	@echo "  make dev          # Start development server"
 	@echo "  make build        # Production build"
 	@echo "  make check        # Run linter, type-check, and tests"
+	@echo "  make firebase-deploy  # Build and deploy the client to Firebase Hosting"
 	@echo ""
 	@echo "For full options, see targets in this Makefile"
 
@@ -42,6 +43,9 @@ edge-dev:
 
 edge-deploy-staging:
 	npm run edge:deploy:staging
+
+firebase-deploy: build
+	firebase deploy --only hosting --project data--scope
 
 TF := terraform -chdir=infra
 

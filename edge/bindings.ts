@@ -112,8 +112,10 @@ export interface Env {
   WORKERS_AI_DAILY_QUOTA?: string
   /** CORS allow-origin; defaults to '*' (no cookies cross the wire, only a body). */
   CORS_ALLOW_ORIGIN?: string
-  /** Provider call timeout in ms (§21.6); ai-router.ts's own default applies when unset. */
+  /** Provider call timeout in ms (§21.6): the hard total ceiling; ai-router.ts's own default applies when unset. */
   AI_ROUTER_TIMEOUT_MS?: string
+  /** Longest provider silence in ms (first token, or between tokens); ai-router.ts's own default applies when unset. */
+  AI_ROUTER_IDLE_TIMEOUT_MS?: string
   /** Request body cap in bytes; ai-router.ts's own default applies when unset. */
   AI_ROUTER_MAX_BODY_BYTES?: string
   /** Per-minute dual-keyed limiter (§23.5) — all three must be set to override the default. */
